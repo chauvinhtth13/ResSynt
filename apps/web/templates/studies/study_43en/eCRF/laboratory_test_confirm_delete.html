@@ -1,0 +1,125 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}{% trans "Xóa Xét Nghiệm 43EN" %}{% endblock %}
+
+{% block page_title %}{% trans "Xóa Xét Nghiệm 43EN" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'screening_case_list' %}">{% trans "Danh sách Bệnh nhân 43EN" %}</a></li>                <li class="breadcrumb-item"><a href="{% url 'patient_detail' usubjid=screening_case.USUBJID %}">{% trans "Bệnh nhân" %} {{ screening_case.USUBJID }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'laboratory_test_list' usubjid=screening_case.USUBJID %}">{% trans "Xét nghiệm" %}</a></li>
+<li class="breadcrumb-item active">{% trans "Xóa xét nghiệm" %}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .confirm-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  
+  .card-header-danger {
+    background-color: #dc3545;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .warning-icon {
+    font-size: 3rem;
+    color: #dc3545;
+    margin-bottom: 1rem;
+  }
+  
+  .test-details {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid #dc3545;
+  }
+  
+  .info-row {
+    display: flex;
+    margin-bottom: 0.5rem;
+  }
+  
+  .info-label {
+    font-weight: 600;
+    min-width: 150px;
+  }
+  
+  .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+  }
+  
+  .confirm-actions {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="card confirm-card">
+        <div class="card-header card-header-danger">
+          <h3 class="card-title">{% trans "Xác nhận xóa xét nghiệm" %}</h3>
+        </div>
+        
+        <div class="card-body text-center">
+          <div class="warning-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          
+          <h4>{% trans "Bạn có chắc chắn muốn xóa xét nghiệm này?" %}</h4>
+          <p class="text-muted">{% trans "Hành động này không thể hoàn tác. Tất cả dữ liệu liên quan đến xét nghiệm này sẽ bị xóa vĩnh viễn." %}</p>
+          
+          <div class="test-details">
+            <div class="info-row">
+              <div class="info-label">{% trans "Bệnh nhân:" %}</div>
+              <div>{{ screening_case.USUBJID }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">{% trans "Loại xét nghiệm:" %}</div>
+              <div>{{ lab_test.get_test_type_display }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">{% trans "Nhóm:" %}</div>
+              <div>{{ lab_test.get_category_display }}</div>
+            </div>
+            {% if lab_test.performed %}
+            <div class="info-row">
+              <div class="info-label">{% trans "Ngày thực hiện:" %}</div>
+              <div>{{ lab_test.performed_date|default:"-" }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">{% trans "Kết quả:" %}</div>
+              <div>{{ lab_test.result|default:"-" }}</div>
+            </div>
+            {% endif %}
+          </div>
+          
+          <div class="confirm-actions">
+            <form method="post" action="{% url 'laboratory_test_delete' usubjid=screening_case.USUBJID test_id=lab_test.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> {% trans "Xóa xét nghiệm" %}
+              </button>
+            </form>
+            <a href="{% url 'laboratory_test_list' usubjid=screening_case.USUBJID %}" class="btn btn-secondary">
+              <i class="fas fa-times"></i> {% trans "Hủy" %}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,375 @@
+{% extends 'adminlte_base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Thống kê Bệnh nhân 43EN" %}{% endblock %}
+
+{% block page_title %}{% trans "Thống kê Bệnh nhân 43EN-KPN" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">{% trans "Dashboard" %}</a></li>
+<li class="breadcrumb-item active">{% trans "Thống kê Bệnh nhân" %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h2><i class="fas fa-chart-bar mr-2"></i>{% trans "THỐNG KÊ NGHIÊN CỨU 43EN-KPN" %}</h2>
+                    <p class="mb-0">{% trans "Dữ liệu tổng hợp về bệnh nhân và người tiếp xúc" %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Statistics Cards -->
+    <div class="row mb-4">
+        <!-- Bệnh nhân sàng lọc -->
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ total_screening }}</h3>
+                    <p>{% trans "Bệnh nhân sàng lọc" %}</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <a href="{% url '43en:screening_case_list' %}" class="small-box-footer">
+                    {% trans "Xem chi tiết" %} <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Bệnh nhân tham gia -->
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3>{{ total_enrolled }}</h3>
+                    <p>{% trans "Bệnh nhân tham gia" %}</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <a href="{% url '43en:patient_list' %}" class="small-box-footer">
+                    {% trans "Xem chi tiết" %} <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Contact sàng lọc -->
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ total_contacts }}</h3>
+                    <p>{% trans "Contact sàng lọc" %}</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <a href="{% url '43en:screening_contact_list' %}" class="small-box-footer">
+                    {% trans "Xem chi tiết" %} <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Contact tham gia -->
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3>{{ total_contact_enrolled }}</h3>
+                    <p>{% trans "Contact tham gia" %}</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <a href="{% url '43en:contact_list' %}" class="small-box-footer">
+                    {% trans "Xem chi tiết" %} <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Bệnh nhân theo tháng -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        {% trans "Bệnh nhân sàng lọc theo tháng (6 tháng gần đây)" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="screeningChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bệnh nhân tham gia theo tháng -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        {% trans "Bệnh nhân tham gia theo tháng (6 tháng gần đây)" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="enrolledChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demographics Row -->
+    <div class="row mt-4">
+        <!-- Giới tính -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-venus-mars mr-2"></i>
+                        {% trans "Phân bố theo giới tính" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="genderChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Độ tuổi -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-birthday-cake mr-2"></i>
+                        {% trans "Phân bố theo độ tuổi" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="ageChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Statistics -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-friends mr-2"></i>
+                        {% trans "Thống kê Contact" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="info-box bg-info">
+                                <span class="info-box-icon"><i class="fas fa-search"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">{% trans "Tổng số sàng lọc" %}</span>
+                                    <span class="info-box-number">{{ contact_stats.total_screened }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="info-box bg-warning">
+                                <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">{% trans "Đủ điều kiện" %}</span>
+                                    <span class="info-box-number">{{ contact_stats.eligible }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="info-box bg-success">
+                                <span class="info-box-icon"><i class="fas fa-user-check"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">{% trans "Đã tham gia" %}</span>
+                                    <span class="info-box-number">{{ contact_stats.enrolled }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Table -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-table mr-2"></i>
+                        {% trans "Tóm tắt thống kê" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th>{% trans "Chỉ số" %}</th>
+                                    <th>{% trans "Số lượng" %}</th>
+                                    <th>{% trans "Tỷ lệ" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>{% trans "Tỷ lệ tham gia (Bệnh nhân)" %}</strong></td>
+                                    <td>{{ total_enrolled }}/{{ total_screening }}</td>
+                                    <td>{{ patient_enrollment_rate }}%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{% trans "Tỷ lệ tham gia (Contact)" %}</strong></td>
+                                    <td>{{ total_contact_enrolled }}/{{ total_contacts }}</td>
+                                    <td>{{ contact_enrollment_rate }}%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{% trans "Tổng số người tham gia" %}</strong></td>
+                                    <td>{{ total_enrolled|add:total_contact_enrolled }}</td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Dữ liệu cho biểu đồ sàng lọc theo tháng
+    const screeningData = {{ screening_by_month|safe }};
+    const enrolledData = {{ enrolled_by_month|safe }};
+    const genderData = {{ gender_stats|safe }};
+    const ageData = {{ age_stats|safe }};
+
+    // Biểu đồ sàng lọc theo tháng
+    const screeningCtx = document.getElementById('screeningChart').getContext('2d');
+    new Chart(screeningCtx, {
+        type: 'line',
+        data: {
+            labels: screeningData.map(item => {
+                const months = ['', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+                return months[item.month] || item.month;
+            }),
+            datasets: [{
+                label: '{% trans "Bệnh nhân sàng lọc" %}',
+                data: screeningData.map(item => item.count),
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Biểu đồ tham gia theo tháng
+    const enrolledCtx = document.getElementById('enrolledChart').getContext('2d');
+    new Chart(enrolledCtx, {
+        type: 'bar',
+        data: {
+            labels: enrolledData.map(item => {
+                const months = ['', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+                return months[item.month] || item.month;
+            }),
+            datasets: [{
+                label: '{% trans "Bệnh nhân tham gia" %}',
+                data: enrolledData.map(item => item.count),
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Biểu đồ giới tính
+    const genderCtx = document.getElementById('genderChart').getContext('2d');
+    new Chart(genderCtx, {
+        type: 'doughnut',
+        data: {
+            labels: genderData.map(item => item.SEX === 'Male' ? '{% trans "Nam" %}' : '{% trans "Nữ" %}'),
+            datasets: [{
+                data: genderData.map(item => item.count),
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 99, 132, 0.8)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Biểu đồ độ tuổi
+    const ageCtx = document.getElementById('ageChart').getContext('2d');
+    new Chart(ageCtx, {
+        type: 'bar',
+        data: {
+            labels: ['<18', '18-30', '30-50', '50-70', '>70'],
+            datasets: [{
+                label: '{% trans "Số lượng" %}',
+                data: [
+                    ageData.under_18,
+                    ageData.18_30,
+                    ageData.30_50,
+                    ageData.50_70,
+                    ageData.over_70
+                ],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

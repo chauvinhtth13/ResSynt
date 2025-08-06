@@ -1,0 +1,620 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+  {% if is_view_only %}
+    {% trans "Xem Thông Tin Theo Dõi Contact" %}
+  {% else %}
+    {% trans "Form Theo Dõi Contact 43EN" %}
+  {% endif %}
+{% endblock %}
+
+{% block page_title %}
+  {% if is_view_only %}
+    {% trans "Xem Thông Tin Theo Dõi Contact" %}
+  {% else %}
+    {% trans "Form Theo Dõi Contact 43EN" %}
+  {% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'screening_contact_list' %}">{% trans "Danh sách Người tiếp xúc 43EN" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url '43en:contact_detail' usubjid=screening_contact.USUBJID %}">{{ screening_contact.USUBJID }}</a></li>
+<li class="breadcrumb-item active">
+  {% if followup_type == '28' %}
+    {% trans "Theo dõi ngày 28" %}
+  {% else %}
+    {% trans "Theo dõi ngày 90" %}
+  {% endif %}
+</li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/form-animations.css' %}">
+
+<style>
+  /* Reset và cơ bản */
+  body {
+    font-family: 'Roboto', sans-serif;
+    color: #495057;
+  }
+  
+  /* Card styling */
+  .card {
+    border: none;
+    margin-bottom: 25px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+    padding: 15px 20px;
+  }
+  
+  .card-primary .card-header {
+    background-color: #3b7ddd;
+    color: white;
+  }
+  
+  /* Section headers - giống phần trong mẫu giấy */
+  .form-section-header {
+    background-color: #dce4f1;
+    color: #333;
+    font-weight: 600;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #3b7ddd;
+    border-radius: 3px;
+    font-size: 1.1rem;
+  }
+  
+  /* Styling cho container chính */
+  .followup-container {
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  .followup-header {
+    background-color: #dce4f1;
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  /* Fields styling */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #495057;
+  }
+  
+  .form-control:focus {
+    border-color: #3b7ddd;
+    box-shadow: 0 0 0 0.2rem rgba(59, 125, 221, 0.25);
+  }
+  
+  .input-group-text {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+  }
+  
+  /* Button styling */
+  .btn {
+    font-weight: 600;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-primary {
+    background-color: #3b7ddd;
+    border-color: #3b7ddd;
+  }
+  
+  .btn-primary:hover {
+    background-color: #326abc;
+    border-color: #2f62b2;
+  }
+  
+  /* Đánh số thứ tự */
+  .numbered-item {
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 10px;
+  }
+  
+  .numbered-item::before {
+    content: attr(data-number) '.';
+    position: absolute;
+    left: 0;
+    font-weight: 600;
+  }
+  
+  /* Form chỉ đọc */
+  .view-only-form .form-control,
+  .view-only-form .custom-select,
+  .view-only-form .form-check-input,
+  .view-only-form select,
+  .view-only-form input,
+  .view-only-form textarea {
+    pointer-events: none;
+    background-color: #f8f9fa !important;
+    border-color: #e9ecef !important;
+    color: #495057 !important;
+    opacity: 1;
+    box-shadow: none !important;
+    cursor: default !important;
+  }
+  
+  .view-only-form .btn:not(.btn-back):not(.btn-edit) {
+    display: none;
+  }
+  
+  /* Fix alignment cho form fields */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+  }
+  
+  .form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+  }
+  
+  .form-group .form-control,
+  .form-group select,
+  .form-group input[type="text"],
+  .form-group input[type="date"] {
+    margin-top: 0;
+    align-self: flex-start;
+    height: 38px;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+  }
+  
+  /* Đảm bảo các trường trong cùng một row có cùng chiều cao */
+  .row .form-group {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  
+  .row .form-group .form-control,
+  .row .form-group select,
+  .row .form-group input[type="text"],
+  .row .form-group input[type="date"] {
+    flex: 1;
+    min-height: 38px; /* Đảm bảo chiều cao tối thiểu */
+    max-height: 38px; /* Đảm bảo chiều cao tối đa */
+  }
+  
+  /* Đặc biệt cho Bootstrap fields */
+  .form-group .bootstrap-select,
+  .form-group .select2-container {
+    height: 38px;
+  }
+  
+  .form-group .bootstrap-select .dropdown-toggle,
+  .form-group .select2-selection {
+    height: 38px;
+    line-height: 1.5;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  /* Đảm bảo các trường date có cùng style */
+  .form-group input[type="date"] {
+    font-family: inherit;
+    font-size: 1rem;
+  }
+  
+  /* Fix cho Bootstrap 5 form fields */
+  .form-group .form-select {
+    height: 38px;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  /* Table styling */
+  .table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+  }
+  
+  .table-bordered td, .table-bordered th {
+    border: 1px solid #dee2e6;
+  }
+  
+  /* Card colors */
+  .card-info {
+    border-top: 3px solid #17a2b8;
+  }
+  
+  .card-warning {
+    border-top: 3px solid #ffc107;
+  }
+  
+  .card-danger {
+    border-top: 3px solid #dc3545;
+  }
+  
+  .card-success {
+    border-top: 3px solid #28a745;
+  }
+  
+  .card-purple {
+    border-top: 3px solid #6f42c1;
+  }
+  
+  .card-secondary {
+    border-top: 3px solid #6c757d;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          {% if is_view_only %}
+            <i class="fas fa-user mr-2"></i>{% trans "Thông Tin Theo Dõi Contact" %} {{ contact.USUBJID }}
+          {% else %}
+            <i class="fas fa-user-plus mr-2"></i>{% trans "Form Theo Dõi Contact 43EN" %} {{ contact.USUBJID }}
+          {% endif %}
+        </h3>
+        
+        {% if is_view_only %}
+        <div class="card-tools">
+          <a href="{% url '43en:contact_followup_28_edit' usubjid=contact.USUBJID %}" class="btn btn-primary btn-sm btn-edit">
+            <i class="fas fa-edit"></i> {% trans "Chỉnh sửa" %}
+          </a>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        {% if form.errors and not is_view_only %}
+        <div class="alert alert-danger">
+          <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        <form method="post" id="contactFollowupForm" {% if is_view_only %}class="view-only-form"{% endif %}>
+          {% csrf_token %}
+          
+          <div class="followup-container">
+            <div class="followup-header">
+              <div class="row">
+                <div class="col">
+                  <h4 class="m-0">
+                    {% if followup_type == '28' %}
+                      FOLLOW UP - CONTACT (28 NGÀY)
+                    {% else %}
+                      FOLLOW UP - CONTACT (90 NGÀY)
+                    {% endif %}
+                  </h4>
+                </div>
+                <div class="col text-right">
+                  <span>FU (1/1)</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="followup-content p-3">
+              <!-- Thông tin contact -->
+              <div class="row mb-3">
+                <div class="col-12">
+                  <div class="card card-outline card-info">
+                    <div class="card-header">
+                      <h5 class="card-title">{% trans "Thông tin người tiếp xúc" %}</h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-3">
+                          <strong>{% trans "Mã số nghiên cứu" %}:</strong><br>
+                          <span class="text-primary">43EN</span>
+                        </div>
+                        <div class="col-md-3">
+                          <strong>{% trans "Địa điểm NC" %}:</strong><br>
+                          <span class="text-primary">{{ contact.SITEID }}</span>
+                        </div>
+                        <div class="col-md-3">
+                          <strong>{% trans "Mã số contact" %}:</strong><br>
+                          <span class="text-primary">{{ contact.SUBJID }}</span>
+                        </div>
+                        <div class="col-md-3">
+                          <strong>{% trans "Mối quan hệ" %}:</strong><br>
+                          <span class="text-primary">{{ contact.RELATIONSHIP|default:"-" }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Đánh giá tại thời điểm follow-up -->
+              <div class="form-section-header mt-4">
+                {% if followup_type == '28' %}
+                  {% trans "1. Người tiếp xúc gần được đánh giá tại thời điểm ngày 28?" %}
+                {% else %}
+                  {% trans "1. Người tiếp xúc gần được đánh giá tại thời điểm ngày 90?" %}
+                {% endif %}
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    {% if followup_type == '28' %}
+                      {% bootstrap_field form.FU28ASSESSED %}
+                    {% else %}
+                      {% bootstrap_field form.FU90ASSESSED %}
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    {% if followup_type == '28' %}
+                      {% bootstrap_field form.FU28ASSESSDATE %}
+                    {% else %}
+                      {% bootstrap_field form.FU90ASSESSDATE %}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Yếu tố nguy cơ tiếp xúc với y tế -->
+              <div class="form-section-header mt-4">
+                {% trans "2. Người tiếp xúc gần có từng tiếp xúc với chăm sóc y tế kể từ lần đánh giá trước?" %}
+              </div>
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-check mb-2">
+                    {% if followup_type == '28' %}
+                      {% bootstrap_field form.HOSP2D6M %}
+                    {% else %}
+                      {% bootstrap_field form.HOSP2D6M_90 %}
+                    {% endif %}
+                  </div>
+                  <div class="form-check mb-2">
+                    {% if followup_type == '28' %}
+                      {% bootstrap_field form.DIAL3M %}
+                    {% else %}
+                      {% bootstrap_field form.DIAL3M_90 %}
+                    {% endif %}
+                  </div>
+                  <div class="form-check mb-2">
+                    {% if followup_type == '28' %}
+                      {% bootstrap_field form.CATHETER3M %}
+                    {% else %}
+                      {% bootstrap_field form.CATHETER3M_90 %}
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check mb-2">
+                    {% if followup_type == '28' %}
+                      {% bootstrap_field form.SONDE3M %}
+                    {% else %}
+                      {% bootstrap_field form.SONDE3M_90 %}
+                    {% endif %}
+                  </div>
+                  <div class="form-check mb-2">
+                    {% if followup_type == '28' %}
+                      {% bootstrap_field form.HOMEWOUNDCARE %}
+                    {% else %}
+                      {% bootstrap_field form.HOMEWOUNDCARE_90 %}
+                    {% endif %}
+                  </div>
+                  <div class="form-check mb-2">
+                    {% if followup_type == '28' %}
+                      {% bootstrap_field form.LONGTERMCAREFACILITY %}
+                    {% else %}
+                      {% bootstrap_field form.LONGTERMCAREFACILITY_90 %}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sử dụng thuốc -->
+              <div class="form-section-header mt-4">
+                {% if followup_type == '28' %}
+                  {% trans "3. Sử dụng thuốc (corticoid, PPI, kháng sinh,...)?" %}
+                {% else %}
+                  {% trans "4. Sử dụng thuốc (corticoid, PPI, kháng sinh,...)?" %}
+                {% endif %}
+              </div>
+              <div class="form-check mb-3">
+                {% if followup_type == '28' %}
+                  {% bootstrap_field form.MEDICATIONUSE %}
+                {% else %}
+                  {% bootstrap_field form.MEDICATIONUSE_90 %}
+                {% endif %}
+              </div>
+              <div class="table-responsive" id="medication-table-container">
+                {{ medication_formset.management_form }}
+                <table class="table table-bordered table-sm" id="medication_history_table">
+                  <thead class="thead-light">
+                    <tr>
+                      <th width="25%">{% trans "Tên thuốc" %}</th>
+                      <th width="20%">{% trans "Liều dùng" %}</th>
+                      <th width="25%">{% trans "Thời gian sử dụng" %}</th>
+                      <th width="30%">{% trans "Lý do" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for med_form in medication_formset %}
+                      <tr>
+                        <td>{{ med_form.medication_name }}</td>
+                        <td>{{ med_form.dosage }}</td>
+                        <td>{{ med_form.usage_period }}</td>
+                        <td>{{ med_form.reason }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+                {% if not is_view_only %}
+                <button type="button" class="btn btn-sm btn-success" id="add_medication_row">
+                  <i class="fas fa-plus"></i> {% trans "Thêm thuốc" %}
+                </button>
+                {% endif %}
+              </div>
+
+              <!-- Thông tin hoàn thành -->
+              <div class="form-section-header mt-4">
+                {% trans "Chuyên viên" %}
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    {% bootstrap_field form.COMPLETEDBY %}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    {% bootstrap_field form.COMPLETEDDATE %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-right mt-4 d-flex justify-content-between">
+            <div>
+              <a href="{% url 'screening_contact_list' %}" class="btn btn-secondary btn-back">
+                <i class="fas fa-arrow-left mr-1"></i> {% trans "Quay lại" %}
+              </a>
+            </div>
+            {% if not is_view_only %}
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-save mr-1"></i> {% trans "Lưu thông tin" %}
+            </button>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% include 'study_43en/includes/datepicker_scripts.html' %}
+<script>
+$(document).ready(function() {
+    // Hiển thị/ẩn bảng thuốc theo checkbox
+    function toggleMedicationTable() {
+        var checked = false;
+        // Hỗ trợ cả 28 và 90
+        if ($('#id_MEDICATIONUSE').length) {
+            checked = $('#id_MEDICATIONUSE').is(':checked');
+        } else if ($('#id_MEDICATIONUSE_90').length) {
+            checked = $('#id_MEDICATIONUSE_90').is(':checked');
+        }
+        if (checked) {
+            $('#medication-table-container').show();
+        } else {
+            $('#medication-table-container').hide();
+        }
+    }
+    $('#id_MEDICATIONUSE, #id_MEDICATIONUSE_90').on('change', toggleMedicationTable);
+    toggleMedicationTable();
+
+    // Thêm dòng thuốc mới
+    $('#add_medication_row').on('click', function() {
+        var rowCount = $('#medication_history_table tbody tr').length;
+        var newRow = `
+            <tr data-row-index="${rowCount}">
+                <td>
+                    <input type="text" name="MEDICATION_NAME_${rowCount}" class="form-control form-control-sm" placeholder="Tên thuốc">
+                </td>
+                <td>
+                    <input type="text" name="MEDICATION_DOSAGE_${rowCount}" class="form-control form-control-sm" placeholder="Liều dùng">
+                </td>
+                <td>
+                    <input type="text" name="MEDICATION_DURATION_${rowCount}" class="form-control form-control-sm" placeholder="Thời gian">
+                </td>
+                <td>
+                    <div class="d-flex">
+                        <input type="text" name="MEDICATION_REASON_${rowCount}" class="form-control form-control-sm mr-2" placeholder="Lý do">
+                        <button type="button" class="btn btn-sm btn-danger remove-medication-row">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        $('#medication_history_table tbody').append(newRow);
+        $('#id_MEDICATION_COUNT').val(rowCount + 1);
+        $('#medication_history_table tbody tr:last-child input:first').focus();
+    });
+
+    // Xóa dòng thuốc
+    $(document).on('click', '.remove-medication-row', function() {
+        $(this).closest('tr').remove();
+        // Cập nhật lại index cho các dòng còn lại
+        $('#medication_history_table tbody tr').each(function(idx) {
+            $(this).attr('data-row-index', idx);
+            $(this).find('input, select, textarea').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    var newName = name.replace(/_\d+$/, '_' + idx);
+                    $(this).attr('name', newName);
+                }
+            });
+        });
+        $('#id_MEDICATION_COUNT').val($('#medication_history_table tbody tr').length);
+    });
+
+    // Khi submit form, thu thập dữ liệu thuốc vào hidden field
+    $('#contactFollowupForm').on('submit', function() {
+        var medicationData = [];
+        $('#medication_history_table tbody tr').each(function() {
+            var rowIndex = $(this).data('row-index');
+            var name = $('input[name="MEDICATION_NAME_' + rowIndex + '"]').val();
+            var dosage = $('input[name="MEDICATION_DOSAGE_' + rowIndex + '"]').val();
+            var duration = $('input[name="MEDICATION_DURATION_' + rowIndex + '"]').val();
+            var reason = $('input[name="MEDICATION_REASON_' + rowIndex + '"]').val();
+            if (name || dosage || duration || reason) {
+                medicationData.push({
+                    name: name || '',
+                    dosage: dosage || '',
+                    duration: duration || '',
+                    reason: reason || ''
+                });
+            }
+        });
+        $('#id_MEDICATION_DATA').val(JSON.stringify(medicationData));
+    });
+
+    // Hiệu ứng hiển thị các phần của form
+    $('.form-section-header').each(function(index) {
+        $(this).css('opacity', '0').css('transform', 'translateY(20px)');
+        setTimeout(function(el) {
+            $(el).css('transition', 'all 0.5s ease')
+                .css('opacity', '1')
+                .css('transform', 'translateY(0)');
+        }, index * 150, this);
+    });
+});
+</script>
+{% endblock %}

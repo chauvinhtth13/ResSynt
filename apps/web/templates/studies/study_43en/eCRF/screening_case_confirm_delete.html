@@ -1,0 +1,81 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Xóa Bệnh nhân" %} {{ screening_case.screening_id }}{% endblock %}
+
+{% block page_title %}{% trans "Xóa Bệnh nhân" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url '43en:screening_case_list' %}">{% trans "Danh sách Bệnh nhân 43EN" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url '43en:screening_case_view' screening_case.screening_id %}">{{ screening_case.screening_id }}</a></li>
+<li class="breadcrumb-item active">{% trans "Xóa" %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card card-danger">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          {% trans "Xác nhận xóa" %}
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-warning">
+          <h5><i class="icon fas fa-exclamation-triangle"></i> {% trans "Cảnh báo!" %}</h5>
+          {% trans "Bạn có chắc chắn muốn xóa bệnh nhân này không? Hành động này không thể hoàn tác." %}
+        </div>
+        
+        <div class="patient-details mb-4">
+          <h5>{% trans "Thông tin bệnh nhân" %}:</h5>
+          <table class="table table-bordered">
+            <tr>
+              <th>{% trans "Mã sàng lọc" %}</th>
+              <td><strong>{{ screening_case.screening_id }}</strong></td>
+            </tr>
+            {% if screening_case.USUBJID %}
+            <tr>
+              <th>{% trans "USUBJID" %}</th>
+              <td><strong>{{ screening_case.USUBJID }}</strong></td>
+            </tr>
+            {% endif %}
+            <tr>
+              <th>{% trans "Chữ cái đầu" %}</th>
+              <td>{{ screening_case.INITIAL }}</td>
+            </tr>
+            <tr>
+              <th>{% trans "Ngày sàng lọc" %}</th>
+              <td>{{ screening_case.SCREENINGFORMDATE|date:"d/m/Y" }}</td>
+            </tr>
+            <tr>
+              <th>{% trans "Trạng thái" %}</th>
+              <td>
+                {% if screening_case.is_confirmed %}
+                  <span class="badge badge-success">{% trans "Đủ điều kiện" %}</span>
+                {% else %}
+                  <span class="badge badge-danger">{% trans "Không đủ điều kiện" %}</span>
+                {% endif %}
+              </td>
+            </tr>
+          </table>
+        </div>
+        
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-flex justify-content-between">
+            <a href="{% url '43en:screening_case_view' screening_case.screening_id %}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left mr-1"></i> {% trans "Quay lại" %}
+            </a>
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-trash mr-1"></i> {% trans "Xác nhận xóa" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,727 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}{% trans "Thông Tin Nuôi Cấy Vi Sinh 43EN" %}{% endblock %}
+
+{% block page_title %}{% trans "Thông Tin Nuôi Cấy Vi Sinh 43EN" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'screening_case_list' %}">{% trans "Danh sách Bệnh nhân 43EN" %}</a></li>                <li class="breadcrumb-item"><a href="{% url 'patient_detail' usubjid=screening_case.USUBJID %}">{% trans "Bệnh nhân" %} {{ screening_case.USUBJID }}</a></li>
+<li class="breadcrumb-item active">{% trans "Nuôi Cấy Vi Sinh" %}{% if is_view_only %} ({% trans "Xem" %}){% elif edit_mode %} ({% trans "Chỉnh sửa" %}){% endif %}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Save indicator */
+  #saveIndicator {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1050;
+    display: none;
+  }
+  
+  /* Form thêm mới */
+  .new-culture-form {
+    background-color: #f8f9fa;
+    border-left: 3px solid #17a2b8;
+    padding: 15px 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+  
+  .saving-indicator, .saved-indicator {
+    font-size: 0.85rem;
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+  
+  .saved-indicator {
+    background-color: #d4edda;
+  }
+  
+  /* Add some styling for table */
+  .table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+  }
+  
+  .table td {
+    vertical-align: middle;
+  }
+  
+  /* Cải thiện form styling */
+  .form-label {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    font-size: 0.95rem;
+  }
+  
+  .form-control, .form-select {
+    border-radius: 4px;
+    border-color: #ced4da;
+    padding: 0.4rem 0.75rem;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  .form-control::placeholder {
+    color: #adb5bd;
+    font-size: 0.9rem;
+  }
+  
+  /* Card styling */
+  .card-header.bg-primary {
+    background-color: #0d6efd !important;
+    font-weight: 500;
+  }
+  
+  .culture-form-container {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+  }
+  
+  /* Buttons styling */
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Form groups spacing */
+  .mb-3 {
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Đảm bảo chiều cao nhất định cho các trường input */
+  .form-select, .form-control {
+    min-height: 38px;
+  }
+  
+  /* Đảm bảo các nhãn có cùng chiều cao */
+  .form-label {
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Đảm bảo khoảng cách đều giữa các dòng của form */
+  .g-3 > .col,
+  .g-3 > [class*="col-"] {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+/* Styling cho badge trạng thái */
+.badge {
+  font-weight: 500;
+  font-size: 0.8rem;
+  padding: 0.35em 0.65em;
+}
+
+.badge.bg-warning {
+  color: #212529;
+}
+
+.badge.bg-light {
+  border: 1px solid #dee2e6;
+}
+
+  .readonly-form a.btn,
+  .readonly-form .btn-primary {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    display: inline-block !important;
+  }
+  
+  /* Đảm bảo chỉ nút kháng sinh có thể nhấn */
+  .readonly-form .d-flex a.btn-primary {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Xóa bỏ hiệu ứng disabled từ nút chỉ xem */
+  .btn.disabled {
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="card-title">{% trans "Thông tin nuôi cấy vi sinh bệnh nhân" %} {{ screening_case.USUBJID }}</h3>
+          <div>
+            <a href="{% url 'clinical_case_update' usubjid=screening_case.USUBJID %}" class="btn btn-secondary btn-sm">
+              <i class="fas fa-arrow-left"></i> {% trans "Quay lại thông tin lâm sàng" %}
+            </a>
+            
+            {% if is_view_only %}
+            <a href="{% url '43en:microbiology_culture_list' screening_case.USUBJID %}?mode=edit" class="btn btn-warning btn-sm">
+              <i class="fas fa-edit"></i> {% trans "Chuyển sang chế độ chỉnh sửa" %}
+            </a>
+            {% elif edit_mode %}
+            <a href="{% url '43en:microbiology_culture_list' screening_case.USUBJID %}?mode=view" class="btn btn-info btn-sm">
+              <i class="fas fa-eye"></i> {% trans "Chuyển sang chế độ xem" %}
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>      <div class="card-body {% if is_view_only %}readonly-form{% endif %}">
+        <!-- Save indicator -->
+        <div id="saveIndicator" class="alert alert-success" role="alert">
+          <span class="message"></span>
+        </div>
+          <!-- Unified Form for Adding New Culture -->
+        {% if not is_view_only %}
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">{% trans "Thêm mẫu nuôi cấy mới" %}</h5>
+          </div>
+          <div class="card-body culture-form-container">
+            <form id="newCultureForm">
+              <div class="row g-3">
+                <!-- Cột 1: Loại bệnh phẩm và Mã số bệnh phẩm -->
+                <div class="col-12 col-md-4">
+                  <div class="mb-3">
+                    <label for="new-sample-type" class="form-label">{% trans "Loại bệnh phẩm" %}:</label>
+                    <select class="form-select" id="new-sample-type" name="new_sample_type">
+                      <option value="">-- {% trans "Chọn loại bệnh phẩm" %} --</option>
+                      {% for code, name in sample_types.items %}
+                      <option value="{{ code }}">{{ name }}</option>
+                      {% endfor %}
+                      <option value="OTHER">{% trans "Khác" %}</option>
+                    </select>
+                  </div>
+                  <div class="mb-3" id="other-sample-type-container" style="display: none;">
+                    <label for="other-sample-type" class="form-label">{% trans "Loại bệnh phẩm khác" %}:</label>
+                    <input type="text" class="form-control" id="other-sample-type" name="other_sample_type" placeholder="Nhập loại bệnh phẩm khác...">
+                  </div>
+                  <div class="mb-3">
+                    <label for="new-unified-sample-id" class="form-label">{% trans "Mã số bệnh phẩm (SID)" %}:</label>
+                    <input type="text" class="form-control" id="new-unified-sample-id" name="new_unified_sample_id" placeholder="Nhập mã số...">
+                  </div>
+                </div>
+                  
+                <!-- Cột 2: Kết quả và Chi tiết kết quả -->
+                <div class="col-12 col-md-4">
+                  <div class="mb-3">
+                    <label for="new-unified-result-type" class="form-label">{% trans "Kết quả" %}:</label>
+                    <select class="form-select" id="new-unified-result-type" name="new_unified_result_type">
+                      <option value="">-- {% trans "Chọn kết quả" %} --</option>
+                      <option value="POSITIVE">{% trans "Dương tính" %}</option>
+                      <option value="NEGATIVE">{% trans "Âm tính" %}</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="new-unified-result-details" class="form-label">{% trans "Chi tiết kết quả" %}:</label>
+                    <input type="text" class="form-control" id="new-unified-result-details" name="new_unified_result_details" placeholder="Nhập chi tiết kết quả...">
+                  </div>
+                </div>
+                
+                <!-- Cột 3: Ngày thực hiện và nút gửi -->
+                <div class="col-12 col-md-4">
+                  <div class="mb-3">
+                    <label for="new-unified-performed-date" class="form-label">{% trans "Ngày thực hiện" %}:</label>
+                    <input type="date" class="form-control" id="new-unified-performed-date" name="new_unified_performed_date">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">{% trans "Đã thực hiện" %}:</label>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="new-unified-performed" name="new_unified_performed">
+                      <label class="form-check-label" for="new-unified-performed">
+                        {% trans "Đã hoàn thành" %}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+                
+              <div class="row mt-3">
+                <div class="col-12 text-end">
+                  <button type="button" id="btnAddCulture" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> {% trans "Thêm mẫu nuôi cấy" %}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Danh sách mẫu nuôi cấy hiện có -->
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">{% trans "Danh sách mẫu nuôi cấy" %}</h5>
+          </div>
+          <div class="card-body">
+            {% if cultures %}
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>{% trans "Loại bệnh phẩm" %}</th>
+                      <th>{% trans "Mã số" %}</th>
+                      <th>{% trans "Kết quả" %}</th>
+                      <th>{% trans "Chi tiết kết quả" %}</th>
+                      <th>{% trans "Ngày thực hiện" %}</th>
+                      <th>{% trans "Trạng thái" %}</th>
+                      <th class="text-center">{% trans "Thao tác" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for culture in cultures %}
+                      <tr data-culture-id="{{ culture.id }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                          {% if culture.sample_type == 'OTHER' %}
+                            {{ culture.other_sample }}
+                          {% else %}
+                            {{ culture.get_sample_type_display|default:"-" }}
+                          {% endif %}
+                        </td>
+                        <td>{{ culture.sample_id|default:"-" }}</td>
+                        <td>{{ culture.get_result_type_display|default:"-" }}</td>
+                        <td>{{ culture.result_details|default:"-" }}</td>
+                        <td>{{ culture.performed_date|date:"d/m/Y"|default:"-" }}</td>
+                        <td>
+                          {% if culture.performed %}
+                            {% if culture.result_type == 'POSITIVE' %}
+                              {% if culture.has_sensitivities %}
+                                {% if culture.sensitivity_status == 'complete' %}
+                                  <span class="badge bg-success">{% trans "Hoàn thành" %}</span>
+                                {% else %}
+                                  <span class="badge bg-warning">{% trans "Chưa hoàn thành" %}</span>
+                                {% endif %}
+                              {% else %}
+                                <span class="badge bg-danger">{% trans "Chưa có độ nhạy kháng sinh" %}</span>
+                              {% endif %}
+                            {% else %}
+                              <span class="badge bg-info">{% trans "Không thực hiện" %}</span>
+                            {% endif %}
+                          {% else %}
+                            <span class="badge bg-secondary">{% trans "Chưa thực hiện" %}</span>
+                          {% endif %}
+                        </td>
+                        <td class="text-center">
+                          {% if not is_view_only %}
+                          <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-warning btn-edit-culture" title="{% trans 'Chỉnh sửa' %}" data-culture-id="{{ culture.id }}">
+                              <i class="fas fa-edit"></i>
+                            </button>
+                            {% if culture.result_type == 'POSITIVE' %}
+                            <a href="{% url '43en:antibiotic_sensitivity_list' usubjid=usubjid culture_id=culture.id %}?mode=edit" class="btn btn-sm btn-primary" title="{% trans 'Độ nhạy kháng sinh' %}">
+                              <i class="fas fa-flask"></i>
+                            </a>
+                            {% endif %}
+                          </div>
+                          {% else %}
+                          <div class="d-flex gap-1" style="pointer-events: auto !important;">
+                            {% if culture.result_type == 'POSITIVE' %}
+                            <a href="{% url '43en:antibiotic_sensitivity_list' usubjid=usubjid culture_id=culture.id %}?mode=view" 
+                              class="btn btn-sm btn-primary" 
+                              style="pointer-events: auto !important;" 
+                              title="{% trans 'Xem độ nhạy kháng sinh' %}">
+                              <i class="fas fa-flask"></i>
+                            </a>
+                            {% else %}
+                            <span class="btn btn-sm btn-secondary disabled">
+                              <i class="fas fa-ban"></i>
+                            </span>
+                            {% endif %}
+                          </div>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> {% trans "Chưa có mẫu nuôi cấy nào. Hãy thêm mẫu nuôi cấy mới." %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Modal chỉnh sửa mẫu nuôi cấy -->
+        {% if not is_view_only %}
+        <div class="modal fade" id="editCultureModal" tabindex="-1" aria-labelledby="editCultureModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editCultureModalLabel">{% trans "Chỉnh sửa thông tin mẫu nuôi cấy" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <form id="editCultureForm">
+                  <input type="hidden" id="edit-culture-id" name="culture_id">
+                  
+                  <div class="row g-3">
+                    <!-- Cột 1: Loại bệnh phẩm và Mã số bệnh phẩm -->
+                    <div class="col-12 col-md-4">
+                      <div class="mb-3">
+                        <label for="edit-sample-type" class="form-label">{% trans "Loại bệnh phẩm" %}:</label>
+                        <select class="form-select" id="edit-sample-type" name="edit_sample_type">
+                          <option value="">-- {% trans "Chọn loại bệnh phẩm" %} --</option>
+                          {% for code, name in sample_types.items %}
+                          <option value="{{ code }}">{{ name }}</option>
+                          {% endfor %}
+                          <option value="OTHER">{% trans "Khác" %}</option>
+                        </select>
+                      </div>
+                      <div class="mb-3" id="edit-other-sample-container" style="display: none;">
+                        <label for="edit-other-sample" class="form-label">{% trans "Loại bệnh phẩm khác" %}:</label>
+                        <input type="text" class="form-control" id="edit-other-sample" name="edit_other_sample" placeholder="Nhập loại bệnh phẩm khác...">
+                      </div>
+                      <div class="mb-3">
+                        <label for="edit-sample-id" class="form-label">{% trans "Mã số bệnh phẩm (SID)" %}:</label>
+                        <input type="text" class="form-control" id="edit-sample-id" name="edit_sample_id" placeholder="Nhập mã số...">
+                      </div>
+                    </div>
+                    
+                    <!-- Cột 2: Kết quả và Chi tiết kết quả -->
+                    <div class="col-12 col-md-4">
+                      <div class="mb-3">
+                        <label for="edit-result-type" class="form-label">{% trans "Kết quả" %}:</label>
+                        <select class="form-select" id="edit-result-type" name="edit_result_type">
+                          <option value="">-- {% trans "Chọn kết quả" %} --</option>
+                          <option value="POSITIVE">{% trans "Dương tính" %}</option>
+                          <option value="NEGATIVE">{% trans "Âm tính" %}</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="edit-result-details" class="form-label">{% trans "Chi tiết kết quả" %}:</label>
+                        <input type="text" class="form-control" id="edit-result-details" name="edit_result_details" placeholder="Nhập chi tiết kết quả...">
+                      </div>
+                    </div>
+                    
+                    <!-- Cột 3: Ngày thực hiện và Trạng thái -->
+                    <div class="col-12 col-md-4">
+                      <div class="mb-3">
+                        <label for="edit-performed-date" class="form-label">{% trans "Ngày thực hiện" %}:</label>
+                        <input type="date" class="form-control" id="edit-performed-date" name="edit_performed_date">
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label">{% trans "Đã thực hiện" %}:</label>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="edit-performed" name="edit_performed">
+                          <label class="form-check-label" for="edit-performed">
+                            {% trans "Đã hoàn thành" %}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Đóng" %}</button>
+                <button type="button" id="btnSaveEditedCulture" class="btn btn-primary">{% trans "Lưu thay đổi" %}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Modal xác nhận xóa đã bị xóa -->
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+  // Khởi tạo biến
+  const usubjid = '{{ usubjid }}';
+  const csrfToken = '{{ csrf_token }}';
+  const isViewOnly = {% if is_view_only %}true{% else %}false{% endif %};
+  let saveIndicatorTimeout;
+  
+  console.log("Microbiology culture JS loaded");
+  console.log("USUBJID:", usubjid);
+  console.log("View Only Mode:", isViewOnly);
+  
+  // Thiết lập CSRF cho AJAX
+  $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+      xhr.setRequestHeader("X-CSRFToken", csrfToken);
+    }
+  });
+  
+  // Hàm hiển thị thông báo
+  function showMessage(message, type = 'success') {
+    clearTimeout(saveIndicatorTimeout);
+    const $indicator = $('#saveIndicator');
+    $indicator.removeClass('alert-success alert-danger alert-warning alert-info')
+             .addClass(`alert-${type}`);
+    $indicator.find('.message').text(message);
+    $indicator.show();
+    
+    saveIndicatorTimeout = setTimeout(() => {
+      $indicator.hide();
+    }, 3000);
+  }
+  
+  // Hàm format ngày
+  function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  // Khởi tạo DataTable nếu không phải chế độ chỉ xem
+  try {
+    $('table').DataTable({
+      order: [[0, 'desc']],
+      responsive: true,
+      columnDefs: [
+        { orderable: false, targets: isViewOnly ? [] : [7] } // Nếu chế độ chỉ xem, tất cả các cột đều có thể sắp xếp
+      ]
+    });
+  } catch (e) {
+    console.log("DataTable init failed:", e);
+  }
+  
+  // Trong chế độ chỉ xem, không thực hiện các chức năng thêm/sửa/xóa
+  if (isViewOnly) {
+    // Xóa bỏ các sự kiện ngăn chặn click trên các nút cần hoạt động
+    $('.d-flex a.btn-primary').off('click').on('click', function(e) {
+      console.log("Nút kháng sinh được nhấn");
+    });
+    
+    // Đặt lại pointer-events cho các nút
+    $('.d-flex a.btn-primary').css({
+      'pointer-events': 'auto',
+      'cursor': 'pointer'
+    });
+  }
+  
+  // Xử lý nút thêm mẫu mới
+  $('#btnAddCulture').on('click', function(e) {
+    e.preventDefault();
+    
+    const $btn = $(this);
+    const originalHtml = $btn.html();
+    
+    // Lấy dữ liệu form
+    const sampleType = $('#new-sample-type').val();
+    const otherSample = $('#other-sample-type').val();
+    const resultType = $('#new-unified-result-type').val();
+    const resultDetails = $('#new-unified-result-details').val();
+    const sampleId = $('#new-unified-sample-id').val();
+    const performedDate = $('#new-unified-performed-date').val();
+    const performed = $('#new-unified-performed').is(':checked');
+    
+    // Validate
+    if (!sampleType) {
+      showMessage('Vui lòng chọn loại bệnh phẩm', 'warning');
+      return;
+    }
+    
+    if (sampleType === 'OTHER' && !otherSample.trim()) {
+      showMessage('Vui lòng nhập loại bệnh phẩm khác', 'warning');
+      return;
+    }
+    
+    // Hiển thị loading
+    $btn.html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...').prop('disabled', true);
+    
+    // Chuẩn bị dữ liệu
+    const formData = {
+      'sample_type': sampleType,
+      'other_sample': otherSample,
+      'result_type': resultType,
+      'result_details': resultDetails,
+      'sample_id': sampleId,
+      'performed': performed ? 'true' : 'false',
+      'performed_date': performedDate,
+      'sequence': 1
+    };
+    
+    // Gửi AJAX
+    $.ajax({
+      url: `/43en/${usubjid}/microbiology/quick-create/`,
+      method: 'POST',
+      data: formData,
+      success: function(response) {
+        console.log("Create success:", response);
+        if (response.success) {
+          showMessage('Đã thêm mẫu nuôi cấy mới thành công!', 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } else {
+          $btn.html(originalHtml).prop('disabled', false);
+          showMessage(response.message || 'Có lỗi xảy ra', 'danger');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error("Create error:", error);
+        $btn.html(originalHtml).prop('disabled', false);
+        
+        let errorMsg = 'Có lỗi xảy ra khi tạo mẫu';
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (response.message) {
+            errorMsg = response.message;
+          }
+        } catch (e) {
+          console.log("Could not parse error response");
+        }
+        
+        showMessage(errorMsg, 'danger');
+      }
+    });
+  });
+  
+  // Xử lý nút edit
+  $(document).on('click', '.btn-edit-culture', function() {
+    const cultureId = $(this).data('id');
+    console.log("Edit clicked for culture:", cultureId);
+    
+    showMessage('Đang tải thông tin...', 'info');
+    
+    // Lấy thông tin mẫu
+    $.ajax({
+      url: `/43en/${usubjid}/microbiology/${cultureId}/get/`,
+      method: 'GET',
+      success: function(response) {
+        console.log("Get culture success:", response);
+        
+        // Điền dữ liệu vào modal
+        $('#edit-culture-id').val(cultureId);
+        $('#edit-sample-type').val(response.sample_type);
+        $('#edit-result-type').val(response.result_type || '');
+        $('#edit-result-details').val(response.result_details || '');
+        $('#edit-sample-id').val(response.sample_id || '');
+        
+        // Xử lý ngày
+        if (response.performed_date) {
+          $('#edit-performed-date').val(response.performed_date.substring(0, 10));
+        } else {
+          $('#edit-performed-date').val('');
+        }
+        
+        // Xử lý trạng thái performed
+        $('#edit-performed').prop('checked', response.performed);
+        
+        // Xử lý OTHER sample type
+        if (response.sample_type === 'OTHER' && response.other_sample) {
+          $('#edit-other-sample-container').show();
+          $('#edit-other-sample').val(response.other_sample);
+        } else {
+          $('#edit-other-sample-container').hide();
+          $('#edit-other-sample').val('');
+        }
+        
+        // Hiển thị modal
+        $('#editCultureModal').modal('show');
+        $('#saveIndicator').hide();
+      },
+      error: function(xhr, status, error) {
+        console.error("Get culture error:", error);
+        showMessage('Không thể lấy thông tin mẫu nuôi cấy', 'danger');
+      }
+    });
+  });
+  
+  // Xử lý nút save trong modal
+  $('#btnSaveEditedCulture').on('click', function() {
+    const $btn = $(this);
+    const originalHtml = $btn.html();
+    const cultureId = $('#edit-culture-id').val();
+    
+    console.log("Save edit clicked for culture:", cultureId);
+    
+    // Lấy dữ liệu form
+    const resultType = $('#edit-result-type').val();
+    const resultDetails = $('#edit-result-details').val();
+    const sampleId = $('#edit-sample-id').val();
+    const performed = $('#edit-performed').is(':checked');
+    const performedDate = $('#edit-performed-date').val();
+    
+    // Hiển thị loading
+    $btn.html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...').prop('disabled', true);
+    
+    // Chuẩn bị dữ liệu
+    const formData = {
+      'result_type': resultType,
+      'result_details': resultDetails,
+      'sample_id': sampleId,
+      'performed': performed ? 'true' : 'false',
+      'performed_date': performedDate
+    };
+    
+    // Gửi AJAX
+    $.ajax({
+      url: `/43en/${usubjid}/microbiology/${cultureId}/update/`,
+      method: 'POST',
+      data: formData,
+      success: function(response) {
+        console.log("Update success:", response);
+        if (response.success) {
+          showMessage('Đã cập nhật thông tin mẫu nuôi cấy thành công!', 'success');
+          $('#editCultureModal').modal('hide');
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } else {
+          $btn.html(originalHtml).prop('disabled', false);
+          showMessage(response.message || 'Có lỗi xảy ra khi cập nhật', 'danger');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error("Update error:", error);
+        $btn.html(originalHtml).prop('disabled', false);
+        
+        let errorMsg = 'Có lỗi xảy ra khi cập nhật mẫu';
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (response.message) {
+            errorMsg = response.message;
+          }
+        } catch (e) {
+          console.log("Could not parse error response");
+        }
+        
+        showMessage(errorMsg, 'danger');
+      }
+    });
+  });
+  
+  // Chức năng xóa mẫu đã bị loại bỏ
+  
+  // Xử lý nút Cancel
+  $('.btn-cancel-edit').on('click', function() {
+    console.log("Cancel clicked");
+    $('#editCultureModal').modal('hide');
+  });
+  
+  // Reset form khi đóng modal
+  $('#editCultureModal').on('hidden.bs.modal', function() {
+    console.log("Modal hidden");
+    $('#btnSaveEditedCulture').html('<i class="fas fa-save"></i> Lưu thay đổi').prop('disabled', false);
+    $('#editCultureForm')[0].reset();
+  });
+  
+  console.log("JavaScript initialization completed");
+});
+</script>
+{% endblock %} 

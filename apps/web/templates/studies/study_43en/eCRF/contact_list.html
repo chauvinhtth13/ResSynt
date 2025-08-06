@@ -1,0 +1,211 @@
+{% extends 'adminlte_base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Danh sách Contact" %}{% endblock %}
+
+{% block page_title %}{% trans "Danh sách Contact" %}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Danh sách Contact" %}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-success">
+        <h3 class="card-title text-white">
+            <i class="fas fa-users"></i>
+            {% trans "DANH SÁCH CONTACT" %}
+        </h3>
+        <div class="card-tools">
+            <a href="{% url '43en:screening_contact_create' %}" class="btn btn-primary btn-sm ml-2">
+                <i class="fas fa-plus mr-1"></i> {% trans "Tạo Contact mới" %}
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="bg-light text-dark">
+                    <tr>
+                        <th class="text-center">{% trans "Mã bệnh nhân" %}</th>
+                        <th class="text-center">{% trans "Tên viết tắt" %}</th>
+                        <th class="text-center">{% trans "Bệnh nhân liên quan" %}</th>
+                        <th class="text-center">{% trans "Ngày tham gia" %}</th>
+                        <th class="text-center">{% trans "Trạng thái" %}</th>
+                        <th class="text-center" width="180">{% trans "Thao tác" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in page_obj %}
+                    <tr>
+                        <td><strong>{{ contact.USUBJID }}</strong></td>
+                        <td>{{ contact.INITIAL|default:"-" }}</td>
+                        <td>
+                            {% if contact.SUBJIDENROLLSTUDY %}
+                                {{ contact.SUBJIDENROLLSTUDY.USUBJID }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if contact.has_enrollment %}
+                                {{ contact.enrollmentcontact.ENRDATE|date:"d/m/Y"|default:"-" }}
+                            {% else %}
+                                {{ contact.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if contact.has_enrollment %}
+                                <span class="badge badge-success">{% trans "Đã tham gia" %}</span>
+                            {% else %}
+                                <span class="badge badge-warning">{% trans "Đủ điều kiện" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url '43en:contact_detail' usubjid=contact.USUBJID %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> {% trans "Chi tiết" %}
+                                </a>
+                                {% if not contact.has_enrollment %}
+                                    <a href="{% url '43en:enrollment_contact_create' usubjid=contact.USUBJID %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-plus"></i> {% trans "Tuyển" %}
+                                    </a>
+                                {% elif not contact.has_sample %}
+                                    <a href="{% url '43en:contact_sample_collection_edit' usubjid=contact.USUBJID sample_type='1' %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-plus"></i> {% trans "Tạo mẫu" %}
+                                    </a>
+                                {% else %}
+                                    <a href="{% url '43en:contact_sample_collection_list' usubjid=contact.USUBJID %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-vial"></i> {% trans "Xem mẫu" %}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">{% trans "Đầu" %}</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">{% trans "Đầu" %}</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#"><i class="fas fa-angle-left"></i></a></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
+                            {% trans "Cuối" %}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#"><i class="fas fa-angle-right"></i></a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">{% trans "Cuối" %}</a></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        {% else %}
+        <!-- No Data -->
+        <div class="alert alert-info text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">{% trans "Hiện tại chưa có contact nào đủ điều kiện và đồng ý tham gia nghiên cứu." %}</h4>
+            <p class="text-muted mb-4">{% trans "Vui lòng kiểm tra lại danh sách sàng lọc contact hoặc tạo contact mới." %}</p>
+            <a href="{% url '43en:screening_contact_create' %}" class="btn btn-success btn-lg">
+                <i class="fas fa-plus"></i>
+                {% trans "Tạo Contact mới" %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card-header.bg-success {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+.card-header.bg-success .card-title {
+    color: #ffffff !important;
+}
+.table th {
+    background-color: #f8f9fa;
+    color: #212529;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+}
+.table td {
+    vertical-align: middle;
+    text-align: center;
+}
+.badge {
+    font-size: 0.875em;
+}
+.btn-group .btn {
+    margin-right: 0.25rem;
+}
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+.pagination .page-link {
+    color: #495057;
+}
+.pagination .page-item.active .page-link {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: #fff;
+}
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    .btn-group .btn {
+        margin-right: 0;
+    }
+    .btn-lg {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}

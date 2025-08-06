@@ -1,0 +1,811 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-03 12:19+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\patients\forms.py:52
+msgid "Email nay se duoc su dung de xac thuc tai khoan."
+msgstr "This email will be used to verify your account."
+
+#: .\patients\forms.py:61
+msgid "Email nay da duoc su dung. Vui long chon email khac."
+msgstr "This email is already in use. Please choose another email."
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:6
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:8
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:13
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:58
+msgid "Nhập Thông tin Bệnh nhân"
+msgstr "Enter Patient Information"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:12
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:12
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:12
+#: .\patients\templates\patients\patient_detail_adminlte.html:12
+#: .\patients\templates\patients\patient_list_adminlte.html:7
+#: .\patients\templates\patients\patient_list_adminlte.html:9
+#: .\patients\templates\patients\patient_list_adminlte.html:13
+#: .\patients\templates\patients\patient_list_adminlte.html:101
+#: .\patients\templates\patients\screening_form_adminlte.html:12
+#: .\templates\adminlte_base.html:280
+msgid "Danh sách Bệnh nhân"
+msgstr "Patient List"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:65
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:72
+#: .\patients\templates\patients\screening_form_adminlte.html:93
+msgid "Lỗi!"
+msgstr "Error!"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:89
+#: .\patients\templates\patients\screening_form_adminlte.html:118
+msgid "Bước 1: Thông tin cơ bản"
+msgstr "Step 1: Basic Information"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:92
+msgid "Bước 2: Thông tin lâm sàng"
+msgstr "Step 2: Clinical Information"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:95
+msgid "Bước 3: Thông tin liên hệ"
+msgstr "Step 3: Contact Information"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:104
+#: .\patients\templates\patients\patient_list_adminlte.html:264
+#: .\patients\templates\patients\screening_form_adminlte.html:131
+msgid "Thông tin cơ bản"
+msgstr "Basic Information"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:144
+#: .\patients\templates\patients\patient_list_adminlte.html:268
+msgid "Thông tin lâm sàng"
+msgstr "Clinical Information"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:179
+msgid "Thông tin liên hệ"
+msgstr "Contact Information"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:209
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:267
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:37
+#: .\patients\templates\patients\patient_detail_adminlte.html:177
+#: .\patients\templates\patients\patient_list_adminlte.html:187
+#: .\patients\templates\patients\patient_list_adminlte.html:279
+#: .\patients\templates\patients\screening_form_adminlte.html:267
+#: .\patients\templates\patients\signup.html:58
+msgid "Hủy"
+msgstr "Cancel"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:212
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:270
+#: .\patients\templates\patients\screening_form_adminlte.html:270
+msgid "Làm lại"
+msgstr "Reset"
+
+#: .\patients\templates\patients\enrollment_patient_form_adminlte.html:215
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:273
+#: .\patients\templates\patients\screening_form_adminlte.html:273
+msgid "Lưu"
+msgstr "Save"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:6
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:8
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:14
+msgid "Nhập Mẫu Sinh học"
+msgstr "Enter Biological Sample"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:13
+#: .\patients\templates\patients\patient_detail_adminlte.html:6
+#: .\patients\templates\patients\patient_detail_adminlte.html:8
+#: .\patients\templates\patients\patient_detail_adminlte.html:13
+msgid "Chi tiết Bệnh nhân"
+msgstr "Patient Details"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:65
+msgid "Nhập thông tin Mẫu Sinh học"
+msgstr "Enter Biological Sample Information"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:97
+#: .\patients\templates\patients\patient_detail_adminlte.html:25
+msgid "Thông tin bệnh nhân"
+msgstr "Patient Information"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:109
+#: .\patients\templates\patients\patient_list_adminlte.html:115
+#: .\patients\views\home_views.py:58
+msgid "Study ID"
+msgstr "Study ID"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:116
+#: .\patients\templates\patients\patient_list_adminlte.html:116
+msgid "Tên bệnh nhân"
+msgstr "Patient Name"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:126
+#: .\patients\templates\patients\patient_list_adminlte.html:120
+msgid "Ngày nhập viện"
+msgstr "Admission Date"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:142
+#: .\patients\templates\patients\patient_detail_adminlte.html:122
+msgid "Thông tin mẫu"
+msgstr "Sample Information"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:173
+msgid "Mẫu Stool/Rectal"
+msgstr "Stool/Rectal Sample"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:201
+msgid "Mẫu Throat"
+msgstr "Throat Sample"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:234
+msgid "Thông tin xử lý mẫu"
+msgstr "Sample Processing Information"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:386
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:397
+msgid "Chưa có mẫu nào được thu thập"
+msgstr "No samples have been collected"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:389
+msgid "Đã thu thập "
+msgstr "Collected "
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:389
+msgid " mẫu"
+msgstr " samples"
+
+#: .\patients\templates\patients\enrollment_sample_form_adminlte.html:392
+msgid "Đã thu thập đủ 4 loại mẫu"
+msgstr "All 4 types of samples collected"
+
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:6
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:8
+msgid "Xác nhận xóa bệnh nhân"
+msgstr "Confirm Patient Deletion"
+
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:13
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:22
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:40
+#: .\patients\templates\patients\patient_detail_adminlte.html:168
+#: .\patients\templates\patients\patient_detail_adminlte.html:180
+#: .\patients\templates\patients\patient_list_adminlte.html:178
+#: .\patients\templates\patients\patient_list_adminlte.html:190
+msgid "Xác nhận xóa"
+msgstr "Confirm Deletion"
+
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:27
+msgid "Cảnh báo!"
+msgstr "Warning!"
+
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:28
+msgid "Bạn đang yêu cầu xóa bệnh nhân"
+msgstr "You are requesting to delete a patient"
+
+#: .\patients\templates\patients\patient_delete_confirm_adminlte.html:29
+msgid ""
+"Hành động này không thể hoàn tác. Tất cả các dữ liệu liên quan đến bệnh nhân "
+"này sẽ bị xóa vĩnh viễn."
+msgstr "This action cannot be undone. All data related to this patient will be permanently deleted."
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:29
+#: .\patients\templates\patients\patient_list_adminlte.html:165
+msgid "Chỉnh sửa"
+msgstr "Edit"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:32
+#: .\patients\templates\patients\patient_list_adminlte.html:168
+msgid "Xóa"
+msgstr "Delete"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:46
+msgid "Giới tính:"
+msgstr "Gender:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:46
+#: .\patients\templates\patients\patient_list_adminlte.html:42
+#: .\patients\templates\patients\patient_list_adminlte.html:135
+#: .\patients\views\home_views.py:35
+msgid "Nam"
+msgstr "Male"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:46
+#: .\patients\templates\patients\patient_list_adminlte.html:43
+#: .\patients\templates\patients\patient_list_adminlte.html:137
+#: .\patients\views\home_views.py:35
+msgid "Nữ"
+msgstr "Female"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:47
+msgid "Tuổi:"
+msgstr "Age:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:48
+msgid "Ngày sinh:"
+msgstr "Date of Birth:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:49
+msgid "Số điện thoại:"
+msgstr "Phone Number:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:52
+msgid "Địa chỉ:"
+msgstr "Address:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:53
+msgid "Ngày nhập viện:"
+msgstr "Admission Date:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:54
+msgid "Trạng thái:"
+msgstr "Status:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:56
+#: .\patients\templates\patients\patient_list_adminlte.html:50
+#: .\patients\templates\patients\patient_list_adminlte.html:150
+msgid "Đang hoạt động"
+msgstr "Active"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:58
+#: .\patients\templates\patients\patient_list_adminlte.html:51
+#: .\patients\templates\patients\patient_list_adminlte.html:152
+msgid "Không hoạt động"
+msgstr "Inactive"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:60
+#: .\patients\templates\patients\patient_list_adminlte.html:52
+#: .\patients\templates\patients\patient_list_adminlte.html:154
+msgid "Hoàn thành"
+msgstr "Completed"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:63
+msgid "Ngày xuất viện:"
+msgstr "Discharge Date:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:76
+msgid "Thông tin lịch hẹn"
+msgstr "Appointment Information"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:84
+msgid "Ngày hẹn V2 dự kiến:"
+msgstr "Expected V2 Appointment Date:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:86
+msgid "Khoảng hẹn V2:"
+msgstr "V2 Appointment Range:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:90
+msgid "Theo dõi D28:"
+msgstr "D28 Follow-up:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:93
+#: .\patients\views\home_views.py:37 .\templates\adminlte_base.html:449
+msgid "Đã đọc"
+msgstr "Read"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:95
+#: .\patients\views\home_views.py:37
+msgid "Chưa đọc"
+msgstr "Unread"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:98
+msgid "Ngày D28 dự kiến:"
+msgstr "Expected D28 Date:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:102
+msgid "Ngày D28 thực tế:"
+msgstr "Actual D28 Date:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:104
+msgid "Ngày rút lui:"
+msgstr "Withdrawal Date:"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:111
+msgid "Không có thông tin lịch hẹn"
+msgstr "No appointment information"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:131
+msgid "Mã mẫu"
+msgstr "Sample ID"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:132
+msgid "Loại mẫu"
+msgstr "Sample Type"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:133
+msgid "Ngày phát hiện K.pneumoniae"
+msgstr "K.pneumoniae Detection Date"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:134
+msgid "Mẫu phân/trực tràng V1"
+msgstr "Stool/Rectal Sample V1"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:135
+msgid "Mẫu họng V1"
+msgstr "Throat Sample V1"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:136
+msgid "Mẫu phân/trực tràng V2"
+msgstr "Stool/Rectal Sample V2"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:137
+msgid "Mẫu họng V2"
+msgstr "Throat Sample V2"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:157
+msgid "Không có thông tin mẫu"
+msgstr "No sample information"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:174
+#: .\patients\templates\patients\patient_list_adminlte.html:184
+msgid "Bạn có chắc chắn muốn xóa bệnh nhân"
+msgstr "Are you sure you want to delete this patient"
+
+#: .\patients\templates\patients\patient_detail_adminlte.html:188
+msgid "Không tìm thấy thông tin bệnh nhân"
+msgstr "Patient information not found"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:35
+#: .\patients\templates\patients\patient_list_adminlte.html:81
+msgid "Tìm kiếm"
+msgstr "Search"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:36
+msgid "Study ID, Tên, SĐT, Địa chỉ..."
+msgstr "Study ID, Name, Phone, Address..."
+
+#: .\patients\templates\patients\patient_list_adminlte.html:39
+#: .\patients\templates\patients\patient_list_adminlte.html:117
+msgid "Giới tính"
+msgstr "Gender"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:41
+#: .\patients\templates\patients\patient_list_adminlte.html:49
+#: .\patients\templates\patients\patient_list_adminlte.html:58
+msgid "Tất cả"
+msgstr "All"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:47
+#: .\patients\templates\patients\patient_list_adminlte.html:122
+#: .\templates\adminlte_base.html:448
+msgid "Trạng thái"
+msgstr "Status"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:56
+msgid "Theo dõi D28"
+msgstr "D28 Follow-up"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:59
+msgid "Đã hoàn thành"
+msgstr "Completed"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:60
+msgid "Chưa hoàn thành"
+msgstr "Not Completed"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:64
+msgid "Ngày nhập viện từ"
+msgstr "Admission Date From"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:68
+msgid "Ngày nhập viện đến"
+msgstr "Admission Date To"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:72
+msgid "Ngày hẹn từ"
+msgstr "Appointment Date From"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:76
+msgid "Ngày hẹn đến"
+msgstr "Appointment Date To"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:84
+msgid "Đặt lại"
+msgstr "Reset"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:87
+#: .\patients\templates\patients\patient_list_adminlte.html:281
+msgid "Xuất Excel"
+msgstr "Export to Excel"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:106
+msgid "Thêm Bệnh nhân"
+msgstr "Add Patient"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:118
+#: .\templates\admin_dashboard.html:165
+msgid "Tuổi"
+msgstr "Age"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:119
+msgid "Số điện thoại"
+msgstr "Phone Number"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:121
+#: .\templates\adminlte_base.html:447
+msgid "Ngày hẹn"
+msgstr "Appointment Date"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:123
+msgid "Thao tác"
+msgstr "Actions"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:156
+msgid "Đã rút lui"
+msgstr "Withdrawn"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:162
+msgid "Chi tiết"
+msgstr "Details"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:203
+msgid "Không có dữ liệu bệnh nhân phù hợp với bộ lọc."
+msgstr "No patient data matches the filter criteria."
+
+#: .\patients\templates\patients\patient_list_adminlte.html:253
+msgid "Xuất dữ liệu Excel"
+msgstr "Export Excel Data"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:261
+msgid "Chọn thông tin xuất:"
+msgstr "Select export information:"
+
+#: .\patients\templates\patients\patient_list_adminlte.html:272
+#: .\templates\adminlte_base.html:337
+msgid "Lịch hẹn"
+msgstr "Appointments"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:6
+#: .\patients\templates\patients\screening_form_adminlte.html:8
+#: .\patients\templates\patients\screening_form_adminlte.html:13
+#: .\templates\adminlte_base.html:274
+msgid "Nhập Bệnh nhân"
+msgstr "Enter Patient"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:86
+msgid "Sàng lọc Bệnh nhân"
+msgstr "Patient Screening"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:121
+msgid "Bước 2: Tiêu chí đủ điều kiện"
+msgstr "Step 2: Eligibility Criteria"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:124
+msgid "Bước 3: Trạng thái tham gia"
+msgstr "Step 3: Participation Status"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:157
+msgid "Tiêu chí Đủ điều kiện"
+msgstr "Eligibility Criteria"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:169
+msgid "1. Dương tính K. pneumoniae"
+msgstr "1. Positive for K. pneumoniae"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:172
+#: .\patients\templates\patients\screening_form_adminlte.html:185
+#: .\patients\templates\patients\screening_form_adminlte.html:198
+#: .\patients\templates\patients\screening_form_adminlte.html:230
+msgid "Có"
+msgstr "Yes"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:176
+#: .\patients\templates\patients\screening_form_adminlte.html:189
+#: .\patients\templates\patients\screening_form_adminlte.html:202
+#: .\patients\templates\patients\screening_form_adminlte.html:234
+msgid "Không"
+msgstr "No"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:182
+msgid "2. Nhiễm khuẩn sau 48h nhập viện"
+msgstr "2. Infection after 48h of admission"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:195
+msgid "3. Tuổi dưới 16"
+msgstr "3. Age under 16"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:215
+msgid "Trạng thái tham gia"
+msgstr "Participation Status"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:227
+msgid "Tham gia nghiên cứu"
+msgstr "Participate in the study"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:247
+msgid "Lý do không tham gia"
+msgstr "Reason for not participating"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:330
+msgid "Bệnh nhân đủ điều kiện tham gia nghiên cứu"
+msgstr "Patient eligible to participate in the study"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:333
+msgid "Bệnh nhân không đủ điều kiện tham gia nghiên cứu"
+msgstr "Patient not eligible to participate in the study"
+
+#: .\patients\templates\patients\screening_form_adminlte.html:364
+msgid "Vui lòng hoàn thành tiêu chí đủ điều kiện"
+msgstr "Please complete the eligibility criteria"
+
+#: .\patients\templates\patients\signup.html:5
+#: .\patients\templates\patients\signup.html:11
+msgid "Đăng ký tài khoản"
+msgstr "Register Account"
+
+#: .\patients\templates\patients\signup.html:19
+#: .\patients\templates\patients\signup.html:35
+#: .\templates\adminlte_base.html:500
+msgid "Đóng"
+msgstr "Close"
+
+#: .\patients\templates\patients\signup.html:24
+msgid "Vui lòng sửa các lỗi sau:"
+msgstr "Please fix the following errors:"
+
+#: .\patients\templates\patients\signup.html:41
+msgid "Thông tin đăng ký"
+msgstr "Registration Information"
+
+#: .\patients\views\home_views.py:53
+msgid "Thông báo: Lịch hẹn sắp đến"
+msgstr "Notification: Upcoming Appointment"
+
+#: .\patients\views\home_views.py:56
+msgid "Kính gửi"
+msgstr "Dear"
+
+#: .\patients\views\home_views.py:57
+msgid "Bạn có một lịch hẹn sắp đến với bệnh nhân"
+msgstr "You have an upcoming appointment with patient"
+
+#: .\patients\views\home_views.py:59
+msgid "Ngày hẹn V2"
+msgstr "V2 Appointment Date"
+
+#: .\patients\views\home_views.py:60
+msgid "Vui lòng chuẩn bị cho lịch hẹn này"
+msgstr "Please prepare for this appointment"
+
+#: .\patients\views\home_views.py:61
+msgid "Trân trọng"
+msgstr "Sincerely"
+
+#: .\patients\views\home_views.py:61
+msgid "Hệ thống Quản lý Bệnh nhân"
+msgstr "Patient Management System"
+
+#: .\templates\admin_dashboard.html:5 .\templates\adminlte_base.html:268
+#: .\templates\adminlte_base.html:372 .\templates\adminlte_base.html:397
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: .\templates\admin_dashboard.html:5 .\templates\adminlte_base.html:9
+msgid "Quản lý Bệnh nhân"
+msgstr "Patient Management"
+
+#: .\templates\admin_dashboard.html:44
+msgid "Tổng số bệnh nhân 36EN-LRIs"
+msgstr "Total 36EN-LRIs Patients"
+
+#: .\templates\admin_dashboard.html:49 .\templates\admin_dashboard.html:66
+#: .\templates\admin_dashboard.html:82 .\templates\admin_dashboard.html:98
+msgid "Xem chi tiết"
+msgstr "View Details"
+
+#: .\templates\admin_dashboard.html:58
+msgid "Tổng số mẫu 36EN-LRIs"
+msgstr "Total 36EN-LRIs Samples"
+
+#: .\templates\admin_dashboard.html:60
+msgid "Đang xử lý"
+msgstr "Processing"
+
+#: .\templates\admin_dashboard.html:75
+msgid "Nhập viện tuần này"
+msgstr "Admissions This Week"
+
+#: .\templates\admin_dashboard.html:76
+msgid "36EN-LRIs Study"
+msgstr "36EN-LRIs Study"
+
+#: .\templates\admin_dashboard.html:92
+msgid "Kết quả AMR"
+msgstr "AMR Results"
+
+#: .\templates\admin_dashboard.html:93
+msgid "Xét nghiệm kháng thuốc"
+msgstr "Antimicrobial Resistance Testing"
+
+#: .\templates\admin_dashboard.html:111
+msgid "Xu hướng ca bệnh 36EN-LRIs (2021-2023)"
+msgstr "36EN-LRIs Case Trends (2021-2023)"
+
+#: .\templates\admin_dashboard.html:132
+msgid "Phân bố tuổi bệnh nhân 36EN-LRIs"
+msgstr "36EN-LRIs Patient Age Distribution"
+
+#: .\templates\admin_dashboard.html:151
+msgid "Bệnh nhân 36EN-LRIs gần đây"
+msgstr "Recent 36EN-LRIs Patients"
+
+#: .\templates\admin_dashboard.html:164
+msgid "Mã BN"
+msgstr "Patient ID"
+
+#: .\templates\admin_dashboard.html:166
+msgid "Chẩn đoán"
+msgstr "Diagnosis"
+
+#: .\templates\admin_dashboard.html:167
+msgid "Hành động"
+msgstr "Action"
+
+#: .\templates\admin_dashboard.html:186
+msgid "Không có bệnh nhân nào"
+msgstr "No patients found"
+
+#: .\templates\admin_dashboard.html:195
+msgid "Xem tất cả"
+msgstr "View All"
+
+#: .\templates\admin_dashboard.html:206
+#, python-format
+msgid "Tình hình kháng thuốc (%%) - 36EN-LRIs"
+msgstr "Antimicrobial Resistance (%%) - 36EN-LRIs"
+
+#: .\templates\admin_dashboard.html:230
+msgid "Loại mẫu phổ biến - 36EN-LRIs"
+msgstr "Common Sample Types - 36EN-LRIs"
+
+#: .\templates\admin_dashboard.html:251
+msgid "Phân bố giới tính - 36EN-LRIs"
+msgstr "Gender Distribution - 36EN-LRIs"
+
+#: .\templates\admin_dashboard.html:272
+msgid "Phân bố vi khuẩn - 36EN-LRIs"
+msgstr "Bacterial Distribution - 36EN-LRIs"
+
+#: .\templates\admin_dashboard.html:362
+msgid "Số lượng bệnh nhân"
+msgstr "Number of Patients"
+
+#: .\templates\admin_dashboard.html:510
+msgid "Kháng"
+msgstr "Resistant"
+
+#: .\templates\admin_dashboard.html:516
+msgid "Trung gian"
+msgstr "Intermediate"
+
+#: .\templates\admin_dashboard.html:522
+msgid "Nhạy"
+msgstr "Susceptible"
+
+#: .\templates\admin_dashboard.html:563
+msgid "Số ca bệnh"
+msgstr "Number of Cases"
+
+#: .\templates\adminlte_base.html:130
+msgid "Đang tải..."
+msgstr "Loading..."
+
+#: .\templates\adminlte_base.html:144 .\templates\adminlte_base.html:393
+msgid "Trang chủ"
+msgstr "Home"
+
+#: .\templates\adminlte_base.html:153
+msgid "Thông báo"
+msgstr "Notifications"
+
+#: .\templates\adminlte_base.html:162 .\templates\adminlte_base.html:434
+msgid "Lịch hẹn sắp đến"
+msgstr "Upcoming Appointments"
+
+#: .\templates\adminlte_base.html:178
+msgid "Xem tất cả lịch hẹn"
+msgstr "View All Appointments"
+
+#: .\templates\adminlte_base.html:183
+msgid "Không có lịch hẹn trong 3 ngày tới"
+msgstr "No appointments in the next 3 days"
+
+#: .\templates\adminlte_base.html:191
+msgid "Chuyển đổi ngôn ngữ"
+msgstr "Switch Language"
+
+#: .\templates\adminlte_base.html:231 .\templates\adminlte_base.html:232
+msgid "Đăng xuất"
+msgstr "Logout"
+
+#: .\templates\adminlte_base.html:245
+msgid "Quản Lý Bệnh Nhân"
+msgstr "Patient Management"
+
+#: .\templates\adminlte_base.html:286
+msgid "Bệnh nhân 36EN-LRIs"
+msgstr "36EN-LRIs Patients"
+
+#: .\templates\adminlte_base.html:293
+msgid "Thống kê bệnh nhân"
+msgstr "Patient Statistics"
+
+#: .\templates\adminlte_base.html:299
+msgid "Thống kê AMR"
+msgstr "AMR Statistics"
+
+#: .\templates\adminlte_base.html:303
+msgid "QUẢN LÝ CHUYÊN MÔN"
+msgstr "PROFESSIONAL MANAGEMENT"
+
+#: .\templates\adminlte_base.html:308
+msgid "Quản lý Mẫu"
+msgstr "Sample Management"
+
+#: .\templates\adminlte_base.html:316
+msgid "Nhập mẫu mới"
+msgstr "Enter New Sample"
+
+#: .\templates\adminlte_base.html:322
+msgid "Danh sách mẫu"
+msgstr "Sample List"
+
+#: .\templates\adminlte_base.html:328
+msgid "Kết quả xét nghiệm"
+msgstr "Test Results"
+
+#: .\templates\adminlte_base.html:345
+msgid "Đặt lịch hẹn"
+msgstr "Schedule Appointment"
+
+#: .\templates\adminlte_base.html:351
+msgid "Danh sách lịch hẹn"
+msgstr "Appointment List"
+
+#: .\templates\adminlte_base.html:383
+msgid "Tìm kiếm bệnh nhân..."
+msgstr "Search patients..."
+
+#: .\templates\adminlte_base.html:446
+msgid "Bệnh nhân"
+msgstr "Patient"
+
+#: .\templates\adminlte_base.html:478
+msgid "Không có lịch hẹn sắp đến trong 3 ngày tới."
+msgstr "No upcoming appointments in the next 3 days."
+
+#: .\templates\adminlte_base.html:487
+msgid "Đánh dấu đã đọc"
+msgstr "Mark as read"
+
+#: .\templates\adminlte_base.html:495
+msgid "Xóa thông báo đã đọc"
+msgstr "Delete read notifications"
+
+#: .\templates\adminlte_base.html:509
+msgid "Bệnh viện"
+msgstr "Hospital"
+
+#: .\templates\adminlte_base.html:510
+msgid "All rights reserved."
+msgstr "All rights reserved."
+
+#: .\templates\adminlte_base.html:565
+msgid "Đang chuyển đổi ngôn ngữ..."
+msgstr "Switching language..."

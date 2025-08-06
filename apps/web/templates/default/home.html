@@ -1,0 +1,68 @@
+{% extends 'adminlte_base.html' %}
+{% load django_bootstrap5 %}
+{% load static %}
+{% load patient_tags %}
+
+{% block title %}Trang chủ{% endblock %}
+
+{% block content %}
+<!-- Cards tổng quan -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="overview-card red">
+            <h2>{{ total_doctors }}</h2>
+            <p>Tổng số Bác sĩ</p>
+            <p>Approval Required: {{ approval_required }}</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="overview-card orange">
+            <h2>{{ total_patients }}</h2>
+            <p>Tổng số Bệnh nhân</p>
+            <p>Wants to Admit: {{ wants_to_admit }}</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="overview-card blue">
+            <h2>{{ total_appointments }}</h2>
+            <p>Tổng số Lịch hẹn</p>
+            <p>Approve Appointments: {{ approve_appointments }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng Upcoming Patients -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Bệnh nhân Sắp tới Hẹn</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Họ và tên</th>
+                    <th>Ghi chú</th>
+                    <th>Số điện thoại</th>
+                    <th>Địa chỉ</th>
+                    <th>Ngày hẹn</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for patient in recent_patients %}
+                    <tr>
+                        <td>{{ patient.patient_name }}</td>
+                        <td>{{ patient.notes|default:"Không có" }}</td>
+                        <td>{{ patient.phone_number }}</td>
+                        <td>{{ patient.address }}</td>
+                        <td>{{ patient_appointment_dates|lookup:patient.study_id }}</td>
+                        <td>{{ patient_statuses|lookup:patient.study_id }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">Không có bệnh nhân sắp tới hẹn.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
