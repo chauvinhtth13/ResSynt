@@ -1,0 +1,369 @@
+{% load django_bootstrap5 %}
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} | 43EN-KPN Study</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- AdminLTE -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+  <!-- Flag Icon CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/6.11.0/css/flag-icons.min.css">
+  <!-- DateRangePicker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+  
+  <!-- Custom CSS -->
+  <style>
+    .main-sidebar {
+      background-color: #343a40;
+    }
+    
+    .main-sidebar .brand-link {
+      border-bottom: 1px solid #4b545c;
+      background-color: #a4deb7;
+    }
+    
+    .brand-text {
+      color: #ffffff;
+      font-weight: 700;
+    }
+    
+    .nav-sidebar .nav-item .nav-link.active {
+      background-color: #e9ebe9;
+    }
+    
+    .brand-link {
+      box-shadow: none !important;
+      border-bottom: none !important;
+      background-color: #aee6c1;
+    }
+    .brand-image {
+      box-shadow: none !important;
+      border: none !important;
+    }
+    
+    .btn-action {
+      border-radius: 50px;
+      font-weight: 500;
+      padding: 0.375rem 1rem;
+      margin-right: 5px;
+    }
+    
+    .card-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .card-header .card-title {
+      color: #343a40;
+      font-weight: 600;
+    }
+    
+    .card-info > .card-header {
+      background-color: #17a2b8;
+      color: white;
+    }
+    
+    .card-success > .card-header {
+      background-color: #28a745;
+      color: white;
+    }
+    
+    .card-warning > .card-header {
+      background-color: #ffc107;
+      color: #212529;
+    }
+    
+    .card-primary > .card-header {
+      background-color: #007bff;
+      color: white;
+    }
+    
+    .breadcrumb-item a {
+      color: #e1e6e2;
+    }
+    
+    .alert {
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .table thead th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+    }
+    
+    .pagination .page-item.active .page-link {
+      background-color: #e7f0e9;
+      border-color: #e0e8e2;
+    }
+    
+    .pagination .page-link {
+      color: #28a745;
+    }
+    /* Thêm vào block <style> hoặc file css */
+    .brand-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 56px;
+    }
+  </style>
+  
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'admin_dashboard' %}" class="nav-link">{% trans "Dashboard" %}</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url '43en:screening_case_list' %}" class="nav-link {% if 'screening' in request.path and 'case' in request.path %}active{% endif %}">{% trans "Sàng lọc BN" %}</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url '43en:patient_list' %}" class="nav-link {% if 'patients' in request.path %}active{% endif %}">{% trans "Bệnh nhân" %}</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url '43en:screening_contact_list' %}" class="nav-link {% if 'contact' in request.path and 'screening' in request.path %}active{% endif %}">
+          {% trans "Sàng lọc CT" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url '43en:contact_list' %}" class="nav-link {% if 'contact' in request.path and not 'screening' in request.path %}active{% endif %}">
+          {% trans "Contact" %}
+        </a>
+      </li>
+    </ul>
+
+    <!-- Right navbar links -->
+    <ul class="navbar-nav ml-auto">
+      <!-- Language Dropdown Menu -->
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#">
+          {% if LANGUAGE_CODE == 'en' %}
+            <i class="flag-icon flag-icon-us mr-1"></i> EN
+          {% else %}
+            <i class="flag-icon flag-icon-vn mr-1"></i> VI
+          {% endif %}
+        </a>
+        <div class="dropdown-menu dropdown-menu-right p-0">
+          <form action="/i18n/setlang/" method="post">
+            {% csrf_token %}
+            <input name="next" type="hidden" value="{{ request.path }}">
+            <button type="submit" name="language" value="en" class="dropdown-item {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
+              <i class="flag-icon flag-icon-us mr-2"></i> English
+            </button>
+            <button type="submit" name="language" value="vi" class="dropdown-item {% if LANGUAGE_CODE == 'vi' %}active{% endif %}">
+              <i class="flag-icon flag-icon-vn mr-2"></i> Tiếng Việt
+            </button>
+          </form>
+        </div>
+      </li>
+      
+      <!-- User Dropdown Menu -->
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#">
+          <i class="fas fa-user-circle"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right">
+          <span class="dropdown-item dropdown-header">{{ request.user.username }}</span>
+          <div class="dropdown-divider"></div>
+          <a href="{% url 'admin:index' %}" class="dropdown-item">
+            <i class="fas fa-cog mr-2"></i> {% trans "Quản trị" %}
+          </a>
+          <div class="dropdown-divider"></div>
+          <form action="{% url 'logout' %}" method="post" class="dropdown-item">
+            {% csrf_token %}
+            <button type="submit" style="background: none; border: none; padding: 0; color: inherit; cursor: pointer;">
+              <i class="fas fa-sign-out-alt mr-2"></i> {% trans "Đăng xuất" %}
+            </button>
+          </form>
+        </div>
+      </li>
+      
+      <li class="nav-item">
+        <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+          <i class="fas fa-expand-arrows-alt"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <!-- Brand Logo -->
+  <a href="{% url 'admin_dashboard' %}" class="brand-link">
+    <img src="{% static 'img/Logo3-01.png' %}" alt="Hospital Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+  </a>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Hospital Title -->
+    <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+      <div class="info w-100 text-center">
+        <span class="d-block text-light font-weight-bold">Hospital</span>
+      </div>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+        <!-- Dashboard -->
+        <li class="nav-item">
+          <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+            <i class="nav-icon fas fa-tachometer-alt"></i>
+            <p>{% trans "Dashboard" %}</p>
+          </a>
+        </li>
+        
+        <!-- Bệnh nhân section -->
+        <li class="nav-item {% if 'patient' in request.path or 'screening' in request.path and 'case' in request.path %}menu-open{% endif %}">
+          <a href="#" class="nav-link {% if 'patient' in request.path or 'screening' in request.path and 'case' in request.path %}active{% endif %}">
+            <i class="nav-icon fas fa-user-md"></i>
+            <p>
+              {% trans "Bệnh nhân" %}
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url '43en:screening_case_list' %}" class="nav-link {% if 'screening' in request.path and 'case' in request.path %}active{% endif %}">
+                <i class="nav-icon fas fa-search"></i>
+                <p>{% trans "Sàng lọc" %}</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url '43en:patient_list' %}" class="nav-link {% if 'patient' in request.path and not 'screening' in request.path %}active{% endif %}">
+                <i class="nav-icon fas fa-procedures"></i>
+                <p>{% trans "Tham gia" %}</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        
+        <!-- Contact section -->
+        <li class="nav-item {% if 'contact' in request.path %}menu-open{% endif %}">
+          <a href="#" class="nav-link {% if 'contact' in request.path %}active{% endif %}">
+            <i class="nav-icon fas fa-users"></i>
+            <p>
+              {% trans "Contact" %}
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url '43en:screening_contact_list' %}" class="nav-link {% if 'contact' in request.path and 'screening' in request.path %}active{% endif %}">
+                <i class="nav-icon fas fa-search"></i>
+                <p>{% trans "Sàng lọc" %}</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url '43en:contact_list' %}" class="nav-link {% if 'contact' in request.path and not 'screening' in request.path %}active{% endif %}">
+                <i class="nav-icon fas fa-user-friends"></i>
+                <p>{% trans "Tham gia" %}</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+    <!-- /.sidebar-menu -->
+  </div>
+  <!-- /.sidebar -->
+</aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">{% block page_title %}{% endblock %}</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              {% block breadcrumb %}
+              <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">{% trans "Dashboard" %}</a></li>
+              <li class="breadcrumb-item active">{% trans "Trang chính" %}</li>
+              {% endblock %}
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <div class="content">
+      <div class="container-fluid">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <!-- Main Footer -->
+  <footer class="main-footer">
+    <div class="float-right d-none d-sm-inline">
+      43EN-KPN Study
+    </div>
+    <strong>Copyright &copy; 2025 <a href="#">PTD</a>.</strong> {% trans "All rights reserved." %}
+  </footer>
+</div>
+<!-- ./wrapper -->
+
+<!-- REQUIRED SCRIPTS -->
+<!-- jQuery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<!-- jQuery UI -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+<!-- Moment.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<!-- DateRangePicker -->
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<script>
+  // Thiết lập các tooltip
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Xử lý ẩn alert sau 5 giây
+    $('.alert').delay(5000).fadeOut(500);
+  });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

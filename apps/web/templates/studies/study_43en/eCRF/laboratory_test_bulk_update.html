@@ -1,0 +1,208 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}{% trans "Cập Nhật Nhóm Xét Nghiệm 43EN" %}{% endblock %}
+
+{% block page_title %}{% trans "Cập Nhật Nhóm Xét Nghiệm 43EN" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'screening_case_list' %}">{% trans "Danh sách Bệnh nhân 43EN" %}</a></li>                <li class="breadcrumb-item"><a href="{% url 'patient_detail' usubjid=screening_case.USUBJID %}">{% trans "Bệnh nhân" %} {{ screening_case.USUBJID }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'laboratory_test_list' usubjid=screening_case.USUBJID %}">{% trans "Xét nghiệm" %}</a></li>
+<li class="breadcrumb-item active">{% trans "Cập nhật nhóm xét nghiệm" %} {{ category }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/form-animations.css' %}">
+<style>
+  .form-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  
+  .card-header-primary {
+    background-color: #3b7ddd;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .test-item {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 3px solid #3b7ddd;
+    transition: all 0.2s ease;
+  }
+  
+  .test-item:hover {
+    background-color: #e9ecef;
+  }
+  
+  .test-name {
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 5px;
+  }
+  
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -5px;
+    margin-left: -5px;
+  }
+  
+  .form-col {
+    flex: 1;
+    padding-right: 5px;
+    padding-left: 5px;
+    min-width: 200px;
+  }
+  
+  .form-check {
+    padding-left: 1.8rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-check-input {
+    margin-top: 0.4rem;
+    margin-left: -1.8rem;
+  }
+
+  /* Override for form control styles */
+  .test-item input[type="date"],
+  .test-item textarea {
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  .test-item input[type="date"]:focus,
+  .test-item textarea:focus {
+    border-color: #3b7ddd;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(59, 125, 221, 0.25);
+  }
+  
+  .performed-fields {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #dee2e6;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card form-card">
+        <div class="card-header card-header-primary">
+          <h3 class="card-title">{% trans "Cập nhật nhóm xét nghiệm" %} {{ category }}</h3>
+          <p class="mb-0">{% trans "Bệnh nhân" %}: {{ screening_case.USUBJID }}</p>
+        </div>
+        
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> {% trans "Cập nhật thông tin các xét nghiệm trong nhóm. Đánh dấu 'Đã thực hiện' và điền ngày thực hiện và kết quả cho các xét nghiệm đã có kết quả." %}
+          </div>
+          
+          <form method="post" action="{% url 'laboratory_test_bulk_update' usubjid=screening_case.USUBJID category=category_code %}">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            
+            {% for form in formset %}
+              <div class="test-item">
+                {{ form.id }}
+                {{ form.category }}
+                {{ form.test_type }}
+                
+                <div class="test-name">
+                  {{ form.instance.get_test_type_display }}
+                </div>
+                
+                <div class="form-check form-switch">
+                  {{ form.performed }}
+                  <label class="form-check-label" for="{{ form.performed.id_for_label }}">
+                    {% trans "Đã thực hiện xét nghiệm này" %}
+                  </label>
+                </div>
+                
+                <div class="performed-fields" {% if not form.performed.value %}style="display: none;"{% endif %}>
+                  <div class="form-row">
+                    <div class="form-col">
+                      <label class="form-label" for="{{ form.performed_date.id_for_label }}">{% trans "Ngày thực hiện" %}:</label>
+                      {{ form.performed_date }}
+                      {% if form.performed_date.errors %}
+                        <div class="invalid-feedback d-block">{{ form.performed_date.errors }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="form-col">
+                      <label class="form-label" for="{{ form.result.id_for_label }}">{% trans "Kết quả" %}:</label>
+                      {{ form.result }}
+                      {% if form.result.errors %}
+                        <div class="invalid-feedback d-block">{{ form.result.errors }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                
+                {% if form.non_field_errors %}
+                  <div class="alert alert-danger mt-2">
+                    {{ form.non_field_errors }}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+            
+            <div class="form-group mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> {% trans "Lưu tất cả" %}
+              </button>
+              <a href="{% url 'laboratory_test_list' usubjid=screening_case.USUBJID %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> {% trans "Hủy" %}
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  $(document).ready(function() {
+    // Show/hide performed date and result fields based on performed checkbox
+    $('.form-check-input').change(function() {
+      var performedFields = $(this).closest('.test-item').find('.performed-fields');
+      if ($(this).is(':checked')) {
+        performedFields.slideDown();
+      } else {
+        performedFields.slideUp();
+      }
+    });
+    
+    // Initialize datepicker for all date inputs
+    if ($('input[type="date"]').length > 0) {
+      $('input[type="date"]').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true
+      });
+    }
+  });
+</script>
+{% endblock %}

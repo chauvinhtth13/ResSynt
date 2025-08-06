@@ -1,0 +1,167 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}{% trans "Cập Nhật Xét Nghiệm 43EN" %}{% endblock %}
+
+{% block page_title %}{% trans "Cập Nhật Xét Nghiệm 43EN" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'screening_case_list' %}">{% trans "Danh sách Bệnh nhân 43EN" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url '43en:patient_detail' usubjid=screening_case.USUBJID %}">{% trans "Bệnh nhân" %} {{ screening_case.USUBJID }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'laboratory_test_list' usubjid=screening_case.USUBJID %}">{% trans "Xét nghiệm" %}</a></li>
+<li class="breadcrumb-item active">{% trans "Cập nhật xét nghiệm" %}</li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/form-animations.css' %}">
+<!-- Thêm Bootstrap Datepicker CSS từ CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+<style>
+  .form-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  
+  .card-header-primary {
+    background-color: #3b7ddd;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-label {
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  .form-control:focus {
+    border-color: #3b7ddd;
+    box-shadow: 0 0 0 0.2rem rgba(59, 125, 221, 0.25);
+  }
+  
+  .custom-switch {
+    padding-left: 2.5rem;
+  }
+  
+  .test-info {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-left: 3px solid #3b7ddd;
+  }
+  
+  .test-info p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .test-info p strong {
+    min-width: 150px;
+    display: inline-block;
+  }
+  
+  /* Custom styles for datepicker */
+  .datepicker.dropdown-menu {
+    max-width: 300px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card form-card">
+        <div class="card-header card-header-primary">
+          <h3 class="card-title">{% trans "Cập nhật xét nghiệm" %} {{ lab_test.get_test_type_display }}</h3>
+        </div>
+        
+        <div class="card-body">
+          <div class="test-info">
+            <p><strong>{% trans "Bệnh nhân" %}:</strong> {{ screening_case.USUBJID }}</p>
+            <p><strong>{% trans "Xét nghiệm" %}:</strong> {{ lab_test.get_test_type_display }}</p>
+            <p><strong>{% trans "Nhóm xét nghiệm" %}:</strong> {{ lab_test.get_category_display }}</p>
+          </div>
+          
+          <form method="post" action="{% url 'laboratory_test_edit' usubjid=screening_case.USUBJID test_id=lab_test.id %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="{{ form.performed.name }}" id="{{ form.performed.id_for_label }}" {% if form.performed.value %}checked{% endif %}>
+                <label class="form-check-label" for="{{ form.performed.id_for_label }}">
+                  {% trans "Đã thực hiện xét nghiệm" %}
+                </label>
+              </div>
+              {% if form.performed.errors %}
+                <div class="invalid-feedback d-block">{{ form.performed.errors }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="form-group performed-field" {% if not form.performed.value %}style="display: none;"{% endif %}>
+              <label class="form-label" for="{{ form.performed_date.id_for_label }}">{% trans "Ngày thực hiện" %}:</label>
+              {{ form.performed_date }}
+              {% if form.performed_date.errors %}
+                <div class="invalid-feedback d-block">{{ form.performed_date.errors }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="form-group performed-field" {% if not form.performed.value %}style="display: none;"{% endif %}>
+              <label class="form-label" for="{{ form.result.id_for_label }}">{% trans "Kết quả" %}:</label>
+              {{ form.result }}
+              {% if form.result.errors %}
+                <div class="invalid-feedback d-block">{{ form.result.errors }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="form-group mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> {% trans "Lưu thay đổi" %}
+              </button>
+              <a href="{% url 'laboratory_test_list' usubjid=screening_case.USUBJID %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> {% trans "Hủy" %}
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Thêm Bootstrap Datepicker JS từ CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
+<!-- Tải file cấu hình datepicker tùy chỉnh -->
+<script src="{% static 'js/datepicker-setup.js' %}"></script>
+<script>
+  $(document).ready(function() {
+    // Show/hide performed date and result fields based on performed checkbox
+    $('#{{ form.performed.id_for_label }}').change(function() {
+      if ($(this).is(':checked')) {
+        $('.performed-field').slideDown();
+      } else {
+        $('.performed-field').slideUp();
+      }
+    });
+    
+    // Chỉ khởi tạo datepicker nếu chưa được khởi tạo (tránh khởi tạo lại)
+    if ($('.datepicker').length > 0 && !$('.datepicker').hasClass('datepicker-initialized')) {
+      $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true
+      }).addClass('datepicker-initialized');
+    }
+  });
+</script>
+{% endblock %}
