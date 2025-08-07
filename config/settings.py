@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_bootstrap5',
-    #'study_43en.apps.Study43enConfig',
     'chartjs',
+    'apps.tenancy'
 ]
 
 MIDDLEWARE = [
@@ -57,9 +57,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            #os.path.join(BASE_DIR, 'templates'),  # Thư mục templates chính
-        ],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -83,37 +81,17 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     # Database cho Django admin, auth, sessions, contenttypes
     'default': {
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'admin_system',
-        # 'USER': 'postgres',  # 🔄 Thay bằng username PostgreSQL của bạn
-        # 'PASSWORD': 'duyduy123',  # 🔄 Thay bằng password PostgreSQL của bạn
-        # 'HOST': 'localhost',
-        # 'PORT': '5432',
-        # # Bỏ OPTIONS charset cho PostgreSQL
-        # 'TEST': {
-        #     'NAME': 'test_admin_system',
-        # }
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'db_management',
+        'USER': 'postgres',
+        'PASSWORD': 'Oucru@201252',
+        'HOST': 'localhost',
+        'PORT': '5432',
     },
-    
-    # # Database có sẵn cho app fourtythree
-    # 'fourtythree_db': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'fourtythree_db',  # Database đã có sẵn
-    #     'USER': 'postgres',  # 🔄 Thay bằng username PostgreSQL của bạn
-    #     'PASSWORD': 'duyduy123',  # 🔄 Thay bằng password PostgreSQL của bạn
-    #     'HOST': 'localhost',
-    #     'PORT': '5432',
-    #     # Bỏ OPTIONS charset cho PostgreSQL
-    #     'TEST': {
-    #         'NAME': 'test_fourtythree_db',
-    #     }
-    # }
 }
 
 # Database routing
-#DATABASE_ROUTERS = ['study_data_management.db_router.DatabaseRouter']
+DATABASE_ROUTERS = ['config.db_router.StudyDBRouter']
 
 # Mapping apps to databases
 # DATABASE_APPS_MAPPING = {
@@ -174,53 +152,53 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = 'apps/web/static/'
+# STATICFILES_DIRS = [
+#     BASE_DIR / "static",
+# ]
+# STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = 'login'  # Tên URL đăng nhập, khớp với path('login/', ...)
-LOGIN_REDIRECT_URL = 'select_study'
-LOGOUT_REDIRECT_URL = 'login'
+# LOGIN_URL = 'login'  # Tên URL đăng nhập, khớp với path('login/', ...)
+# LOGIN_REDIRECT_URL = 'select_study'
+# LOGOUT_REDIRECT_URL = 'login'
 
-# Cấu hình gửi email qua Gmail
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'nhoxduy12345x@gmail.com'  # Thay bằng email của bạn
-EMAIL_HOST_PASSWORD = 'kvze kvmq ilhv leoj'  # Thay bằng mật khẩu ứng dụng của Gmail
-DEFAULT_FROM_EMAIL = 'nhoxduy12345x@gmail.com'  # Email gửi mặc định
+# # Cấu hình gửi email qua Gmail
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'nhoxduy12345x@gmail.com'  # Thay bằng email của bạn
+# EMAIL_HOST_PASSWORD = 'kvze kvmq ilhv leoj'  # Thay bằng mật khẩu ứng dụng của Gmail
+# DEFAULT_FROM_EMAIL = 'nhoxduy12345x@gmail.com'  # Email gửi mặc định
 
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        # Thêm logger cho __name__ nếu cần
-        '__main__': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'root': {
+#         'handlers': ['console'],
+#         'level': 'INFO',
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console'],
+#             'level': 'INFO',
+#             'propagate': True,
+#         },
+#         # Thêm logger cho __name__ nếu cần
+#         '__main__': {
+#             'handlers': ['console'],
+#             'level': 'INFO',
+#         },
+#     },
+# }
