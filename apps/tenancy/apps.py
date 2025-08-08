@@ -1,8 +1,5 @@
-# apps/tenancy/apps.py
-
 from django.apps import AppConfig
 
 class TenancyConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.tenancy'
-    verbose_name = "DB Management (Quản trị nghiên cứu)"
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.tenancy"

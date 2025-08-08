@@ -1,38 +1,39 @@
+"""
+URL configuration for mysite project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/5.2/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib.auth.decorators import login_required
-from django.views.generic import RedirectView
-from django.conf.urls.i18n import i18n_patterns  # Import i18n_patterns
-
-from . import views
 
 urlpatterns = [
-    # Thêm URL path cho i18n
-    # path('i18n/', include('django.conf.urls.i18n')),  # Để xử lý set_language
-    
-    # path('admin/', admin.site.urls),
-    # path('', RedirectView.as_view(url='select-study/')),  # Chuyển hướng đến trang select-study
-    # path('dashboard/', views.admin_dashboard, name='admin_dashboard'),  # Dashboard chính
-    # path('select-study/', views.select_study, name='select_study'),  # Giữ lại cho tương thích ngược
-    # path('patient-statistics/', views.patient_statistics, name='patient_statistics'),  # Thống kê bệnh nhân
-    # path('43en/', include(('study_43en.urls', 'study_43en'), namespace='43en')),  # URLs for app study_43en with namespace
-    
-    # # Thêm URL patterns không có namespace - để tương thích với template cũ
-    # path('', include('study_43en.urls')),  # Thêm URL patterns không có namespace
-    
-    # # Authentication
-    # path('accounts/login/', auth_views.LoginView.as_view(
-    #     template_name='registration/login.html',
-    #     redirect_authenticated_user=True
-    # ), name='login'),
-    # path('accounts/logout/', auth_views.LogoutView.as_view(
-    #     next_page='login'
-    # ), name='logout'),
-    
-    # # Error pages
-    # path('404/', lambda request: views.custom_404(request, Exception())),
+    path("i18n/", include("django.conf.urls.i18n")),  # Để xử lý set_language
     path("admin/", admin.site.urls),
+    path(
+        "accounts/login/",
+        auth_views.LoginView.as_view(template_name="default/registration/login.html"),
+        name="login",
+    ),
+    path(
+        "accounts/logout/",
+        auth_views.LogoutView.as_view(),
+        name="logout",
+    ),
+     path("accounts/password_reset/", auth_views.PasswordResetView.as_view(), name="password_reset"),
+    path("accounts/password_reset/done/", auth_views.PasswordResetDoneView.as_view(), name="password_reset_done"),
+    path("accounts/reset/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
+    path("accounts/reset/done/", auth_views.PasswordResetCompleteView.as_view(), name="password_reset_complete"),
 ]

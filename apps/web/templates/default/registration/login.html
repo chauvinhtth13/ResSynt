@@ -1,212 +1,98 @@
-{% load django_bootstrap5 %}
 {% load static %}
-{% load i18n %}
-
 <!DOCTYPE html>
-<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% trans "Đăng nhập" %} | {% trans "Quản lý Bệnh nhân" %}</title>
-
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- AdminLTE -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
-  <!-- iCheck -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/icheck-bootstrap/3.0.1/icheck-bootstrap.min.css">
-  <!-- Flag Icon CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/6.11.0/css/flag-icons.min.css">
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="{% static 'css/medical-theme.css' %}">
-  
-  <style>
-    .login-page {
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      min-height: 100vh;
-    }
-    
-    .login-box {
-      margin-top: 5%;
-      max-width: 450px;
-      width: 100%;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    
-    .login-logo {
-      margin-bottom: 0;
-      padding: 20px;
-      background: #fff;
-      text-align: center;
-      font-weight: 700;
-      font-size: 24px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .login-logo a {
-      color: #333;
-      text-decoration: none;
-    }
-    
-    .login-card-body {
-      padding: 30px;
-      background: #fff;
-    }
-    
-    .login-box-msg {
-      margin-bottom: 20px;
-      font-size: 16px;
-      color: #666;
-    }
-    
-    .input-group .input-group-text {
-      background-color: transparent;
-      border-right: none;
-      color: #666;
-    }
-    
-    .form-control {
-      border-left: none;
-    }
-    
-    .btn-primary {
-      background-color: #1F3BB3;
-      border-color: #1F3BB3;
-    }
-    
-    .btn-primary:hover {
-      background-color: #0f2ba0;
-      border-color: #0f2ba0;
-    }
-    
-    .language-switcher {
-      text-align: center;
-      margin-top: 20px;
-    }
-    
-    .language-switcher .dropdown-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-    }
-    
-    .language-switcher .dropdown-item:hover {
-      background: #f0f0f0;
-    }
-    
-    .hospital-logo {
-      height: 80px;
-      margin-bottom: 10px;
-    }
-    
-    .card.forgot-password {
-      margin-top: 20px;
-      border: none;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-    
-    .card.forgot-password .card-body {
-      padding: 15px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="{% static 'css/default/style.css' %}">
 </head>
-<body class="hold-transition login-page">
-<div class="login-box">
-  <!-- Login Logo -->
-  <div class="login-logo">
-    <img src="{% static 'img/Logo3-01.png' %}" alt="Hospital Logo" class="hospital-logo">
-  </div>
-  <!-- /.login-logo -->
-  <div class="card">
-    <div class="login-card-body">
-      <p class="login-box-msg">{% trans "Đăng nhập để bắt đầu phiên làm việc" %}</p>
-      
-      {% if form.errors %}
-        <div class="alert alert-danger alert-dismissible fade show">
-          <h5><i class="icon fas fa-ban"></i> {% trans "Lỗi!" %}</h5>
-          <p>{% trans "Tên người dùng hoặc mật khẩu không đúng. Vui lòng thử lại." %}</p>
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-      {% endif %}
-
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="next" value="{% url 'select_study' %}">
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <span class="input-group-text"><i class="fas fa-user"></i></span>
-          </div>
-          <input type="text" name="username" class="form-control" placeholder="{% trans 'Tên đăng nhập' %}" required>
-        </div>
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-          </div>
-          <input type="password" name="password" class="form-control" placeholder="{% trans 'Mật khẩu' %}" required>
-        </div>
-        <div class="row">
-          <div class="col-8">
-            <div class="icheck-primary">
-              <input type="checkbox" id="remember">
-              <label for="remember">
-                {% trans "Ghi nhớ đăng nhập" %}
-              </label>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                        <rect width="32" height="32" rx="6" fill="#635BFF"/>
+                        <path d="M8 12h16v2H8v-2zm0 4h16v2H8v-2zm0 4h10v2H8v-2z" fill="white"/>
+                    </svg>
+                </div>
+                <h1>Sign in to Dashboard</h1>
+                <p>Welcome back! Please sign in to continue</p>
             </div>
-          </div>
-          <!-- /.col -->
-          <div class="col-4">
-            <button type="submit" class="btn btn-primary btn-block">{% trans "Đăng nhập" %}</button>
-          </div>
-          <!-- /.col -->
-        </div>
-      </form>
-      
-      <!-- Language Switcher -->
-      <div class="language-switcher mt-4">
-        <form action="/i18n/setlang/" method="post">
-          {% csrf_token %}
-          <input name="next" type="hidden" value="{{ request.path }}">
-          
-          <!-- <div class="btn-group btn-group-sm"> -->
-            <!-- English -->
-            <!-- <button type="submit" name="language" value="en" 
-                    class="btn {% if LANGUAGE_CODE == 'en' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-              <i class="flag-icon flag-icon-us mr-1"></i> English
-            </button> -->
-            
-            <!-- Vietnamese -->
-            <!-- <button type="submit" name="language" value="vi"
-                    class="btn {% if LANGUAGE_CODE == 'vi' or not LANGUAGE_CODE %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-              <i class="flag-icon flag-icon-vn mr-1"></i> Tiếng Việt
-            </button>
-          </div> -->
-        </form>
-      </div>
-    </div>
-    <!-- /.login-card-body -->
-  </div>
-  
-  <!-- Forgot Password Card -->
-  <div class="card forgot-password">
-    <div class="card-body text-center">
-      <a href="#">{% trans "Quên mật khẩu?" %}</a>
-    </div>
-  </div>
-</div>
-<!-- /.login-box -->
 
-<!-- jQuery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<!-- Bootstrap 4 -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+            <form class="login-form" id="loginForm" method="post" action="{% url 'login' %}" novalidate>
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="error-message" style="margin-bottom:12px">
+                        Invalid username or password.
+                    </div>
+                {% endif %}
+
+                <div class="input-group">
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder=" " value="{{ form.username.value|default:'' }}">
+                    <label for="username">Email / Username</label>
+                    <span class="input-border"></span>
+                    <span class="error-message" id="usernameError"></span>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder=" ">
+                    <label for="password">Password</label>
+                    <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
+                        <svg class="eye-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M8 3C4.5 3 1.6 5.6 1 8c.6 2.4 3.5 5 7 5s6.4-2.6 7-5c-.6-2.4-3.5-5-7-5zm0 8.5A3.5 3.5 0 118 4.5a3.5 3.5 0 010 7zm0-5.5a2 2 0 100 4 2 2 0 000-4z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <span class="input-border"></span>
+                    <span class="error-message" id="passwordError"></span>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span class="checkmark">
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden="true">
+                                <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        Remember me
+                    </label>
+
+                    {% url 'password_reset' as pr_url %}
+                    {% if pr_url %}
+                        <a href="{{ pr_url }}" class="forgot-link">Forgot password?</a>
+                    {% endif %}
+                </div>
+
+                <input type="hidden" name="next" value="{{ next }}">
+                <button type="submit" class="submit-btn">
+                    <span class="btn-text">Sign in</span>
+                    <div class="btn-loader" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+                            <path d="M16 9a7 7 0 01-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <animateTransform attributeName="transform" type="rotate" dur="1s" values="0 9 9;360 9 9" repeatCount="indefinite"/>
+                            </path>
+                        </svg>
+                    </div>
+                </button>
+            </form>
+
+            <div class="success-message" id="successMessage" aria-live="polite" aria-atomic="true">
+                <div class="success-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="12" fill="#635BFF"/>
+                        <path d="M8 12l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3>Welcome back!</h3>
+                <p>Redirecting to your dashboard...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS của bạn -->
+    <script src="{% static 'js/default/login.js' %}"></script>
 </body>
 </html>
