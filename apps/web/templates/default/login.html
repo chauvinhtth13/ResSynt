@@ -1,0 +1,282 @@
+{% load static i18n %}
+<!doctype html>
+<html
+  lang="{{ LANGUAGE_CODE|default:'en' }}"
+  dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}"
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ResSync — {% trans "Sign in" %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      body { font-family: "Roboto", system-ui, -apple-system, Segoe UI, Roboto,
+               Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji",
+               "Segoe UI Symbol", sans-serif; }
+      @media (prefers-reduced-motion: reduce) {
+        *:not([data-allow-motion="true"]) {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body
+    class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased"
+  >
+    <main class="w-full max-w-7xl p-4 sm:p-6 lg:p-8">
+      <!-- Main card -->
+      <section
+        class="grid overflow-hidden rounded-3xl bg-white shadow-xl ring-1 ring-slate-900/5 md:grid-cols-6"
+        role="region"
+        aria-labelledby="signin-title"
+      >
+        <!-- Left: branding & features -->
+        <aside class="md:col-span-3 bg-gradient-to-b from-indigo-200 to-white p-8 md:p-12">
+          <div class="flex items-center">
+            <img
+              src="{% static 'images/default/logo.svg' %}"
+              alt="ResSync logo"
+              class="h-16 w-auto"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+
+          <h2 class="mt-6 text-2xl font-semibold leading-tight">
+            {% trans "Welcome to the ResSync System" %}
+          </h2>
+          <p class="mt-2 text-sm text-slate-600">
+            {% trans "The next generation of research data management" %}
+          </p>
+
+          <div class="mt-8 space-y-3">
+            <h3 class="text-sm font-medium uppercase tracking-wide text-slate-500">
+              {% trans "Key Features" %}
+            </h3>
+            <ul class="mt-2 list-inside list-disc space-y-3">
+              <li><strong class="font-semibold">{% trans "Data Management:" %}</strong> {% trans "Organize, query, and export study data efficiently" %}</li>
+              <li><strong class="font-semibold">{% trans "Data Entry:" %}</strong> {% trans "Fast CRF input with built-in format and logic checks" %}</li>
+              <li><strong class="font-semibold">{% trans "Dashboards:" %}</strong> {% trans "Real-time summaries of progress and data status" %}</li>
+              <li><strong class="font-semibold">{% trans "Accurate Scheduling:" %}</strong> {% trans "Auto reminders and error-free visit tracking" %}</li>
+            </ul>
+          </div>
+
+          <div class="mt-10 border-t border-slate-200 pt-6 text-xs text-slate-500">
+            <p>
+              {% trans "Need help?" %}
+              <a
+                class="font-medium text-indigo-600 underline underline-offset-2 hover:no-underline"
+                href="mailto:vinhc@oucru.org"
+              >vinhc@oucru.org</a>
+            </p>
+            <p class="mt-2">
+              &copy; {{ now|date:"Y" }} ResSync — {% trans "designed by Vinh Chau & Duy Tuong Pham" %}
+            </p>
+          </div>
+        </aside>
+
+        <!-- Right: form -->
+        <div class="md:col-span-3 p-8 md:p-12 flex items-center justify-center">
+          <form
+            id="signin-form"
+            action="{% url 'login' %}"
+            method="post"
+            class="mx-auto w-full max-w-md space-y-6"
+            novalidate
+            aria-describedby="form-help"
+          >
+            {% csrf_token %}
+
+            <h1 id="signin-title" class="text-4xl font-bold leading-tight">
+              {% trans "Sign In" %}
+            </h1>
+            <p id="form-help" class="text-sm text-slate-600">
+              {% trans "Enter your ResSync username and password to sign in." %}
+            </p>
+
+            {# Hiển thị lỗi chung (ví dụ sai tài khoản/mật khẩu) #}
+            {% if form.non_field_errors %}
+              <div class="rounded-md bg-red-50 p-3 text-sm text-red-700">
+                {{ form.non_field_errors|join:" " }}
+              </div>
+            {% endif %}
+
+            <!-- Username -->
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-700">
+                {% trans "Username or email" %}
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autocomplete="username"
+                enterkeyhint="next"
+                required
+                placeholder="username"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+                autofocus
+                value="{{ form.username.value|default:'' }}"
+                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
+                aria-describedby="username-error"
+              />
+              {% if form.username.errors %}
+                <p id="username-error" class="mt-1 text-sm text-red-600">
+                  {{ form.username.errors|join:" " }}
+                </p>
+              {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700">
+                {% trans "Password" %}
+              </label>
+              <div class="relative mt-1">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  enterkeyhint="done"
+                  required
+                  placeholder="••••••••"
+                  class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 text-gray-900 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  aria-invalid="{% if form.password.errors %}true{% else %}false{% endif %}"
+                  aria-describedby="password-error"
+                />
+                <button
+                  type="button"
+                  id="passwordToggle"
+                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  aria-label="{% trans 'Show password' %}"
+                  aria-controls="password"
+                  aria-pressed="false"
+                >
+                  <span class="material-icons" id="eyeOn">visibility</span>
+                  <span class="material-icons hidden" id="eyeOff">visibility_off</span>
+                </button>
+              </div>
+              {% if form.password.errors %}
+                <p id="password-error" class="mt-1 text-sm text-red-600">
+                  {{ form.password.errors|join:" " }}
+                </p>
+              {% endif %}
+            </div>
+
+            <!-- Misc -->
+            <div class="flex items-center justify-between">
+              <label class="flex select-none items-center">
+                <input
+                  type="checkbox"
+                  name="remember"
+                  id="remember"
+                  class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                />
+                <span class="ml-2 text-sm text-gray-700">{% trans "Remember me" %}</span>
+              </label>
+              <a
+                href="{% url 'password_reset' %}"
+                class="text-sm text-indigo-700 underline-offset-2 hover:underline"
+              >
+                {% trans "Forgot password?" %}
+              </a>
+            </div>
+
+            <input type="hidden" name="next" value="{{ next|default:'' }}" />
+
+            <!-- Submit -->
+            <button
+              type="submit"
+              class="inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 disabled:opacity-70"
+              id="submitBtn"
+              aria-live="polite"
+            >
+              <span class="btn-text">{% trans "Sign In" %}</span>
+              <span
+                class="spinner ml-2 hidden h-4 w-4 motion-safe:animate-spin rounded-full border-2 border-white border-t-transparent"
+                aria-hidden="true"
+              ></span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Footer: language switcher -->
+      <footer class="mx-auto mt-6 flex max-w-7xl justify-end">
+        <form action="{% url 'set_language' %}" method="post"
+              class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm shadow-sm">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <span class="material-icons text-base" aria-hidden="true">language</span>
+          <label for="language" class="sr-only">{% trans "Language" %}</label>
+          <select id="language" name="language" class="bg-transparent outline-none">
+            {% get_current_language as CURRENT %}
+            {% get_available_languages as LANGS %}
+            {% for code, name in LANGS %}
+              <option value="{{ code }}" {% if code == CURRENT %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </footer>
+    </main>
+
+    <!-- Minimal JS: password toggle + submit state -->
+    <script>
+      (function () {
+        const pwd = document.getElementById("password");
+        const toggle = document.getElementById("passwordToggle");
+        const eyeOn = document.getElementById("eyeOn");
+        const eyeOff = document.getElementById("eyeOff");
+
+        if (toggle && pwd) {
+          toggle.addEventListener("click", () => {
+            const show = pwd.type === "password";
+            pwd.type = show ? "text" : "password";
+            toggle.setAttribute("aria-pressed", String(show));
+            eyeOn.classList.toggle("hidden", show);
+            eyeOff.classList.toggle("hidden", !show);
+            toggle.setAttribute("aria-label", show ? "{% trans 'Hide password' %}" : "{% trans 'Show password' %}");
+          });
+        }
+
+        const form = document.getElementById("signin-form");
+        const btn = document.getElementById("submitBtn");
+        const spinner = btn?.querySelector(".spinner");
+        const btnText = btn?.querySelector(".btn-text");
+
+        if (form && btn && spinner && btnText) {
+          form.addEventListener("submit", () => {
+            btn.disabled = true;
+            btn.setAttribute("aria-busy", "true");
+            spinner.classList.remove("hidden");
+            btnText.textContent = "{% trans 'Signing in…' %}";
+          }, { passive: true });
+        }
+      })();
+    </script>
+    <script defer src="{% static 'js/default/login_script.js' %}"></script>
+  </body>
+</html>
