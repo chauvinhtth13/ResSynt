@@ -1,86 +1,52 @@
 # apps/tenancy/db_loader.py
+# This module handles dynamic loading of per-study databases into settings.DATABASES.
+# Optimizations:
+# - Use cache (Django's default cache, e.g., Redis or LocMem) to store DB configs for STUDY_DB_AUTO_REFRESH_SECONDS seconds.
+# - Only load active studies (status='active' from models.py).
+# - Deepcopy default DB config and override NAME and OPTIONS (search_path to 'data').
+# - Conditional SSL based on DEBUG (disable in dev, require in prod).
+# - Force_refresh param for commands (e.g., create_study) to update immediately.
+# - Logging for errors/debugging.
+# - Aligned with models.py: Use Study model with status filter.
+# - Call this in middleware (on each request, but cached) or in AppConfig ready() for initial load.
+
+import copy
 import logging
-from typing import Dict
 from django.conf import settings
-from django.db import connections
+from django.core.cache import cache
+from apps.tenancy.models import Study
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('apps.tenancy')
 
-
-def _study_db_config(db_name: str) -> Dict:
-    mgmt = settings.DATABASES.get("db_management") or settings.DATABASES.get("default")
-    return {
-        "ENGINE": getattr(settings, "STUDY_DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": db_name,
-        "USER": getattr(settings, "STUDY_DB_USER", mgmt.get("USER")),
-        "PASSWORD": getattr(settings, "STUDY_DB_PASSWORD", mgmt.get("PASSWORD")),
-        "HOST": getattr(settings, "STUDY_DB_HOST", mgmt.get("HOST")),
-        "PORT": getattr(settings, "STUDY_DB_PORT", mgmt.get("PORT")),
-        "OPTIONS": {"options": f"-c search_path={getattr(settings, 'STUDY_DB_SEARCH_PATH', 'public')}"},
-        "CONN_MAX_AGE": mgmt.get("CONN_MAX_AGE", 600),
-        "ATOMIC_REQUESTS": mgmt.get("ATOMIC_REQUESTS", False),  # <-- THÊM DÒNG NÀY
-        "AUTOCOMMIT": mgmt.get("AUTOCOMMIT", True),            # (tuỳ chọn, cho đủ bộ)
-        "CONN_HEALTH_CHECKS": mgmt.get("CONN_HEALTH_CHECKS", False),  # (tuỳ chọn)
-        "TIME_ZONE": mgmt.get("TIME_ZONE", settings.TIME_ZONE),       # (tuỳ chọn)
-    }
-
-
-def load_active_study_databases() -> None:
+def load_study_dbs(force_refresh=False):
     """
-    Đọc metadata.studies (status='active') từ db_management và nạp cấu hình DB
-    vào connections.databases cho từng study theo tên alias = database_name.
-    Chỉ thêm mới nếu alias chưa tồn tại.
+    Load and cache dynamic DB configs for active studies.
+    Returns the updated DATABASES dict.
     """
-    # Lấy kết nối DB quản lý
-    if "db_management" not in connections.databases:
-        # fallback: cho phép dùng 'default' làm db_management nếu trỏ cùng DB
-        logger.debug("db_loader: 'db_management' alias không thấy, dùng 'default' thay thế nếu có.")
-        if "default" not in connections.databases:
-            logger.error("db_loader: Không có alias 'db_management' hay 'default' trong settings.DATABASES.")
-            return
-        mgmt_alias = "default"
-    else:
-        mgmt_alias = "db_management"
-
-    # Query danh sách study active
-    try:
-        with connections[mgmt_alias].cursor() as cur:
-            cur.execute("""
-                SELECT code, database_name
-                FROM metadata.studies
-                WHERE status = 'active'
-            """)
-            rows = cur.fetchall()
-    except Exception as e:
-        logger.error("db_loader: Không thể truy vấn metadata.studies từ %s: %s", mgmt_alias, e)
-        return
-
-    prefix = getattr(settings, "STUDY_DB_PREFIX", "db_study_")
-    added = 0
-
-    for code, dbname in rows:
-        if not dbname or not isinstance(dbname, str):
-            logger.warning("db_loader: Bỏ qua study '%s' do database_name rỗng/không hợp lệ.", code)
-            continue
-
-        if not dbname.startswith(prefix):
-            logger.warning(
-                "db_loader: Bỏ qua study '%s' vì database_name='%s' không bắt đầu bằng prefix '%s'.",
-                code, dbname, prefix
-            )
-            continue
-
-        if dbname in connections.databases:
-            # Đã có alias rồi -> bỏ qua (tránh ghi đè cấu hình hiện có)
-            continue
-
+    cache_key = 'study_dbs_config'
+    study_dbs = cache.get(cache_key)
+    if study_dbs is None or force_refresh:
+        study_dbs = {}
         try:
-            connections.databases[dbname] = _study_db_config(dbname)
-            added += 1
+            active_studies = Study.objects.filter(status=Study.Status.ACTIVE)
+            for study in active_studies:
+                db_alias = study.db_name
+                if db_alias not in settings.DATABASES:
+                    db_config = copy.deepcopy(settings.DATABASES['default'])
+                    db_config.update({
+                        'NAME': study.db_name,
+                        'OPTIONS': {
+                            'options': f"-c search_path={settings.STUDY_DB_SEARCH_PATH}",
+                            'sslmode': 'disable' if settings.DEBUG else 'require',
+                        },
+                    })
+                    study_dbs[db_alias] = db_config
+                    logger.debug(f"Added DB config for study {study.code}: {db_alias}")
+            cache.set(cache_key, study_dbs, settings.STUDY_DB_AUTO_REFRESH_SECONDS)
+            settings.DATABASES.update(study_dbs)
         except Exception as e:
-            logger.error("db_loader: Lỗi khi thêm cấu hình DB cho '%s': %s", dbname, e)
-
-    if added:
-        logger.info("Dynamic DB: added %d active study database(s).", added)
+            logger.error(f"Error loading study DBs: {e}")
     else:
-        logger.info("Dynamic DB: no new active study databases to add.")
+        # If cached, ensure they're in DATABASES (in case of restart)
+        settings.DATABASES.update(study_dbs)
+    return settings.DATABASES

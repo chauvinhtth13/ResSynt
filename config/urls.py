@@ -66,7 +66,7 @@ urlpatterns = [
     #path("", RedirectView.as_view(pattern_name="login", permanent=False), name="home"),
     
     # (Khi sẵn sàng) bật routes của app web:
-    path("", include("apps.web.urls"))
+    #path("", include("apps.web.urls"))
 ]
 
 # Dev: serve static & media an toàn

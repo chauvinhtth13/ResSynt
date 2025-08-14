@@ -1,17 +1,19 @@
 # settings.py for the Django project "ResSync"
-# Optimized version: Removed duplicates, improved structure, added necessary settings for multi-tenant DB setup,
-# including better handling for dynamic databases, testing, and security.
+# Optimized version with enhancements for multi-tenant DB setup, security, logging, caching, and testing.
 # Assumptions:
 # - Using PostgreSQL with separate DBs per study (multi-db tenant).
 # - Schemas in main DB: auth (Django default), metadata (custom models), public (fallback).
-# - Per-study DBs use a single schema (configurable, default 'public'; change to 'data' if needed).
-# - Added: CACHES for potential session/caching needs, EMAIL settings placeholder, TEST settings.
-# - Ensured consistency in env var handling and defaults.
-# - Middleware and routers already configured; ensured order.
-# - For production: Recommend using env vars for sensitive info.
+# - Per-study DBs use schema 'data' as per project description.
+# - Added: Redis cache, SMTP email, log rotation, custom test runner for multi-tenant testing.
+# - For production: Use .env for sensitive info (SECRET_KEY, DB credentials, email settings).
+# Updates: Added 'apps.studies' to INSTALLED_APPS; thread-local for current study; integration with db_loader.
+# Fix: Removed 'django_tenants' from INSTALLED_APPS and its router from DATABASE_ROUTERS to resolve AttributeError: 'Settings' object has no attribute 'TENANT_MODEL'.
+#      The django_tenants package requires specific settings like TENANT_MODEL, but since this project uses custom multi-DB tenancy (separate databases per study)
+#      rather than multi-schema in a single DB, it's not necessary. The custom StudyDBRouter, middleware, and db_loader handle the routing and dynamic DB loading.
 
 import os
 import sys
+import threading  # Added for thread-local
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -20,7 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent  # -> ResSync/
 load_dotenv(BASE_DIR / ".env")  # Load .env from project root
 
 # === Core settings ===
-SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-default-key")  # Use a secure key in production
+SECRET_KEY = os.getenv("SECRET_KEY")  # Must be set in .env; no default for security
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY must be set in .env")
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if os.getenv("CSRF_TRUSTED_ORIGINS") else []
@@ -43,6 +47,7 @@ INSTALLED_APPS = [
     # ResSync apps
     "apps.web",
     "apps.tenancy.apps.TenancyConfig",
+    "apps.studies",  # Added: For tenant-specific models (per-study data)
 ]
 
 # === Middleware ===
@@ -55,7 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Tenancy middleware for dynamic DB routing (inserted at top for early context setting)
+    # Tenancy middleware for dynamic DB routing and RLS
     "apps.tenancy.middleware.StudyRoutingMiddleware",
 ]
 
@@ -81,35 +86,40 @@ TEMPLATES = [
 _DB_MANAGEMENT = {
     "ENGINE": "django.db.backends.postgresql",
     "NAME": os.getenv("PGDATABASE", "db_management"),
-    "USER": os.getenv("PGUSER", "resync_app"),
-    "PASSWORD": os.getenv("PGPASSWORD", ""),
+    "USER": os.getenv("PGUSER", "ressync_admin"),
+    "PASSWORD": os.getenv("PGPASSWORD"),
     "HOST": os.getenv("PGHOST", "localhost"),
     "PORT": os.getenv("PGPORT", "5432"),
-    "OPTIONS": {"options": "-c search_path=auth,metadata,public"},  # Schemas: auth (Django), metadata (custom), public (fallback)
+    "OPTIONS": {
+        "options": "-c search_path=metadata,public",
+        "sslmode": "disable" if DEBUG else "require",  # Enforce SSL for security
+    },
     "CONN_MAX_AGE": int(os.getenv("PG_CONN_MAX_AGE", "600")),
-    "ATOMIC_REQUESTS": False,  # Dev/test: False for performance; set True for production if needed
+    "CONN_HEALTH_CHECKS": not DEBUG,  # Enable in production
+    "ATOMIC_REQUESTS": False,  # Set True in production if needed
     "AUTOCOMMIT": True,
-    "CONN_HEALTH_CHECKS": False,  # Optional: Enable for production
     "TIME_ZONE": os.getenv("DB_TIME_ZONE", "Asia/Ho_Chi_Minh"),
 }
 
 DATABASES = {
-    "default": _DB_MANAGEMENT,  # Alias 'default' points to db_management for convenience
+    "default": _DB_MANAGEMENT,  # Alias for db_management
     "db_management": _DB_MANAGEMENT,
 }
 
-# === Template for per-study DBs (dynamic loading in middleware/apps) ===
-STUDY_DB_AUTO_REFRESH_SECONDS = int(os.getenv("STUDY_DB_AUTO_REFRESH_SECONDS", "300"))  # Refresh interval for loading active DBs
-STUDY_DB_PREFIX = os.getenv("STUDY_DB_PREFIX", "db_study_")  # Prefix for study DB names
+# === Template for per-study DBs (dynamic loading in db_loader.py) ===
+STUDY_DB_AUTO_REFRESH_SECONDS = int(os.getenv("STUDY_DB_AUTO_REFRESH_SECONDS", "300"))
+STUDY_DB_PREFIX = os.getenv("STUDY_DB_PREFIX", "db_study_")
 STUDY_DB_ENGINE = "django.db.backends.postgresql"
 STUDY_DB_HOST = os.getenv("STUDY_PGHOST", _DB_MANAGEMENT["HOST"])
 STUDY_DB_PORT = os.getenv("STUDY_PGPORT", _DB_MANAGEMENT["PORT"])
 STUDY_DB_USER = os.getenv("STUDY_PGUSER", _DB_MANAGEMENT["USER"])
 STUDY_DB_PASSWORD = os.getenv("STUDY_PGPASSWORD", _DB_MANAGEMENT["PASSWORD"])
-STUDY_DB_SEARCH_PATH = os.getenv("STUDY_SEARCH_PATH", "data")  # Changed to 'data' per project description; was 'public'
+STUDY_DB_SEARCH_PATH = os.getenv("STUDY_SEARCH_PATH", "data")  # Matches project schema 'data'
 
 # === Database Routers ===
-DATABASE_ROUTERS = ["apps.tenancy.db_router.StudyDBRouter"]
+DATABASE_ROUTERS = [
+    "apps.tenancy.db_router.StudyDBRouter",  # Custom router for study DBs
+]
 
 # === i18n & Timezone ===
 LANGUAGE_CODE = "vi"
@@ -118,28 +128,30 @@ LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
 USE_L10N = True
 TIME_ZONE = "Asia/Ho_Chi_Minh"
-USE_TZ = True
+USE_TZ = True  # Required for TIMESTAMPTZ handling
 
 # === Static & Media ===
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "apps" / "web" / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-MEDIA_URL = "/media/"  # Uncommented and added default; configure storage in production
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # === Authentication ===
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
+FEATURE_PASSWORD_RESET = os.getenv("FEATURE_PASSWORD_RESET", "False").lower() in ("true", "1", "yes")
 
 # === Security ===
-SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False").lower() in ("true", "1", "yes")
-CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() in ("true", "1", "yes")
-SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+SESSION_COOKIE_SECURE = not DEBUG  # Enable in production
+CSRF_COOKIE_SECURE = not DEBUG  # Enable in production
 SECURE_SSL_REDIRECT = not DEBUG  # Redirect HTTP to HTTPS in production
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year for HSTS in production
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
-X_FRAME_OPTIONS = "DENY"  # Prevent clickjacking
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # For proxy setups
+X_FRAME_OPTIONS = "DENY"
 
 # === Defaults ===
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -155,55 +167,79 @@ LOGGING = {
         "verbose": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
     },
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "simple"},
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "level": "WARNING",  # Luôn bỏ qua DEBUG/INFO
+        },
         "file": {
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
             "filename": str(LOGS_DIR / "django.log"),
             "encoding": "utf-8",
+            "maxBytes": 5 * 1024 * 1024,  # 5MB
+            "backupCount": 5,
+            "level": "INFO",  # Không ghi DEBUG vào file
         },
     },
     "root": {
         "handlers": ["console", "file"],
-        "level": "DEBUG" if DEBUG else "INFO",
+        "level": "INFO",  # Mức tối thiểu cho root logger
     },
     "loggers": {
-        "django": {"handlers": ["console", "file"], "level": "DEBUG" if DEBUG else "INFO", "propagate": False},
-        "apps.tenancy": {"handlers": ["console", "file"], "level": "DEBUG" if DEBUG else "INFO", "propagate": False},
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "apps.tenancy": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "apps.web": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
 
-# === Custom settings ===
-TENANCY_ENABLED = os.getenv("TENANCY_ENABLED", "False").lower() in ("true", "1", "yes")
-TENANCY_STUDY_CODE_PREFIX = os.getenv("TENANCY_STUDY_CODE_PREFIX", "study_")
-
-# === Additional necessary settings ===
-# Caches: Add a simple cache for sessions or queries; use Redis/Memcached in production
+# === Caches ===
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-snowflake",
+        "BACKEND": "django_redis.cache.RedisCache" if not DEBUG else "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://localhost:6379/1") if not DEBUG else "unique-snowflake",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient" if not DEBUG else None,
+        },
     }
 }
 
-# Email: Placeholder; configure for password reset, notifications
-FEATURE_PASSWORD_RESET = False  # If enabling, add email settings below
-# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # Use smtp in production
-# EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
-# EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
-# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False").lower() in ("true", "1", "yes")
-# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-# Testing: For multi-DB, ensure tests run on test databases
+# === Email ===
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" if FEATURE_PASSWORD_RESET else "django.core.mail.backends.console.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+
+# === Custom settings ===
+TENANCY_ENABLED = os.getenv("TENANCY_ENABLED", "True").lower() in ("true", "1", "yes")
+TENANCY_STUDY_CODE_PREFIX = os.getenv("TENANCY_STUDY_CODE_PREFIX", "study_")
+
+# Thread-local for current study (used in middleware and router)
+THREAD_LOCAL = threading.local()
+
+# === Testing ===
 if "test" in sys.argv:
     DATABASES["default"]["NAME"] = "test_" + DATABASES["default"]["NAME"]
-    # Add test prefixes for study DBs if needed in custom test runner
-    # Add test prefixes for study DBs if needed in custom test runner
+    TEST_RUNNER = "apps.tenancy.test_runner.StudyTestRunner"
 
-# Password validation: Strengthen in production
+# === Password validation ===
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
