@@ -1,5 +1,6 @@
+<!-- apps\web\templates\default\login.html -->
 {% load static%}
-<!doctype html>
+<!DOCTYPE html>
 <html
   lang="en"
 >
@@ -22,20 +23,7 @@
 
     <!-- Tailwind (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-      body { font-family: "Roboto", system-ui, -apple-system, Segoe UI, Roboto,
-               Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji",
-               "Segoe UI Symbol", sans-serif; }
-      @media (prefers-reduced-motion: reduce) {
-        *:not([data-allow-motion="true"]) {
-          animation-duration: 0.001ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.001ms !important;
-          scroll-behavior: auto !important;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/default/login_style.css' %}" />
   </head>
 
   <body
@@ -97,7 +85,7 @@
         <!-- Right: form -->
         <div class="md:col-span-3 p-8 md:p-12 flex items-center justify-center">
           <form
-            id="signin-form"
+            id="loginForm"
             action="{% url 'login' %}"
             method="post"
             class="mx-auto w-full max-w-md space-y-6"
@@ -113,7 +101,7 @@
               Enter your ResSync username and password to sign in.
             </p>
 
-            {# Hiển thị lỗi chung (ví dụ sai tài khoản/mật khẩu) #}
+            {# Display non-field errors (e.g., invalid credentials) #}
             {% if form.non_field_errors %}
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-700">
                 {{ form.non_field_errors|join:" " }}
@@ -186,22 +174,10 @@
               {% endif %}
             </div>
 
-            <!-- Misc -->
-            <!-- <div class="flex items-center justify-between">
-              <a
-                href="{% url 'password_reset' %}"
-                class="text-sm text-indigo-700 underline-offset-2 hover:underline"
-              >
-                Forgot password?
-              </a>
-            </div> -->
-
-            <!-- <input type="hidden" name="next" value="{{ next|default:'' }}" /> -->
-
             <!-- Submit -->
             <button
               type="submit"
-              class="inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 disabled:opacity-70"
+              class="submit-btn inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 disabled:opacity-70"
               id="submitBtn"
               aria-live="polite"
             >
@@ -211,45 +187,21 @@
                 aria-hidden="true"
               ></span>
             </button>
+            <!-- Forgot password -->
+            <!-- <div class="flex items-center justify-between">
+              <a
+                href="{% url 'password_reset' %}"
+                class="text-sm text-indigo-700 underline-offset-2 hover:underline"
+              >
+                Forgot password?
+              </a>
+            </div> -->
           </form>
         </div>
       </section>
     </main>
 
-    <!-- Minimal JS: password toggle + submit state -->
-    <script>
-      (function () {
-        const pwd = document.getElementById("password");
-        const toggle = document.getElementById("passwordToggle");
-        const eyeOn = document.getElementById("eyeOn");
-        const eyeOff = document.getElementById("eyeOff");
-
-        if (toggle && pwd) {
-          toggle.addEventListener("click", () => {
-            const show = pwd.type === "password";
-            pwd.type = show ? "text" : "password";
-            toggle.setAttribute("aria-pressed", String(show));
-            eyeOn.classList.toggle("hidden", show);
-            eyeOff.classList.toggle("hidden", !show);
-            toggle.setAttribute("aria-label", show ? "Hide password" : "Show password");
-          });
-        }
-
-        const form = document.getElementById("signin-form");
-        const btn = document.getElementById("submitBtn");
-        const spinner = btn?.querySelector(".spinner");
-        const btnText = btn?.querySelector(".btn-text");
-
-        if (form && btn && spinner && btnText) {
-          form.addEventListener("submit", () => {
-            btn.disabled = true;
-            btn.setAttribute("aria-busy", "true");
-            spinner.classList.remove("hidden");
-            btnText.textContent = "Signing in…";
-          }, { passive: true });
-        }
-      })();
-    </script>
+    <!-- JS -->
     <script defer src="{% static 'js/default/login_script.js' %}"></script>
   </body>
 </html>

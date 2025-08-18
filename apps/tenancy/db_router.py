@@ -1,12 +1,15 @@
+import threading
 from django.conf import settings
+
+THREAD_LOCAL = threading.local()
 
 def get_current_db():
     """Get the current study DB alias from thread-local storage."""
-    return getattr(settings.THREAD_LOCAL, 'current_db', 'default')
+    return getattr(THREAD_LOCAL, 'current_db', 'default')
 
 def set_current_db(db_alias):
     """Set the current study DB alias in thread-local storage."""
-    setattr(settings.THREAD_LOCAL, 'current_db', db_alias)
+    setattr(THREAD_LOCAL, 'current_db', db_alias)
 
 class StudyDBRouter:
     management_apps = [

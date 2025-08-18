@@ -1,3 +1,4 @@
+/* web/static/js/default/login_script.js */
 class ResSyncLoginForm {
   constructor() {
     this.form = document.getElementById('loginForm');
@@ -14,7 +15,7 @@ class ResSyncLoginForm {
         this.passwordInput.type = type;
       });
     }
-    // KHÔNG preventDefault — để form POST thẳng tới Django
+    // DO NOT preventDefault — let the form POST directly to Django
     this.form.addEventListener('submit', () => {
       this.submitButton.disabled = true;
       this.submitButton.classList.add('loading');

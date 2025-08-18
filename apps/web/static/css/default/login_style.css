@@ -1,0 +1,14 @@
+/* web/static/css/default/login_style.css */
+body {
+  font-family: "Roboto", system-ui, -apple-system, "Segoe UI", Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *:not([data-allow-motion="true"]) {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

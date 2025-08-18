@@ -14,7 +14,7 @@ import copy
 import logging
 from django.conf import settings
 from django.core.cache import cache
-from apps.tenancy.models import Study
+from .models import Study
 
 logger = logging.getLogger('apps.tenancy')
 
@@ -29,19 +29,26 @@ def load_study_dbs(force_refresh=False):
         study_dbs = {}
         try:
             active_studies = Study.objects.filter(status=Study.Status.ACTIVE)
+            
+            # Remove stale study DBs from settings.DATABASES
+            for db_alias in list(settings.DATABASES.keys()):
+                if db_alias != 'default' and db_alias.startswith(settings.STUDY_DB_PREFIX):
+                    del settings.DATABASES[db_alias]
+                    logger.debug(f"Removed stale DB config: {db_alias}")
+            
             for study in active_studies:
                 db_alias = study.db_name
-                if db_alias not in settings.DATABASES:
-                    db_config = copy.deepcopy(settings.DATABASES['default'])
-                    db_config.update({
-                        'NAME': study.db_name,
-                        'OPTIONS': {
-                            'options': f"-c search_path={settings.STUDY_DB_SEARCH_PATH}",
-                            'sslmode': 'disable' if settings.DEBUG else 'require',
-                        },
-                    })
-                    study_dbs[db_alias] = db_config
-                    logger.debug(f"Added DB config for study {study.code}: {db_alias}")
+                db_config = copy.deepcopy(settings.DATABASES['default'])
+                db_config.update({
+                    'NAME': study.db_name,
+                    'OPTIONS': {
+                        'options': f"-c search_path={settings.STUDY_DB_SEARCH_PATH}",
+                        'sslmode': 'disable' if settings.DEBUG else 'require',
+                    },
+                })
+                study_dbs[db_alias] = db_config
+                logger.debug(f"Added DB config for study {study.code}: {db_alias}")
+            
             cache.set(cache_key, study_dbs, settings.STUDY_DB_AUTO_REFRESH_SECONDS)
             settings.DATABASES.update(study_dbs)
         except Exception as e:

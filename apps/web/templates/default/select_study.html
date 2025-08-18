@@ -1,169 +1,139 @@
+<!-- apps\web\templates\default\select_study.html -->
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cổng Thông tin Nghiên cứu - Dashboard</title>
-    
+    <title>ResSync- Professional Study Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uW/rJ0S4ySgM8G8fWk6u5a8t8k8l7v7v7u6v7v7u6l7v7v7u6u7w7v7u7v7u6" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
-    <style>
-        :root {
-            --primary-color: #4f46e5; /* indigo-600 */
-            --background-color: #f8fafc; /* slate-50 */
-            --sidebar-width: 320px;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-color);
-        }
-        .search-sidebar {
-            width: var(--sidebar-width);
-            background-color: #ffffff;
-            border-right: 1px solid #e2e8f0;
-            flex-shrink: 0;
-        }
-        .results-area {
-            width: calc(100% - var(--sidebar-width));
-        }
-        .result-card {
-            opacity: 0;
-            transform: translateY(10px);
-            animation: slide-up-fade-in 0.3s ease-out forwards;
-            transition: all 0.2s ease-in-out;
-            background-color: #ffffff;
-        }
-        .result-card:hover {
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
-        }
-        @keyframes slide-up-fade-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/default/select_study.css' %}">
 </head>
+<body class="min-h-screen">
 
-<body class="flex flex-col min-h-screen text-gray-800 antialiased">
-
-    <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <a href="/" class="text-2xl font-extrabold text-gray-900 tracking-tight">
-                    <i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i> Cổng Nghiên cứu
-                </a>
-                
-                <nav id="language-switcher-container" class="relative">
-                    <button id="language-switcher-button" type="button" class="inline-flex items-center gap-x-2 text-sm font-semibold text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">
-                        <i class="fa-solid fa-globe"></i>
-                        <span id="current-language-text">Tiếng Việt</span>
-                        <i class="fa-solid fa-chevron-down text-xs"></i>
-                    </button>
-                    <div id="language-switcher-menu" class="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition ease-out duration-100 transform opacity-0 scale-95 invisible" role="menu">
-                        <div class="py-1" role="none">
-                            <a href="#" class="language-option text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" data-lang="en">English</a>
-                            <a href="#" class="language-option text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" data-lang="vi">Tiếng Việt</a>
-                        </div>
-                    </div>
-                </nav>
-            </div>
+    <!-- Header Section -->
+    <header class="glass-morphism py-4 px-8 flex justify-between items-center sticky top-0 z-50 border-b border-gray-200">
+        <div class="items-center">
+            <img
+              src="{% static 'images/default/logo.webp' %}"
+              alt="ResSync logo"
+              class="h-10 w-auto"
+              loading="lazy"
+              decoding="async"
+            />
         </div>
+
+        <nav class="flex items-center space-x-4">
+            <!-- Language Selection -->
+            <div class="relative dropdown">
+                <button class="glass-morphism text-gray-700 font-medium py-3 px-4 rounded-xl flex items-center transition-all duration-300 hover:bg-gray-100">
+                    <span id="current-language">EN</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 ml-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+                <div class="dropdown-menu language-menu rounded-xl mt-2 right-0 overflow-hidden">
+                    <a href="#" data-lang="en" class="flex items-center">
+                        <span class="mr-2">EN</span> English
+                    </a>
+                    <a href="#" data-lang="vi" class="flex items-center">
+                        <span class="mr-2">VN</span> Vietnamese
+                    </a>
+                </div>
+            </div>
+
+            <!-- User Profile -->
+            <div class="relative dropdown">
+                <button class="btn-primary text-white font-medium py-3 px-6 rounded-xl flex items-center">
+                    <span id="username-display"> {% trans 'Welcome' %}, {{ user.get_full_name|default:user.username }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 ml-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+                <div class="dropdown-menu user-menu rounded-xl mt-2 right-0 overflow-hidden">
+                    <a href="#" id="change-password-link" class="flex items-center">
+                        Change Password
+                    </a>
+                    <div class="border-t border-gray-200 my-2"></div>
+                    <a href="#" id="logout-link" class="flex items-center">
+                        Sign Out
+                    </a>
+                </div>
+            </div>
+        </nav>
     </header>
 
-    <main class="flex-grow w-full flex flex-col md:flex-row">
-        <aside class="search-sidebar p-6 hidden md:block">
-            <h2 class="text-xl font-extrabold text-gray-900 mb-6">Tìm kiếm</h2>
-            
-            <form class="relative mb-6" role="search">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
-                </div>
-                <input id="search-code" type="text" placeholder="Tìm kiếm mã số, tên..." class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm" aria-label="Tìm kiếm theo mã số đề tài" />
-            </form>
+    <!-- Main Content -->
+    <main class="container mx-auto mt-8 p-8 max-w-7xl">
+        <!-- Page Title -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Study Management Dashboard</h1>
+        </div>
 
-            <div class="space-y-4">
-                <h3 class="text-sm font-semibold text-gray-700 mb-2">Bộ lọc nâng cao</h3>
+        <!-- Search Section -->
+        <section class="floating-card rounded-2xl p-8 mb-8">
+            <div class="flex flex-col md:flex-row gap-6 items-end">
+                <div class="flex-1">
+                    <label for="study-id-search" class="block text-gray-700 text-sm font-semibold mb-3">
+                        Search Studies Code
+                    </label>
+                    <div class="search-container">
+                        <div class="relative flex rounded-xl overflow-hidden bg-white border border-gray-300">
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text"
+                                id="study-id-search"
+                                placeholder="Enter Study Code or Study Name..."
+                                class="flex-1 py-4 pl-12 pr-4 bg-transparent text-gray-700 focus:outline-none focus:ring-0">
+                            <button id="search-button"
+                                    class="inline-flex items-center justify-center btn-primary text-white font-semibold py-4 px-8 hover:shadow-lg transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Studies Table -->
+        <section class="floating-card rounded-2xl overflow-hidden">
+            <div class="px-8 py-6 border-b border-gray-200 flex items-center justify-between">
                 <div>
-                    <label for="year-filter" class="block text-sm font-medium text-gray-700 mb-1">Năm:</label>
-                    <select id="year-filter" class="w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md">
-                        <option>Tất cả</option>
-                        <option>2025</option>
-                        <option>2024</option>
-                        <option>2023</option>
-                    </select>
+                    <h2 class="text-xl font-bold text-gray-800">Research Studies</h2>
                 </div>
             </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Study Code
+                            </th>
+                            <th class="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Study Name
+                            </th>
+                            <th class="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Last Updated
+                            </th>
+                            <th class="px-8 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="study-table-body" class="divide-y divide-gray-200">
 
-            <div class="mt-8">
-                 <button id="search-button" type="submit" class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 transition-all duration-200">
-                    <span class="search-text">Áp dụng</span>
-                    <i class="fa-solid fa-spinner fa-spin-pulse hidden search-spinner"></i>
-                </button>
+                    </tbody>
+                </table>
             </div>
-        </aside>
-
-        <div class="flex-grow p-6 md:p-8 results-area">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Kết quả tìm kiếm</h2>
-                <div class="text-sm text-gray-500 hidden md:block">Hiển thị 1-10 trên 150 kết quả</div>
-            </div>
-
-            <section id="results-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                </section>
-        </div>
+        </section>
     </main>
-
-    <footer class="border-t border-gray-200 mt-auto">
-        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-gray-500">
-            <p>&copy; 2025 Cổng Thông tin Nghiên cứu. Mọi quyền được bảo lưu.</p>
-        </div>
-    </footer>
-
-
-    <template id="result-card-template">
-        <article class="result-card p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-microscope text-indigo-600"></i>
-                    <p class="text-sm font-semibold text-gray-500 result-id">Mã số: CT_001</p>
-                </div>
-                <span class="result-status inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <i class="fa-solid fa-check mr-1 text-xs"></i> Đã hoàn thành
-                </span>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 result-title leading-snug">Nghiên cứu về Ứng dụng AI trong Năng lượng Tái tạo</h3>
-            <p class="text-sm text-gray-500 mt-2 result-researcher">
-                <i class="fa-solid fa-user-tie mr-1 text-indigo-400"></i> Chủ nhiệm: TS. Nguyễn Thị A
-            </p>
-            <div class="mt-4 flex justify-end">
-                <a href="#" class="result-link text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-                    Xem chi tiết <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
-                </a>
-            </div>
-        </article>
-    </template>
-
-    <template id="skeleton-loader-template">
-        <div class="bg-white p-6 rounded-xl shadow-sm animate-pulse border border-gray-100">
-            <div class="flex items-center justify-between mb-4">
-                <div class="h-4 bg-gray-200 rounded w-24"></div>
-                <div class="h-5 bg-gray-200 rounded-full w-24"></div>
-            </div>
-            <div class="h-6 bg-gray-300 rounded w-3/4 mb-3"></div>
-            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div class="h-5 bg-gray-200 rounded-full w-28 ml-auto mt-4"></div>
-        </div>
-    </template>
-    
-    <template id="empty-state-template">
-        <div class="text-center py-16 col-span-full" aria-live="polite">
-            <i class="fa-solid fa-box-open text-gray-400 text-5xl"></i>
-            <h3 class="mt-4 text-xl font-medium text-gray-900">Không tìm thấy kết quả</h3>
-            <p class="mt-2 text-sm text-gray-500">Vui lòng thử lại với mã số khác hoặc điều chỉnh năm.</p>
-        </div>
-    </template>
-
 </body>
 </html>

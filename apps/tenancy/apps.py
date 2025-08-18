@@ -1,10 +1,11 @@
 # apps/tenancy/apps.py
 from django.apps import AppConfig
+from django.utils.translation import gettext_lazy as _
 
 class TenancyConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.tenancy'
-    verbose_name = "Tenancy Management"
+    verbose_name = _("Tenancy Management")
 
     def ready(self):
         # Removed load_study_dbs() to avoid DB access during app init.
