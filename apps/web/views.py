@@ -2,10 +2,14 @@
 import logging
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+from django.utils.translation import gettext as _
 from django.db.models import Q
-from apps.tenancy.models import StudyMembership, Study
+from apps.tenancy.models import StudyMembership, StudySite
+from django.http import JsonResponse
 
 logger = logging.getLogger('apps.web')
+
 
 @login_required
 def select_study(request):

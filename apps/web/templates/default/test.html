@@ -1,4 +1,4 @@
-{% load static i18n%}
+{% load static i18n %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}" class="bg-slate-50 antialiased">
 <head>
@@ -11,12 +11,33 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN with light config for font + easing util -->
+  <script>
+    window.tailwind = {
+      config: {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica", "Arial", "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"] },
+            transitionTimingFunction: {
+              'out-quad': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            }
+          }
+        }
+      }
+    }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- App base styles -->
   <style>
+    /* Reduce motion for users who prefer it */
     @media (prefers-reduced-motion: reduce) {
-      .transition, .transition-all, [class*="transition-"] { transition: none !important; }
+      .transition-all, .transition { transition: none !important; }
     }
+    /* Hide elements when using [hidden] for a11y */
+    [hidden] { display: none !important; }
+    /* Smooth focus ring */
     :focus-visible { outline: 2px solid rgb(59 130 246); outline-offset: 2px; }
   </style>
 </head>
@@ -68,7 +89,10 @@
 
   <!-- Main -->
   <main class="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-    
+    <div class="mb-10 text-center">
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">{% trans 'Study Management Dashboard' %}</h1>
+    </div>
+
     {% if error %}
       <div role="alert" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
         {{ error }}
@@ -76,28 +100,26 @@
     {% endif %}
 
     <!-- Search Section -->
-    <section role="search" aria-labelledby="study-search-title"
-    class="mb-10">
-        <div class="mx-auto w-full max-w-4xl">
-            <div class="relative">
-                <div class="flex items-center rounded-full border border-slate-200 bg-white shadow-sm transition focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500">
-                    <!-- Icon -->
-                    <span class="pl-4 text-gray-400" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    </span>
-
-
-                    <!-- Input -->
-                    <input id="study-id-search" type="search" autocomplete="off" enterkeyhint="search" placeholder="{% trans 'Search by Study Code or Name…' %}" class="w-full bg-white px-3 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none rounded-full" />
-                </div>
-            </div>
+    <section class="mb-8 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 lg:p-8">
+      <div class="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div class="w-full">
+          <label for="study-id-search" class="mb-2 block text-sm font-semibold text-gray-700">{% trans 'Search Study' %}</label>
+          <div class="relative flex rounded-xl border border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
+            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input id="study-id-search" type="text" inputmode="search" autocomplete="off" placeholder="{% trans 'Enter Study Code or Study Name…' %}" class="w-full bg-transparent py-3 pl-10 pr-12 text-gray-700 placeholder:text-gray-400 focus:outline-none" />
+            <button id="clear-search" type="button" class="absolute right-28 top-1/2 -translate-y-1/2 hidden rounded-md p-1 text-gray-400 hover:text-gray-600" aria-label="{% trans 'Clear search' %}">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 11-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd"/></svg>
+            </button>
+            <button id="search-button" type="button" class="ml-auto inline-flex items-center justify-center rounded-r-xl bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700">{% trans 'Search' %}</button>
+          </div>
         </div>
+      </div>
     </section>
 
     <!-- Table -->
-    <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <div class="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-4">
         <h2 class="text-lg sm:text-xl font-bold">{% trans 'Research Studies' %}</h2>
       </div>
@@ -106,28 +128,23 @@
         <table class="w-full text-sm">
           <thead class="bg-slate-50 text-gray-600">
             <tr>
-              <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs uppercase tracking-wider whitespace-nowrap font-bold">{% trans 'Study Code' %}</th>
-              <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs uppercase tracking-wider whitespace-nowrap font-bold">{% trans 'Study Name' %}</th>
-              <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs uppercase tracking-wider whitespace-nowrap font-bold">{% trans 'Last Updated' %}</th>
-              <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs uppercase tracking-wider whitespace-nowrap font-bold">{% trans 'Actions' %}</th>
+              <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs font-semibold uppercase tracking-wider">{% trans 'Study Code' %}</th>
+              <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs font-semibold uppercase tracking-wider">{% trans 'Study Name' %}</th>
+              <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs font-semibold uppercase tracking-wider">{% trans 'Last Updated' %}</th>
+              <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-right text-xs font-semibold uppercase tracking-wider">{% trans 'Actions' %}</th>
             </tr>
           </thead>
           <tbody id="studies-body">
             {% for membership in studies %}
               <tr class="border-b border-slate-200 last:border-0" data-row>
-                <td class="px-4 sm:px-6 lg:px-8 py-3 font-semibold" data-col="code">{{ membership.study.code }}</td>
+                <td class="px-4 sm:px-6 lg:px-8 py-3" data-col="code">{{ membership.study.code }}</td>
                 <td class="px-4 sm:px-6 lg:px-8 py-3" data-col="name">{{ membership.study.name }}</td>
                 <td class="px-4 sm:px-6 lg:px-8 py-3 whitespace-nowrap" data-col="updated">{{ membership.study.updated_at|date:"d-m-Y H:i:s" }}</td>
                 <td class="px-4 sm:px-6 lg:px-8 py-3 text-right">
                   <form method="post" action="">
                     {% csrf_token %}
                     <input type="hidden" name="study_id" value="{{ membership.study.id }}" />
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                      {% trans 'Open Study' %}
-                    </button>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-3 py-1.5 font-semibold text-white transition hover:bg-blue-700">{% trans 'Go to Study' %}</button>
                   </form>
                 </td>
               </tr>
@@ -185,6 +202,7 @@
           if (!open) {
             menu.removeAttribute('hidden');
             trigger.setAttribute('aria-expanded', 'true');
+            // Focus first focusable item
             const first = menu.querySelector('a,button,[tabindex]:not([tabindex="-1"])');
             first?.focus({ preventScroll: true });
           }
@@ -235,62 +253,41 @@
       });
     })();
 
-    // --- Debounced client-side table search (buttonless) ---
+    // --- Debounced client-side table search ---
     (function studySearch(){
       const input = document.getElementById('study-id-search');
+      const btn = document.getElementById('search-button');
       const clearBtn = document.getElementById('clear-search');
       const tbody = document.getElementById('studies-body');
-      if (!input || !tbody) return;
+      if (!input || !btn || !tbody) return;
 
       const rows = Array.from(tbody.querySelectorAll('[data-row]'));
       const emptyRow = tbody.querySelector('[data-empty-row]');
 
       function applyFilter(q) {
-        const query = (q || '').trim().toLowerCase();
+        const query = q.trim().toLowerCase();
         let visible = 0;
         rows.forEach(row => {
-          const code = row.querySelector('[data-col="code"]')?.textContent.toLowerCase() || '';
-          const name = row.querySelector('[data-col="name"]')?.textContent.toLowerCase() || '';
+          const code = row.querySelector('[data-col="code"]').textContent.toLowerCase();
+          const name = row.querySelector('[data-col="name"]').textContent.toLowerCase();
           const match = !query || code.includes(query) || name.includes(query);
           row.toggleAttribute('hidden', !match);
           if (match) visible++;
         });
         if (emptyRow) emptyRow.toggleAttribute('hidden', visible !== 0);
-        clearBtn?.classList.toggle('hidden', query.length === 0);
+        clearBtn.classList.toggle('hidden', query.length === 0);
       }
 
-      // Live filter (debounced)
-      let t = 0;
-      input.addEventListener('input', () => {
-        clearTimeout(t);
-        t = setTimeout(() => applyFilter(input.value), 120);
-      });
+      let timer = null;
+      function debouncedApply() {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => applyFilter(input.value), 120);
+      }
 
-      // Immediate on Enter; Esc clears
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') applyFilter(input.value);
-        if (e.key === 'Escape') { input.value = ''; applyFilter(''); }
-      });
-
-      // Clear button
-      clearBtn?.addEventListener('click', () => {
-        input.value = '';
-        applyFilter('');
-        input.focus();
-      });
-
-      // Keyboard shortcut: Cmd/Ctrl + K focuses input
-      document.addEventListener('keydown', (e) => {
-        const mod = e.ctrlKey || e.metaKey;
-        if (mod && (e.key === 'k' || e.key === 'K')) {
-          e.preventDefault();
-          input.focus();
-          input.select();
-        }
-      });
-
-      // Init
-      applyFilter(input.value);
+      btn.addEventListener('click', () => applyFilter(input.value));
+      input.addEventListener('input', debouncedApply);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyFilter(input.value); });
+      clearBtn.addEventListener('click', () => { input.value = ''; applyFilter(''); input.focus(); });
     })();
   </script>
 </body>

@@ -1,16 +1,3 @@
-# settings.py for the Django project "ResSync"
-# Optimized version with enhancements for multi-tenant DB setup, security, logging, caching, and testing.
-# Assumptions:
-# - Using PostgreSQL with separate DBs per study (multi-db tenant).
-# - Schemas in main DB: auth (Django default), metadata (custom models), public (fallback).
-# - Per-study DBs use schema 'data' as per project description.
-# - Added: Redis cache, SMTP email, log rotation, custom test runner for multi-tenant testing.
-# - For production: Use .env for sensitive info (SECRET_KEY, DB credentials, email settings).
-# Updates: Added 'apps.studies' to INSTALLED_APPS; thread-local for current study; integration with db_loader.
-# Fix: Removed 'django_tenants' from INSTALLED_APPS and its router from DATABASE_ROUTERS to resolve AttributeError: 'Settings' object has no attribute 'TENANT_MODEL'.
-#      The django_tenants package requires specific settings like TENANT_MODEL, but since this project uses custom multi-DB tenancy (separate databases per study)
-#      rather than multi-schema in a single DB, it's not necessary. The custom StudyDBRouter, middleware, and db_loader handle the routing and dynamic DB loading.
-
 import os
 import sys
 import threading  # Added for thread-local
@@ -44,6 +31,8 @@ INSTALLED_APPS = [
     # Third-party
     "django_bootstrap5",
     "chartjs",
+    'rosetta',
+    'parler',
     # ResSync apps
     "apps.web",
     "apps.tenancy.apps.TenancyConfig",
@@ -126,9 +115,19 @@ LANGUAGE_CODE = "vi"
 LANGUAGES = [("vi", "Vietnamese"), ("en", "English")]
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
-USE_L10N = True
 TIME_ZONE = "Asia/Ho_Chi_Minh"
 USE_TZ = True  # Required for TIMESTAMPTZ handling
+
+PARLER_LANGUAGES = {
+    None: (
+        {'code': 'en',}, # English
+        {'code': 'vi',}, # Vietnamese
+    ),
+    'default': {
+        'fallbacks': ['vi'],
+        'hide_untranslated': False,
+    }
+}
 
 # === Static & Media ===
 STATIC_URL = "/static/"

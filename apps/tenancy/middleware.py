@@ -23,23 +23,22 @@ class StudyRoutingMiddleware:
         # Ensure study DBs are loaded (cached, so efficient)
         load_study_dbs()
 
-        # Exclude admin paths to prevent redirecting admin dashboard access
+        # Exclude specific paths to prevent redirecting (e.g., admin, login, select-study)
         excluded_paths = ('/select-study/', '/secure-auth/', '/admin/')
-        if request.user.is_authenticated and not request.path.startswith(excluded_paths):
+        if request.user.is_authenticated and not any(request.path.startswith(p) for p in excluded_paths):
             current_study_id = request.session.get('current_study')
 
             if current_study_id:
                 try:
-                    membership = StudyMembership.objects.select_related('study', 'role').get(
+                    membership = StudyMembership.objects.select_related('study', 'role').prefetch_related('role__role_permissions__permission').get(
                         user=request.user, study__id=current_study_id
                     )
                     setattr(request, 'study', membership.study)
                     setattr(request, 'role', membership.role)
 
-                    # Load permissions for the role in this study
-                    permissions = Permission.objects.filter(
-                        role_permissions__role=membership.role
-                    ).values_list('code', flat=True)
+                    # Load permissions for the role (prefetched for efficiency)
+                    permissions = [rp.permission.code for rp in membership.role.role_permissions.all()]  # type: ignore[attr-defined]
+
                     setattr(request, 'study_permissions', set(permissions))
 
                     # Set thread-local for DB routing
@@ -52,8 +51,7 @@ class StudyRoutingMiddleware:
 
             if not current_study_id:
                 # If no current study, check if user has any memberships
-                memberships = StudyMembership.objects.filter(user=request.user)
-                if memberships.exists():
+                if StudyMembership.objects.filter(user=request.user).exists():
                     logger.info(f"Redirecting user {request.user.pk} to select study.")
                     return redirect('select_study')
                 else:
@@ -63,7 +61,7 @@ class StudyRoutingMiddleware:
 
         response = self.get_response(request)
 
-        # Clean up thread-local after response
+        # Clean up thread-local after response to prevent leakage
         set_current_db('default')
 
         return response

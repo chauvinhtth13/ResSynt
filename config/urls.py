@@ -3,11 +3,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
+
 from apps.web.login import UsernameOrEmailAuthenticationForm
-from apps.web.views import select_study  # Import the new view
+from apps.web.views import select_study # Import the new view
 
 urlpatterns = [
     # i18n (language switch)
+    path('rosetta/', include('rosetta.urls')),
+
     path("i18n/", include("django.conf.urls.i18n")),
 
     # Django Admin (changed default path for security)
@@ -32,7 +35,7 @@ urlpatterns = [
     path(
         "secure-auth/password_reset/",
         RedirectView.as_view(pattern_name="login", permanent=False),
-        name="password_change",
+        name="password_reset",
     ),
 
     # Select study page
