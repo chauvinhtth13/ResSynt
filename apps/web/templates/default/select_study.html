@@ -1,60 +1,57 @@
-{% load static i18n%}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}" class="bg-slate-50 antialiased">
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
 <head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ResSync — Professional Study Management</title>
-
-  <!-- Performance: preconnect + font display -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% trans 'ResSync — Select Study' %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <style>
-    @media (prefers-reduced-motion: reduce) {
-      .transition, .transition-all, [class*="transition-"] { transition: none !important; }
-    }
-    :focus-visible { outline: 2px solid rgb(59 130 246); outline-offset: 2px; }
-  </style>
+  <link rel="stylesheet" href="{% static 'css/default/select_study.css' %}">
 </head>
 <body class="min-h-screen text-gray-800 font-sans">
-  {% get_current_language as LANGUAGE_CODE %}
-
-  <!-- Header -->
   <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between">
         <a href="/" class="shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded">
-          <img src="{% static 'images/default/logo.webp' %}" alt="ResSync logo" class="h-10 w-auto" loading="lazy" decoding="async" />
+          <img src="{% static 'images/default/logo.webp' %}" alt="{% trans 'ResSync logo' %}" class="h-10 w-auto" loading="lazy" decoding="async">
         </a>
-
         <nav class="flex items-center gap-3">
-          <!-- Language dropdown -->
           <div class="relative" data-dropdown>
             <button type="button" data-dropdown-trigger aria-haspopup="menu" aria-expanded="false" aria-controls="lang-menu" class="flex items-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-              <span id="current-language" class="tracking-wide">{{ LANGUAGE_CODE|upper }}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="ml-2 h-4 w-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+              <span id="current-language" class="tracking-wide">{{ LANGUAGE_CODE|lower|default:'vi' }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="ml-2 h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+              </svg>
             </button>
-            <div id="lang-menu" role="menu" aria-label="Select language" data-dropdown-menu hidden class="absolute right-0 mt-2 min-w-[12rem] origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg transition">
-              <a href="#" role="menuitem" data-lang="en" class="flex items-center rounded-lg px-3 py-2 text-sm hover:bg-slate-100">
-                <span class="w-8 text-left font-semibold">EN</span><span>English</span>
-              </a>
-              <a href="#" role="menuitem" data-lang="vi" class="flex items-center rounded-lg px-3 py-2 text-sm hover:bg-slate-100">
-                <span class="w-8 text-left font-semibold">VI</span><span>Vietnamese</span>
-              </a>
+            <div id="lang-menu" role="menu" aria-label="{% trans 'Select language' %}" data-dropdown-menu hidden class="absolute right-0 mt-2 min-w-[12rem] origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg transition">
+              <form method="post" action="{% url 'set_language' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" name="language" value="vi" role="menuitem" class="flex w-full items-center rounded-lg px-3 py-2 text-sm hover:bg-slate-100 {% if LANGUAGE_CODE == 'vi' %}font-semibold bg-slate-100{% endif %}">
+                  <span class="w-8 text-left font-semibold">vi</span><span>{% trans 'Vietnamese' %}</span>
+                </button>
+                <button type="submit" name="language" value="en" role="menuitem" class="flex w-full items-center rounded-lg px-3 py-2 text-sm hover:bg-slate-100 {% if LANGUAGE_CODE == 'en' %}font-semibold bg-slate-100{% endif %}">
+                  <span class="w-8 text-left font-semibold">en</span><span>{% trans 'English' %}</span>
+                </button>
+              </form>
             </div>
           </div>
-
-          <!-- User dropdown -->
           <div class="relative" data-dropdown>
             <button type="button" data-dropdown-trigger aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu" class="flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
               <span id="username-display">{% trans 'Welcome' %}, {{ user.get_full_name|default:user.username }}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="ml-2 h-4 w-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="ml-2 h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+              </svg>
             </button>
-            <div id="user-menu" role="menu" aria-label="User menu" data-dropdown-menu hidden class="absolute right-0 mt-2 w-48 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg transition">
+            <div id="user-menu" role="menu" aria-label="{% trans 'User menu' %}" data-dropdown-menu hidden class="absolute right-0 mt-2 w-48 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg transition">
+              {% if is_superuser %}
+              <a href="{% url 'admin:index' %}" role="menuitem" class="block rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-slate-100">{% trans 'Go to Admin' %}</a>
+              {% endif %}
               <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button type="submit" role="menuitem" class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-slate-100">{% trans 'Sign Out' %}</button>
@@ -65,43 +62,31 @@
       </div>
     </div>
   </header>
-
-  <!-- Main -->
   <main class="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-    
     {% if error %}
       <div role="alert" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
         {{ error }}
       </div>
     {% endif %}
-
-    <!-- Search Section -->
-    <section role="search" aria-labelledby="study-search-title"
-    class="mb-10">
-        <div class="mx-auto w-full max-w-4xl">
-            <div class="relative">
-                <div class="flex items-center rounded-full border border-slate-200 bg-white shadow-sm transition focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500">
-                    <!-- Icon -->
-                    <span class="pl-4 text-gray-400" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    </span>
-
-
-                    <!-- Input -->
-                    <input id="study-id-search" type="search" autocomplete="off" enterkeyhint="search" placeholder="{% trans 'Search by Study Code or Name…' %}" class="w-full bg-white px-3 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none rounded-full" />
-                </div>
-            </div>
+    <section role="search" aria-labelledby="study-search-title" class="mb-10">
+      <div class="mx-auto w-full max-w-4xl">
+        <h2 id="study-search-title" class="sr-only">{% trans 'Search Studies' %}</h2>
+        <div class="relative">
+          <div class="flex items-center rounded-full border border-slate-200 bg-white shadow-sm transition focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500">
+            <span class="pl-4 text-gray-400" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </span>
+            <input id="study-id-search" type="search" autocomplete="off" enterkeyhint="search" placeholder="{% trans 'Search by Study Code or Name…' %}" class="w-full bg-white px-3 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none rounded-full">
+          </div>
         </div>
+      </div>
     </section>
-
-    <!-- Table -->
     <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div class="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-4">
         <h2 class="text-lg sm:text-xl font-bold">{% trans 'Research Studies' %}</h2>
       </div>
-
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-slate-50 text-gray-600">
@@ -114,184 +99,33 @@
           </thead>
           <tbody id="studies-body">
             {% for membership in studies %}
-              <tr class="border-b border-slate-200 last:border-0" data-row>
-                <td class="px-4 sm:px-6 lg:px-8 py-3 font-semibold" data-col="code">{{ membership.study.code }}</td>
-                <td class="px-4 sm:px-6 lg:px-8 py-3" data-col="name">{{ membership.study.name }}</td>
-                <td class="px-4 sm:px-6 lg:px-8 py-3 whitespace-nowrap" data-col="updated">{{ membership.study.updated_at|date:"d-m-Y H:i:s" }}</td>
-                <td class="px-4 sm:px-6 lg:px-8 py-3 text-right">
-                  <form method="post" action="">
-                    {% csrf_token %}
-                    <input type="hidden" name="study_id" value="{{ membership.study.id }}" />
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                      {% trans 'Open Study' %}
-                    </button>
-                  </form>
-                </td>
-              </tr>
+            <tr class="border-b border-slate-200 last:border-0" data-row>
+              <td class="px-4 sm:px-6 lg:px-8 py-3 font-semibold" data-col="code">{{ membership.study.code }}</td>
+              <td class="px-4 sm:px-6 lg:px-8 py-3" data-col="name">{{ membership.study.name|default_if_none:_('(No name)') }}</td>
+              <td class="px-4 sm:px-6 lg:px-8 py-3 whitespace-nowrap" data-col="updated">{{ membership.study.updated_at|date:"d-m-Y H:i:s" }}</td>
+              <td class="px-4 sm:px-6 lg:px-8 py-3 text-right">
+                <form method="post" action="{% url 'select_study' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="study_id" value="{{ membership.study.id }}">
+                  <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                    {% trans 'Open Study' %}
+                  </button>
+                </form>
+              </td>
+            </tr>
             {% empty %}
-              <tr id="no-results-row" data-empty-row>
-                <td colspan="4" class="px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-500">{% trans 'No studies found.' %}</td>
-              </tr>
+            <tr id="no-results-row" data-empty-row>
+              <td colspan="4" class="px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-500">{% trans 'No studies found.' %}</td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </section>
   </main>
-
-  <!-- Scripts -->
-  <script>
-    // --- CSRF helper (Django) ---
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-      return null;
-    }
-
-    // --- Dropdowns (accessible, single controller for all) ---
-    (function dropdowns(){
-      const DROPDOWN_SELECTOR = '[data-dropdown]';
-      const TRIGGER_SELECTOR = '[data-dropdown-trigger]';
-      const MENU_SELECTOR = '[data-dropdown-menu]';
-
-      function closeAll(except) {
-        document.querySelectorAll(DROPDOWN_SELECTOR).forEach(d => {
-          const menu = d.querySelector(MENU_SELECTOR);
-          const btn = d.querySelector(TRIGGER_SELECTOR);
-          if (!menu) return;
-          if (except && except === menu) return; // keep this one open
-          if (!menu.hasAttribute('hidden')) {
-            menu.setAttribute('hidden', '');
-            if (btn) btn.setAttribute('aria-expanded', 'false');
-          }
-        });
-      }
-
-      // Toggle on click
-      document.addEventListener('click', (e) => {
-        const trigger = e.target.closest(TRIGGER_SELECTOR);
-        const inDropdown = e.target.closest(DROPDOWN_SELECTOR);
-
-        if (trigger) {
-          const root = trigger.closest(DROPDOWN_SELECTOR);
-          const menu = root?.querySelector(MENU_SELECTOR);
-          if (!menu) return;
-          const open = !menu.hasAttribute('hidden');
-          closeAll();
-          if (!open) {
-            menu.removeAttribute('hidden');
-            trigger.setAttribute('aria-expanded', 'true');
-            const first = menu.querySelector('a,button,[tabindex]:not([tabindex="-1"])');
-            first?.focus({ preventScroll: true });
-          }
-          return;
-        }
-
-        // Clicked outside any dropdown -> close all
-        if (!inDropdown) closeAll();
-      });
-
-      // Close with Escape
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeAll();
-      });
-    })();
-
-    // --- Language switcher ---
-    (function languageSwitcher(){
-      const currentLanguageSpan = document.getElementById('current-language');
-      const langMenu = document.getElementById('lang-menu');
-      if (!langMenu || !currentLanguageSpan) return;
-
-      langMenu.querySelectorAll('[data-lang]').forEach(link => {
-        link.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const selectedLangValue = link.getAttribute('data-lang');
-          const selectedLangText = link.querySelector('span.font-semibold')?.textContent || selectedLangValue.toUpperCase();
-          currentLanguageSpan.textContent = selectedLangText;
-
-          try {
-            const res = await fetch('/i18n/setlang/', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCookie('csrftoken') || ''
-              },
-              body: new URLSearchParams({ language: selectedLangValue }).toString()
-            });
-            if (res.ok) {
-              window.location.reload();
-            } else {
-              console.error('Failed to change language', await res.text());
-            }
-          } catch (err) {
-            console.error('Error changing language:', err);
-          }
-        });
-      });
-    })();
-
-    // --- Debounced client-side table search (buttonless) ---
-    (function studySearch(){
-      const input = document.getElementById('study-id-search');
-      const clearBtn = document.getElementById('clear-search');
-      const tbody = document.getElementById('studies-body');
-      if (!input || !tbody) return;
-
-      const rows = Array.from(tbody.querySelectorAll('[data-row]'));
-      const emptyRow = tbody.querySelector('[data-empty-row]');
-
-      function applyFilter(q) {
-        const query = (q || '').trim().toLowerCase();
-        let visible = 0;
-        rows.forEach(row => {
-          const code = row.querySelector('[data-col="code"]')?.textContent.toLowerCase() || '';
-          const name = row.querySelector('[data-col="name"]')?.textContent.toLowerCase() || '';
-          const match = !query || code.includes(query) || name.includes(query);
-          row.toggleAttribute('hidden', !match);
-          if (match) visible++;
-        });
-        if (emptyRow) emptyRow.toggleAttribute('hidden', visible !== 0);
-        clearBtn?.classList.toggle('hidden', query.length === 0);
-      }
-
-      // Live filter (debounced)
-      let t = 0;
-      input.addEventListener('input', () => {
-        clearTimeout(t);
-        t = setTimeout(() => applyFilter(input.value), 120);
-      });
-
-      // Immediate on Enter; Esc clears
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') applyFilter(input.value);
-        if (e.key === 'Escape') { input.value = ''; applyFilter(''); }
-      });
-
-      // Clear button
-      clearBtn?.addEventListener('click', () => {
-        input.value = '';
-        applyFilter('');
-        input.focus();
-      });
-
-      // Keyboard shortcut: Cmd/Ctrl + K focuses input
-      document.addEventListener('keydown', (e) => {
-        const mod = e.ctrlKey || e.metaKey;
-        if (mod && (e.key === 'k' || e.key === 'K')) {
-          e.preventDefault();
-          input.focus();
-          input.select();
-        }
-      });
-
-      // Init
-      applyFilter(input.value);
-    })();
-  </script>
+  <script defer src="{% static 'js/default/select_study.js' %}"></script>
 </body>
 </html>

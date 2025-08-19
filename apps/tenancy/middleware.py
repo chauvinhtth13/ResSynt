@@ -10,24 +10,18 @@ from .db_router import set_current_db
 logger = logging.getLogger('apps.tenancy')
 
 class StudyRoutingMiddleware:
-    """
-    Middleware to set the current study, role, and permissions on the request object
-    based on the user's session and memberships. This assumes that after login,
-    a 'current_study' is set in the session (e.g., via a view that lets the user select a study).
-    If no current study is set and the user has memberships, it redirects to a study selection page.
-    """
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        # Ensure study DBs are loaded (cached, so efficient)
         load_study_dbs()
-
-        # Exclude specific paths to prevent redirecting (e.g., admin, login, select-study)
-        excluded_paths = ('/select-study/', '/secure-auth/', '/admin/')
+        excluded_paths = ['/select-study/', '/accounts/', '/admin/', '/i18n/', '/static/', '/media/']
         if request.user.is_authenticated and not any(request.path.startswith(p) for p in excluded_paths):
-            current_study_id = request.session.get('current_study')
+            if request.user.is_superuser:
+                set_current_db('default')
+                return self.get_response(request)
 
+            current_study_id = request.session.get('current_study')
             if current_study_id:
                 try:
                     membership = StudyMembership.objects.select_related('study', 'role').prefetch_related('role__role_permissions__permission').get(
@@ -35,33 +29,22 @@ class StudyRoutingMiddleware:
                     )
                     setattr(request, 'study', membership.study)
                     setattr(request, 'role', membership.role)
-
-                    # Load permissions for the role (prefetched for efficiency)
-                    permissions = [rp.permission.code for rp in membership.role.role_permissions.all()]  # type: ignore[attr-defined]
-
+                    permissions = [rp.permission.code for rp in membership.role.role_permissions.all()] # type: ignore
                     setattr(request, 'study_permissions', set(permissions))
-
-                    # Set thread-local for DB routing
                     set_current_db(membership.study.db_name)
-
                 except StudyMembership.DoesNotExist:
                     logger.warning(f"Invalid study ID {current_study_id} for user {request.user.pk}; clearing session.")
                     request.session.pop('current_study', None)
                     current_study_id = None
 
             if not current_study_id:
-                # If no current study, check if user has any memberships
                 if StudyMembership.objects.filter(user=request.user).exists():
                     logger.info(f"Redirecting user {request.user.pk} to select study.")
                     return redirect('select_study')
                 else:
-                    # No memberships; log and proceed (or forbid access)
                     logger.info(f"User {request.user.pk} has no study memberships.")
                     # Optionally: return HttpResponseForbidden("No study access.")
 
         response = self.get_response(request)
-
-        # Clean up thread-local after response to prevent leakage
         set_current_db('default')
-
         return response

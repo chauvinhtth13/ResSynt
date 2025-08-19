@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     # ResSync apps
     "apps.web",
     "apps.tenancy.apps.TenancyConfig",
-    "apps.studies",  # Added: For tenant-specific models (per-study data)
+    #"apps.studies",  # Added: For tenant-specific models (per-study data)
 ]
 
 # === Middleware ===
@@ -138,7 +138,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # === Authentication ===
 LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = '/select-study/'
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 FEATURE_PASSWORD_RESET = os.getenv("FEATURE_PASSWORD_RESET", "False").lower() in ("true", "1", "yes")
 

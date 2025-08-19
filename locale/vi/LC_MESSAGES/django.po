@@ -1,0 +1,87 @@
+# Vietnamese translations for select_study.html in ResSync Platform
+# Created for locale/vi/LC_MESSAGES/django.po
+msgid ""
+msgstr ""
+"Project-Id-Version: ResSync Platform\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-20 01:25+0700\n"
+"PO-Revision-Date: 2025-08-20 01:25+0700\n"
+"Last-Translator: Grok <grok@x.ai>\n"
+"Language-Team: Vietnamese <vi@translations.ressync>\n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: apps/web/templates/default/select_study.html:12
+msgid "ResSync — Select Study"
+msgstr "ResSync — Chọn Nghiên cứu"
+
+#: apps/web/templates/default/select_study.html:25
+msgid "ResSync logo"
+msgstr "Logo ResSync"
+
+#: apps/web/templates/default/select_study.html:37
+msgid "Select language"
+msgstr "Chọn ngôn ngữ"
+
+#: apps/web/templates/default/select_study.html:41
+msgid "Vietnamese"
+msgstr "Tiếng Việt"
+
+#: apps/web/templates/default/select_study.html:44
+msgid "English"
+msgstr "Tiếng Anh"
+
+#: apps/web/templates/default/select_study.html:51
+msgid "Welcome"
+msgstr "Chào mừng"
+
+#: apps/web/templates/default/select_study.html:54
+msgid "Go to Admin"
+msgstr "Đi tới Trang Quản trị"
+
+#: apps/web/templates/default/select_study.html:58
+msgid "Sign Out"
+msgstr "Đăng xuất"
+
+#: apps/web/templates/default/select_study.html:68
+msgid "Search Studies"
+msgstr "Tìm kiếm Nghiên cứu"
+
+#: apps/web/templates/default/select_study.html:73
+msgid "Search by Study Code or Name…"
+msgstr "Tìm kiếm theo Mã hoặc Tên Nghiên cứu…"
+
+#: apps/web/templates/default/select_study.html:84
+msgid "Research Studies"
+msgstr "Các Nghiên cứu"
+
+#: apps/web/templates/default/select_study.html:89
+msgid "Study Code"
+msgstr "Mã Nghiên cứu"
+
+#: apps/web/templates/default/select_study.html:90
+msgid "Study Name"
+msgstr "Tên Nghiên cứu"
+
+#: apps/web/templates/default/select_study.html:91
+msgid "Last Updated"
+msgstr "Cập nhật Lần cuối"
+
+#: apps/web/templates/default/select_study.html:92
+msgid "Actions"
+msgstr "Hành động"
+
+#: apps/web/templates/default/select_study.html:103
+msgid "No studies found."
+msgstr "Không tìm thấy nghiên cứu nào."
+
+#: apps/web/templates/default/select_study.html:108
+msgid "Open Study"
+msgstr "Mở Nghiên cứu"
+
+#: apps/web/templates/default/select_study.html:98
+msgid "(No name)"
+msgstr "(Không có tên)"
