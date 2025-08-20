@@ -3,8 +3,9 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
-from apps.web.views import select_study, custom_login
-from apps.web.login import UsernameOrEmailAuthenticationForm
+from apps.web.views import select_study, custom_login, dashboard
+
+handler404 = 'django.views.defaults.page_not_found'  # Added: Ensures custom 404.html is used
 
 urlpatterns = [
     path('rosetta/', include('rosetta.urls')),
@@ -26,5 +27,6 @@ urlpatterns = [
         name="password_reset",
     ),
     path("select-study/", select_study, name="select_study"),
+    path("dashboard/", dashboard, name="dashboard"),
     path("", RedirectView.as_view(pattern_name="login", permanent=False), name="home"),
 ]

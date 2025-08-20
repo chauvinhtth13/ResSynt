@@ -1,9 +1,8 @@
-# apps/tenancy/middleware.py
 import logging
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, Http404  # Ensure Http404 imported
 from django.shortcuts import redirect
 from django.conf import settings
-from .models import StudyMembership, Permission
+from .models import StudyMembership
 from .db_loader import load_study_dbs
 from .db_router import set_current_db
 
@@ -16,6 +15,11 @@ class StudyRoutingMiddleware:
     def __call__(self, request: HttpRequest) -> HttpResponse:
         load_study_dbs()
         excluded_paths = ['/select-study/', '/accounts/', '/admin/', '/i18n/', '/static/', '/media/']
+        
+        # Raise 404 for authenticated non-superusers accessing admin
+        if request.path.startswith('/admin/') and request.user.is_authenticated and not request.user.is_superuser:
+            raise Http404("Page not found")
+        
         if request.user.is_authenticated and not any(request.path.startswith(p) for p in excluded_paths):
             if request.user.is_superuser:
                 set_current_db('default')
@@ -29,7 +33,7 @@ class StudyRoutingMiddleware:
                     )
                     setattr(request, 'study', membership.study)
                     setattr(request, 'role', membership.role)
-                    permissions = [rp.permission.code for rp in membership.role.role_permissions.all()] # type: ignore
+                    permissions = [rp.permission.code for rp in membership.role.role_permissions.all()]  # type: ignore
                     setattr(request, 'study_permissions', set(permissions))
                     set_current_db(membership.study.db_name)
                 except StudyMembership.DoesNotExist:
@@ -43,7 +47,7 @@ class StudyRoutingMiddleware:
                     return redirect('select_study')
                 else:
                     logger.info(f"User {request.user.pk} has no study memberships.")
-                    # Optionally: return HttpResponseForbidden("No study access.")
+                    # Optionally: raise Http404 or return custom response
 
         response = self.get_response(request)
         set_current_db('default')

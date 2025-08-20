@@ -56,7 +56,7 @@ msgstr "Tìm kiếm theo Mã hoặc Tên Nghiên cứu…"
 
 #: apps/web/templates/default/select_study.html:84
 msgid "Research Studies"
-msgstr "Các Nghiên cứu"
+msgstr "Danh Sách Các Nghiên cứu"
 
 #: apps/web/templates/default/select_study.html:89
 msgid "Study Code"

@@ -1,4 +1,4 @@
-# apps/web/forms.py
+# apps/web/login.py
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate

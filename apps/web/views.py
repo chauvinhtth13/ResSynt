@@ -62,10 +62,12 @@ def select_study(request):
                 membership = next(m for m in memberships if str(m.study.pk) == study_id)
                 request.session['current_study'] = membership.study.pk
                 logger.info(f"User {request.user.pk} selected study {membership.study.code}")
-                return redirect('home')  # Replace with 'dashboard' when defined
+                return redirect('dashboard')  # Redirect to dashboard after selection
             except StopIteration:
                 logger.warning(f"Invalid study selection attempt by user {request.user.pk}: {study_id}")
                 context['error'] = _("Invalid study selection.")
+
+    return render(request, 'default/select_study.html', context)
 
     return render(request, 'default/select_study.html', context)
 
@@ -82,3 +84,19 @@ def custom_login(request):
         return redirect('admin:index' if user.is_superuser else 'select_study')
 
     return render(request, 'default/login.html', {'form': form})
+
+@login_required
+def dashboard(request):
+    """Render the dashboard for the selected study."""
+    study = getattr(request, 'study', None)
+    if not study:
+        logger.warning(f"No study selected for user {request.user.pk}; redirecting to select_study.")
+        return redirect('select_study')
+
+    # Derive study folder from db_name (e.g., 'db_study_43en' -> 'study_43en')
+    study_folder = study.db_name.replace('db_', '', 1) if study.db_name.startswith('db_') else study.db_name
+
+    context = {
+        'study_folder': study_folder,
+    }
+    return render(request, 'default/dashboard.html', context)

@@ -1,0 +1,139 @@
+<!-- templates/default/dashboard.html (update logo src to use study_folder) -->
+{% load static i18n %}
+<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% trans "ResSync Dashboard" %}</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/default/dashboard.css' %}">
+</head>
+
+<body class="bg-gradient-to-br from-gray-50 to-slate-100 text-gray-700 h-screen overflow-hidden">
+  <div class="relative flex h-full">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-slate-800 text-gray-100 shadow-2xl flex flex-col"
+           role="navigation" aria-label="{% trans 'Primary navigation' %}">
+      <div class="relative flex items-center justify-center h-[68px] bg-slate-300">
+        <!-- Dynamic logo based on selected study, height matched to header (4rem/64px) -->
+        <div class="flex items-center justify-center">
+            <img src="{% static 'images/studies/' %}{{ study_folder|default:'default' }}/logo.webp"
+            alt="{% if study_folder %}{% trans 'Study logo' %}{% else %}{% trans 'Default logo' %}{% endif %}"
+            loading="lazy" class="h-12 w-auto object-contain" decoding="async">
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4">
+        <p class="px-3 py-2 font-bold uppercase tracking-wider text-gray-100">{% trans "Dashboard" %}</p>
+        <a href="#" class="block px-10 py-2 rounded-lg hover:bg-gray-800/70">{% trans "Summary Report" %}</a>
+        <a href="#" class="block px-10 py-2 rounded-lg hover:bg-gray-800/70">{% trans "Study Analytics" %}</a>
+        <hr class="my-4 border-gray-700/70" />
+        <p class="px-3 py-2 font-bold uppercase tracking-wider text-gray-100">{% trans "Case Report Form" %}</p>
+        <!-- add with content here -->
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex-1 flex flex-col min-w-0">
+      <!-- Header -->
+      <header class="sticky top-0 z-20 flex items-center gap-2 px-4 md:px-6 py-3 bg-white border-b border-gray-200">
+        <!-- Desktop: collapse sidebar -->
+        <button id="toggleSidebarBtn"
+                class="hidden md:inline-flex items-center justify-center p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-transform"
+                aria-label="{% trans 'Hide sidebar' %}" aria-pressed="false" aria-controls="sidebar"
+                data-hide-label="{% trans 'Hide sidebar' %}" data-show-label="{% trans 'Show sidebar' %}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               fill="currentColor" class="bi bi-list rotate-0" viewBox="0 0 16 16" aria-hidden="true">
+            <path fill-rule="evenodd"
+                  d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+          </svg>
+        </button>
+
+        <div class="ml-auto flex items-center gap-2">
+          <!-- Language switcher (EN/VI) -->
+          <div class="relative" data-dropdown>
+            <button type="button" data-dropdown-trigger aria-haspopup="menu" aria-expanded="false" aria-controls="lang-menu" class="flex items-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+              <span id="current-language" class="tracking-wide">{{ LANGUAGE_CODE|lower|default:'vi' }}</span>
+            </button>
+            <div id="lang-menu" role="menu" aria-label="{% trans 'Select language' %}" data-dropdown-menu hidden class="absolute right-0 mt-2 min-w-[12rem] origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg transition">
+              <form method="post" action="{% url 'set_language' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" name="language" value="vi" role="menuitem" class="flex w-full items-center rounded-lg px-3 py-2 text-sm hover:bg-slate-100 {% if LANGUAGE_CODE == 'vi' %}font-semibold bg-slate-100{% endif %}">
+                  <span class="w-8 text-left font-semibold">vi</span><span>{% trans 'Vietnamese' %}</span>
+                </button>
+                <button type="submit" name="language" value="en" role="menuitem" class="flex w-full items-center rounded-lg px-3 py-2 text-sm hover:bg-slate-100 {% if LANGUAGE_CODE == 'en' %}font-semibold bg-slate-100{% endif %}">
+                  <span class="w-8 text-left font-semibold">en</span><span>{% trans 'English' %}</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <button class="relative p-3 bg-white/80 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200" aria-label="{% trans 'Notifications' %}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
+            </svg>
+          </button>
+
+          <!-- User menu -->
+          <div class="relative">
+            <button id="userMenuBtn"
+                    class="inline-flex items-center gap-2 p-2.5 rounded-2xl bg-gray-100 text-gray-700 hover:bg-white hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-haspopup="menu" aria-expanded="false" aria-controls="userMenu">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+              </svg>
+              <span class="hidden md:inline-flex text-sm font-medium">{{ user.get_full_name|default:user.username }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 transition-transform duration-200" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
+              </svg>
+            </button>
+            
+            <div id="userMenu"
+                 class="hidden absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-100 divide-y divide-gray-100 animate-slide-in"
+                 role="menu" aria-label="{% trans 'User menu' %}">
+                <div class="py-1">
+                    <button type="button"
+                            onclick="window.location.href = '{% url 'select_study' %}'"
+                            class="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                        {% trans "Choose another study" %}
+                    </button>
+                </div>
+                <form method="post" action="{% url 'logout' %}">
+                  {% csrf_token %}
+                    <button type="submit" class="flex items-center gap-3 px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 w-full text-left">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        {% trans "Log Out" %}
+                    </button>
+                </form>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="flex-1 overflow-y-auto p-6 md:p-8">
+        <!-- add with content here -->
+      </main>
+    </div>
+  </div>
+
+  <!-- Custom JS -->
+  <script type="module" src="{% static 'js/default/dashboard.js' %}"></script>
+</body>
+</html>
