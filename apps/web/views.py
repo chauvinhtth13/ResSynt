@@ -96,6 +96,13 @@ def custom_login(request):
 @never_cache
 @login_required
 def dashboard(request, study_code=None):
+    """Get language from session or default to Vietnamese, then render dashboard."""
+    language = get_language()
+    if not language:
+        language = 'vi'
+        activate(language)
+        request.session['django_language'] = language
+
     """Render the dashboard for the selected study."""
     study = getattr(request, 'study', None)
     if not study:
