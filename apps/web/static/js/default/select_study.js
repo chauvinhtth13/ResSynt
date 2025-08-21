@@ -1,3 +1,4 @@
+// static/js/default/select_study.js
 /**
  * Client-side JavaScript for ResSync study selection page.
  * Handles dropdowns, language switching, and debounced table search.
@@ -44,7 +45,7 @@ const initDropdowns = () => {
       return;
     }
     if (!e.target.closest('[data-dropdown]')) closeAll();
-  });
+  }, { passive: true });  // Passive for performance
 
   document.addEventListener('touchstart', (e) => {
     const trigger = e.target.closest('[data-dropdown-trigger]');
@@ -56,7 +57,7 @@ const initDropdowns = () => {
       return;
     }
     if (!e.target.closest('[data-dropdown]')) closeAll();
-  });
+  }, { passive: true });
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
@@ -134,10 +135,10 @@ const initStudySearch = () => {
     rows.forEach(row => {
       const code = row.querySelector('[data-col="code"]')?.textContent.toLowerCase() || '';
       const name = row.querySelector('[data-col="name"]')?.textContent.toLowerCase() || '';
-      row.style.display = (q && !code.includes(q) && !name.includes(q)) ? 'none' : '';
-      if (!row.style.display) visible++;
+      row.hidden = q && !code.includes(q) && !name.includes(q);
+      if (!row.hidden) visible++;
     });
-    if (emptyRow) emptyRow.style.display = visible ? 'none' : '';
+    if (emptyRow) emptyRow.hidden = !!visible;
   };
 
   let debounceTimeout;

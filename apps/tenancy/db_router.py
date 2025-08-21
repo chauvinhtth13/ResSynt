@@ -1,3 +1,4 @@
+# apps/tenancy/db_router.py
 import threading
 from django.conf import settings
 
@@ -13,8 +14,8 @@ def set_current_db(db_alias):
 
 class StudyDBRouter:
     management_apps = [
-        'auth', 'admin', 'contenttypes', 'sessions', 'messages', 'staticfiles', 'tenancy'
-    ]  # Apps that use the main DB (including 'tenancy' for metadata models like Study, Role, etc.)
+        'auth', 'admin', 'contenttypes', 'sessions', 'messages', 'staticfiles', 'tenancy', 'web'
+    ]  # Added 'web' if it uses main DB; adjust as needed
 
     def db_for_read(self, model, **hints):
         if model._meta.app_label in self.management_apps:
@@ -27,7 +28,6 @@ class StudyDBRouter:
         return get_current_db()
 
     def allow_relation(self, obj1, obj2, **hints):
-        # Allow relations if both objects are in management apps or both in study apps
         db1 = self.db_for_read(obj1.__class__)
         db2 = self.db_for_read(obj2.__class__)
         if db1 and db2:

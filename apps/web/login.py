@@ -17,29 +17,29 @@ class UsernameOrEmailAuthenticationForm(AuthenticationForm):
     )
 
     def clean(self):
-        # Lấy raw input
+        # Get raw input
         username_or_email = self.cleaned_data.get("username")
         password = self.cleaned_data.get("password")
 
         if username_or_email and password:
-            # Xác định username thực tế
+            # Determine actual username
             actual_username = username_or_email
 
-            # Nếu chuỗi giống email, thử tìm user theo email (case-insensitive)
+            # If string looks like email, try to find user by email (case-insensitive)
             if "@" in username_or_email:
                 try:
                     user = User.objects.get(email__iexact=username_or_email)
                     actual_username = getattr(user, User.USERNAME_FIELD, "username")
                 except User.DoesNotExist:
-                    # Không tìm thấy theo email -> để authenticate fail bình thường
+                    # Not found by email -> let authenticate fail normally
                     pass
                 except User.MultipleObjectsReturned:
-                    # Nếu hệ thống cho phép email trùng (không unique), fail rõ ràng
+                    # If system allows duplicate emails (not unique), fail clearly
                     raise forms.ValidationError(
                         _("Multiple accounts use this email. Please use your username.")
                     )
 
-            # Gọi authenticate (Django backend mặc định cần username + password)
+            # Call authenticate (Django default backend needs username + password)
             self.user_cache = authenticate(
                 self.request,
                 username=actual_username,

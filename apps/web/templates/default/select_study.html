@@ -54,7 +54,7 @@
               {% endif %}
               <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
-                <button type="submit" role="menuitem" class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-slate-100">{% trans 'Sign Out' %}</button>
+                <button type="submit" role="menuitem" class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-100">{% trans 'Sign Out' %}</button>
               </form>
             </div>
           </div>
@@ -98,15 +98,15 @@
             </tr>
           </thead>
           <tbody id="studies-body">
-            {% for membership in studies %}
+            {% for study in studies %}
             <tr class="border-b border-slate-200 last:border-0" data-row>
-              <td class="px-4 sm:px-6 lg:px-8 py-3 font-semibold" data-col="code">{{ membership.study.code }}</td>
-              <td class="px-4 sm:px-6 lg:px-8 py-3" data-col="name">{{ membership.study.name|default_if_none:_('(No name)') }}</td>
-              <td class="px-4 sm:px-6 lg:px-8 py-3 whitespace-nowrap" data-col="updated">{{ membership.study.updated_at|date:"d-m-Y H:i:s" }}</td>
+              <td class="px-4 sm:px-6 lg:px-8 py-3 font-semibold" data-col="code">{{ study.code }}</td>
+              <td class="px-4 sm:px-6 lg:px-8 py-3" data-col="name">{{ study.name|default_if_none:_('(No name)') }}</td>
+              <td class="px-4 sm:px-6 lg:px-8 py-3 whitespace-nowrap" data-col="updated">{{ study.updated_at|date:"d-m-Y H:i:s" }}</td>
               <td class="px-4 sm:px-6 lg:px-8 py-3 text-right">
                 <form method="post" action="{% url 'select_study' %}">
                   {% csrf_token %}
-                  <input type="hidden" name="study_id" value="{{ membership.study.id }}">
+                  <input type="hidden" name="study_id" value="{{ study.id }}">
                   <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />

@@ -78,7 +78,7 @@ class RolePermissionAdmin(admin.ModelAdmin):
 @admin.register(Study)
 class StudyAdmin(TranslatableAdmin):
     list_display = ('code', 'name', 'status', 'db_name', 'created_at', 'updated_at')
-    search_fields = ('code', 'name', 'db_name')
+    search_fields = ('code', 'translations__name', 'db_name')
     list_filter = ('status', 'created_at', 'updated_at')
     inlines = [StudySiteInline]
     readonly_fields = ('created_at', 'updated_at')
@@ -86,18 +86,22 @@ class StudyAdmin(TranslatableAdmin):
 @admin.register(Site)
 class SiteAdmin(TranslatableAdmin):
     list_display = ('code', 'abbreviation', 'name', 'created_at', 'updated_at')
-    search_fields = ('code', 'abbreviation', 'name')
+    search_fields = ('code', 'abbreviation', 'translations__name')
     list_filter = ('created_at', 'updated_at')
     inlines = [StudySiteInline]
     readonly_fields = ('created_at', 'updated_at')
 
 @admin.register(StudySite)
 class StudySiteAdmin(admin.ModelAdmin):
-    list_display = ('study', 'site', 'created_at', 'updated_at')
+    list_display = ('get_study_code', 'site', 'created_at', 'updated_at')
     search_fields = ('study__code', 'site__code')
     list_filter = ('created_at', 'updated_at')
     inlines = [StudyMembershipInline]
     readonly_fields = ('created_at', 'updated_at')
+
+    @admin.display(description=_("Study Code"))
+    def get_study_code(self, obj):
+        return obj.study.code
 
 class StudyMembershipForm(forms.ModelForm):
     class Meta:
@@ -118,14 +122,22 @@ class StudyMembershipForm(forms.ModelForm):
 @admin.register(StudyMembership)
 class StudyMembershipAdmin(admin.ModelAdmin):
     form = StudyMembershipForm
-    list_display = ('user', 'study', 'get_site_code', 'role', 'assigned_at')
+    list_display = ('user', 'get_study_code', 'get_site_code', 'role', 'assigned_at')
     search_fields = ('user__username', 'study__code', 'study_site__site__code', 'role__title')
     list_filter = ('role', 'assigned_at')
     readonly_fields = ('assigned_at',)
+    raw_id_fields = ('user',)  # For large user bases
+
+    @admin.display(description=_("Study Code"))
+    def get_study_code(self, obj):
+        return obj.study.code
 
     @admin.display(description=_("Site Code"))
     def get_site_code(self, obj):
         return obj.study_site.site.code if obj.study_site else '-'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('study').prefetch_related('study_site__site')
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'study_site':

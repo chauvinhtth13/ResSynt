@@ -1,12 +1,13 @@
-# Vietnamese translations for select_study.html in ResSync Platform
-# Created for locale/vi/LC_MESSAGES/django.po
+# Vietnamese translations for ResSync Platform.
+# This file is distributed under the same license as the ResSync Platform package.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: ResSync Platform\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-08-20 01:25+0700\n"
 "PO-Revision-Date: 2025-08-20 01:25+0700\n"
-"Last-Translator: Grok <grok@x.ai>\n"
+"Last-Translator: Vinh Chau\n"
 "Language-Team: Vietnamese <vi@translations.ressync>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -23,14 +24,17 @@ msgid "ResSync logo"
 msgstr "Logo ResSync"
 
 #: apps/web/templates/default/select_study.html:37
+#: apps/web/templates/default/dashboard.html:50
 msgid "Select language"
 msgstr "Chọn ngôn ngữ"
 
 #: apps/web/templates/default/select_study.html:41
+#: apps/web/templates/default/dashboard.html:54
 msgid "Vietnamese"
 msgstr "Tiếng Việt"
 
 #: apps/web/templates/default/select_study.html:44
+#: apps/web/templates/default/dashboard.html:57
 msgid "English"
 msgstr "Tiếng Anh"
 
@@ -74,6 +78,10 @@ msgstr "Cập nhật Lần cuối"
 msgid "Actions"
 msgstr "Hành động"
 
+#: apps/web/templates/default/select_study.html:98
+msgid "(No name)"
+msgstr "(Không có tên)"
+
 #: apps/web/templates/default/select_study.html:103
 msgid "No studies found."
 msgstr "Không tìm thấy nghiên cứu nào."
@@ -82,6 +90,59 @@ msgstr "Không tìm thấy nghiên cứu nào."
 msgid "Open Study"
 msgstr "Mở Nghiên cứu"
 
-#: apps/web/templates/default/select_study.html:98
-msgid "(No name)"
-msgstr "(Không có tên)"
+#: apps/web/templates/default/dashboard.html:4
+msgid "ResSync Dashboard"
+msgstr "Bảng Điều Khiển ResSync"
+
+#: apps/web/templates/default/dashboard.html:21
+msgid "Primary navigation"
+msgstr "Điều Hướng Chính"
+
+#: apps/web/templates/default/dashboard.html:25
+msgid "Study logo"
+msgstr "Logo Nghiên Cứu"
+
+#: apps/web/templates/default/dashboard.html:25
+msgid "Default logo"
+msgstr "Logo Mặc Định"
+
+#: apps/web/templates/default/dashboard.html:31
+msgid "Dashboard"
+msgstr "Bảng Điều Khiển"
+
+#: apps/web/templates/default/dashboard.html:32
+msgid "Summary Report"
+msgstr "Báo Cáo Tóm Tắt"
+
+#: apps/web/templates/default/dashboard.html:33
+msgid "Study Analytics"
+msgstr "Phân Tích Nghiên cứu"
+
+#: apps/web/templates/default/dashboard.html:35
+msgid "Case Report Form"
+msgstr "Mẫu Báo Cáo Trường Hợp"
+
+#: apps/web/templates/default/dashboard.html:41
+#: apps/web/templates/default/dashboard.html:42
+msgid "Hide sidebar"
+msgstr "Ẩn Thanh Bên"
+
+#: apps/web/templates/default/dashboard.html:42
+msgid "Show sidebar"
+msgstr "Hiển Thị Thanh Bên"
+
+#: apps/web/templates/default/dashboard.html:62
+msgid "Notifications"
+msgstr "Thông Báo"
+
+#: apps/web/templates/default/dashboard.html:67
+msgid "User menu"
+msgstr "Menu Người Dùng"
+
+#: apps/web/templates/default/dashboard.html:74
+msgid "Choose another study"
+msgstr "Chọn Nghiên cứu Khác"
+
+#: apps/web/templates/default/dashboard.html:83
+msgid "Log Out"
+msgstr "Đăng Xuất"

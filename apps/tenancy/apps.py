@@ -8,6 +8,5 @@ class TenancyConfig(AppConfig):
     verbose_name = _("Tenancy Management")
 
     def ready(self):
-        # Removed load_study_dbs() to avoid DB access during app init.
-        # Loading will happen lazily in middleware on first request.
-        pass
+        from .db_loader import load_study_dbs
+        load_study_dbs(force_refresh=True)  # Preload active study DBs on app startup for performance

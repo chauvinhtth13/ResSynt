@@ -1,4 +1,6 @@
+// static/js/default/dashboard.js
 const qs = (s, el = document) => el.querySelector(s);
+const qsa = (s, el = document) => el.querySelectorAll(s);
 
 // Simplified focus trap for mobile sidebar
 function trapFocusWithin(container) {
@@ -17,14 +19,12 @@ function trapFocusWithin(container) {
       first.focus();
     }
   };
-  container.addEventListener('keydown', onKey);
+  container.addEventListener('keydown', onKey, { passive: true });
   return () => container.removeEventListener('keydown', onKey);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   const toggleSidebarBtn = qs('#toggleSidebarBtn');
-  const userMenuBtn = qs('#userMenuBtn');
-  const userMenu = qs('#userMenu');
   const mqlDesktop = window.matchMedia('(min-width: 768px)');
 
   // Restore desktop collapsed state
@@ -45,26 +45,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     localStorage.setItem('sidebarCollapsed', isCollapsed ? '1' : '0');
   };
-  toggleSidebarBtn?.addEventListener('click', toggleSidebar);
+  toggleSidebarBtn?.addEventListener('click', toggleSidebar, { passive: true });
 
-  // User menu
-  const hideUserMenu = () => {
-    if (userMenu) userMenu.classList.add('hidden');
-    if (userMenuBtn) userMenuBtn.setAttribute('aria-expanded', 'false');
-  };
-  const showUserMenu = () => {
-    if (userMenu) userMenu.classList.remove('hidden');
-    if (userMenuBtn) userMenuBtn.setAttribute('aria-expanded', 'true');
-  };
-
-  // Delegated click handler for dropdowns
-  document.addEventListener('click', (e) => {
-    if (userMenuBtn?.contains(e.target)) {
-      e.stopPropagation();
-      userMenu?.classList.contains('hidden') ? showUserMenu() : hideUserMenu();
-    } else if (userMenu && !userMenu.contains(e.target)) {
-      hideUserMenu();
+  // General dropdown handling
+  const dropdowns = qsa('[data-dropdown]');
+  dropdowns.forEach(drop => {
+    const trigger = drop.querySelector('.dropdown-trigger');
+    const menu = drop.querySelector('.dropdown-menu');
+    if (trigger && menu) {
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = menu.classList.contains('hidden');
+        menu.classList.toggle('hidden', !isHidden);
+        trigger.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+      }, { passive: true });
+      document.addEventListener('click', (e) => {
+        if (!drop.contains(e.target)) {
+          menu.classList.add('hidden');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      }, { passive: true });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          menu.classList.add('hidden');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      }, { passive: true });
     }
   });
 
+  // Handle "Choose another study" to block back
+  const chooseStudyForm = qs('[data-choose-study-form]');
+  if (chooseStudyForm) {
+    chooseStudyForm.addEventListener('submit', (e) => {
+      history.pushState(null, '', location.href);  // Push dummy state to trap back
+      history.pushState(null, '', location.href);  // Multiple to block multiple backs
+      // Form submits POST, no need for replace
+    }, { passive: true });
+  }
+
+  // Trap back button
+  window.addEventListener('popstate', () => {
+    history.go(1);  // Force forward on back
+  }, { passive: true });
 });

@@ -197,7 +197,7 @@ class Study(TranslatableModel):
         ]
 
     def __str__(self):
-        return self.code
+        return str(self.safe_translation_getter("name") or self.code)
 
 class Site(TranslatableModel):
     code = models.CharField(
@@ -245,8 +245,8 @@ class Site(TranslatableModel):
             )
         ]
 
-    def __str__(self):
-        return self.code
+    def __str__(self) -> str:
+        return str(self.safe_translation_getter("name") or self.code)
 
 class StudySite(models.Model):
     study = models.ForeignKey(

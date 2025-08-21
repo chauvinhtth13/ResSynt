@@ -41,23 +41,23 @@ INSTALLED_APPS = [
 
 # === Middleware ===
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.locale.LocaleMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Tenancy middleware for dynamic DB routing and RLS
-    "apps.tenancy.middleware.StudyRoutingMiddleware",
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.tenancy.middleware.NoCacheMiddleware',  # Add this new one
+    'apps.tenancy.middleware.StudyRoutingMiddleware',  # Existing
 ]
 
 # === Templates ===
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "apps" / "web" / "templates"],
+        "DIRS": [BASE_DIR / "apps" / "templates"],  # Corrected path based on folder structure
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -131,7 +131,7 @@ PARLER_LANGUAGES = {
 
 # === Static & Media ===
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "apps" / "web" / "static"]
+STATICFILES_DIRS = [BASE_DIR / "apps" / "static"]  # Corrected path based on folder structure
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -169,7 +169,7 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "simple",
-            "level": "WARNING",  # Luôn bỏ qua DEBUG/INFO
+            "level": "DEBUG" if DEBUG else "WARNING",
         },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -178,27 +178,27 @@ LOGGING = {
             "encoding": "utf-8",
             "maxBytes": 5 * 1024 * 1024,  # 5MB
             "backupCount": 5,
-            "level": "INFO",  # Không ghi DEBUG vào file
+            "level": "DEBUG" if DEBUG else "INFO",
         },
     },
     "root": {
         "handlers": ["console", "file"],
-        "level": "INFO",  # Mức tối thiểu cho root logger
+        "level": "DEBUG" if DEBUG else "INFO",
     },
     "loggers": {
         "django": {
             "handlers": ["console", "file"],
-            "level": "INFO",
+            "level": "DEBUG" if DEBUG else "INFO",
             "propagate": False,
         },
         "apps.tenancy": {
             "handlers": ["console", "file"],
-            "level": "INFO",
+            "level": "DEBUG" if DEBUG else "INFO",
             "propagate": False,
         },
         "apps.web": {
             "handlers": ["console", "file"],
-            "level": "INFO",
+            "level": "DEBUG" if DEBUG else "INFO",
             "propagate": False,
         },
     },
