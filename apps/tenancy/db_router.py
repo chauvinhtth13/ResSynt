@@ -15,7 +15,7 @@ def set_current_db(db_alias):
 class StudyDBRouter:
     management_apps = [
         'auth', 'admin', 'contenttypes', 'sessions', 'messages', 'staticfiles', 'tenancy', 'web'
-    ]  # Added 'web' if it uses main DB; adjust as needed
+    ]  # Apps that use the main DB; 'studies' not included for study data in per-DB
 
     def db_for_read(self, model, **hints):
         if model._meta.app_label in self.management_apps:

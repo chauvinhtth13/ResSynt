@@ -1,0 +1,304 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+{% load study_43en_tags %}
+
+{% block title %}
+  {% if is_update %}
+    {% trans "Cập Nhật Xét Nghiệm Lần" %} {{ lab_type }}
+  {% else %}
+    {% trans "Tạo Mới Xét Nghiệm Lần" %} {{ lab_type }}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">
+        {% if is_update %}
+          {% trans "Cập Nhật Xét Nghiệm Lần" %} {{ lab_type }}
+        {% else %}
+          {% trans "Tạo Mới Xét Nghiệm Lần" %} {{ lab_type }}
+        {% endif %}
+      </h6>
+      <div class="ml-auto">
+        <a href="{% url '43en:laboratory_test_list' usubjid=enrollment_case.USUBJID_id %}" class="btn btn-secondary">
+          {% trans "Quay Lại" %}
+        </a>
+        <button type="submit" form="lab-form" class="btn btn-primary">
+          {% trans "Lưu Thay Đổi" %}
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Thông tin bệnh nhân -->
+      <div class="alert alert-info mb-4">
+        <div class="row">
+          <div class="col-md-4">
+            <strong>{% trans "Mã bệnh nhân" %}:</strong> {{ enrollment_case.USUBJID_id }}
+          </div>
+          <div class="col-md-4">
+            <strong>{% trans "Lần xét nghiệm" %}:</strong> 
+            {% for choice_value, choice_label in lab_type_choices %}
+              {% if choice_value == lab_type %}{{ choice_label }}{% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Form cập nhật -->
+      <form method="post" id="lab-form">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        
+        <!-- Hiển thị các xét nghiệm theo category từ 11-25 -->
+        {% for category_code, category_name in all_categories %}
+          <div class="lab-category mb-4" id="category-{{ category_code }}">
+            <h5 class="category-title mb-3 pb-2">{{ category_name }}</h5>
+            
+            <div class="lab-tests-list">
+              {% for test_code, test_name in all_test_types %}
+                {% if test_code in category_test_map|get_item:category_code %}
+                  {% with form=test_form_map|get_item:test_code %}
+                    <div class="lab-test-row">
+                      {% if form %}
+                        <!-- Nếu đã có form (đã có xét nghiệm) -->
+                        <div class="lab-test-card {% if form.instance.PERFORMED %}performed{% endif %}">
+                          {{ form.id }}
+                          <input type="hidden" name="{{ form.prefix }}-TESTTYPE" value="{{ test_code }}">
+                          <input type="hidden" name="{{ form.prefix }}-CATEGORY" value="{{ category_code }}">
+                          <input type="hidden" name="{{ form.prefix }}-LAB_TYPE" value="{{ lab_type }}">
+                          <div class="test-header">
+                            <div class="form-check">
+                              {{ form.PERFORMED }}
+                              <label class="form-check-label" for="{{ form.PERFORMED.auto_id }}">
+                                <strong>{{ test_name }}</strong>
+                                <span class="test-code text-muted">({{ test_code }})</span>
+                              </label>
+                            </div>
+                          </div>
+                          
+                          <div class="test-details" style="{% if not form.instance.PERFORMED %}display:none;{% endif %}">
+                            <div class="row">
+                              <div class="col-md-4">
+                                <label for="{{ form.PERFORMEDDATE.auto_id }}" class="form-label">{% trans "Ngày thực hiện" %}</label>
+                                {{ form.PERFORMEDDATE }}
+                                {% if form.PERFORMEDDATE.errors %}
+                                  <div class="invalid-feedback d-block">{{ form.PERFORMEDDATE.errors }}</div>
+                                {% endif %}
+                              </div>
+                              <div class="col-md-8">
+                                <label for="{{ form.RESULT.auto_id }}" class="form-label">{% trans "Kết quả" %}</label>
+                                {{ form.RESULT }}
+                                {% if form.RESULT.errors %}
+                                  <div class="invalid-feedback d-block">{{ form.RESULT.errors }}</div>
+                                {% endif %}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      {% else %}
+                        <!-- Nếu chưa có form (chưa có xét nghiệm) -->
+                        <div class="lab-test-card">
+                          <input type="hidden" name="new_tests" value="{{ test_code }}|{{ category_code }}">
+                          
+                          <div class="test-header">
+                            <div class="form-check">
+                              <input type="checkbox" class="form-check-input" name="new_performed_{{ test_code }}" id="id_new_performed_{{ test_code }}" value="true">
+                              <label class="form-check-label" for="id_new_performed_{{ test_code }}">
+                                <strong>{{ test_name }}</strong>
+                                <span class="test-code text-muted">({{ test_code }})</span>
+                              </label>
+                            </div>
+                          </div>
+                          
+                          <div class="test-details" style="display:none;">
+                            <div class="row">
+                              <div class="col-md-4">
+                                <label class="form-label">{% trans "Ngày thực hiện" %}</label>
+                                <input type="text" name="new_date_{{ test_code }}" class="form-control datepicker">
+                              </div>
+                              <div class="col-md-8">
+                                <label class="form-label">{% trans "Kết quả" %}</label>
+                                <textarea name="new_result_{{ test_code }}" class="form-control" rows="2"></textarea>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endwith %}
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="mt-4 text-center">
+          <button type="submit" class="btn btn-primary btn-lg px-5">
+            {% if is_update %}
+              {% trans "Lưu Tất Cả Thay Đổi" %}
+            {% else %}
+              {% trans "Tạo Mới Xét Nghiệm" %}
+            {% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Các category */
+  .category-title {
+    color: #3c6382;
+    font-weight: 600;
+    background-color: #f8f9fc;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+  }
+  
+  /* Card cho mỗi xét nghiệm */
+  .lab-test-row {
+    margin-bottom: 10px;
+  }
+  
+  .lab-test-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.2s;
+    border-left: 4px solid #e9ecef;
+  }
+  
+  .lab-test-card.performed {
+    border-left-color: #38ada9;
+    background-color: #f2f9f9;
+  }
+  
+  .lab-test-card:hover {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  }
+  
+  /* Layout một xét nghiệm mỗi dòng */
+  .lab-tests-list {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Form elements */
+  .form-check-label {
+    padding-left: 8px;
+    cursor: pointer;
+  }
+  
+  .form-check-input {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .test-header {
+    margin-bottom: 15px;
+  }
+  
+  /* Input styling */
+  .test-details input, 
+  .test-details textarea,
+  .test-details select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    transition: border-color 0.2s;
+  }
+  
+  .test-details input:focus, 
+  .test-details textarea:focus,
+  .test-details select:focus {
+    border-color: #38ada9;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(56, 173, 169, 0.25);
+  }
+  
+  /* Mã xét nghiệm */
+  .test-code {
+    font-size: 0.85em;
+    padding-left: 4px;
+  }
+  
+  /* Nhóm xét nghiệm */
+  .lab-category {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #eaeaea;
+  }
+
+  .lab-category:last-child {
+    border-bottom: none;
+  }
+  
+  /* Form layout */
+  .test-details .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -5px;
+    margin-right: -5px;
+  }
+  
+  .test-details .col-md-4,
+  .test-details .col-md-8 {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  
+  @media (max-width: 768px) {
+    .test-details .row {
+      flex-direction: column;
+    }
+    
+    .test-details .col-md-4,
+    .test-details .col-md-8 {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{% include "study_43en/includes/datepicker_scripts.html" %}
+<script>
+  $(document).ready(function() {
+    // Hiển thị/ẩn chi tiết xét nghiệm khi checkbox được chọn/bỏ chọn
+    $('input[name$="-PERFORMED"], input[name^="new_performed_"]').change(function() {
+      var detailsDiv = $(this).closest('.lab-test-card').find('.test-details');
+      var card = $(this).closest('.lab-test-card');
+      
+      if ($(this).is(':checked')) {
+        detailsDiv.slideDown();
+        card.addClass('performed');
+      } else {
+        detailsDiv.slideUp();
+        card.removeClass('performed');
+      }
+    });
+    
+    // Focus vào ngày thực hiện khi checkbox được chọn
+    $('input[name$="-PERFORMED"], input[name^="new_performed_"]').change(function() {
+      if ($(this).is(':checked')) {
+        var dateInput = $(this).closest('.lab-test-card').find('input[name$="-PERFORMEDDATE"], input[name^="new_date_"]');
+        setTimeout(function() {
+          dateInput.focus();
+        }, 300);
+      }
+    });
+  });
+</script>
+{% endblock %}

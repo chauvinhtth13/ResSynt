@@ -15,7 +15,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path(
         "accounts/login/",
-        custom_login,
+        never_cache(custom_login),
         name="login",
     ),
     path(
@@ -23,8 +23,8 @@ urlpatterns = [
         never_cache(auth_views.LogoutView.as_view(next_page="login")),  # Wrap with never_cache
         name="logout",
     ),
-    path("select-study/", select_study, name="select_study"),
-    path("dashboard/", dashboard, name="dashboard"),
+    path("select-study/", never_cache(select_study), name="select_study"),
+    path("dashboard/", never_cache(dashboard), name="dashboard"),
     path("", RedirectView.as_view(pattern_name="login", permanent=False), name="home"),
 ]
 

@@ -6,6 +6,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>{% trans "ResSync Dashboard" %}</title>
 
   <!-- Tailwind (CDN) -->
@@ -26,21 +29,21 @@
     <!-- Sidebar -->
     <aside id="sidebar" class="bg-slate-800 text-gray-100 shadow-2xl flex flex-col"
            role="navigation" aria-label="{% trans 'Primary navigation' %}">
-      <div class="relative flex items-center justify-center h-[68px] bg-slate-300">
-        <!-- Dynamic logo based on selected study, height matched to header (4rem/64px) -->
+      <div class="relative flex items-center justify-center h-[68px] bg-slate-500">
         <div class="flex items-center justify-center">
-            <img src="{% static 'images/studies/' %}{{ study_folder|default:'default' }}/logo.webp"
-            alt="{% if study_folder %}{% trans 'Study logo' %}{% else %}{% trans 'Default logo' %}{% endif %}"
-            loading="lazy" class="h-12 w-auto object-contain" decoding="async">
+          <img src="{% static 'images/studies/' %}{{ study_folder|default:'default' }}/logo.webp"
+               alt="{% if study_folder %}{% trans 'Study logo' %}{% else %}{% trans 'Default logo' %}{% endif %}"
+               loading="lazy" class="h-12 w-auto object-contain" decoding="async">
         </div>
       </div>
+      <!-- Sidebar content -->
+      {% include 'studies/'|add:study_folder|add:'/sidebar.html' with request=request %}
     </aside>
 
     <!-- Main -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Header -->
       <header class="sticky top-0 z-20 flex items-center gap-2 px-4 md:px-6 py-3 bg-white border-b border-gray-200">
-        <!-- Desktop: collapse sidebar -->
         <button id="toggleSidebarBtn"
                 class="hidden md:inline-flex items-center justify-center p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-transform"
                 aria-label="{% trans 'Hide sidebar' %}" aria-pressed="false" aria-controls="sidebar"
@@ -53,9 +56,9 @@
         </button>
 
         <div class="ml-auto flex items-center gap-2">
-          <!-- Language switcher (EN/VI) -->
+          <!-- Language switcher -->
           <div class="relative" data-dropdown="language">
-            <button type="button" class="dropdown-trigger flex items-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+            <button type="button" class="dropdown-trigger flex items-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-white hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <span id="current-language" class="tracking-wide">{{ LANGUAGE_CODE|lower|default:'vi' }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="ml-2 h-4 w-4" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
@@ -76,7 +79,7 @@
           </div>
 
           <!-- Notifications -->
-          <button class="relative p-3 bg-white/80 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200" aria-label="{% trans 'Notifications' %}">
+          <button class="relative p-3 bg-white/80 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200" aria-label="{% trans 'Notifications' %}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
             </svg>
@@ -94,29 +97,27 @@
                 <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
               </svg>
             </button>
-            
-            <div id="userMenu"
-                 class="dropdown-menu hidden absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-100 divide-y divide-gray-100 animate-slide-in"
+            <div id="userMenu" class="dropdown-menu hidden absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-100 divide-y divide-gray-100 animate-slide-in"
                  role="menu" aria-label="{% trans 'User menu' %}">
-                <div class="py-1">
-                    <form method="post" action="{% url 'select_study' %}" data-choose-study-form>
-                      {% csrf_token %}
-                      <input type="hidden" name="clear_study" value="1">
-                      <button type="submit"
-                              class="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
-                          {% trans "Choose another study" %}
-                      </button>
-                    </form>
-                </div>
-                <form method="post" action="{% url 'logout' %}">
+              <div class="py-1">
+                <form method="post" action="{% url 'select_study' %}" data-choose-study-form>
                   {% csrf_token %}
-                    <button type="submit" class="flex items-center gap-3 px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 w-full text-left">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        {% trans "Log Out" %}
-                    </button>
+                  <input type="hidden" name="clear_study" value="1">
+                  <button type="submit"
+                          class="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                    {% trans "Choose another study" %}
+                  </button>
                 </form>
+              </div>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center gap-3 px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 w-full text-left">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  {% trans "Log Out" %}
+                </button>
+              </form>
             </div>
           </div>
         </div>
@@ -124,11 +125,27 @@
 
       <!-- Content -->
       <main class="flex-1 overflow-y-auto p-6 md:p-8">
+        {% include 'studies/'|add:study_folder|add:'/content.html' with request=request %}
       </main>
     </div>
   </div>
 
   <!-- Custom JS -->
   <script type="module" src="{% static 'js/default/dashboard.js' %}"></script>
+  {% with study_js='js/studies/'|add:study_folder|add:'/custom.js' %}
+    {% if study_folder %}
+      <script type="module" src="{% static study_js %}"></script>
+    {% endif %}
+  {% endwith %}
+  <script>
+    if (performance.getEntriesByType('navigation')[0].type === 'back_forward') {
+      window.location.reload();
+    }
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
+  </script>
 </body>
 </html>

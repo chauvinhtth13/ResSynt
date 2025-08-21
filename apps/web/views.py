@@ -10,6 +10,8 @@ from django.shortcuts import render, redirect
 from django.utils.translation import gettext_lazy as _, get_language, activate
 from django.db.models import Q
 from django.views.decorators.cache import never_cache  # Ensure imported
+from django.db import connections
+from django.conf import settings
 from apps.tenancy.models import Study, StudyMembership
 from .login import UsernameOrEmailAuthenticationForm
 
@@ -93,7 +95,7 @@ def custom_login(request):
 
 @never_cache
 @login_required
-def dashboard(request):
+def dashboard(request, study_code=None):
     """Render the dashboard for the selected study."""
     study = getattr(request, 'study', None)
     if not study:
@@ -103,7 +105,20 @@ def dashboard(request):
     # Derive study folder from db_name (e.g., 'db_study_43en' -> 'study_43en')
     study_folder = study.db_name.replace('db_', '', 1) if study.db_name.startswith('db_') else study.db_name
 
+    # Fetch table names from study database (all user tables)
+    tables = []
+    if 'access_data' in getattr(request, 'study_permissions', set()):
+        with connections[study.db_name].cursor() as cursor:
+            cursor.execute("""
+                SELECT tablename 
+                FROM pg_tables 
+                WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+            """)
+            tables = [row[0] for row in cursor.fetchall()]
+        logger.debug(f"Fetched {len(tables)} tables from {study.db_name} for user {request.user.pk}")
+
     context = {
         'study_folder': study_folder,
+        'tables': tables,
     }
     return render(request, 'default/dashboard.html', context)

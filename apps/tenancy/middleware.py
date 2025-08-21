@@ -9,6 +9,16 @@ from .db_router import set_current_db
 
 logger = logging.getLogger('apps.tenancy')
 
+import logging
+from django.http import HttpRequest, HttpResponse, Http404
+from django.shortcuts import redirect
+from django.conf import settings
+from .models import StudyMembership
+from .db_loader import load_study_dbs
+from .db_router import set_current_db
+
+logger = logging.getLogger('apps.tenancy')
+
 class StudyRoutingMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -51,6 +61,7 @@ class StudyRoutingMiddleware:
                             # Set site_codes: list of site codes user has access to in this study; empty for full access if any null
                             site_codes = {m.study_site.site.code for m in memberships if m.study_site}
                             request.site_codes = list(site_codes) if site_codes else []  # type: ignore[attr-defined]  # Empty list means full access
+                            logger.debug(f"Accessed study DB {request.study.db_name} for user {request.user.pk} with permissions {request.study_permissions}") # type: ignore[attr-defined]
                             set_current_db(request.study.db_name)  # type: ignore[attr-defined]
                     else:
                         if StudyMembership.objects.filter(user=request.user).exists():

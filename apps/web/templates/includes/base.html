@@ -1,0 +1,22 @@
+<!-- templates/includes/base.html -->
+{% load static i18n %}
+<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>{% block title %}{% trans "ResSync" %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-slate-100 text-gray-700 h-screen overflow-hidden">
+    {% block content %}{% endblock %}
+</body>
+</html>

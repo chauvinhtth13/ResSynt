@@ -1,0 +1,191 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Danh sách sàng lọc Contact 43EN" %}{% endblock %}
+
+{% block page_title %}{% trans "Danh sách sàng lọc Contact 43EN" %}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Danh sách sàng lọc Contact" %}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header bg-success">
+    <h3 class="card-title text-white">
+      <i class="fas fa-user-friends"></i>
+      {% trans "Danh sách contact sàng lọc 43EN" %}
+    </h3>
+    <div class="card-tools">
+      <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
+        <i class="fas fa-minus"></i>
+      </button>
+      <a href="{% url '43en:screening_contact_create' %}" class="btn btn-primary btn-sm ml-2">
+        <i class="fas fa-plus mr-1"></i> {% trans "Thêm mới" %}
+      </a>
+    </div>
+  </div>
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end mb-3">
+      <div class="col-md-8">
+        <label for="search" class="form-label">{% trans "Tìm kiếm Contact:" %}</label>
+        <input type="text" class="form-control" id="search" name="q" value="{{ query }}" placeholder="{% trans 'Nhập mã contact hoặc tên viết tắt...' %}">
+      </div>
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-search"></i> {% trans "Tìm kiếm" %}
+        </button>
+        <a href="{% url '43en:screening_contact_list' %}" class="btn btn-secondary">
+          <i class="fas fa-refresh"></i> {% trans "Làm mới" %}
+        </a>
+      </div>
+    </form>
+    {% if total_contacts == 0 %}
+      <div class="alert alert-info text-center">
+        <h4><i class="icon fa fa-info"></i> {% trans "Chưa có contact nào!" %}</h4>
+        <p>{% trans "Hiện tại chưa có contact nào được sàng lọc." %}</p>
+        <a href="{% url '43en:screening_contact_create' %}" class="btn btn-primary">
+          <i class="fas fa-plus"></i> {% trans "Tạo Contact mới" %}
+        </a>
+      </div>
+    {% else %}
+      <div class="table-responsive">
+        <table class="table table-bordered">
+          <thead class="bg-light text-dark">
+            <tr>
+              <th class="text-center">{% trans "Screening ID" %}</th>
+              <th class="text-center">{% trans "Mã Contact" %}</th>
+              <th class="text-center">{% trans "Chữ cái đầu" %}</th>
+              <th class="text-center">{% trans "Ngày sàng lọc" %}</th>
+              <th class="text-center">{% trans "Trạng thái" %}</th>
+              <th class="text-center" width="150">{% trans "Thao tác" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for contact in page_obj %}
+            <tr>
+              <td class="text-center">
+                {% if contact.SCRID %}
+                  <strong>{{ contact.SCRID }}</strong>
+                {% else %}
+                  <span class="text-muted">None</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                  {% if contact.USUBJID %}
+                    {{ contact.USUBJID }}
+                  {% else %}
+                    <span >None</span>
+                  {% endif %}
+              </td>
+              <td class="text-center">
+                {{ contact.INITIAL|default:"-" }}
+              </td>
+              <td class="text-center">
+                {{ contact.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}
+              </td>
+              <td class="text-center">
+                {% if contact.CONSENTTOSTUDY and contact.LIVEIN5DAYS3MTHS and contact.MEALCAREONCEDAY %}
+                  <span class="badge badge-success">
+                    <i class="fas fa-check"></i> {% trans "Đủ điều kiện" %}
+                  </span>
+                {% else %}
+                  <span class="badge badge-danger">
+                    <i class="fas fa-times"></i> {% trans "Không đủ điều kiện" %}
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <div class="btn-group" role="group">
+                  {% if contact.USUBJID %}
+                    <a href="{% url '43en:screening_contact_view' usubjid_or_id=contact.USUBJID %}" class="btn btn-sm btn-primary" title="{% trans 'Xem chi tiết' %}">
+                      <i class="fas fa-eye"></i> {% trans "Xem" %}
+                    </a>
+                    <a href="{% url '43en:screening_contact_update' usubjid_or_id=contact.USUBJID %}" class="btn btn-sm btn-warning" title="{% trans 'Chỉnh sửa' %}">
+                      <i class="fas fa-edit"></i> {% trans "Sửa" %}
+                    </a>
+                  {% else %}
+                    <a href="{% url '43en:screening_contact_view' usubjid_or_id=contact.SCRID %}" class="btn btn-sm btn-primary" title="{% trans 'Xem chi tiết' %}">
+                      <i class="fas fa-eye"></i> {% trans "Xem" %}
+                    </a>
+                    <a href="{% url '43en:screening_contact_update' usubjid_or_id=contact.SCRID %}" class="btn btn-sm btn-warning" title="{% trans 'Chỉnh sửa' %}">
+                      <i class="fas fa-edit"></i> {% trans "Sửa" %}
+                    </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+        <div class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">{% trans "Đầu" %}</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><a class="page-link" href="#">{% trans "Đầu" %}</a></li>
+              <li class="page-item disabled"><a class="page-link" href="#"><i class="fas fa-angle-left"></i></a></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
+                  {% trans "Cuối" %}
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><a class="page-link" href="#"><i class="fas fa-angle-right"></i></a></li>
+              <li class="page-item disabled"><a class="page-link" href="#">{% trans "Cuối" %}</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .card-header.bg-success {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+  }
+  .card-header.bg-success .card-title {
+    color: #ffffff !important;
+  }
+  .card-header.bg-success .btn-tool {
+    color: #ffffff !important;
+  }
+</style>
+{% endblock %}

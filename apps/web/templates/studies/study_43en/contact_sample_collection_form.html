@@ -1,0 +1,631 @@
+{% extends 'adminlte_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}{% trans "Thông Tin Mẫu Contact" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .other-specify-container {
+    transition: all 0.3s ease;
+  }
+  .other-specify-container input[type="text"] {
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+  }
+  .other-specify-container input[type="text"]:focus {
+    border-left: 3px solid #36b9cc;
+    box-shadow: 0 0 0 0.2rem rgba(54, 185, 204, 0.25);
+  }
+  .card.border-primary .other-specify-container input[type="text"] {
+    border-left: 3px solid #4e73df;
+  }
+  input[type="checkbox"]:checked + label {
+    color: #4e73df;
+  }
+  #section-reason-ifno .reason-required-message {
+    padding: 10px;
+    background-color: #fff8f8;
+    border-radius: 5px;
+    border-left: 3px solid #dc3545;
+    margin-bottom: 15px;
+  }
+  #section-reason-ifno textarea:required {
+    border-left: 3px solid #dc3545;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">
+        {% if is_new %}
+          {% trans "Tạo Mới Thông Tin Mẫu Contact" %}
+        {% else %}
+          {% trans "Cập Nhật Thông Tin Mẫu Contact" %}
+        {% endif %}
+        - {{ sample.get_sample_type_display }}
+      </h6>
+      <div class="btn-group">
+        <a href="{% url '43en:contact_sample_collection_list' usubjid=usubjid %}" class="btn btn-primary">
+          <i class="fas fa-arrow-left"></i> {% trans "Quay Lại" %}
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      <form method="post" id="sampleForm" class="form" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="form_submitted" value="True">
+        <input type="hidden" name="sample_type" value="{{ sample.SAMPLE_TYPE }}">
+        <input type="hidden" name="force_save" value="1">
+        <input type="hidden" name="COMPLETEDDATE" value="{{ sample.COMPLETEDDATE|date:'Y-m-d'|default:today|date:'Y-m-d' }}">
+        {% if sample.SAMPLE_TYPE == '4' %}
+        <input type="hidden" name="BLOOD" value="False">
+        <input type="hidden" name="BLOODDATE" value="">
+        {% endif %}
+
+        <!-- Thông tin chung -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-primary">{% trans "Thông Tin Chung" %}</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "USUBJID" %}:</label>
+                  <p class="form-control-static">{{ sample.USUBJID.USUBJID }}</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Tên Contact" %}:</label>
+                  <p class="form-control-static">{{ sample.USUBJID.INITIAL }}</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Loại Mẫu" %}:</label>
+                  <p class="form-control-static">{{ sample.get_sample_type_display }}</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Ngày Thu Thập" %}:</label>
+                  <p class="form-control-static">
+                  {% if sample.STOOLDATE %}
+                    {{ sample.STOOLDATE|date:"d/m/Y" }}
+                  {% elif sample.THROATSWABDATE %}
+                    {{ sample.THROATSWABDATE|date:"d/m/Y" }}
+                  {% elif sample.RECTSWABDATE %}
+                    {{ sample.RECTSWABDATE|date:"d/m/Y" }}
+                  {% elif sample.BLOODDATE and sample.SAMPLE_TYPE != '4' %}
+                    {{ sample.BLOODDATE|date:"d/m/Y" }}
+                  {% else %}
+                    --
+                  {% endif %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mẫu đã được thu nhận? -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-primary">{% trans "Mẫu đã được thu nhận?" %}</h5>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <div class="form-check form-check-inline">
+                <input type="radio" name="SAMPLE" id="SAMPLE_yes" value="True" class="form-check-input"
+                       {% if sample.SAMPLE %}checked{% endif %}>
+                <label for="SAMPLE_yes" class="form-check-label">{% trans "Có" %}</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input type="radio" name="SAMPLE" id="SAMPLE_no" value="False" class="form-check-input"
+                       {% if not sample.SAMPLE %}checked{% endif %}>
+                <label for="SAMPLE_no" class="form-check-label">{% trans "Không" %}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Nếu Có -->
+        <div id="section-has-sample" class="mb-4" {% if not sample.SAMPLE %}style="display: none;"{% endif %}>
+          <div class="card mb-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0 text-primary">{% trans "Loại mẫu được thu nhận" %}</h5>
+            </div>
+            <div class="card-body">
+              <!-- Phân -->
+              <div class="row mb-4">
+                <div class="col-lg-12 col-md-12">
+                  <div class="card h-100 border-left-primary">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <div class="form-check mb-0">
+                        <input type="checkbox" name="STOOL" id="id_STOOL" class="form-check-input sample-type-checkbox"
+                               {% if sample.STOOL %}checked{% endif %}>
+                        <label for="id_STOOL" class="form-check-label font-weight-bold h5 mb-0">{% trans "Phân" %}</label>
+                      </div>
+                    </div>
+                    <div class="card-body py-3">
+                      <div class="stool-date-container" {% if not sample.STOOL %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                          <label for="id_STOOLDATE">{% trans "Ngày lấy mẫu" %}:</label>
+                          <input type="date" name="STOOLDATE" id="id_STOOLDATE" class="form-control"
+                                 value="{{ sample.STOOLDATE|date:'Y-m-d'|default:'' }}">
+                        </div>
+                        <div class="sample-culture-container mt-4">
+                          <h6 class="text-primary font-weight-bold mb-3">{% trans "Kết quả nuôi cấy mẫu phân" %}</h6>
+                          <div class="mb-3">
+                            <label class="font-weight-bold mb-2">{% trans "Kết quả" %}:</label>
+                            <div class="btn-group btn-group-toggle d-flex flex-wrap" data-toggle="buttons">
+                              <label class="btn btn-outline-primary {% if sample.CULTRES_1 == 'Pos' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_1" value="Pos" {% if sample.CULTRES_1 == 'Pos' %}checked{% endif %}>
+                                <i class="fas fa-plus-circle mr-1"></i>{% trans "Dương tính" %}
+                              </label>
+                              <label class="btn btn-outline-success {% if sample.CULTRES_1 == 'Neg' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_1" value="Neg" {% if sample.CULTRES_1 == 'Neg' %}checked{% endif %}>
+                                <i class="fas fa-minus-circle mr-1"></i>{% trans "Âm tính" %}
+                              </label>
+                              <label class="btn btn-outline-secondary {% if sample.CULTRES_1 == 'NoApply' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_1" value="NoApply" {% if sample.CULTRES_1 == 'NoApply' %}checked{% endif %}>
+                                <i class="fas fa-ban mr-1"></i>{% trans "Không áp dụng" %}
+                              </label>
+                              <label class="btn btn-outline-warning {% if sample.CULTRES_1 == 'NotPerformed' %}active{% endif %} mb-2">
+                                <input type="radio" name="CULTRES_1" value="NotPerformed" {% if sample.CULTRES_1 == 'NotPerformed' %}checked{% endif %}>
+                                <i class="fas fa-times-circle mr-1"></i>{% trans "Không thực hiện" %}
+                              </label>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-primary h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="KLEBPNEU_1" id="id_KLEBPNEU_1" class="form-check-input"
+                                           {% if sample.KLEBPNEU_1 %}checked{% endif %}>
+                                    <label for="id_KLEBPNEU_1" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-bug text-danger mr-1"></i>{% trans "Klebsiella pneumoniae" %}
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-info h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="other-specify-container">
+                                    <input type="hidden" name="OTHERRES_1" id="id_OTHERRES_1"
+                                           value="{% if sample.OTHERRES_1 %}True{% else %}False{% endif %}">
+                                    <label class="font-weight-bold mb-1"><i class="fas fa-edit mr-2 text-info"></i>{% trans "Khác, ghi rõ:" %}</label>
+                                    <input type="text" name="OTHERRESSPECIFY_1" id="id_OTHERRESSPECIFY_1"
+                                           class="form-control" value="{{ sample.OTHERRESSPECIFY_1|default:'' }}"
+                                           placeholder="{% trans 'Nhập tại đây nếu có kết quả khác' %}"
+                                           data-checkbox-id="id_OTHERRES_1">
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Phết trực tràng -->
+              <div class="row mb-4">
+                <div class="col-lg-12 col-md-12">
+                  <div class="card h-100 border-left-success">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <div class="form-check mb-0">
+                        <input type="checkbox" name="RECTSWAB" id="id_RECTSWAB" class="form-check-input sample-type-checkbox"
+                               {% if sample.RECTSWAB %}checked{% endif %}>
+                        <label for="id_RECTSWAB" class="form-check-label font-weight-bold h5 mb-0">{% trans "Phết trực tràng" %}</label>
+                      </div>
+                    </div>
+                    <div class="card-body py-3">
+                      <div class="rect-swab-date-container" {% if not sample.RECTSWAB %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                          <label for="id_RECTSWABDATE">{% trans "Ngày lấy mẫu" %}:</label>
+                          <input type="date" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control"
+                                 value="{{ sample.RECTSWABDATE|date:'Y-m-d'|default:'' }}">
+                        </div>
+                        <div class="sample-culture-container mt-4">
+                          <h6 class="text-success font-weight-bold mb-3">{% trans "Kết quả nuôi cấy mẫu phết trực tràng" %}</h6>
+                          <div class="mb-3">
+                            <label class="font-weight-bold mb-2">{% trans "Kết quả" %}:</label>
+                            <div class="btn-group btn-group-toggle d-flex flex-wrap" data-toggle="buttons">
+                              <label class="btn btn-outline-primary {% if sample.CULTRES_2 == 'Pos' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_2" value="Pos" {% if sample.CULTRES_2 == 'Pos' %}checked{% endif %}>
+                                <i class="fas fa-plus-circle mr-1"></i>{% trans "Dương tính" %}
+                              </label>
+                              <label class="btn btn-outline-success {% if sample.CULTRES_2 == 'Neg' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_2" value="Neg" {% if sample.CULTRES_2 == 'Neg' %}checked{% endif %}>
+                                <i class="fas fa-minus-circle mr-1"></i>{% trans "Âm tính" %}
+                              </label>
+                              <label class="btn btn-outline-secondary {% if sample.CULTRES_2 == 'NoApply' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_2" value="NoApply" {% if sample.CULTRES_2 == 'NoApply' %}checked{% endif %}>
+                                <i class="fas fa-ban mr-1"></i>{% trans "Không áp dụng" %}
+                              </label>
+                              <label class="btn btn-outline-warning {% if sample.CULTRES_2 == 'NotPerformed' %}active{% endif %} mb-2">
+                                <input type="radio" name="CULTRES_2" value="NotPerformed" {% if sample.CULTRES_2 == 'NotPerformed' %}checked{% endif %}>
+                                <i class="fas fa-times-circle mr-1"></i>{% trans "Không thực hiện" %}
+                              </label>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-primary h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="KLEBPNEU_2" id="id_KLEBPNEU_2" class="form-check-input"
+                                           {% if sample.KLEBPNEU_2 %}checked{% endif %}>
+                                    <label for="id_KLEBPNEU_2" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-bug text-danger mr-1"></i>{% trans "Klebsiella pneumoniae" %}
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-info h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="other-specify-container">
+                                    <input type="hidden" name="OTHERRES_2" id="id_OTHERRES_2"
+                                           value="{% if sample.OTHERRES_2 %}True{% else %}False{% endif %}">
+                                    <label class="font-weight-bold mb-1"><i class="fas fa-edit mr-2 text-info"></i>{% trans "Khác, ghi rõ:" %}</label>
+                                    <input type="text" name="OTHERRESSPECIFY_2" id="id_OTHERRESSPECIFY_2"
+                                           class="form-control" value="{{ sample.OTHERRESSPECIFY_2|default:'' }}"
+                                           placeholder="{% trans 'Nhập tại đây nếu có kết quả khác' %}"
+                                           data-checkbox-id="id_OTHERRES_2">
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Phết họng -->
+              <div class="row mb-4">
+                <div class="col-lg-12 col-md-12">
+                  <div class="card h-100 border-left-info">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <div class="form-check mb-0">
+                        <input type="checkbox" name="THROATSWAB" id="id_THROATSWAB" class="form-check-input sample-type-checkbox"
+                               {% if sample.THROATSWAB %}checked{% endif %}>
+                        <label for="id_THROATSWAB" class="form-check-label font-weight-bold h5 mb-0">{% trans "Phết họng" %}</label>
+                      </div>
+                    </div>
+                    <div class="card-body py-3">
+                      <div class="throat-swab-date-container" {% if not sample.THROATSWAB %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                          <label for="id_THROATSWABDATE">{% trans "Ngày lấy mẫu" %}:</label>
+                          <input type="date" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control"
+                                 value="{{ sample.THROATSWABDATE|date:'Y-m-d'|default:'' }}">
+                        </div>
+                        <div class="sample-culture-container mt-4">
+                          <h6 class="text-info font-weight-bold mb-3">{% trans "Kết quả nuôi cấy mẫu phết họng" %}</h6>
+                          <div class="mb-3">
+                            <label class="font-weight-bold mb-2">{% trans "Kết quả" %}:</label>
+                            <div class="btn-group btn-group-toggle d-flex flex-wrap" data-toggle="buttons">
+                              <label class="btn btn-outline-primary {% if sample.CULTRES_3 == 'Pos' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_3" value="Pos" {% if sample.CULTRES_3 == 'Pos' %}checked{% endif %}>
+                                <i class="fas fa-plus-circle mr-1"></i>{% trans "Dương tính" %}
+                              </label>
+                              <label class="btn btn-outline-success {% if sample.CULTRES_3 == 'Neg' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_3" value="Neg" {% if sample.CULTRES_3 == 'Neg' %}checked{% endif %}>
+                                <i class="fas fa-minus-circle mr-1"></i>{% trans "Âm tính" %}
+                              </label>
+                              <label class="btn btn-outline-secondary {% if sample.CULTRES_3 == 'NoApply' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_3" value="NoApply" {% if sample.CULTRES_3 == 'NoApply' %}checked{% endif %}>
+                                <i class="fas fa-ban mr-1"></i>{% trans "Không áp dụng" %}
+                              </label>
+                              <label class="btn btn-outline-warning {% if sample.CULTRES_3 == 'NotPerformed' %}active{% endif %} mb-2">
+                                <input type="radio" name="CULTRES_3" value="NotPerformed" {% if sample.CULTRES_3 == 'NotPerformed' %}checked{% endif %}>
+                                <i class="fas fa-times-circle mr-1"></i>{% trans "Không thực hiện" %}
+                              </label>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-primary h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="KLEBPNEU_3" id="id_KLEBPNEU_3" class="form-check-input"
+                                           {% if sample.KLEBPNEU_3 %}checked{% endif %}>
+                                    <label for="id_KLEBPNEU_3" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-bug text-danger mr-1"></i>{% trans "Klebsiella pneumoniae" %}
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-info h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="other-specify-container">
+                                    <input type="hidden" name="OTHERRES_3" id="id_OTHERRES_3"
+                                           value="{% if sample.OTHERRES_3 %}True{% else %}False{% endif %}">
+                                    <label class="font-weight-bold mb-1"><i class="fas fa-edit mr-2 text-info"></i>{% trans "Khác, ghi rõ:" %}</label>
+                                    <input type="text" name="OTHERRESSPECIFY_3" id="id_OTHERRESSPECIFY_3"
+                                           class="form-control" value="{{ sample.OTHERRESSPECIFY_3|default:'' }}"
+                                           placeholder="{% trans 'Nhập tại đây nếu có kết quả khác' %}"
+                                           data-checkbox-id="id_OTHERRES_3">
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Mẫu máu - chỉ hiển thị khi không phải là Sample 4 -->
+              {% if sample.SAMPLE_TYPE != '4' %}
+              <div class="row mb-4">
+                <div class="col-lg-12 col-md-12">
+                  <div class="card h-100 border-left-warning">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <div class="form-check mb-0">
+                        <input type="checkbox" name="BLOOD" id="id_BLOOD" class="form-check-input sample-type-checkbox"
+                               {% if sample.BLOOD %}checked{% endif %}>
+                        <label for="id_BLOOD" class="form-check-label font-weight-bold h5 mb-0">{% trans "Mẫu máu" %}</label>
+                      </div>
+                    </div>
+                    <div class="card-body py-3">
+                      <div class="blood-date-container" {% if not sample.BLOOD %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                          <label for="id_BLOODDATE">{% trans "Ngày lấy mẫu" %}:</label>
+                          <input type="date" name="BLOODDATE" id="id_BLOODDATE" class="form-control"
+                                 value="{{ sample.BLOODDATE|date:'Y-m-d'|default:'' }}">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div id="section-reason-ifno" class="card shadow mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-primary">{% trans "Ghi chú" %}</h5>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="id_REASONIFNO" class="font-weight-bold">{% trans "Lý do không thu thập được mẫu (nếu có)" %}:</label>
+              <div class="reason-required-message text-danger mb-2" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i>
+                {% trans "Không có mẫu nào được thu thập. Vui lòng ghi rõ lý do!" %}
+              </div>
+              <textarea name="REASONIFNO" id="id_REASONIFNO" class="form-control" rows="3">{{ sample.REASONIFNO|default:'' }}</textarea>
+              <small class="form-text text-muted">
+                {% trans "Nhập thông tin chi tiết về lý do không thu thập được mẫu hoặc các ghi chú khác liên quan đến việc thu thập mẫu." %}
+              </small>
+            </div>
+          </div>
+        </div>
+        <div class="text-center mt-4">
+          <button type="submit" id="submitButton" class="btn btn-primary btn-lg px-5">
+            <i class="fas fa-save mr-2"></i>
+            {% if is_new %}
+              {% trans "Lưu" %}
+            {% else %}
+              {% trans "Cập Nhật" %}
+            {% endif %}
+          </button>
+          <a href="{% url '43en:contact_sample_collection_list' usubjid=usubjid %}" class="btn btn-secondary btn-lg px-4 ml-2">
+            <i class="fas fa-times mr-2"></i> {% trans "Hủy" %}
+          </a>
+        </div>
+        {% if messages %}
+        <div class="mt-3">
+          {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+  let savedCheckboxStates = {
+    STOOL: false,
+    THROATSWAB: false,
+    RECTSWAB: false,
+    BLOOD: false
+  };
+
+  function updateReasonIfNoVisibility() {
+    const hasStool = $('#id_STOOL').is(':checked');
+    const hasThroatSwab = $('#id_THROATSWAB').is(':checked');
+    const hasRectSwab = $('#id_RECTSWAB').is(':checked');
+    const hasBlood = $('#id_BLOOD').is(':checked');
+    const $reasonSection = $('#section-reason-ifno');
+    if (!hasStool && !hasThroatSwab && !hasRectSwab && !hasBlood) {
+      $reasonSection.find('.reason-required-message').show();
+      $reasonSection.find('textarea[name="REASONIFNO"]').attr('required', true);
+    } else {
+      $reasonSection.find('.reason-required-message').hide();
+      $reasonSection.find('textarea[name="REASONIFNO"]').removeAttr('required');
+    }
+  }
+
+  function setupKlebsiellaOtherToggle(klebsiellaId, otherSpecifyId, otherResId) {
+    $(klebsiellaId).change(function() {
+      const $otherInput = $(otherSpecifyId);
+      if ($(this).is(':checked')) {
+        $otherInput.prop('disabled', true)
+                   .val('')
+                   .attr('placeholder', '{% trans "Không áp dụng khi đã chọn Klebsiella pneumoniae" %}');
+        $(otherResId).val('False');
+      } else {
+        $otherInput.prop('disabled', false)
+                  .attr('placeholder', '{% trans "Nhập tại đây nếu có kết quả khác" %}');
+      }
+    });
+  }
+
+  function setupCultureResultToggle(cultureResultName, klebsiellaId, otherSpecifyId, otherResId) {
+    const $klebsiellaContainer = $(klebsiellaId).closest('.col-lg-6');
+    const $otherContainer = $(otherSpecifyId).closest('.col-lg-6');
+    $(`input[name="${cultureResultName}"]`).change(function() {
+      const value = $(this).val();
+      if (value === 'Pos') {
+        $klebsiellaContainer.slideDown(300);
+        $otherContainer.slideDown(300);
+      } else {
+        $klebsiellaContainer.slideUp(300);
+        $otherContainer.slideUp(300);
+        $(klebsiellaId).prop('checked', false);
+        $(otherSpecifyId).val('');
+        $(otherResId).val('False');
+      }
+    });
+  }
+
+  setupKlebsiellaOtherToggle('#id_KLEBPNEU_1', '#id_OTHERRESSPECIFY_1', '#id_OTHERRES_1');
+  setupKlebsiellaOtherToggle('#id_KLEBPNEU_2', '#id_OTHERRESSPECIFY_2', '#id_OTHERRES_2');
+  setupKlebsiellaOtherToggle('#id_KLEBPNEU_3', '#id_OTHERRESSPECIFY_3', '#id_OTHERRES_3');
+
+  setupCultureResultToggle('CULTRES_1', '#id_KLEBPNEU_1', '#id_OTHERRESSPECIFY_1', '#id_OTHERRES_1');
+  setupCultureResultToggle('CULTRES_2', '#id_KLEBPNEU_2', '#id_OTHERRESSPECIFY_2', '#id_OTHERRES_2');
+  setupCultureResultToggle('CULTRES_3', '#id_KLEBPNEU_3', '#id_OTHERRESSPECIFY_3', '#id_OTHERRES_3');
+
+  function setupSampleToggle(checkboxId, dateContainerClass) {
+    $(checkboxId).change(function() {
+      if ($(this).is(':checked')) {
+        $(dateContainerClass).slideDown(200);
+      } else {
+        $(dateContainerClass).slideUp(200);
+      }
+      updateReasonIfNoVisibility();
+    });
+  }
+
+  setupSampleToggle('#id_STOOL', '.stool-date-container');
+  setupSampleToggle('#id_THROATSWAB', '.throat-swab-date-container');
+  setupSampleToggle('#id_RECTSWAB', '.rect-swab-date-container');
+  setupSampleToggle('#id_BLOOD', '.blood-date-container');
+
+  function saveInitialCheckboxStates() {
+    savedCheckboxStates = {
+      STOOL: $('#id_STOOL').is(':checked'),
+      THROATSWAB: $('#id_THROATSWAB').is(':checked'),
+      RECTSWAB: $('#id_RECTSWAB').is(':checked'),
+      BLOOD: $('#id_BLOOD').is(':checked')
+    };
+  }
+
+  function restoreCheckboxStates() {
+    if (savedCheckboxStates.STOOL) $('#id_STOOL').prop('checked', true).trigger('change');
+    if (savedCheckboxStates.THROATSWAB) $('#id_THROATSWAB').prop('checked', true).trigger('change');
+    if (savedCheckboxStates.RECTSWAB) $('#id_RECTSWAB').prop('checked', true).trigger('change');
+    if (savedCheckboxStates.BLOOD) $('#id_BLOOD').prop('checked', true).trigger('change');
+    $('input[name="CULTRES_1"]:checked').trigger('change');
+    $('input[name="CULTRES_2"]:checked').trigger('change');
+    $('input[name="CULTRES_3"]:checked').trigger('change');
+  }
+
+  $('input[name="SAMPLE"]').change(function() {
+    if ($(this).val() === 'True') {
+      $('#section-has-sample').slideDown(300);
+      restoreCheckboxStates();
+    } else {
+      saveInitialCheckboxStates();
+      $('#section-has-sample').slideUp(300);
+      $('.sample-type-checkbox').prop('checked', false);
+    }
+    updateReasonIfNoVisibility();
+  });
+
+  $('#sampleForm').on('submit', function(e) {
+    const isSampleYes = $('input[name="SAMPLE"][value="True"]').is(':checked');
+    if (!isSampleYes) {
+      const reason = $('#id_REASONIFNO').val().trim();
+      if (reason === '') {
+        e.preventDefault();
+        alert('{% trans "Vui lòng nhập lý do không thu thập được mẫu" %}');
+        $('#id_REASONIFNO').focus();
+        return false;
+      }
+      $('.sample-type-checkbox').prop('checked', false);
+    } else {
+      const hasAnyChecked = $('#id_BLOOD').is(':checked') ||
+                            $('#id_STOOL').is(':checked') ||
+                            $('#id_THROATSWAB').is(':checked') ||
+                            $('#id_RECTSWAB').is(':checked');
+      if (!hasAnyChecked) {
+        e.preventDefault();
+        alert('{% trans "Vui lòng chọn ít nhất một loại mẫu" %}');
+        return false;
+      }
+    }
+    $('input[name="form_submitted"]').val('True');
+    return true;
+  });
+
+  if ($('input[name="SAMPLE"][value="True"]').is(':checked')) {
+    $('#section-has-sample').show();
+  } else {
+    $('#section-has-sample').hide();
+  }
+  $('.sample-type-checkbox').each(function() {
+    $(this).trigger('change');
+  });
+  $('input[name="CULTRES_1"]:checked').trigger('change');
+  $('input[name="CULTRES_2"]:checked').trigger('change');
+  $('input[name="CULTRES_3"]:checked').trigger('change');
+  if ($('input[name="CULTRES_1"]:checked').val() === 'Pos') {
+    $('#id_KLEBPNEU_1').closest('.col-lg-6').show();
+    $('#id_OTHERRESSPECIFY_1').closest('.col-lg-6').show();
+  } else {
+    $('#id_KLEBPNEU_1').closest('.col-lg-6').hide();
+    $('#id_OTHERRESSPECIFY_1').closest('.col-lg-6').hide();
+  }
+  if ($('input[name="CULTRES_2"]:checked').val() === 'Pos') {
+    $('#id_KLEBPNEU_2').closest('.col-lg-6').show();
+    $('#id_OTHERRESSPECIFY_2').closest('.col-lg-6').show();
+  } else {
+    $('#id_KLEBPNEU_2').closest('.col-lg-6').hide();
+    $('#id_OTHERRESSPECIFY_2').closest('.col-lg-6').hide();
+  }
+  if ($('input[name="CULTRES_3"]:checked').val() === 'Pos') {
+    $('#id_KLEBPNEU_3').closest('.col-lg-6').show();
+    $('#id_OTHERRESSPECIFY_3').closest('.col-lg-6').show();
+  } else {
+    $('#id_KLEBPNEU_3').closest('.col-lg-6').hide();
+    $('#id_OTHERRESSPECIFY_3').closest('.col-lg-6').hide();
+  }
+  $('#id_KLEBPNEU_1').trigger('change');
+  $('#id_KLEBPNEU_2').trigger('change');
+  $('#id_KLEBPNEU_3').trigger('change');
+  saveInitialCheckboxStates();
+  updateReasonIfNoVisibility();
+});
+</script>
+{% endblock %}
