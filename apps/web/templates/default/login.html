@@ -13,10 +13,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
@@ -27,17 +23,16 @@
   </head>
 
   <body
-    class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased"
+    class="flex min-h-screen items-center justify-center bg-gray-100 text-slate-800 antialiased"
   >
     <main class="w-full max-w-7xl p-4 sm:p-6 lg:p-8">
       <!-- Main card -->
-      <section
-        class="grid overflow-hidden rounded-3xl bg-white shadow-xl ring-1 ring-slate-900/5 md:grid-cols-6"
+      <section class="grid overflow-hidden rounded-3xl bg-white ring-2 ring-slate-900/5 md:grid-cols-2"
         role="region"
         aria-labelledby="signin-title"
       >
         <!-- Left: branding & features -->
-        <aside class="md:col-span-3 bg-gradient-to-b from-indigo-200 to-white p-8 md:p-12">
+        <aside class="md:col-span-1 bg-gradient-to-br from-blue-200 to-white p-8 md:p-12">
           <div class="flex items-center">
             <img
               src="{% static 'images/default/logo.webp' %}"
@@ -48,33 +43,62 @@
             />
           </div>
 
-          <h2 class="mt-6 text-2xl font-semibold leading-tight">
+          <h2 class="mt-4 text-2xl font-bold leading-tight text-gray-900">
             Welcome to the ResSync Platform
           </h2>
-          <p class="mt-2 text-sm text-slate-600">
+          <p class="mt-2 text-slate-700">
             The next generation of research data management
           </p>
 
-          <div class="mt-8 space-y-3">
-            <h3 class="text-sm font-medium uppercase tracking-wide text-slate-500">
-              Key Features
+          <div class="mt-6 md:space-y-2">
+            <h3 class="font-bold text-base uppercase tracking-wider text-slate-700">
+                Platform Features
             </h3>
-            <ul class="mt-2 list-inside list-disc space-y-3">
-              <li><strong class="font-semibold">Data Management:</strong> Organize, query, and export study data efficiently</li>
-              <li><strong class="font-semibold">Data Entry:</strong> Fast CRF input with built-in format and logic checks</li>
-              <li><strong class="font-semibold">Dashboards:</strong> Real-time summaries of progress and data status</li>
-              <li><strong class="font-semibold">Accurate Scheduling:</strong> Auto reminders and error-free visit tracking</li>
+            <!-- Đã bỏ đường kẻ và dùng space-y để tạo khoảng cách thoáng hơn -->
+            <ul class="space-y-4 pt-2">
+                <!-- Mục 1 -->
+                <li class="flex items-center gap-5">
+                    <span class="material-icons text-4xl text-blue-500">folder_open</span>
+                    <div class="flex-grow">
+                        <strong class="font-semibold text-gray-900">Data Management</strong>
+                        <p class="text-gray-600 text-sm">Organize, query, and export study data efficiently.</p>
+                    </div>
+                </li>
+                <!-- Mục 2 -->
+                <li class="flex items-center gap-5">
+                    <span class="material-icons text-4xl text-blue-500">edit_note</span>
+                    <div class="flex-grow">
+                        <strong class="font-semibold text-gray-900">Data Entry</strong>
+                        <p class="text-gray-600 text-sm">Fast CRF input with built-in format and logic checks.</p>
+                    </div>
+                </li>
+                <!-- Mục 3 -->
+                <li class="flex items-center gap-5">
+                    <span class="material-icons text-4xl text-blue-500">dashboard</span>
+                    <div class="flex-grow">
+                        <strong class="font-semibold text-gray-900">Dashboards</strong>
+                        <p class="text-gray-600 text-sm">Real-time summaries of progress and data status.</p>
+                    </div>
+                </li>
+                <!-- Mục 4 -->
+                <li class="flex items-center gap-5">
+                    <span class="material-icons text-4xl text-blue-500">event_available</span>
+                    <div class="flex-grow">
+                        <strong class="font-semibold text-gray-900">Accurate Scheduling</strong>
+                        <p class="text-gray-600 text-sm">Auto reminders and error-free visit tracking.</p>
+                    </div>
+                </li>
             </ul>
           </div>
 
-          <div class="mt-10 border-t border-slate-200 pt-6 text-xs text-slate-500">
+          <div class="mt-6 border-t border-slate-300 pt-6 text-xs text-slate-500">
             <p>
               Need help?
               <a
-                class="font-medium text-indigo-600 underline underline-offset-2 hover:no-underline"
-                href="mailto:vinhc@oucru.org"
+                class="font-medium text-blue-500 underline underline-offset-2 hover:no-underline"
+                href="mailto:ressync@oucru.org"
               >vinhc@oucru.org</a> 
-              or <a href="tel:+84765808290" class="font-medium text-indigo-600 underline underline-offset-2 hover:no-underline">+84 765 808 290</a>
+              or <a href="tel:+84765808290" class="font-medium text-blue-500 underline underline-offset-2 hover:no-underline">+84 765 808 290</a>
             </p>
             <p class="mt-2">
               &copy; 2025 ResSync — designed by Vinh Chau & Duy Tuong Pham
@@ -83,7 +107,7 @@
         </aside>
 
         <!-- Right: form -->
-        <div class="md:col-span-3 p-8 md:p-12 flex items-center justify-center">
+        <div class="md:col-span-1 p-8 md:p-12 flex items-center justify-center">
           <form
             id="loginForm"
             action="{% url 'login' %}"
@@ -94,7 +118,7 @@
           >
             {% csrf_token %}
 
-            <h1 id="signin-title" class="text-4xl font-bold leading-tight">
+            <h1 id="signin-title" class="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
               Sign In
             </h1>
             <p id="form-help" class="text-sm text-slate-600">
@@ -102,9 +126,11 @@
             </p>
 
             {# Display non-field errors (e.g., invalid credentials) #}
+
             {% if form.non_field_errors %}
-              <div class="rounded-md bg-red-50 p-3 text-sm text-red-700">
-                {{ form.non_field_errors|join:" " }}
+              <div class="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 flex items-start gap-2 w-full">
+                <span class="material-icons text-2xl mt-0.5">error_outline</span>
+                <span class="break-all">{{ form.non_field_errors|join:" " }}</span>
               </div>
             {% endif %}
 
@@ -126,7 +152,7 @@
                 spellcheck="false"
                 autofocus
                 value="{{ form.username.value|default:'' }}"
-                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring--blue-500 focus:outline-none transition-colors duration-200"
                 aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
                 aria-describedby="username-error"
               />
@@ -151,7 +177,7 @@
                   enterkeyhint="done"
                   required
                   placeholder="••••••••"
-                  class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 text-gray-900 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                   class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring--blue-500 focus:outline-none transition-colors duration-200"
                   aria-invalid="{% if form.password.errors %}true{% else %}false{% endif %}"
                   aria-describedby="password-error"
                 />
@@ -163,8 +189,8 @@
                   aria-controls="password"
                   aria-pressed="false"
                 >
-                  <span class="material-icons" id="eyeOn">visibility</span>
-                  <span class="material-icons hidden" id="eyeOff">visibility_off</span>
+                  <span class="material-icons" id="eyeOn">visibility_off</span>
+                  <span class="material-icons hidden" id="eyeOff">visibility</span>
                 </button>
               </div>
               {% if form.password.errors %}
@@ -177,7 +203,7 @@
             <!-- Submit -->
             <button
               type="submit"
-              class="submit-btn inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 disabled:opacity-70"
+              class="submit-btn inline-flex w-full items-center justify-center rounded-lg bg-blue-500 px-4 py-3 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800 disabled:opacity-70"
               id="submitBtn"
               aria-live="polite"
             >
@@ -187,15 +213,6 @@
                 aria-hidden="true"
               ></span>
             </button>
-            <!-- Forgot password -->
-            <!-- <div class="flex items-center justify-between">
-              <a
-                href="{% url 'password_reset' %}"
-                class="text-sm text-indigo-700 underline-offset-2 hover:underline"
-              >
-                Forgot password?
-              </a>
-            </div> -->
           </form>
         </div>
       </section>
