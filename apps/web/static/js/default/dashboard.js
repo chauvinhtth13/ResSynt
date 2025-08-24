@@ -1,91 +1,81 @@
 // static/js/default/dashboard.js
-const qs = (s, el = document) => el.querySelector(s);
-const qsa = (s, el = document) => el.querySelectorAll(s);
+'use strict';
 
-// Simplified focus trap for mobile sidebar
-function trapFocusWithin(container) {
-  const focusables = Array.from(
-    container.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])')
-  ).filter(el => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true' && el.tabIndex !== -1);
-  if (!focusables.length) return () => {};
-  const first = focusables[0], last = focusables[focusables.length - 1];
-  const onKey = (e) => {
-    if (e.key !== 'Tab') return;
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
-  container.addEventListener('keydown', onKey, { passive: true });
-  return () => container.removeEventListener('keydown', onKey);
-}
+const { qs, qsa, initDropdowns, trapFocusWithin, registerInit } = window.ResSyncBase;
 
-document.addEventListener('DOMContentLoaded', () => {
+// Toggle sidebar (optimized: Handles missing elements, uses dataset safely)
+const initSidebarToggle = () => {
   const toggleSidebarBtn = qs('#toggleSidebarBtn');
+  if (!toggleSidebarBtn) return;
+
   const mqlDesktop = window.matchMedia('(min-width: 768px)');
 
   // Restore desktop collapsed state
-  if (mqlDesktop.matches && localStorage.getItem('sidebarCollapsed') === '1') {
-    document.body.classList.add('sidebar-collapsed');
+  if (mqlDesktop.matches) {
+    const collapsed = localStorage.getItem('sidebarCollapsed') === '1';
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
+    updateToggleState(toggleSidebarBtn, collapsed);
   }
 
-  // Desktop toggle (collapse)
-  const toggleSidebar = () => {
-    if (!toggleSidebarBtn) return;
+  toggleSidebarBtn.addEventListener('click', () => {
     const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-    toggleSidebarBtn.setAttribute('aria-label', isCollapsed ? toggleSidebarBtn.dataset.showLabel : toggleSidebarBtn.dataset.hideLabel);
-    toggleSidebarBtn.setAttribute('aria-pressed', String(isCollapsed));
-    const svg = toggleSidebarBtn.querySelector('svg');
-    if (svg) {
-      svg.classList.toggle('-rotate-180', !isCollapsed);
-      svg.classList.toggle('rotate-0', isCollapsed);
-    }
+    updateToggleState(toggleSidebarBtn, isCollapsed);
     localStorage.setItem('sidebarCollapsed', isCollapsed ? '1' : '0');
-  };
-  toggleSidebarBtn?.addEventListener('click', toggleSidebar, { passive: true });
-
-  // General dropdown handling
-  const dropdowns = qsa('[data-dropdown]');
-  dropdowns.forEach(drop => {
-    const trigger = drop.querySelector('.dropdown-trigger');
-    const menu = drop.querySelector('.dropdown-menu');
-    if (trigger && menu) {
-      trigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isHidden = menu.classList.contains('hidden');
-        menu.classList.toggle('hidden', !isHidden);
-        trigger.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
-      }, { passive: true });
-      document.addEventListener('click', (e) => {
-        if (!drop.contains(e.target)) {
-          menu.classList.add('hidden');
-          trigger.setAttribute('aria-expanded', 'false');
-        }
-      }, { passive: true });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          menu.classList.add('hidden');
-          trigger.setAttribute('aria-expanded', 'false');
-        }
-      }, { passive: true });
-    }
   });
+};
 
-  // Handle "Choose another study" to block back
+const updateToggleState = (btn, isCollapsed) => {
+  btn.setAttribute('aria-label', isCollapsed ? btn.dataset.showLabel || 'Show sidebar' : btn.dataset.hideLabel || 'Hide sidebar');
+  btn.setAttribute('aria-pressed', String(isCollapsed));
+  const svg = btn.querySelector('svg');
+  if (svg) {
+    svg.classList.toggle('-rotate-180', !isCollapsed);
+    svg.classList.toggle('rotate-0', isCollapsed);
+  }
+};
+
+// Handle choose study form and back trap (optimized: Checks history support)
+const initBackTrap = () => {
+  if (!history || !history.pushState) return; // Graceful degradation
+
   const chooseStudyForm = qs('[data-choose-study-form]');
   if (chooseStudyForm) {
-    chooseStudyForm.addEventListener('submit', (e) => {
-      history.pushState(null, '', location.href);  // Push dummy state to trap back
-      history.pushState(null, '', location.href);  // Multiple to block multiple backs
-      // Form submits POST, no need for replace
-    }, { passive: true });
+    chooseStudyForm.addEventListener('submit', () => {
+      history.pushState(null, '', location.href);
+      history.pushState(null, '', location.href);
+    });
   }
 
-  // Trap back button
   window.addEventListener('popstate', () => {
-    history.go(1);  // Force forward on back
-  }, { passive: true });
+    history.go(1);
+  });
+};
+
+// Force reload on back/forward navigation or persisted page show
+const initReloadOnBack = () => {
+  // Check for back_forward navigation type
+  if (performance.getEntriesByType('navigation')[0].type === 'back_forward') {
+    window.location.reload();
+  }
+
+  // Add event listener for pageshow if persisted (bfcache)
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      window.location.reload();
+    }
+  });
+};
+
+registerInit(() => {
+  initSidebarToggle();
+  const cleanupDropdowns = initDropdowns();
+  initBackTrap();
+  initReloadOnBack();
+
+  // Apply trapFocus if sidebar exists (assuming #sidebar for mobile)
+  const sidebar = qs('#sidebar'); // Adjust selector as needed
+  if (sidebar && !window.matchMedia('(min-width: 768px)').matches) {
+    const untrap = trapFocusWithin(sidebar);
+    // Optional: Add event to remove trap when sidebar closes
+  }
 });

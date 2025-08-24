@@ -1,224 +1,208 @@
-<!-- apps\web\templates\default\login.html -->
-{% load static%}
+{% load static %}
 <!DOCTYPE html>
-<html
-  lang="en"
->
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<html lang="en">
+<head>
+    <!-- Meta tags for character encoding, compatibility, and responsive viewport -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    
+    <!-- Page title -->
     <title>ResSync — Sign in</title>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-
-    <!-- Tailwind (CDN) -->
+    
+    <!-- Core stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/default/base.css' %}" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{% static 'css/default/login_style.css' %}" />
-  </head>
-
-  <body
-    class="flex min-h-screen items-center justify-center bg-gray-100 text-slate-800 antialiased"
-  >
-    <main class="w-full max-w-7xl p-4 sm:p-6 lg:p-8">
-      <!-- Main card -->
-      <section class="grid overflow-hidden rounded-3xl bg-white ring-2 ring-slate-900/5 md:grid-cols-2"
-        role="region"
-        aria-labelledby="signin-title"
-      >
-        <!-- Left: branding & features -->
-        <aside class="md:col-span-1 bg-gradient-to-br from-blue-200 to-white p-8 md:p-12">
-          <div class="flex items-center">
-            <img
-              src="{% static 'images/default/logo.webp' %}"
-              alt="ResSync logo"
-              class="h-auto w-auto"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-
-          <h2 class="mt-4 text-2xl font-bold leading-tight text-gray-900">
-            Welcome to the ResSync Platform
-          </h2>
-          <p class="mt-2 text-slate-700">
-            The next generation of research data management
-          </p>
-
-          <div class="mt-6 md:space-y-2">
-            <h3 class="font-bold text-base uppercase tracking-wider text-slate-700">
-                Platform Features
-            </h3>
-            <!-- Đã bỏ đường kẻ và dùng space-y để tạo khoảng cách thoáng hơn -->
-            <ul class="space-y-4 pt-2">
-                <!-- Mục 1 -->
-                <li class="flex items-center gap-5">
-                    <span class="material-icons text-4xl text-blue-500">folder_open</span>
-                    <div class="flex-grow">
-                        <strong class="font-semibold text-gray-900">Data Management</strong>
-                        <p class="text-gray-600 text-sm">Organize, query, and export study data efficiently.</p>
-                    </div>
-                </li>
-                <!-- Mục 2 -->
-                <li class="flex items-center gap-5">
-                    <span class="material-icons text-4xl text-blue-500">edit_note</span>
-                    <div class="flex-grow">
-                        <strong class="font-semibold text-gray-900">Data Entry</strong>
-                        <p class="text-gray-600 text-sm">Fast CRF input with built-in format and logic checks.</p>
-                    </div>
-                </li>
-                <!-- Mục 3 -->
-                <li class="flex items-center gap-5">
-                    <span class="material-icons text-4xl text-blue-500">dashboard</span>
-                    <div class="flex-grow">
-                        <strong class="font-semibold text-gray-900">Dashboards</strong>
-                        <p class="text-gray-600 text-sm">Real-time summaries of progress and data status.</p>
-                    </div>
-                </li>
-                <!-- Mục 4 -->
-                <li class="flex items-center gap-5">
-                    <span class="material-icons text-4xl text-blue-500">event_available</span>
-                    <div class="flex-grow">
-                        <strong class="font-semibold text-gray-900">Accurate Scheduling</strong>
-                        <p class="text-gray-600 text-sm">Auto reminders and error-free visit tracking.</p>
-                    </div>
-                </li>
-            </ul>
-          </div>
-
-          <div class="mt-6 border-t border-slate-300 pt-6 text-xs text-slate-500">
-            <p>
-              Need help?
-              <a
-                class="font-medium text-blue-500 underline underline-offset-2 hover:no-underline"
-                href="mailto:ressync@oucru.org"
-              >vinhc@oucru.org</a> 
-              or <a href="tel:+84765808290" class="font-medium text-blue-500 underline underline-offset-2 hover:no-underline">+84 765 808 290</a>
-            </p>
-            <p class="mt-2">
-              &copy; 2025 ResSync — designed by Vinh Chau & Duy Tuong Pham
-            </p>
-          </div>
-        </aside>
-
-        <!-- Right: form -->
-        <div class="md:col-span-1 p-8 md:p-12 flex items-center justify-center">
-          <form
-            id="loginForm"
-            action="{% url 'login' %}"
-            method="post"
-            class="mx-auto w-full max-w-md space-y-6"
-            novalidate
-            aria-describedby="form-help"
-          >
-            {% csrf_token %}
-
-            <h1 id="signin-title" class="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-              Sign In
-            </h1>
-            <p id="form-help" class="text-sm text-slate-600">
-              Enter your ResSync username and password to sign in.
-            </p>
-
-            {# Display non-field errors (e.g., invalid credentials) #}
-
-            {% if form.non_field_errors %}
-              <div class="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 flex items-start gap-2 w-full">
-                <span class="material-icons text-2xl mt-0.5">error_outline</span>
-                <span class="break-all">{{ form.non_field_errors|join:" " }}</span>
-              </div>
-            {% endif %}
-
-            <!-- Username -->
-            <div>
-              <label for="username" class="block text-sm font-medium text-gray-700">
-                Username or email
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                autocomplete="username"
-                enterkeyhint="next"
-                required
-                placeholder="username or email"
-                autocapitalize="none"
-                autocorrect="off"
-                spellcheck="false"
-                autofocus
-                value="{{ form.username.value|default:'' }}"
-                class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring--blue-500 focus:outline-none transition-colors duration-200"
-                aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
-                aria-describedby="username-error"
-              />
-              {% if form.username.errors %}
-                <p id="username-error" class="mt-1 text-sm text-red-600">
-                  {{ form.username.errors|join:" " }}
+    <!-- Note: Uncomment the following line if output.css is needed -->
+    <!-- <link rel="stylesheet" href="{% static 'css/output.css' %}" /> -->
+</head>
+<body class="flex min-h-screen items-center justify-center bg-gray-100 text-slate-800 antialiased">
+    <!-- Main content wrapper -->
+    <main class="w-full max-w-6xl p-0">
+        <!-- Sign-in card with grid layout for responsive design -->
+        <section class="grid overflow-hidden rounded-3xl bg-white ring-2 ring-slate-900/5 md:grid-cols-2" role="region" aria-labelledby="signin-title">
+            <!-- Left side: Branding and feature showcase -->
+            <aside class="md:col-span-1 bg-gradient-to-br from-blue-200 via-blue-100 to-white p-8 md:p-12">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <img src="{% static 'images/default/logo.webp' %}" alt="ResSync logo" class="h-auto w-auto" loading="lazy" decoding="async" />
+                </div>
+                
+                <!-- Platform introduction -->
+                <h2 class="mt-4 text-2xl font-bold leading-tight text-gray-900">
+                    Welcome to the ResSync Platform
+                </h2>
+                <p class="mt-2 text-slate-700">
+                    The next generation of research data management
                 </p>
-              {% endif %}
+                
+                <!-- Feature list -->
+                <div class="mt-4 space-y-1">
+                    <h3 class="font-bold text-base uppercase tracking-wider text-slate-700">
+                        Platform Features
+                    </h3>
+                    <ul class="space-y-3 pt-1">
+                        <!-- Feature 1: Efficient Data Management -->
+                        <li class="flex items-center gap-3">
+                            <svg class="h-10 w-10 text-blue-500 flex-shrink-0" viewBox="0 -960 960 960" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M480-120q-151 0-255.5-46.5T120-280v-400q0-66 105.5-113T480-840q149 0 254.5 47T840-680v400q0 67-104.5 113.5T480-120Zm0-479q89 0 179-25.5T760-679q-11-29-100.5-55T480-760q-91 0-178.5 25.5T200-679q14 30 101.5 55T480-599Zm0 199q42 0 81-4t74.5-11.5q35.5-7.5 67-18.5t57.5-25v-120q-26 14-57.5 25t-67 18.5Q600-528 561-524t-81 4q-42 0-82-4t-75.5-11.5Q287-543 256-554t-56-25v120q25 14 56 25t66.5 18.5Q358-408 398-404t82 4Zm0 200q46 0 93.5-7t87.5-18.5q40-11.5 67-26t32-29.5v-98q-26 14-57.5 25t-67 18.5Q600-328 561-324t-81 4q-42 0-82-4t-75.5-11.5Q287-343 256-354t-56-25v99q5 15 31.5 29t66.5 25.5q40 11.5 88 18.5t94 7Z"/>
+                            </svg>
+                            <div class="flex-grow">
+                                <strong class="font-semibold text-gray-900">Efficient Data Management</strong>
+                                <p class="text-gray-600 text-sm">Organize, query, and export study data with unparalleled efficiency.</p>
+                            </div>
+                        </li>
+                        <!-- Feature 2: Streamlined Data Entry -->
+                        <li class="flex items-center gap-3">
+                            <svg class="h-10 w-10 text-blue-500 flex-shrink-0" viewBox="0 -960 960 960" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M560-80v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q8 9 12.5 20t4.5 22q0 11-4 22.5T903-300L683-80H560Zm300-263-37-37 37 37ZM620-140h38l121-122-18-19-19-18-122 121v38ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v120h-80v-80H520v-200H240v640h240v80H240Zm280-400Zm241 199-19-18 37 37-18-19Z"/>
+                            </svg>
+                            <div class="flex-grow">
+                                <strong class="font-semibold text-gray-900">Streamlined Data Entry</strong>
+                                <p class="text-gray-600 text-sm">Rapid CRF input with built-in format and logic validation for accuracy.</p>
+                            </div>
+                        </li>
+                        <!-- Feature 3: Dynamic Dashboards -->
+                        <li class="flex items-center gap-3">
+                            <svg class="h-10 w-10 text-blue-500 flex-shrink-0" viewBox="0 -960 960 960" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M80-126.67v-66.66h800v66.66H80Zm40-120V-520h106.67v273.33H120Zm204 0V-720h106.67v473.33H324Zm204.67 0V-600h106.66v353.33H528.67Zm204.66 0V-840H840v593.33H733.33Z"/>
+                            </svg>
+                            <div class="flex-grow">
+                                <strong class="font-semibold text-gray-900">Dynamic Dashboards</strong>
+                                <p class="text-gray-600 text-sm">Real-time summaries of project progress and data status at a glance.</p>
+                            </div>
+                        </li>
+                        <!-- Feature 4: Precise Scheduling -->
+                        <li class="flex items-center gap-3">
+                            <svg class="h-10 w-10 text-blue-500 flex-shrink-0" viewBox="0 -960 960 960" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M186.67-633.33h586.66v-113.34H186.67v113.34Zm0 0v-113.34 113.34Zm0 553.33q-27 0-46.84-19.83Q120-119.67 120-146.67v-600q0-27 19.83-46.83 19.84-19.83 46.84-19.83h56.66V-880h70v66.67h333.34V-880h70v66.67h56.66q27 0 46.84 19.83Q840-773.67 840-746.67v280.34q-15.78-7.86-32.39-13.1-16.61-5.24-34.28-8.24v-79H186.67v420h296.66q6.34 18.67 14.84 35 8.5 16.34 20.16 31.67H186.67Zm540.66 40q-79.95 0-136.31-56.35-56.35-56.36-56.35-136.32 0-79.95 56.35-136.31 56.36-56.35 136.31-56.35 79.96 0 136.32 56.35Q920-312.62 920-232.67q0 79.96-56.35 136.32Q807.29-40 727.33-40Zm61.17-93.67 27.83-28-75-75v-112H702V-222l86.5 88.33Z"/>
+                            </svg>
+                            <div class="flex-grow">
+                                <strong class="font-semibold text-gray-900">Precise Scheduling</strong>
+                                <p class="text-gray-600 text-sm">Automated reminders and visit tracking help you plan optimally.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Footer with support contact and copyright -->
+                <div class="mt-4 border-t border-slate-300 pt-4 text-xs text-slate-500">
+                    <p>
+                        Need help?
+                        <a class="font-medium text-blue-500 underline underline-offset-2 hover:no-underline" href="mailto:ressync@oucru.org">vinhc@oucru.org</a>
+                        or <a href="tel:+84765808290" class="font-medium text-blue-500 underline underline-offset-2 hover:no-underline">+84 765 808 290</a>
+                    </p>
+                    <p class="mt-2">
+                        &copy; 2025 ResSync — designed by Vinh Chau & Duy Tuong Pham
+                    </p>
+                </div>
+            </aside>
+            
+            <!-- Right side: Sign-in form -->
+            <div class="md:col-span-1 p-8 md:p-12 flex items-center justify-center">
+                <form id="loginForm" action="{% url 'login' %}" method="post" class="mx-auto w-full max-w-md space-y-6" novalidate aria-describedby="form-help">
+                    {% csrf_token %}
+                    
+                    <!-- Form title -->
+                    <h1 id="signin-title" class="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
+                        Sign In
+                    </h1>
+                    
+                    <!-- Display non-field errors if any -->
+                    {% if form.non_field_errors %}
+                        <div class="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+                            <span>{{ form.non_field_errors|join:" " }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Username input field -->
+                    <div>
+                        <label for="username" class="block text-sm font-semibold text-gray-700 pb-1">
+                            Username or Email
+                        </label>
+                        <input
+                            id="username"
+                            name="username"
+                            type="text"
+                            autocomplete="username"
+                            enterkeyhint="next"
+                            required
+                            autocapitalize="none"
+                            autocorrect="off"
+                            spellcheck="false"
+                            autofocus
+                            value="{{ form.username.value|default:'' }}"
+                            class="mt-1 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
+                            aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
+                            aria-describedby="username-error"
+                        />
+                        {% if form.username.errors %}
+                            <p id="username-error" class="mt-1 text-sm text-red-600">
+                                {{ form.username.errors|join:" " }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password input field with toggle visibility -->
+                    <div>
+                        <label for="password" class="block text-sm font-semibold text-gray-700 pb-1">
+                            Password
+                        </label>
+                        <div class="relative mt-1">
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                autocomplete="current-password"
+                                enterkeyhint="done"
+                                required
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
+                                aria-invalid="{% if form.password.errors %}true{% else %}false{% endif %}"
+                                aria-describedby="password-error"
+                            />
+                            <button
+                                type="button"
+                                id="passwordToggle"
+                                class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                                aria-label="Show password"
+                                aria-controls="password"
+                                aria-pressed="false"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" id="eyeOn" class="h-6 w-6" fill="currentColor" aria-hidden="true">
+                                    <path d="m634-422-48.67-48.67q20.34-63-27-108-47.33-45-107.66-26.66L402-654q17-10 36.83-14.67 19.84-4.66 41.17-4.66 72.33 0 122.83 50.5T653.33-500q0 21.33-5 41.5T634-422Zm128.67 128-46-45.33Q762-373 796.17-414.17q34.16-41.16 52.5-85.83-50-107.67-147.84-170.5-97.83-62.83-214.16-62.83-37.67 0-76.34 6.66Q371.67-720 346-710l-51.33-52q37-16.33 87.66-27.17Q433-800 483.33-800q145.67 0 264 82.17Q865.67-635.67 920-500q-25 62.33-64.83 114.5-39.84 52.17-92.5 91.5ZM808-61.33 640-226.67q-35 13-76.17 19.84Q522.67-200 480-200q-147.67 0-266.33-82.17Q95-364.33 40-500q20.33-52.33 54.67-100.5 34.33-48.17 82-90.17L56-812l46.67-47.33 750 750-44.67 48ZM222.67-644q-34.34 26.67-65.34 66.33-31 39.67-46.66 77.67 50.66 107.67 150.16 170.5t224.5 62.83q28.67 0 56.34-3.5 27.66-3.5 45-9.83L532-335.33q-11 4.33-25 6.5-14 2.16-27 2.16-71.67 0-122.5-50.16Q306.67-427 306.67-500q0-13.67 2.16-27 2.17-13.33 6.5-25l-92.66-92Zm309.66 125.67Zm-127.66 63.66Z"/>
+                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" id="eyeOff" class="h-6 w-6 hidden" fill="currentColor" aria-hidden="true">
+                                    <path d="M480.08-326.67q72.25 0 122.75-50.58 50.5-50.57 50.5-122.83 0-72.25-50.58-122.75-50.57-50.5-122.83-50.5-72.25 0-122.75 50.58-50.5 50.57-50.5 122.83 0 72.25 50.58 122.75 50.57 50.5 122.83 50.5Zm-.24-62.66q-46.17 0-78.34-32.33-32.17-32.32-32.17-78.5 0-46.17 32.33-78.34 32.32-32.17 78.5-32.17 46.17 0 78.34 32.33 32.17 32.32 32.17 78.5 0 46.17-32.33 78.34-32.32 32.17-78.5 32.17ZM480-200q-146 0-264.67-82.5Q96.67-365 40-500q56.67-135 175.33-217.5Q334-800 480-800t264.67 82.5Q863.33-635 920-500q-56.67 135-175.33 217.5Q626-200 480-200Zm0-300Zm-.11 233.33q118.44 0 217.61-63.5 99.17-63.5 151.17-169.83-52-106.33-151.06-169.83-99.05-63.5-217.5-63.5-118.44 0-217.61 63.5-99.17 63.5-151.83 169.83 52.66 106.33 151.72 169.83 99.05 63.5 217.5 63.5Z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        {% if form.password.errors %}
+                            <p id="password-error" class="mt-1 text-sm text-red-600">
+                                {{ form.password.errors|join:" " }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Submit button with loading spinner -->
+                    <button
+                        type="submit"
+                        class="submit-btn inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-70 transition-colors duration-150"
+                        id="submitBtn"
+                        aria-live="polite"
+                    >
+                        <span class="btn-text">Sign In</span>
+                        <span class="spinner ml-2 hidden h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+                    </button>
+                    
+                    <!-- Forgot password link -->
+                    <div class="flex justify-between items-center text-xs text-slate-500 pt-2">
+                        <a href="{% url 'password_reset' %}" class="hover:underline text-blue-600 font-medium">Forgot password?</a>
+                    </div>
+                </form>
             </div>
-
-            <!-- Password -->
-            <div>
-              <label for="password" class="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div class="relative mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autocomplete="current-password"
-                  enterkeyhint="done"
-                  required
-                  placeholder="••••••••"
-                   class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring--blue-500 focus:outline-none transition-colors duration-200"
-                  aria-invalid="{% if form.password.errors %}true{% else %}false{% endif %}"
-                  aria-describedby="password-error"
-                />
-                <button
-                  type="button"
-                  id="passwordToggle"
-                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
-                  aria-label="Show password"
-                  aria-controls="password"
-                  aria-pressed="false"
-                >
-                  <span class="material-icons" id="eyeOn">visibility_off</span>
-                  <span class="material-icons hidden" id="eyeOff">visibility</span>
-                </button>
-              </div>
-              {% if form.password.errors %}
-                <p id="password-error" class="mt-1 text-sm text-red-600">
-                  {{ form.password.errors|join:" " }}
-                </p>
-              {% endif %}
-            </div>
-
-            <!-- Submit -->
-            <button
-              type="submit"
-              class="submit-btn inline-flex w-full items-center justify-center rounded-lg bg-blue-500 px-4 py-3 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-800 disabled:opacity-70"
-              id="submitBtn"
-              aria-live="polite"
-            >
-              <span class="btn-text">Sign In</span>
-              <span
-                class="spinner ml-2 hidden h-4 w-4 motion-safe:animate-spin rounded-full border-2 border-white border-t-transparent"
-                aria-hidden="true"
-              ></span>
-            </button>
-          </form>
-        </div>
-      </section>
+        </section>
     </main>
-
-    <!-- JS -->
-    <script defer src="{% static 'js/default/login_script.js' %}"></script>
-  </body>
+    
+    <!-- JavaScript for form interactions (e.g., password toggle) -->
+    <script defer src="{% static 'js/default/login.js' %}"></script>
+</body>
 </html>
