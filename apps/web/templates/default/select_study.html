@@ -1,3 +1,4 @@
+<!-- templates/default/select_study.html -->
 {% load static i18n %}
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
@@ -20,7 +21,7 @@
     <!-- Header with navigation and language/user dropdowns -->
     <header class="sticky top-0 z-20 flex justify-between items-center gap-1 px-4 md:px-6 py-2 bg-white border-b border-gray-200">
         <!-- Logo -->
-        <div class="relative items-center ml-4 py-2">
+        <div class="relative items-center ml-4 py-1">
             <img src="{% static 'images/default/logo.webp' %}" alt="{% trans 'ResSync logo' %}" class="h-8 w-auto" loading="lazy" decoding="async">
         </div>
         
@@ -29,20 +30,20 @@
             <!-- Language dropdown -->
             <div class="relative" data-dropdown="language">
                 <button type="button" data-dropdown-trigger aria-haspopup="menu" aria-expanded="false" aria-controls="lang-menu"
-                        class="flex items-center gap-2 rounded-2xl px-3 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-600 hover:ring-1 hover:ring-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                        class="flex items-center gap-2 rounded-2xl px-3 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-600 hover:ring-1 hover:ring-blue-600 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" class="h-5 w-5">
                         <path d="M480-80q-83.33 0-156.33-31.5-73-31.5-127.17-85.67-54.17-54.16-85.33-127.5Q80-398 80-481.33 80-565 111.17-637.5q31.16-72.5 85.33-126.67 54.17-54.16 127.17-85Q396.67-880 480-880q83.67 0 156.5 30.83 72.83 30.84 127 85Q817.67-710 848.83-637.5 880-565 880-481.33q0 83.33-31.17 156.66-31.16 73.34-85.33 127.5-54.17 54.17-127 85.67T480-80Zm0-66q32-36 54-80t36-101.33H390.67Q404-272.67 426-227.67T480-146Zm-91.33-13.33q-22.67-36.34-39.17-77.5Q333-278 322-327.33H182.67q35 64 82.83 103.33t123.17 64.67ZM572-160q66.67-21.33 119.5-64.33t85.83-103H638.67Q627-278.67 610.83-237.5 594.67-196.33 572-160ZM158-394h151.33q-3-24.67-3.83-45.5-.83-20.83-.83-41.83 0-23.67 1.16-43.17Q307-544 310-566.67H158q-6.33 22.67-8.83 41.84-2.5 19.16-2.5 43.5 0 24.33 2.5 44.5 2.5 20.16 8.83 42.83Zm219.33 0h206q3.67-27.33 4.84-46.83 1.16-19.5 1.16-40.5 0-20.34-1.16-39.17-1.17-18.83-4.84-46.17h-206q-3.66 27.34-4.83 46.17-1.17 18.83-1.17 39.17 0 21 1.17 40.5t4.83 46.83ZM650-394h152q6.33-22.67 8.83-42.83 2.5-20.17 2.5-44.5 0-24.34-2.5-43.5-2.5-19.17-8.83-41.84H650.67q3 30 4.16 48.84Q656-499 656-481.33q0 21.66-1.5 41.16-1.5 19.5-4.5 46.17Zm-12-239.33h139.33Q745.67-696 692.83-739q-52.83-43-121.5-61.67Q594-765 610.17-724.5 626.33-684 638-633.33Zm-247.33 0h180q-11.34-50-35-96-23.67-46-55.67-83.34-30 30-51 72.34-21 42.33-38.33 107Zm-208 0h140Q333-682 348.83-722.17 364.67-762.33 388-800q-68.67 18.67-120.5 61t-84.83 105.67Z"/>
                     </svg>
                     <span id="current-language" class="font-semibold text-sm tracking-wider uppercase">{{ LANGUAGE_CODE|lower|default:'vi' }}</span>
                 </button>
-                <div id="lang-menu" role="menu" aria-label="{% trans 'Select language' %}" data-dropdown-menu hidden class="dropdown-menu absolute right-0 mt-2 min-w-[9rem] rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg">
+                <div id="lang-menu" role="menu" aria-label="{% trans 'Select language' %}" data-dropdown-menu hidden class="absolute right-0 mt-2 min-w-[9rem] rounded-xl border border-gray-200 bg-white shadow-lg">
                     <form method="post" action="{% url 'set_language' %}">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ request.path }}">
-                        <button type="submit" name="language" value="vi" role="menuitem" class="flex w-full items-center rounded-lg px-3 py-2 text-sm hover:bg-slate-100 {% if LANGUAGE_CODE == 'vi' %}font-semibold bg-slate-100{% endif %}">
+                        <button type="submit" name="language" value="vi" data-lang="vi" role="menuitem" class="flex w-full items-center rounded-t-lg px-3 py-2 text-sm hover:bg-slate-100 {% if LANGUAGE_CODE == 'vi' %}font-semibold bg-slate-100{% endif %}">
                             <span class="w-8 text-left font-semibold">vi</span><span>{% trans 'Vietnamese' %}</span>
                         </button>
-                        <button type="submit" name="language" value="en" role="menuitem" class="flex w-full items-center rounded-lg px-3 py-2 text-sm hover:bg-slate-100 {% if LANGUAGE_CODE == 'en' %}font-semibold bg-slate-100{% endif %}">
+                        <button type="submit" name="language" value="en" data-lang="en" role="menuitem" class="flex w-full items-center rounded-b-lg px-3 py-2 text-sm hover:bg-slate-100 {% if LANGUAGE_CODE == 'en' %}font-semibold bg-slate-100{% endif %}">
                             <span class="w-8 text-left font-semibold">en</span><span>{% trans 'English' %}</span>
                         </button>
                     </form>
@@ -55,19 +56,24 @@
             <!-- User dropdown -->
             <div class="relative" data-dropdown="user">
                 <button type="button" data-dropdown-trigger aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu"
-                        class="flex items-center gap-2 rounded-2xl px-3 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-600 hover:ring-1 hover:ring-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                        class="flex items-center gap-2 rounded-2xl px-3 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-600 hover:ring-1 hover:ring-blue-600 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" class="h-5 w-5">
                         <path d="M226-262q59-42.33 121.33-65.5 62.34-23.17 132.67-23.17 70.33 0 133 23.17T734.67-262q41-49.67 59.83-103.67T813.33-480q0-141-96.16-237.17Q621-813.33 480-813.33t-237.17 96.16Q146.67-621 146.67-480q0 60.33 19.16 114.33Q185-311.67 226-262Zm253.88-184.67q-58.21 0-98.05-39.95Q342-526.58 342-584.79t39.96-98.04q39.95-39.84 98.16-39.84 58.21 0 98.05 39.96Q618-642.75 618-584.54t-39.96 98.04q-39.95 39.83-98.16 39.83ZM480.31-80q-82.64 0-155.64-31.5-73-31.5-127.34-85.83Q143-251.67 111.5-324.51T80-480.18q0-82.82 31.5-155.49 31.5-72.66 85.83-127Q251.67-817 324.51-848.5T480.18-880q82.82 0 155.49 31.5 72.66 31.5 127 85.83Q817-708.33 848.5-635.65 880-562.96 880-480.31q0 82.64-31.5 155.64-31.5 73-85.83 127.34Q708.33-143 635.65-111.5 562.96-80 480.31-80Zm-.31-66.67q54.33 0 105-15.83t97.67-52.17q-47-33.66-98-51.5Q533.67-284 480-284t-104.67 17.83q-51 17.84-98 51.5 47 36.34 97.67 52.17 50.67 15.83 105 15.83Zm0-366.66q31.33 0 51.33-20t20-51.34q0-31.33-20-51.33T480-656q-31.33 0-51.33 20t-20 51.33q0 31.34 20 51.34 20 20 51.33 20Zm0-71.34Zm0 369.34Z"/>
                     </svg>
                     <span id="username-display" class="font-semibold text-sm tracking-wider">{{ user.get_full_name|default:user.username }}</span>
                 </button>
-                <div id="user-menu" role="menu" aria-label="{% trans 'User menu' %}" data-dropdown-menu hidden class="dropdown-menu absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg">
+                <div id="user-menu" role="menu" aria-label="{% trans 'User menu' %}" data-dropdown-menu hidden class="absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white shadow-lg">
                     {% if is_superuser %}
                         <a href="{% url 'admin:index' %}" role="menuitem" class="block rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-slate-100">{% trans 'Go to Admin' %}</a>
                     {% endif %}
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}
-                        <button type="submit" role="menuitem" class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-100">{% trans 'Sign Out' %}</button>
+                        <button type="submit" class="flex items-center gap-3 px-4 py-3 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 w-full text-left">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" class="h-5 w-5">
+                                <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/>
+                            </svg>
+                            {% trans "Log Out" %}
+                        </button>
                     </form>
                 </div>
             </div>
@@ -84,10 +90,10 @@
         {% endif %}
         
         <!-- Study search section -->
-        <section role="search" aria-labelledby="study-search-title" class="mb-10">
+        <section role="search" aria-labelledby="study-search-title" class="mb-8">
             <div class="mx-auto w-full">
                 <div class="relative">
-                    <div class="flex items-center rounded-full border border-slate-300 bg-white transition focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-500">
+                    <div class="flex items-center rounded-full border border-slate-300 bg-white transition focus-within:border-blue-400 focus-within:ring-0 focus-within:ring-blue-500">
                         <span class="pl-4 text-gray-400" aria-hidden="true">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -102,46 +108,45 @@
         <!-- Study table section -->
         <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <!-- Table header -->
-            <div class="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between border-b border-slate-200 px-4 sm:px-4 lg:px-4 py-4">
                 <h2 class="text-lg sm:text-xl font-bold">{% trans 'Research Studies' %}</h2>
             </div>
             
             <!-- Table with responsive overflow -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 text-gray-600">
+            <div class="flex flex-col overflow-x-auto">
+                <table class="w-full text-sm table-fixed overflow-hidden">
+                    <thead class="bg-slate-200 text-slate-700">
                         <tr>
-                            <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs uppercase tracking-wider whitespace-nowrap font-bold">{% trans 'Study Code' %}</th>
-                            <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs uppercase tracking-wider whitespace-nowrap font-bold">{% trans 'Study Name' %}</th>
-                            <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs uppercase tracking-wider whitespace-nowrap font-bold">{% trans 'Last Updated' %}</th>
-                            <th scope="col" class="px-4 sm:px-6 lg:px-8 py-3 text-left text-xs uppercase tracking-wider whitespace-nowrap font-bold">{% trans 'Actions' %}</th>
+                        <!-- Column widths are fixed using w-[%] classes -->
+                            <th scope="col" class="w-[15%] px-4 py-4 text-left uppercase tracking-wider font-bold whitespace-nowrap">{% trans 'Study Code' %}</th>
+                            <th scope="col" class="w-[45%] px-4 py-4 text-left uppercase tracking-wider font-bold whitespace-nowrap">{% trans 'Study Name' %}</th>
+                            <th scope="col" class="w-[20%] px-4 py-4 text-left uppercase tracking-wider font-bold whitespace-nowrap">{% trans 'Last Updated' %}</th>
+                            <th scope="col" class="w-[20%] px-4 py-4 text-left uppercase tracking-wider font-bold whitespace-nowrap">{% trans 'Actions' %}</th>
                         </tr>
                     </thead>
                     <tbody id="studies-body">
                         {% for study in studies %}
-                            <!-- Study row -->
-                            <tr class="border-b border-slate-200 last:border-0" data-row>
-                                <td class="px-4 sm:px-6 lg:px-8 py-3 font-semibold" data-col="code">{{ study.code }}</td>
-                                <td class="px-4 sm:px-6 lg:px-8 py-3" data-col="name">{{ study.name|default_if_none:_('(No name)') }}</td>
-                                <td class="px-4 sm:px-6 lg:px-8 py-3 whitespace-nowrap" data-col="updated">{{ study.updated_at|date:"d-m-Y H:i:s" }}</td>
-                                <td class="px-4 sm:px-6 lg:px-8 py-3 text-right">
-                                    <form method="post" action="{% url 'select_study' %}">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="study_id" value="{{ study.id }}">
-                                        <button type="submit" class="inline-flex items-center gap-1 rounded-2xl bg-blue-600 px-3 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                                            </svg>
-                                            {% trans 'Open Study' %}
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
+                        <tr class="border-b border-slate-200 last:border-0" data-row>
+                            <td class="h-12 px-4 py-4 font-semibold overflow-hidden whitespace-nowrap text-ellipsis" data-col="code">{{ study.code }}</td>
+                            <td class="h-12 px-4 py-4 overflow-hidden text-ellipsis" data-col="name">{{ study.name|default_if_none:_('(No name)') }}</td>
+                            <td class="h-12 px-4 py-4 overflow-hidden text-ellipsis" data-col="updated">{{ study.updated_at|date:"d-m-Y H:i:s" }}</td>
+                            <td class="h-12 px-4 py-4">
+                                <form method="post" action="{% url 'select_study' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="study_id" value="{{ study.id }}">
+                                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 whitespace-nowrap">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" class="inline-block h-4 w-4">
+                                            <path d="M507-480 384-357l56 57 180-180-180-180-56 57 123 123ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/>
+                                        </svg>
+                                        <span class="inline-block">{% trans 'Open Study' %}</span>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
                         {% empty %}
-                            <!-- Empty state for no studies -->
-                            <tr id="no-results-row" data-empty-row>
-                                <td colspan="4" class="px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-500">{% trans 'No studies found.' %}</td>
-                            </tr>
+                        <tr id="no-results-row" data-empty-row>
+                            <td colspan="4" class="px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-500">{% trans 'No studies found.' %}</td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -150,6 +155,7 @@
     </main>
     
     <!-- JavaScript for study selection and search functionality -->
+    <script defer src="{% static 'js/default/base.js' %}"></script>
     <script defer src="{% static 'js/default/select_study.js' %}"></script>
 </body>
 </html>

@@ -131,7 +131,7 @@ PARLER_LANGUAGES = {
 
 # === Static & Media ===
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "apps" / "static"]  # Corrected path based on folder structure
+STATICFILES_DIRS = [BASE_DIR / "apps" / "web"/ "static"]  # Corrected path based on folder structure
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -151,6 +151,8 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # For proxy setups
 X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Added: Prevent MIME sniffing
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"  # Added: Control referrer info
 
 # === Defaults ===
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -179,6 +181,7 @@ LOGGING = {
             "maxBytes": 5 * 1024 * 1024,  # 5MB
             "backupCount": 5,
             "level": "DEBUG" if DEBUG else "INFO",
+            "delay": True,  # Added: Defer file opening until first log to avoid locks on Windows
         },
     },
     "root": {
@@ -189,6 +192,11 @@ LOGGING = {
         "django": {
             "handlers": ["console", "file"],
             "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": False,
+        },
+        "django.utils.autoreload": {  # Suppress verbose file watching logs
+            "handlers": ["console", "file"],
+            "level": "INFO",
             "propagate": False,
         },
         "apps.tenancy": {
@@ -236,6 +244,12 @@ if "test" in sys.argv:
     TEST_RUNNER = "apps.tenancy.test_runner.StudyTestRunner"
 
 # === Password validation ===
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",  # Added: Primary for better security
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+]
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},

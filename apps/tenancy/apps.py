@@ -8,5 +8,4 @@ class TenancyConfig(AppConfig):
     verbose_name = _("Tenancy Management")
 
     def ready(self):
-        from .db_loader import load_study_dbs
-        load_study_dbs(force_refresh=True)  # Preload active study DBs on app startup for performance
+        pass  # Removed preload for on-demand loading

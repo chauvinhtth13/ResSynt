@@ -1,30 +1,4 @@
-/* base.css - Optimized global styles for Tailwind CSS integration */
-
-/* === Font Definitions === */
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400; /* Regular */
-  src: url('fonts/Inter-Regular.woff2') format('woff2'),
-       url('fonts/Inter-Regular.woff') format('woff');
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 500; /* Medium */
-  src: url('fonts/Inter-Medium.woff2') format('woff2'),
-       url('fonts/Inter-Medium.woff') format('woff');
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 700; /* Bold */
-  src: url('fonts/Inter-Bold.woff2') format('woff2'),
-       url('fonts/Inter-Bold.woff') format('woff');
-  font-display: swap;
-}
+/* static/css/default/base.css */
 
 /* === Root Variables (aligned with Tailwind palette) === */
 :root {
@@ -46,7 +20,7 @@
 
 /* === Global Styles === */
 html, body {
-  font-family: 'Inter', sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   scroll-behavior: smooth;
   margin: 0;
   padding: 0;
@@ -56,14 +30,17 @@ html, body {
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--color-gray-100);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--color-gray-300);
   border-radius: 4px;
   transition: background-color 0.2s ease;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gray-500);
 }
@@ -73,14 +50,17 @@ html, body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 @keyframes slideIn {
   from { transform: translateY(-10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
 /* === Reduced Motion for Accessibility === */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -89,4 +69,62 @@ html, body {
     transition-duration: 0s !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Sidebar animations */
+#sidebar {
+  width: 100%;
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.2s ease;
+  will-change: transform;
+  position: fixed; 
+  inset: 0; 
+  z-index: 40;
+}
+
+body[data-sidebar="open"] #sidebar { 
+  transform: translateX(0); 
+  opacity: 1; 
+  pointer-events: auto; 
+}
+
+@media (min-width: 768px) {
+  #sidebar {
+    width: var(--sidebar-desktop-width);
+    transform: none; 
+    opacity: 1; 
+    pointer-events: auto;
+    position: static; 
+    inset: auto; 
+    z-index: auto; 
+    flex-shrink: 0;
+  }
+  body.sidebar-collapsed #sidebar {
+    width: 0; 
+    transform: translateX(-100%); 
+    opacity: 0; 
+    pointer-events: none; 
+    overflow: hidden;
+  }
+}
+
+#overlay { 
+  transition: opacity 0.2s ease, visibility 0.2s ease; 
+  visibility: hidden;
+}
+
+body[data-sidebar="open"] #overlay { 
+  opacity: 1; 
+  pointer-events: auto; 
+  visibility: visible;
+}
+
+/* Content performance */
+main section { 
+  content-visibility: auto; 
+  contain-intrinsic-size: 600px; 
 }

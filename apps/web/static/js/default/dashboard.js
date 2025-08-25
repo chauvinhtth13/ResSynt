@@ -1,81 +1,105 @@
 // static/js/default/dashboard.js
-'use strict';
+(() => {
+  const { qs, initDropdowns, trapFocusWithin, initLanguageSwitcher, registerInit } = window.ResSyncBase;
 
-const { qs, qsa, initDropdowns, trapFocusWithin, registerInit } = window.ResSyncBase;
+  // Sidebar toggle
+  const initSidebarToggle = () => {
+    const toggleBtn = qs('#toggleSidebarBtn');
+    if (!toggleBtn) return;
 
-// Toggle sidebar (optimized: Handles missing elements, uses dataset safely)
-const initSidebarToggle = () => {
-  const toggleSidebarBtn = qs('#toggleSidebarBtn');
-  if (!toggleSidebarBtn) return;
+    const mqlDesktop = matchMedia('(min-width: 768px)');
+    const STORAGE_KEY = 'sidebarCollapsed';
 
-  const mqlDesktop = window.matchMedia('(min-width: 768px)');
+    const updateToggleState = (isCollapsed) => {
+      toggleBtn.setAttribute('aria-label', isCollapsed ? toggleBtn.dataset.showLabel || 'Show sidebar' : toggleBtn.dataset.hideLabel || 'Hide sidebar');
+      toggleBtn.setAttribute('aria-pressed', String(isCollapsed));
+      const svg = toggleBtn.querySelector('svg');
+      if (svg) svg.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-180deg)';
+    };
 
-  // Restore desktop collapsed state
-  if (mqlDesktop.matches) {
-    const collapsed = localStorage.getItem('sidebarCollapsed') === '1';
-    document.body.classList.toggle('sidebar-collapsed', collapsed);
-    updateToggleState(toggleSidebarBtn, collapsed);
-  }
+    const toggleSidebar = (forceState = null) => {
+      const isCollapsed = forceState ?? !document.body.classList.contains('sidebar-collapsed');
+      document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+      updateToggleState(isCollapsed);
+      localStorage.setItem(STORAGE_KEY, isCollapsed ? '1' : '0');
+      return isCollapsed;
+    };
 
-  toggleSidebarBtn.addEventListener('click', () => {
-    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-    updateToggleState(toggleSidebarBtn, isCollapsed);
-    localStorage.setItem('sidebarCollapsed', isCollapsed ? '1' : '0');
-  });
-};
+    const initState = () => {
+      if (mqlDesktop.matches) {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored !== null) toggleSidebar(stored === '1');
+      }
+    };
 
-const updateToggleState = (btn, isCollapsed) => {
-  btn.setAttribute('aria-label', isCollapsed ? btn.dataset.showLabel || 'Show sidebar' : btn.dataset.hideLabel || 'Hide sidebar');
-  btn.setAttribute('aria-pressed', String(isCollapsed));
-  const svg = btn.querySelector('svg');
-  if (svg) {
-    svg.classList.toggle('-rotate-180', !isCollapsed);
-    svg.classList.toggle('rotate-0', isCollapsed);
-  }
-};
+    initState();
+    toggleBtn.addEventListener('click', () => toggleSidebar());
+    mqlDesktop.addEventListener('change', initState);
+  };
 
-// Handle choose study form and back trap (optimized: Checks history support)
-const initBackTrap = () => {
-  if (!history || !history.pushState) return; // Graceful degradation
+  // Back trap
+  const initBackTrap = () => {
+    if (!history?.pushState) return;
 
-  const chooseStudyForm = qs('[data-choose-study-form]');
-  if (chooseStudyForm) {
-    chooseStudyForm.addEventListener('submit', () => {
-      history.pushState(null, '', location.href);
-      history.pushState(null, '', location.href);
-    });
-  }
-
-  window.addEventListener('popstate', () => {
-    history.go(1);
-  });
-};
-
-// Force reload on back/forward navigation or persisted page show
-const initReloadOnBack = () => {
-  // Check for back_forward navigation type
-  if (performance.getEntriesByType('navigation')[0].type === 'back_forward') {
-    window.location.reload();
-  }
-
-  // Add event listener for pageshow if persisted (bfcache)
-  window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-      window.location.reload();
+    const chooseStudyForm = qs('[data-choose-study-form]');
+    if (chooseStudyForm) {
+      chooseStudyForm.addEventListener('submit', () => {
+        const state = { timestamp: Date.now() };
+        history.pushState(state, '', location.href);
+        history.pushState(state, '', location.href);
+      });
     }
+
+    let navigationLock = false;
+    addEventListener('popstate', (e) => {
+      if (!navigationLock) {
+        navigationLock = true;
+        history.go(1);
+        setTimeout(() => { navigationLock = false; }, 100);
+      }
+    });
+  };
+
+  // Force reload on back/forward
+  const initReloadOnBack = () => {
+    const navEntry = performance.getEntriesByType('navigation')[0];
+    if (navEntry?.type === 'back_forward') {
+      location.reload();
+      return;
+    }
+
+    addEventListener('pageshow', (event) => {
+      if (event.persisted) location.reload();
+    });
+  };
+
+  // Mobile sidebar focus trap
+  const initMobileSidebarTrap = () => {
+    const sidebar = qs('#sidebar');
+    if (!sidebar) return;
+
+    const mqlMobile = matchMedia('(max-width: 767px)');
+    let untrap = null;
+
+    const handleMediaChange = (e) => {
+      if (e.matches && !untrap) {
+        untrap = trapFocusWithin(sidebar);
+      } else if (!e.matches && untrap) {
+        untrap();
+        untrap = null;
+      }
+    };
+
+    handleMediaChange(mqlMobile);
+    mqlMobile.addEventListener('change', handleMediaChange);
+  };
+
+  registerInit(() => {
+    initSidebarToggle();
+    initDropdowns();
+    initLanguageSwitcher();
+    initBackTrap();
+    initReloadOnBack();
+    initMobileSidebarTrap();
   });
-};
-
-registerInit(() => {
-  initSidebarToggle();
-  const cleanupDropdowns = initDropdowns();
-  initBackTrap();
-  initReloadOnBack();
-
-  // Apply trapFocus if sidebar exists (assuming #sidebar for mobile)
-  const sidebar = qs('#sidebar'); // Adjust selector as needed
-  if (sidebar && !window.matchMedia('(min-width: 768px)').matches) {
-    const untrap = trapFocusWithin(sidebar);
-    // Optional: Add event to remove trap when sidebar closes
-  }
-});
+})();

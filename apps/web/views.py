@@ -30,10 +30,12 @@ def select_study(request):
         return redirect('admin:index')
 
     # Set default language to Vietnamese if not set
-    if not request.session.get('django_language'):
-        request.session['django_language'] = 'vi'
-        activate('vi')
+    """Get language from session or default to Vietnamese, then render dashboard."""
     language = get_language()
+    if not language:
+        language = 'vi'
+        activate(language)
+        request.session['django_language'] = language
 
     # Fetch unique studies the user has access to
     studies_qs = (

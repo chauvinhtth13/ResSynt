@@ -1,4 +1,4 @@
-# config/urls.py
+# config/urls.py (change admin path to obscure it)
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
@@ -12,7 +12,7 @@ handler404 = 'django.views.defaults.page_not_found'  # Ensures custom 404.html i
 urlpatterns = [
     path('rosetta/', include('rosetta.urls')),
     path("i18n/", include("django.conf.urls.i18n")),
-    path("admin/", admin.site.urls),
+    path("secret-admin/", admin.site.urls),  # Changed from "admin/" for security
     path(
         "accounts/login/",
         never_cache(custom_login),

@@ -3,18 +3,8 @@ import logging
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import redirect
 from django.conf import settings
-from .models import StudyMembership
-from .db_loader import load_study_dbs
-from .db_router import set_current_db
-
-logger = logging.getLogger('apps.tenancy')
-
-import logging
-from django.http import HttpRequest, HttpResponse, Http404
-from django.shortcuts import redirect
-from django.conf import settings
-from .models import StudyMembership
-from .db_loader import load_study_dbs
+from .models import StudyMembership, Study
+from .db_loader import add_study_db
 from .db_router import set_current_db
 
 logger = logging.getLogger('apps.tenancy')
@@ -24,10 +14,10 @@ class StudyRoutingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        load_study_dbs()
+        # Removed bulk load_study_dbs(); now on-demand per access
 
-        protected_paths = ('/admin/', '/rosetta/')
-        if request.path.startswith(protected_paths) and request.user.is_authenticated and not request.user.is_superuser:
+        protected_paths = ('/secret-admin/', '/rosetta/')  # Updated for new admin path
+        if any(request.path.startswith(p) for p in protected_paths) and request.user.is_authenticated and not request.user.is_superuser:
             raise Http404("Page not found")
 
         excluded_paths = ['/select-study/', '/accounts/', '/admin/', '/rosetta/', '/i18n/', '/static/', '/media/']
@@ -53,6 +43,13 @@ class StudyRoutingMiddleware:
                                 raise Http404("You have no access to any studies.")
                         else:
                             request.study = memberships[0].study  # type: ignore[attr-defined]
+                            study = getattr(request, 'study', None)
+                            if study and study.status != Study.Status.ACTIVE:  # Added check for active status
+                                logger.warning(f"Inactive study {study.code} accessed by user {request.user.pk}; clearing session.")
+                                request.session.pop('current_study', None)
+                                return redirect('select_study')
+                            if study:
+                                add_study_db(study.db_name)  # Load on-demand here
                             request.study_memberships = memberships  # type: ignore[attr-defined]
                             request.study_permissions = set()  # type: ignore[attr-defined]
                             for membership in memberships:
