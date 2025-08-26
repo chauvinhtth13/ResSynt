@@ -187,10 +187,7 @@ class Study(TranslatableModel):
         verbose_name_plural = _("Study Information")
         ordering = ("code",)
         constraints = [
-            models.CheckConstraint(
-                check=models.Q(db_name__regex=r"^[A-Za-z0-9_]+$"),
-                name="valid_db_name",
-            )
+            models.CheckConstraint(check=models.Q(db_name__istartswith=settings.STUDY_DB_PREFIX), name="db_name_prefix_check")
         ]
         indexes = [
             models.Index(fields=["status", "code"], name="ix_study_status_code"),

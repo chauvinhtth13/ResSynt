@@ -8,4 +8,4 @@ class TenancyConfig(AppConfig):
     verbose_name = _("Tenancy Management")
 
     def ready(self):
-        pass  # Removed preload for on-demand loading
+        import apps.tenancy.signals  # Ensure signal handlers are registered
