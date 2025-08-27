@@ -1,4 +1,3 @@
-# apps/web/login.py
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
@@ -34,7 +33,6 @@ class UsernameOrEmailAuthenticationForm(AuthenticationForm):
                     # Not found by email -> let authenticate fail normally
                     pass
                 except User.MultipleObjectsReturned:
-                    # If system allows duplicate emails (not unique), fail clearly
                     raise forms.ValidationError(
                         _("Multiple accounts use this email. Please use your username.")
                     )

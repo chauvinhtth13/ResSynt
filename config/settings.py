@@ -1,63 +1,60 @@
 import os
 import sys
-import threading  # Added for thread-local
+import threading
 from pathlib import Path
-from dotenv import load_dotenv
+import environ
 
-# === Paths & .env ===
-BASE_DIR = Path(__file__).resolve().parent.parent  # -> ResSync/
-load_dotenv(BASE_DIR / ".env")  # Load .env from project root
+# Env setup
+env = environ.Env(
+    DEBUG=(bool, False),
+    ALLOWED_HOSTS=(list, ['localhost:8000', '127.0.0.1:8000']),
+)
+BASE_DIR = Path(__file__).resolve().parent.parent
+environ.Env.read_env(BASE_DIR / ".env")  # Loads .env if exists
 
-# === Core settings ===
-SECRET_KEY = os.getenv("SECRET_KEY")  # Must be set in .env; no default for security
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY must be set in .env")
-DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if os.getenv("CSRF_TRUSTED_ORIGINS") else []
+# Core settings
+SECRET_KEY = env("SECRET_KEY")  # Required
+DEBUG = env("DEBUG")
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[]) # type: ignore
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# === Installed apps ===
+# Installed apps (removed sslserver if not using; add back if needed for optional local HTTPS)
 INSTALLED_APPS = [
-    # Django core
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party
-    "django_bootstrap5",
     "chartjs",
-    'rosetta',
-    'parler',
-    # ResSync apps
+    "parler",
     "apps.web",
     "apps.tenancy.apps.TenancyConfig",
-    #"apps.studies",  # Added: For tenant-specific models (per-study data)
 ]
 
-# === Middleware ===
+# Middleware
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.tenancy.middleware.NoCacheMiddleware',  # Add this new one
-    'apps.tenancy.middleware.StudyRoutingMiddleware',  # Existing
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware", # Uncomment to enable locale middleware if needed
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.tenancy.middleware.NoCacheMiddleware",
+    "apps.tenancy.middleware.StudyRoutingMiddleware",
+    # "csp.middleware.CSPMiddleware",  # Uncomment after pip install django-csp; add CSP_* settings for enhanced security
 ]
 
-# === Templates ===
+# Templates
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "apps" / "templates"],  # Corrected path based on folder structure
+        "DIRS": [BASE_DIR / "apps" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -66,98 +63,97 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.i18n",
+                "apps.web.context_processors.redirect_to"
             ],
         },
     },
 ]
 
-# === Database: Main management DB (db_management) ===
+# Database: Main management DB
 _DB_MANAGEMENT = {
     "ENGINE": "django.db.backends.postgresql",
-    "NAME": os.getenv("PGDATABASE", "db_management"),
-    "USER": os.getenv("PGUSER", "ressync_admin"),
-    "PASSWORD": os.getenv("PGPASSWORD"),
-    "HOST": os.getenv("PGHOST", "localhost"),
-    "PORT": os.getenv("PGPORT", "5432"),
+    "NAME": env("PGDATABASE"),
+    "USER": env("PGUSER"),
+    "PASSWORD": env("PGPASSWORD"),
+    "HOST": env("PGHOST", default="localhost"), # type: ignore
+    "PORT": env("PGPORT", default="5432"), # type: ignore
     "OPTIONS": {
         "options": "-c search_path=metadata,public",
-        "sslmode": "disable" if DEBUG else "require",  # Enforce SSL for security
+        "sslmode": "disable" if DEBUG else "require",
     },
-    "CONN_MAX_AGE": int(os.getenv("PG_CONN_MAX_AGE", "600")),
-    "CONN_HEALTH_CHECKS": not DEBUG,  # Enable in production
-    "ATOMIC_REQUESTS": False,  # Set True in production if needed
+    "CONN_MAX_AGE": 0 if DEBUG else env("PG_CONN_MAX_AGE", cast=int, default=600), # type: ignore    # Persistent in prod for perf
+    "CONN_HEALTH_CHECKS": not DEBUG,
+    "ATOMIC_REQUESTS": False,
     "AUTOCOMMIT": True,
-    "TIME_ZONE": os.getenv("DB_TIME_ZONE", "Asia/Ho_Chi_Minh"),
+    "TIME_ZONE": env("DB_TIME_ZONE", default="Asia/Ho_Chi_Minh"), # type: ignore
 }
 
 DATABASES = {
-    "default": _DB_MANAGEMENT,  # Alias for db_management
+    "default": _DB_MANAGEMENT,
     "db_management": _DB_MANAGEMENT,
 }
 
-# === Template for per-study DBs (dynamic loading in db_loader.py) ===
-STUDY_DB_AUTO_REFRESH_SECONDS = int(os.getenv("STUDY_DB_AUTO_REFRESH_SECONDS", "300"))
-STUDY_DB_PREFIX = os.getenv("STUDY_DB_PREFIX", "db_study_")
+# Per-study DB template
+STUDY_DB_AUTO_REFRESH_SECONDS = env("STUDY_DB_AUTO_REFRESH_SECONDS", cast=int, default=300) # type: ignore
+STUDY_DB_PREFIX = env("STUDY_DB_PREFIX", default="db_study_") # type: ignore
 STUDY_DB_ENGINE = "django.db.backends.postgresql"
-STUDY_DB_HOST = os.getenv("STUDY_PGHOST", _DB_MANAGEMENT["HOST"])
-STUDY_DB_PORT = os.getenv("STUDY_PGPORT", _DB_MANAGEMENT["PORT"])
-STUDY_DB_USER = os.getenv("STUDY_PGUSER", _DB_MANAGEMENT["USER"])
-STUDY_DB_PASSWORD = os.getenv("STUDY_PGPASSWORD", _DB_MANAGEMENT["PASSWORD"])
-STUDY_DB_SEARCH_PATH = os.getenv("STUDY_SEARCH_PATH", "data")  # Matches project schema 'data'
+STUDY_DB_HOST = env("STUDY_PGHOST", default=_DB_MANAGEMENT["HOST"])
+STUDY_DB_PORT = env("STUDY_PGPORT", default=_DB_MANAGEMENT["PORT"])
+STUDY_DB_USER = env("STUDY_PGUSER", default=_DB_MANAGEMENT["USER"])
+STUDY_DB_PASSWORD = env("STUDY_PGPASSWORD", default=_DB_MANAGEMENT["PASSWORD"])
+STUDY_DB_SEARCH_PATH = env("STUDY_SEARCH_PATH", default="data") # type: ignore
 
-# === Database Routers ===
-DATABASE_ROUTERS = [
-    "apps.tenancy.db_router.StudyDBRouter",  # Custom router for study DBs
-]
+# Database Routers
+DATABASE_ROUTERS = ["apps.tenancy.db_router.StudyDBRouter"]
 
-# === i18n & Timezone ===
+# i18n & Timezone
 LANGUAGE_CODE = "vi"
 LANGUAGES = [("vi", "Vietnamese"), ("en", "English")]
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
 TIME_ZONE = "Asia/Ho_Chi_Minh"
-USE_TZ = True  # Required for TIMESTAMPTZ handling
+USE_TZ = True
 
 PARLER_LANGUAGES = {
     None: (
-        {'code': 'en',}, # English
-        {'code': 'vi',}, # Vietnamese
+        {"code": "en"},
+        {"code": "vi"},
     ),
-    'default': {
-        'fallbacks': ['vi'],
-        'hide_untranslated': False,
-    }
+    "default": {
+        "fallbacks": ["vi"],
+        "hide_untranslated": False,
+    },
 }
 
-# === Static & Media ===
+# Static & Media
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "apps" / "web"/ "static"]  # Corrected path based on folder structure
+STATICFILES_DIRS = [BASE_DIR / "apps" / "web" / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# === Authentication ===
+# Authentication
 LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = '/select-study/'
+LOGIN_REDIRECT_URL = "/select-study/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
-FEATURE_PASSWORD_RESET = os.getenv("FEATURE_PASSWORD_RESET", "False").lower() in ("true", "1", "yes")
+FEATURE_PASSWORD_RESET = env("FEATURE_PASSWORD_RESET", cast=bool, default=False) # type: ignore
 
-# === Security ===
-SESSION_COOKIE_SECURE = not DEBUG  # Enable in production
-CSRF_COOKIE_SECURE = not DEBUG  # Enable in production
-SECURE_SSL_REDIRECT = not DEBUG  # Redirect HTTP to HTTPS in production
-SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year for HSTS in production
+# Security (conditional on DEBUG: disabled in dev, enabled in prod)
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_SECONDS = 0 if DEBUG else 31536000  # 0 disables HSTS in dev
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # For proxy setups
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 X_FRAME_OPTIONS = "DENY"
-SECURE_CONTENT_TYPE_NOSNIFF = True  # Added: Prevent MIME sniffing
-SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"  # Added: Control referrer info
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
-# === Defaults ===
+# Defaults
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# === Logging ===
+# Logging
 LOGS_DIR = BASE_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 LOGGING = {
@@ -178,10 +174,10 @@ LOGGING = {
             "formatter": "verbose",
             "filename": str(LOGS_DIR / "django.log"),
             "encoding": "utf-8",
-            "maxBytes": 5 * 1024 * 1024,  # 5MB
+            "maxBytes": 5 * 1024 * 1024,
             "backupCount": 5,
             "level": "DEBUG" if DEBUG else "INFO",
-            "delay": True,  # Added: Defer file opening until first log to avoid locks on Windows
+            "delay": True,
         },
     },
     "root": {
@@ -194,7 +190,7 @@ LOGGING = {
             "level": "DEBUG" if DEBUG else "INFO",
             "propagate": False,
         },
-        "django.utils.autoreload": {  # Suppress verbose file watching logs
+        "django.utils.autoreload": {
             "handlers": ["console", "file"],
             "level": "INFO",
             "propagate": False,
@@ -212,40 +208,40 @@ LOGGING = {
     },
 }
 
-# === Caches ===
+# Caches
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache" if not DEBUG else "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": os.getenv("REDIS_URL", "redis://localhost:6379/1") if not DEBUG else "unique-snowflake",
+        "LOCATION": env("REDIS_URL", default="redis://localhost:6379/1") if not DEBUG else "unique-snowflake", # type: ignore
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient" if not DEBUG else None,
         },
     }
 }
 
-# === Email ===
+# Email
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" if FEATURE_PASSWORD_RESET else "django.core.mail.backends.console.EmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com") # type: ignore
+EMAIL_PORT = env("EMAIL_PORT", cast=int, default=587) # type: ignore
+EMAIL_USE_TLS = env("EMAIL_USE_TLS", cast=bool, default=True) # type: ignore
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="") # type: ignore
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="") # type: ignore
 
-# === Custom settings ===
-TENANCY_ENABLED = os.getenv("TENANCY_ENABLED", "True").lower() in ("true", "1", "yes")
-TENANCY_STUDY_CODE_PREFIX = os.getenv("TENANCY_STUDY_CODE_PREFIX", "study_")
+# Custom settings
+TENANCY_ENABLED = env("TENANCY_ENABLED", cast=bool, default=True) # type: ignore
+TENANCY_STUDY_CODE_PREFIX = env("TENANCY_STUDY_CODE_PREFIX", default="study_") # type: ignore
 
-# Thread-local for current study (used in middleware and router)
+# Thread-local
 THREAD_LOCAL = threading.local()
 
-# === Testing ===
+# Testing
 if "test" in sys.argv:
     DATABASES["default"]["NAME"] = "test_" + DATABASES["default"]["NAME"]
     TEST_RUNNER = "apps.tenancy.test_runner.StudyTestRunner"
 
-# === Password validation ===
+# Password validation
 PASSWORD_HASHERS = [
-    "django.contrib.auth.hashers.Argon2PasswordHasher",  # Added: Primary for better security
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",

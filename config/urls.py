@@ -4,13 +4,17 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from django.views.decorators.cache import never_cache
-from apps.web.views import select_study, custom_login, dashboard
+from django.shortcuts import redirect
+from apps.web.views import custom_login, dashboard
 from config import settings
 
 handler404 = 'django.views.defaults.page_not_found'  # Ensures custom 404.html is used
 
+def root_redirect(request):
+    return redirect('login')  # Or directly to custom_login if preferred
+
+
 urlpatterns = [
-    path('rosetta/', include('rosetta.urls')),
     path("i18n/", include("django.conf.urls.i18n")),
     path("secret-admin/", admin.site.urls),  # Changed from "admin/" for security
     path(
@@ -23,7 +27,7 @@ urlpatterns = [
         never_cache(auth_views.LogoutView.as_view(next_page="login")),  # Wrap with never_cache
         name="logout",
     ),
-    path("select-study/", never_cache(select_study), name="select_study"),
+    # path("select-study/", never_cache(select_study), name="select_study"),  # Commented out - view not implemented
     path("dashboard/", never_cache(dashboard), name="dashboard"),
     path("", RedirectView.as_view(pattern_name="login", permanent=False), name="home"),
 ]

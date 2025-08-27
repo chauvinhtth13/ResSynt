@@ -1,9 +1,11 @@
-// static/js/default/login.js
 (() => {
   class ResSyncLoginForm {
     constructor() {
       this.form = document.getElementById('loginForm');
-      if (!this.form) return;
+      if (!this.form) {
+        console.warn('[login.js] Login form not found');
+        return;
+      }
 
       const username = document.getElementById('username');
       const password = document.getElementById('password');
@@ -15,21 +17,28 @@
       this.elements = { username, password, toggle, eyeOn, eyeOff, submit };
       this.isSubmitting = false;
 
-      if (!password || !submit) return;
+      if (!password || !submit || !username) {
+        console.warn('[login.js] Missing form elements:', { username, password, submit });
+        return;
+      }
 
-      // Initial icon state
+      // ⚠️ Sửa logic khởi tạo ban đầu theo yêu cầu
+      // Mật khẩu ban đầu luôn ẩn, nên hiển thị biểu tượng 'eyeOff'
       if (password.type === 'password') {
         eyeOn?.classList.add('hidden');
         eyeOff?.classList.remove('hidden');
+      } else {
+        // Trường hợp không mong muốn, nhưng vẫn xử lý phòng hờ
+        eyeOn?.classList.remove('hidden');
+        eyeOff?.classList.add('hidden');
       }
 
-      // Ensure toggle is a non-submit control
       if (toggle?.tagName === 'BUTTON' && toggle.getAttribute('type') !== 'button') {
         toggle.setAttribute('type', 'button');
       }
-      // Link toggle to the input for a11y
       if (toggle && !toggle.hasAttribute('aria-controls') && password.id) {
         toggle.setAttribute('aria-controls', password.id);
+        toggle.setAttribute('aria-label', window.trans?.('Show password') || 'Show password');
       }
 
       this.bind();
@@ -46,37 +55,32 @@
           e.preventDefault();
           this.togglePassword();
         }
-      });
+      }, { passive: true });
 
       form.addEventListener('submit', (e) => this.handleSubmit(e));
 
       username?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !username.value) e.preventDefault();
-      });
+      }, { passive: true });
     }
 
     togglePassword() {
       const { password, toggle, eyeOn, eyeOff } = this.elements;
       if (!password || !toggle) return;
 
-      const isPassword = password.type === 'password';
-      password.type = isPassword ? 'text' : 'password';
-      toggle.setAttribute('aria-pressed', String(isPassword));
-      toggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
-      eyeOn?.classList.toggle('hidden', !isPassword);
-      eyeOff?.classList.toggle('hidden', isPassword);
+      const isVisible = password.type === 'text';
+      password.type = isVisible ? 'password' : 'text';
+      toggle.setAttribute('aria-pressed', String(!isVisible));
+      toggle.setAttribute('aria-label', window.trans?.(isVisible ? 'Show password' : 'Hide password') || (isVisible ? 'Show password' : 'Hide password'));
+      
+      // Logic này đã đúng, không cần thay đổi
+      eyeOn?.classList.toggle('hidden', isVisible);
+      eyeOff?.classList.toggle('hidden', !isVisible);
     }
 
     handleSubmit(e) {
       const { username, password, submit } = this.elements;
-      if (!submit || !password) return;
-
-      if (!password.value || !username?.value) {
-        e.preventDefault();
-        return;
-      }
-
-      if (this.isSubmitting) {
+      if (this.isSubmitting || !password.value || !username?.value) {
         e.preventDefault();
         return;
       }
@@ -90,8 +94,6 @@
 
     restoreIfFromBFCache() {
       const { submit } = this.elements;
-      if (!submit) return;
-
       window.addEventListener('pageshow', (evt) => {
         if (evt.persisted) {
           this.isSubmitting = false;
@@ -100,14 +102,24 @@
           submit.setAttribute('aria-busy', 'false');
           submit.querySelector('.spinner')?.classList.add('hidden');
         }
-      });
+      }, { passive: true });
     }
   }
 
-  // Initialize after HTML is parsed
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new ResSyncLoginForm());
-  } else {
+  const initAll = () => {
+    console.log('[login.js] Initializing, ResSyncBase:', window.ResSyncBase);
     new ResSyncLoginForm();
+    if (window.ResSyncBase) {
+      window.ResSyncBase.initDropdowns('[data-dropdown]');
+      window.ResSyncBase.initLanguageSwitcher();
+    } else {
+      console.error('[login.js] ResSyncBase not found');
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll, { passive: true });
+  } else {
+    initAll();
   }
 })();
