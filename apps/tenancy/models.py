@@ -60,7 +60,7 @@ class Permission(models.Model):
     name = models.CharField(
         max_length=100,
         verbose_name=_("Name"),
-        help_text=_("Human-readable name of the permission (e.g., Manage Database)."),
+        help_text=_("Name of the permission (e.g., Manage Database)."),
     )
     description = models.TextField(
         verbose_name=_("Description"),

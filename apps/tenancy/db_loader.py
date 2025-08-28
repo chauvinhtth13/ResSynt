@@ -1,21 +1,29 @@
+# apps/tenancy/db_loader.py
 import logging
+from django.db import connections
 from django.conf import settings
 from django.core.cache import cache
-from django.db import connections
 
 logger = logging.getLogger("apps.tenancy")
+
+# Cache key templates
 CACHE_KEY_PREFIX = "study_db_config_"
-CACHE_TTL = 1800  # Reduced to 30min for fresher configs without overload
 USAGE_CACHE_KEY_PREFIX = "study_db_usage_"
+CACHE_TTL = 1800  # 30 minutes for fresher configs
 
 def add_study_db(study_db_name: str) -> None:
+    """Dynamically add a study database configuration if not already present."""
     if study_db_name in connections.databases:
+        # Mark as used to prevent unloading
         cache.set(f"{USAGE_CACHE_KEY_PREFIX}{study_db_name}", True, CACHE_TTL)
         return
 
+    # Try to get config from cache
     cache_key = f"{CACHE_KEY_PREFIX}{study_db_name}"
     study_db_config = cache.get(cache_key)
+
     if not study_db_config:
+        # Build config from settings if not cached
         study_db_config = {
             "ENGINE": settings.STUDY_DB_ENGINE,
             "NAME": study_db_name,
@@ -33,9 +41,12 @@ def add_study_db(study_db_name: str) -> None:
             "AUTOCOMMIT": settings.DATABASES["default"]["AUTOCOMMIT"],
             "TIME_ZONE": settings.DATABASES["default"]["TIME_ZONE"],
         }
+        # Cache the config
         cache.set(cache_key, study_db_config, CACHE_TTL)
-        logger.debug(f"Cached study DB config: {study_db_name}")
+        logger.debug(f"Cached study DB config for {study_db_name}")
 
+    # Add to connections
     connections.databases[study_db_name] = study_db_config
+    # Mark as used
     cache.set(f"{USAGE_CACHE_KEY_PREFIX}{study_db_name}", True, CACHE_TTL)
-    logger.debug(f"Added study DB config: {study_db_name}")
+    logger.debug(f"Added study DB connection for {study_db_name}")

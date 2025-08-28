@@ -12,6 +12,7 @@ class RolePermissionInline(admin.TabularInline):
     verbose_name = _("Role Permission")
     verbose_name_plural = _("Role Permissions")
 
+
 # Inline for StudySite in Study and Site
 class StudySiteInline(admin.TabularInline):
     model = StudySite
@@ -69,12 +70,6 @@ class PermissionAdmin(admin.ModelAdmin):
     inlines = [RolePermissionInline]
     readonly_fields = ('created_at', 'updated_at')
 
-@admin.register(RolePermission)
-class RolePermissionAdmin(admin.ModelAdmin):
-    list_display = ('role', 'permission')
-    search_fields = ('role__title', 'permission__code')
-    list_filter = ('role', 'permission')
-
 @admin.register(Study)
 class StudyAdmin(TranslatableAdmin):
     list_display = ('code', 'name', 'status', 'db_name', 'created_at', 'updated_at')
@@ -88,20 +83,19 @@ class SiteAdmin(TranslatableAdmin):
     list_display = ('code', 'abbreviation', 'name', 'created_at', 'updated_at')
     search_fields = ('code', 'abbreviation', 'translations__name')
     list_filter = ('created_at', 'updated_at')
-    inlines = [StudySiteInline]
     readonly_fields = ('created_at', 'updated_at')
 
-@admin.register(StudySite)
-class StudySiteAdmin(admin.ModelAdmin):
-    list_display = ('get_study_code', 'site', 'created_at', 'updated_at')
-    search_fields = ('study__code', 'site__code')
-    list_filter = ('created_at', 'updated_at')
-    inlines = [StudyMembershipInline]
-    readonly_fields = ('created_at', 'updated_at')
+# @admin.register(StudySite)
+# class StudySiteAdmin(admin.ModelAdmin):
+#     list_display = ('get_study_code', 'site', 'created_at', 'updated_at')
+#     search_fields = ('study__code', 'site__code')
+#     list_filter = ('created_at', 'updated_at')
+#     inlines = [StudyMembershipInline]
+#     readonly_fields = ('created_at', 'updated_at')
 
-    @admin.display(description=_("Study Code"))
-    def get_study_code(self, obj):
-        return obj.study.code
+#     @admin.display(description=_("Study Code"))
+#     def get_study_code(self, obj):
+#         return obj.study.code
 
 class StudyMembershipForm(forms.ModelForm):
     class Meta:
@@ -110,8 +104,10 @@ class StudyMembershipForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Limit study queryset and customize label
+        self.fields['study'].queryset = Study.objects.all() # type: ignore
+        self.fields['study'].label_from_instance = lambda obj: f"{obj.code}" # type: ignore
         if not self.instance.pk:
-            self.fields['study_site'].widget = forms.HiddenInput()  # Hide on add
             self.fields['study_site'].required = False
         else:
             if self.instance.study:

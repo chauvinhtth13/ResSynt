@@ -1,3 +1,4 @@
+# config/settings.py (optimized)
 import os
 import sys
 import threading
@@ -21,7 +22,7 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# Installed apps (removed sslserver if not using; add back if needed for optional local HTTPS)
+# Installed apps
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -33,13 +34,14 @@ INSTALLED_APPS = [
     "parler",
     "apps.web",
     "apps.tenancy.apps.TenancyConfig",
+    "apps.studies"
 ]
 
 # Middleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.locale.LocaleMiddleware", # Uncomment to enable locale middleware if needed
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -47,7 +49,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.tenancy.middleware.NoCacheMiddleware",
     "apps.tenancy.middleware.StudyRoutingMiddleware",
-    # "csp.middleware.CSPMiddleware",  # Uncomment after pip install django-csp; add CSP_* settings for enhanced security
 ]
 
 # Templates
@@ -63,44 +64,42 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.i18n",
-                "apps.web.context_processors.redirect_to"
             ],
         },
     },
 ]
 
 # Database: Main management DB
-_DB_MANAGEMENT = {
-    "ENGINE": "django.db.backends.postgresql",
-    "NAME": env("PGDATABASE"),
-    "USER": env("PGUSER"),
-    "PASSWORD": env("PGPASSWORD"),
-    "HOST": env("PGHOST", default="localhost"), # type: ignore
-    "PORT": env("PGPORT", default="5432"), # type: ignore
+_DB_MANAGEMENT = env.db(
+    "DATABASE_URL",
+    default=f"postgres://{env('PGUSER', default='postgres')}:{env('PGPASSWORD', default='')}@{env('PGHOST', default='localhost')}:{env('PGPORT', default='5432')}/{env('PGDATABASE', default='db')}", #type: ignore
+    engine="django.db.backends.postgresql",
+)
+
+_DB_MANAGEMENT.update({
+    "CONN_MAX_AGE": 0 if DEBUG else env.int("PG_CONN_MAX_AGE", default=600), #type: ignore
+    "CONN_HEALTH_CHECKS": not DEBUG,
+    "ATOMIC_REQUESTS": False,
+    "AUTOCOMMIT": True,
     "OPTIONS": {
         "options": "-c search_path=metadata,public",
         "sslmode": "disable" if DEBUG else "require",
     },
-    "CONN_MAX_AGE": 0 if DEBUG else env("PG_CONN_MAX_AGE", cast=int, default=600), # type: ignore    # Persistent in prod for perf
-    "CONN_HEALTH_CHECKS": not DEBUG,
-    "ATOMIC_REQUESTS": False,
-    "AUTOCOMMIT": True,
-    "TIME_ZONE": env("DB_TIME_ZONE", default="Asia/Ho_Chi_Minh"), # type: ignore
-}
+    "TIME_ZONE": env("DB_TIME_ZONE", default="Asia/Ho_Chi_Minh"), #type: ignore
+})
 
 DATABASES = {
     "default": _DB_MANAGEMENT,
-    "db_management": _DB_MANAGEMENT,
 }
 
 # Per-study DB template
 STUDY_DB_AUTO_REFRESH_SECONDS = env("STUDY_DB_AUTO_REFRESH_SECONDS", cast=int, default=300) # type: ignore
 STUDY_DB_PREFIX = env("STUDY_DB_PREFIX", default="db_study_") # type: ignore
 STUDY_DB_ENGINE = "django.db.backends.postgresql"
-STUDY_DB_HOST = env("STUDY_PGHOST", default=_DB_MANAGEMENT["HOST"])
-STUDY_DB_PORT = env("STUDY_PGPORT", default=_DB_MANAGEMENT["PORT"])
-STUDY_DB_USER = env("STUDY_PGUSER", default=_DB_MANAGEMENT["USER"])
-STUDY_DB_PASSWORD = env("STUDY_PGPASSWORD", default=_DB_MANAGEMENT["PASSWORD"])
+STUDY_DB_HOST = env("STUDY_PGHOST", default=_DB_MANAGEMENT.get("HOST", "localhost"))
+STUDY_DB_PORT = env("STUDY_PGPORT", default=_DB_MANAGEMENT.get("PORT", "5432"))
+STUDY_DB_USER = env("STUDY_PGUSER", default=_DB_MANAGEMENT.get("USER"))
+STUDY_DB_PASSWORD = env("STUDY_PGPASSWORD", default=_DB_MANAGEMENT.get("PASSWORD"))
 STUDY_DB_SEARCH_PATH = env("STUDY_SEARCH_PATH", default="data") # type: ignore
 
 # Database Routers
@@ -111,6 +110,7 @@ LANGUAGE_CODE = "vi"
 LANGUAGES = [("vi", "Vietnamese"), ("en", "English")]
 LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
+USE_L10N = True
 TIME_ZONE = "Asia/Ho_Chi_Minh"
 USE_TZ = True
 
@@ -139,6 +139,7 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 FEATURE_PASSWORD_RESET = env("FEATURE_PASSWORD_RESET", cast=bool, default=False) # type: ignore
 
 # Security (conditional on DEBUG: disabled in dev, enabled in prod)
+SESSION_ENGINE = "django.contrib.sessions.backends.cache" if not DEBUG else "django.contrib.sessions.backends.db"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_SSL_REDIRECT = not DEBUG
@@ -149,6 +150,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_BROWSER_XSS_FILTER = True
 
 # Defaults
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
