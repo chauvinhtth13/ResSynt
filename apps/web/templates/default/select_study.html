@@ -1,36 +1,23 @@
-<!-- templates/default/select_study.html -->
 {% load static i18n %}
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
-<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
-    <!-- Meta tags for character encoding, compatibility, and responsive viewport -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Page title with translation support -->
     <title>ResSync — Select Study</title>
     
-    <!-- Core stylesheets -->
     <link rel="stylesheet" href="{% static 'css/default/base.css' %}" />
-    <!-- Tailwind CSS CDN for rapid prototyping and utility-first styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Note: Uncomment the following line if output.css is needed -->
-    <!-- <link rel="stylesheet" href="{% static 'css/output.css' %}" /> -->
-</head>
+    </head>
 <body class="min-h-screen bg-gray-100 font-sans text-gray-800">
-    <!-- Header with navigation and language/user dropdowns -->
     {% include 'includes/header.html' %}
     
-    <!-- Main content wrapper -->
-    <!-- CHANGE: Replaced max-w-max with max-w-7xl for better control on large screens. -->
-    <!-- Added w-full to ensure it takes up available width. -->
     <main class="mx-auto w-full max-w-8xl p-4 sm:p-6 lg:p-8">
         <div class="space-y-6 sm:space-y-8">
 
-            <!-- Study search section -->
             <section role="search" aria-labelledby="study-search-title">
-                <!-- CHANGE: Added max-w-2xl and mx-auto to center the search bar and limit its width for better readability on large screens. -->
                 <div class="mx-auto min-w-full">
                     <div class="relative">
                         <div class="flex items-center rounded-full border border-slate-300 bg-white shadow-sm transition focus-within:border-blue-500">
@@ -39,38 +26,30 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
                             </span>
-                            <input id="study-id-search" type="search" autocomplete="off" enterkeyhint="search" placeholder="{% trans 'Tìm theo Mã hoặc Tên Nghiên Cứu…' %}" class="w-full rounded-full bg-transparent px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none">
+                            <input id="study-id-search" type="search" autocomplete="off" enterkeyhint="search" placeholder="{% trans 'Search by Study ID or Name…' %}" class="w-full rounded-full bg-transparent px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none">
                         </div>
                     </div>
                 </div>
             </section>
             
-            <!-- Study table section -->
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <!-- Table header -->
                 <div class="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-6">
-                    <h2 class="text-lg font-bold sm:text-xl">{% trans 'Danh Sách Các Nghiên Cứu' %}</h2>
+                    <h2 class="text-lg font-bold sm:text-xl">{% trans 'List of Studies' %}</h2>
                 </div>
                 
-                <!-- Table with responsive overflow -->
-                <!-- The overflow-x-auto wrapper makes the table scrollable horizontally on small screens -->
                 <div class="overflow-x-auto">
-                    <!-- CHANGE: Removed table-fixed to allow columns to be more flexible. Added min-w-full to ensure it takes at least the full screen width before scrolling. -->
                     <table class="min-w-full text-sm">
                         <thead class="bg-slate-100 text-slate-600">
                             <tr>
-                                <!-- CHANGE: Simplified column width classes. They are now more flexible. -->
-                                <!-- Using whitespace-nowrap to prevent headers from breaking into multiple lines. -->
-                                <th scope="col" class="w-1/8 px-4 py-3 text-left font-semibold uppercase tracking-wider sm:px-6 whitespace-nowrap">{% trans 'Mã nghiên cứu' %}</th>
-                                <th scope="col" class="w-5/8 px-4 py-3 text-left font-semibold uppercase tracking-wider sm:px-6 whitespace-nowrap">{% trans 'Tên nghiên cứu' %}</th>
-                                <th scope="col" class="w-1/8 px-4 py-3 text-left font-semibold uppercase tracking-wider sm:px-6 whitespace-nowrap">{% trans 'Lần cập nhật cuối' %}</th>
-                                <th scope="col" class="w-1/8 px-4 py-3 text-left font-semibold uppercase tracking-wider sm:px-6 whitespace-nowrap">{% trans 'Hành động' %}</th>
+                                <th scope="col" class="w-1/8 px-4 py-3 text-left font-semibold uppercase tracking-wider sm:px-6 whitespace-nowrap">{% trans 'Study ID' %}</th>
+                                <th scope="col" class="w-5/8 px-4 py-3 text-left font-semibold uppercase tracking-wider sm:px-6 whitespace-nowrap">{% trans 'Study Name' %}</th>
+                                <th scope="col" class="w-1/8 px-4 py-3 text-left font-semibold uppercase tracking-wider sm:px-6 whitespace-nowrap">{% trans 'Last Updated' %}</th>
+                                <th scope="col" class="w-1/8 px-4 py-3 text-left font-semibold uppercase tracking-wider sm:px-6 whitespace-nowrap">{% trans 'Action' %}</th>
                             </tr>
                         </thead>
                         <tbody id="studies-body" class="divide-y divide-slate-200">
                             {% for study in studies %}
                             <tr class="hover:bg-slate-50" data-row>
-                                <!-- CHANGE: Ensured consistent padding. Added text-ellipsis for long text. -->
                                 <td class="h-16 whitespace-nowrap px-4 py-4 font-medium text-slate-800 sm:px-6" data-col="code">{{ study.code }}</td>
                                 <td class="h-16 px-4 py-4 text-slate-600 sm:px-6" data-col="name">
                                     <div class="overflow-hidden text-ellipsis">
@@ -78,7 +57,7 @@
                                             {% if study.name %}
                                                 {{ study.name }}
                                             {% else %}
-                                                {% trans "Không có tên nghiên cứu" %}
+                                                {% trans "No study name available" %}
                                             {% endif %}
                                         {% endwith %}
                                     </div>
@@ -88,20 +67,18 @@
                                     <form method="post" action="{% url 'select_study' %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="study_id" value="{{ study.id }}">
-                                        <!-- CHANGE: Button is now full-width on mobile (w-full) and auto-width on larger screens (md:w-auto). -->
-                                        <!-- Added justify-center for better alignment. -->
                                         <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:w-auto">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" class="h-6 w-6">
                                                 <path d="M507-480 384-357l56 57 180-180-180-180-56 57 123 123ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/>
                                             </svg>
-                                            <span class="whitespace-nowrap">{% trans 'Vào nghiên cứu' %}</span>
+                                            <span class="whitespace-nowrap">{% trans 'Enter Study' %}</span>
                                         </button>
                                     </form>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr id="no-results-row" data-empty-row>
-                                <td colspan="4" class="px-4 py-6 text-center text-gray-500 sm:px-6">{% trans 'Không có nghiên cứu được tìm thấy.' %}</td>
+                                <td colspan="4" class="px-4 py-6 text-center text-gray-500 sm:px-6">{% trans 'No studies found.' %}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -111,8 +88,7 @@
         </div>
     </main>
     
-    <!-- JavaScript for study selection and search functionality -->
-    <script src="{% static 'js/default/base.js' %}"></script>
-    <script src="{% static 'js/default/select_study.js' %}"></script>
+    <script src="{% static 'js/default/base.js' %}" defer></script>
+    <script src="{% static 'js/default/select_study.js' %}" defer></script>
 </body>
 </html>

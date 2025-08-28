@@ -1,6 +1,6 @@
 {% load static i18n %}
 
-<nav class="flex-1 overflow-y-auto px-4 py-4 bg-transparent text-gray-200" aria-label="Thanh bên">
+<nav class="flex-1 overflow-y-auto px-4 py-4 bg-transparent text-gray-200" aria-label="Sidebar">
   <ul class="space-y-4">
 
     <li>
@@ -9,17 +9,14 @@
       </p>
       <ul class="space-y-1 mt-2">
         <li>
-          {% url 'dashboard' as dashboard_url %}
-          <a href="{{ dashboard_url }}" 
-            class="flex items-center gap-x-3 px-3 py-2.5 rounded-lg font-medium transition duration-200 
-                   {% if request.path == dashboard_url %}bg-sky-600 text-white shadow-md ring-1 ring-sky-500/40{% else %}text-gray-200/90 hover:bg-blue-800/70 hover:text-white{% endif %}"
-            aria-current="{% if request.path == dashboard_url %}page{% else %}false{% endif %}">
-            <span>{% trans "Báo cáo quản lý" %}</span>
+          <a href="#" 
+            class="flex items-center gap-x-3 px-3 py-2.5 rounded-lg font-medium transition duration-200">
+            <span>{% trans "Management Report" %}</span>
           </a>
         </li>
         <li>
-          <a href="{{ dashboard_url }}#analytics" class="flex items-center gap-x-3 px-3 py-2.5 rounded-lg font-medium transition duration-200 text-gray-200/90 hover:bg-blue-800/70 hover:text-white">
-            <span>{% trans "Báo cáo phân tích" %}</span>
+          <a href="#" class="flex items-center gap-x-3 px-3 py-2.5 rounded-lg font-medium transition duration-200 text-gray-200/90 hover:bg-blue-800/70 hover:text-white">
+            <span>{% trans "Analytics Report" %}</span>
           </a>
         </li>
       </ul>
@@ -29,28 +26,26 @@
 
     <li>
       <p class="px-1 py-2 text-[12px] md:text-[13px] font-bold uppercase tracking-wider text-sky-200/95 hover:text-white transition-colors">
-        {% trans "Bảng nhập số liệu thông tin" %}
+        {% trans "Data Entry Forms" %}
       </p>
       <ul class="space-y-1 mt-2">
         <li>
           <div class="rounded-xl border border-blue-300/15 bg-blue-900/20 backdrop-blur-sm">
             <div class="flex items-center justify-between px-3 py-2.5 rounded-t-xl bg-blue-900/30">
               <span class="font-semibold text-sky-100">
-                {% trans "Thông tin bệnh nhân" %}
+                {% trans "Patient Information" %}
               </span>
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-200">{% trans "CRF" %}</span>
             </div>
             <ul class="p-2.5 space-y-1">
               <li>
-                {% url 'crf:patient_screening' as crf_patient_screening_url %}
-                <a href="{{ crf_patient_screening_url }}" class="flex items-center gap-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-200/90 hover:bg-blue-800/70 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40">
-                  <span class="truncate">{% trans "Danh sách sàng lọc" %}</span>
+                <a href="#" class="flex items-center gap-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-200/90 hover:bg-blue-800/70 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40">
+                  <span class="truncate">{% trans "Screening List" %}</span>
                 </a>
               </li>
               <li>
-                {% url 'crf:patient_enrolment' as crf_patient_enrolment_url %}
-                <a href="{{ crf_patient_enrolment_url }}" class="flex items-center gap-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-200/90 hover:bg-blue-800/70 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40">
-                  <span class="truncate">{% trans "Danh sách tham gia" %}</span>
+                <a href="#" class="flex items-center gap-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-200/90 hover:bg-blue-800/70 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40">
+                  <span class="truncate">{% trans "Enrollment List" %}</span>
                 </a>
               </li>
             </ul>
@@ -60,21 +55,19 @@
           <div class="rounded-xl border border-blue-300/15 bg-blue-900/20 backdrop-blur-sm">
             <div class="flex items-center justify-between px-3 py-2.5 rounded-t-xl bg-blue-900/30">
               <span class="font-semibold text-sky-100">
-                {% trans "Thông tin liên hệ" %}
+                {% trans "Contact Information" %}
               </span>
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-200">{% trans "CRF" %}</span>
             </div>
             <ul class="p-2.5 space-y-1">
               <li>
-                {% url 'crf:contact_screening' as crf_contact_screening_url %}
-                <a href="{{ crf_contact_screening_url }}" class="flex items-center gap-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-200/90 hover:bg-blue-800/70 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40">
-                  <span class="truncate">{% trans "Danh sách sàng lọc" %}</span>
+                <a href="#" class="flex items-center gap-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-200/90 hover:bg-blue-800/70 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40">
+                  <span class="truncate">{% trans "Screening List" %}</span>
                 </a>
               </li>
               <li>
-                {% url 'crf:contact_enrolment' as crf_contact_enrolment_url %}
-                <a href="{{ crf_contact_enrolment_url }}" class="flex items-center gap-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-200/90 hover:bg-blue-800/70 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40">
-                  <span class="truncate">{% trans "Danh sách tham gia" %}</span>
+                <a href="#" class="flex items-center gap-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-200/90 hover:bg-blue-800/70 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40">
+                  <span class="truncate">{% trans "Enrollment List" %}</span>
                 </a>
               </li>
             </ul>
@@ -87,13 +80,12 @@
 
     <li>
       <p class="px-1 py-2 text-[12px] md:text-[13px] font-bold uppercase tracking-wider text-sky-200/95 hover:text-white transition-colors">
-        {% trans "Thông báo thăm khám" %}
+        {% trans "Notifications" %}
       </p>
       <ul class="mt-2">
         <li>
-          {% url 'crf:notifications' as notif_url %}
-          <a href="{{ notif_url }}" class="flex items-center gap-x-3 px-3 py-2.5 rounded-lg font-medium transition duration-200 text-gray-200/90 hover:bg-blue-800/70 hover:text-white">
-            <span>{% trans "Lịch thăm khám" %}</span>
+          <a href="#" class="flex items-center gap-x-3 px-3 py-2.5 rounded-lg font-medium transition duration-200 text-gray-200/90 hover:bg-blue-800/70 hover:text-white">
+            <span>{% trans "Visit Schedule" %}</span>
           </a>
         </li>
       </ul>
@@ -103,13 +95,12 @@
 
     <li>
       <p class="px-1 py-2 text-[12px] md:text-[13px] font-bold uppercase tracking-wider text-sky-200/95 hover:text-white transition-colors">
-        {% trans "Nhật ký hoạt động" %}
+        {% trans "Activity Log" %}
       </p>
       <ul class="mt-2">
         <li>
-          {% url 'crf:audit_trail' as audit_url %}
-          <a href="{{ audit_url }}" class="flex items-center gap-x-3 px-3 py-2.5 rounded-lg font-medium transition duration-200 text-gray-200/90 hover:bg-blue-800/70 hover:text-white">
-            <span>{% trans "Nhật ký dữ liệu" %}</span>
+          <a href="#" class="flex items-center gap-x-3 px-3 py-2.5 rounded-lg font-medium transition duration-200 text-gray-200/90 hover:bg-blue-800/70 hover:text-white">
+            <span>{% trans "Data Log" %}</span>
           </a>
         </li>
       </ul>

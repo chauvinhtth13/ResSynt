@@ -1,45 +1,29 @@
 #!/usr/bin/env python
 # manage.py
-"""Django's command-line utility for administrative tasks."""
 import os
 import sys
 from pathlib import Path
 
 def main():
-    # === Define project root ===
     ROOT = Path(__file__).resolve().parent
-
-    # Ensure project root in sys.path (to prevent import errors)
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
 
-    # === Load .env if exists ===
     try:
-        from dotenv import load_dotenv  # pip install python-dotenv
+        from dotenv import load_dotenv
         load_dotenv(ROOT / ".env")
     except ImportError:
-        pass  # Skip if dotenv not installed
-    except Exception as e:
-        print(f"Warning: cannot load .env - {e}")
+        pass
 
-    # === Configure DJANGO_SETTINGS_MODULE ===
-    os.environ.setdefault(
-        "DJANGO_SETTINGS_MODULE",
-        os.getenv("DJANGO_SETTINGS_MODULE", "config.settings")
-    )
+    required_env = ['SECRET_KEY', 'DATABASE_URL']  # Add critical vars
+    missing = [var for var in required_env if not os.getenv(var)]
+    if missing:
+        raise ValueError(f"Missing env vars: {', '.join(missing)}")
 
-    # === Run Django command ===
-    try:
-        from django.core.management import execute_from_command_line
-    except ImportError as exc:
-        raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
-        ) from exc
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", os.getenv("DJANGO_SETTINGS_MODULE", "config.settings"))
 
+    from django.core.management import execute_from_command_line
     execute_from_command_line(sys.argv)
-
 
 if __name__ == "__main__":
     main()

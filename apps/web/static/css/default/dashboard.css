@@ -1,85 +1,13 @@
 /* static/css/default/dashboard.css */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-html, body { 
-  font-family: 'Inter', ui-sans-serif, system-ui; 
-  scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { 
-    animation-duration: 0.01ms !important; 
-    animation-iteration-count: 1 !important; 
-    transition-duration: 0.01ms !important; 
-    scroll-behavior: auto !important; 
-  }
-}
+/* This file only contains styles unique to the dashboard.
+   All shared styles (like animations, scrollbar, and sidebar logic)
+   are now in base.css */
 
 :root { 
+  /* Override variables defined in base.css if needed */
   --sidebar-desktop-width: 18rem; 
   --header-height: 4rem;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* Sidebar animations */
-#sidebar {
-  width: 100%;
-  transform: translateX(-100%);
-  opacity: 0;
-  pointer-events: none;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              opacity 0.2s ease;
-  will-change: transform;
-  position: fixed; 
-  inset: 0; 
-  z-index: 40;
-}
-
-body[data-sidebar="open"] #sidebar { 
-  transform: translateX(0); 
-  opacity: 1; 
-  pointer-events: auto; 
-}
-
-@media (min-width: 768px) {
-  #sidebar {
-    width: var(--sidebar-desktop-width);
-    transform: none; 
-    opacity: 1; 
-    pointer-events: auto;
-    position: static; 
-    inset: auto; 
-    z-index: auto; 
-    flex-shrink: 0;
-  }
-  body.sidebar-collapsed #sidebar {
-    width: 0; 
-    transform: translateX(-100%); 
-    opacity: 0; 
-    pointer-events: none; 
-    overflow: hidden;
-  }
-}
-
-#overlay { 
-  transition: opacity 0.2s ease, visibility 0.2s ease; 
-  visibility: hidden;
-}
-body[data-sidebar="open"] #overlay { 
-  opacity: 1; 
-  pointer-events: auto; 
-  visibility: visible;
-}
-
-/* Content performance */
-main section { 
-  content-visibility: auto; 
-  contain-intrinsic-size: 600px; 
-}
+/* Additional specific styles for the dashboard can be added here */

@@ -59,7 +59,6 @@
         if (dropdown) {
           const menu = qs('[data-dropdown-menu], .dropdown-menu', dropdown);
           if (menu) {
-            // If trigger is a link, avoid navigation
             if (trigger.tagName === 'A') e.preventDefault();
             e.stopPropagation();
             toggleDropdown(trigger, dropdown, menu);
@@ -67,7 +66,6 @@
           }
         }
       }
-      // Clicked outside any menu: close all
       if (!e.target.closest('[data-dropdown-menu], .dropdown-menu')) closeAll();
     };
 
@@ -82,7 +80,6 @@
       }
     };
 
-    // Note: use non-passive for click so we can preventDefault on anchors if needed
     document.addEventListener('click', handleInteraction, { passive: false });
     document.addEventListener('keydown', handleKeydown, { passive: true });
 
@@ -135,14 +132,13 @@
       currentLangId = 'current-language',
       langMenuId = 'lang-menu',
       errorContainer = 'main',
-      setLangUrl = '/i18n/setlang/'  // default fallback
+      setLangUrl = '/i18n/setlang/'
     } = config;
 
     const currentLangSpan = document.getElementById(currentLangId);
     const langMenu = document.getElementById(langMenuId);
     if (!langMenu || !currentLangSpan) return () => {};
 
-    // Auto-detect action from the form inside the menu if present
     const formAction = langMenu.querySelector('form')?.getAttribute('action') || null;
     const finalSetLangUrl = formAction || setLangUrl;
 
@@ -173,7 +169,6 @@
       const prevText = currentLangSpan.textContent;
       currentLangSpan.textContent = langText;
 
-      // Visual disable while request in flight
       link.style.pointerEvents = 'none';
       link.classList.add('opacity-50');
 
@@ -225,7 +220,6 @@
 
   const registerInit = (fn) => {
     if (typeof fn !== 'function') return;
-    // If DOM already parsed, run this init on the next microtask
     if (document.readyState === 'interactive' || document.readyState === 'complete') {
       queueMicrotask(() => {
         try { fn(); } catch (err) { console.error('[ResSyncBase] init error:', err); }
@@ -235,7 +229,6 @@
     }
   };
 
-  // Always flush any queued inits at DOMContentLoaded
   document.addEventListener('DOMContentLoaded', runInits, { once: true });
 
   // Expose API

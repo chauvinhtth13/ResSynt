@@ -1,0 +1,243 @@
+# Vietnamese translations for ResSync.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-28 14:44+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: .\apps\tenancy\apps.py:8
+msgid "Tenancy Management"
+msgstr "Quản lý Đơn vị"
+
+#: .\apps\web\login.py:10 .\apps\web\login.py:13
+msgid "Username or email"
+msgstr "Tên người dùng hoặc email"
+
+#: .\apps\web\login.py:37
+msgid "Multiple accounts use this email. Please use your username."
+msgstr "Nhiều tài khoản sử dụng email này. Vui lòng sử dụng tên người dùng của bạn."
+
+#: .\apps\web\templates\default\dashboard.html:18
+msgid "Primary navigation"
+msgstr "Thanh điều hướng chính"
+
+#: .\apps\web\templates\default\dashboard.html:26
+msgid "Study logo"
+msgstr "Logo Nghiên cứu"
+
+#: .\apps\web\templates\default\dashboard.html:34
+msgid "Research Study"
+msgstr "Nghiên cứu"
+
+#: .\apps\web\templates\default\login.html:22
+msgid "Welcome to"
+msgstr "Chào mừng đến với"
+
+#: .\apps\web\templates\default\login.html:30
+msgid "Platform Features"
+msgstr "Tính năng nền tảng"
+
+#: .\apps\web\templates\default\login.html:39
+msgid "Efficient Data Management"
+msgstr "Quản lý dữ liệu hiệu quả"
+
+#: .\apps\web\templates\default\login.html:40
+msgid "Organize, query, and export research data with exceptional performance."
+msgstr "Tổ chức, truy vấn và xuất dữ liệu nghiên cứu với hiệu suất vượt trội."
+
+#: .\apps\web\templates\default\login.html:50
+msgid "Streamlined Data Entry"
+msgstr "Nhập liệu tinh gọn"
+
+#: .\apps\web\templates\default\login.html:51
+msgid ""
+"Rapid CRF entry with built-in format and logic checks to ensure accuracy."
+msgstr "Nhập CRF nhanh chóng với các kiểm tra định dạng và logic tích hợp để đảm bảo tính chính xác."
+
+#: .\apps\web\templates\default\login.html:61
+msgid "Dynamic Research Dashboards"
+msgstr "Bảng điều khiển Nghiên cứu động"
+
+#: .\apps\web\templates\default\login.html:62
+msgid "Summarize project progress and data status in real time."
+msgstr "Tóm tắt tiến độ dự án và trạng thái dữ liệu trong thời gian thực."
+
+#: .\apps\web\templates\default\login.html:72
+msgid "Precise Scheduling and Tracking"
+msgstr "Lập lịch và theo dõi chính xác"
+
+#: .\apps\web\templates\default\login.html:73
+msgid ""
+"Automated reminders and appointment tracking help research teams optimize "
+"their plans."
+msgstr "Nhắc nhở tự động và theo dõi cuộc hẹn giúp các nhóm nghiên cứu tối ưu hóa kế hoạch của họ."
+
+#: .\apps\web\templates\default\login.html:92
+#: .\apps\web\templates\includes\header.html:41
+msgid "Select language"
+msgstr "Chọn ngôn ngữ"
+
+#: .\apps\web\templates\default\login.html:132
+msgid "Sign in to platform"
+msgstr "Đăng nhập vào nền tảng"
+
+#: .\apps\web\templates\default\login.html:137
+msgid "End-to-end automation, from data intake to smart reporting."
+msgstr "Tự động hóa toàn diện, từ nhập liệu đến báo cáo."
+
+#: .\apps\web\templates\default\login.html:150
+msgid "Username or Email"
+msgstr "Tên người dùng hoặc Email"
+
+#: .\apps\web\templates\default\login.html:177
+msgid "Password"
+msgstr "Mật khẩu"
+
+#: .\apps\web\templates\default\login.html:224
+msgid "Sign In"
+msgstr "Đăng nhập"
+
+#: .\apps\web\templates\default\login.html:232
+msgid "Need support?"
+msgstr "Cần hỗ trợ?"
+
+#: .\apps\web\templates\default\login.html:235
+msgid "designed by"
+msgstr "thiết kế bởi"
+
+#: .\apps\web\templates\default\select_study.html:29
+msgid "Search by Study ID or Name…"
+msgstr "Tìm kiếm theo ID hoặc Tên Nghiên cứu…"
+
+#: .\apps\web\templates\default\select_study.html:37
+msgid "List of Studies"
+msgstr "Danh sách Nghiên cứu"
+
+#: .\apps\web\templates\default\select_study.html:44
+msgid "Study ID"
+msgstr "ID Nghiên cứu"
+
+#: .\apps\web\templates\default\select_study.html:45
+msgid "Study Name"
+msgstr "Tên Nghiên cứu"
+
+#: .\apps\web\templates\default\select_study.html:46
+msgid "Last Updated"
+msgstr "Cập nhật lần cuối"
+
+#: .\apps\web\templates\default\select_study.html:47
+msgid "Action"
+msgstr "Hành động"
+
+#: .\apps\web\templates\default\select_study.html:60
+msgid "No study name available"
+msgstr "Không có tên nghiên cứu"
+
+#: .\apps\web\templates\default\select_study.html:74
+msgid "Enter Study"
+msgstr "Vào Nghiên cứu"
+
+#: .\apps\web\templates\default\select_study.html:81
+msgid "No studies found."
+msgstr "Không tìm thấy nghiên cứu nào."
+
+#: .\apps\web\templates\includes\header.html:10
+msgid "Hide sidebar"
+msgstr "Ẩn thanh bên"
+
+#: .\apps\web\templates\includes\header.html:16
+msgid "ResSync Logo"
+msgstr "Logo ResSync"
+
+#: .\apps\web\templates\includes\header.html:23
+#: .\apps\web\templates\studies\study_43en\sidebar.html:83
+msgid "Notifications"
+msgstr "Thông báo"
+
+#: .\apps\web\templates\includes\header.html:91
+msgid "User menu"
+msgstr "Menu người dùng"
+
+#: .\apps\web\templates\includes\header.html:100
+msgid "Choose another study"
+msgstr "Chọn nghiên cứu khác"
+
+#: .\apps\web\templates\includes\header.html:112
+msgid "Log out"
+msgstr "Đăng xuất"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:8
+msgid "Dashboard"
+msgstr "Bảng điều khiển"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:14
+msgid "Management Report"
+msgstr "Báo cáo Quản lý"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:19
+msgid "Analytics Report"
+msgstr "Báo cáo Phân tích"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:29
+msgid "Data Entry Forms"
+msgstr "Biểu mẫu nhập liệu"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:36
+msgid "Patient Information"
+msgstr "Thông tin bệnh nhân"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:38
+#: .\apps\web\templates\studies\study_43en\sidebar.html:60
+msgid "CRF"
+msgstr "CRF"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:43
+#: .\apps\web\templates\studies\study_43en\sidebar.html:65
+msgid "Screening List"
+msgstr "Danh sách Sàng lọc"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:48
+#: .\apps\web\templates\studies\study_43en\sidebar.html:70
+msgid "Enrollment List"
+msgstr "Danh sách Tuyển chọn"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:58
+msgid "Contact Information"
+msgstr "Thông tin liên hệ"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:88
+msgid "Visit Schedule"
+msgstr "Lịch trình thăm khám"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:98
+msgid "Activity Log"
+msgstr "Nhật ký hoạt động"
+
+#: .\apps\web\templates\studies\study_43en\sidebar.html:103
+msgid "Data Log"
+msgstr "Nhật ký dữ liệu"
+
+#: .\apps\web\views.py:79
+msgid "Invalid study selection."
+msgstr "Lựa chọn nghiên cứu không hợp lệ."
+
+#: .\config\settings.py:161
+msgid "Tiếng Việt"
+msgstr "Tiếng Việt"
+
+#: .\config\settings.py:162
+msgid "English"
+msgstr "Tiếng Anh"

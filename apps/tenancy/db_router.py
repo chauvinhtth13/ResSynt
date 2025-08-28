@@ -1,36 +1,48 @@
-# apps/tenancy/db_router.py
+# apps/tenancy/db_router.py - OPTIMIZED
 import threading
+from typing import Optional
 from django.conf import settings
+import logging
 
+logger = logging.getLogger("apps.tenancy")
 THREAD_LOCAL = threading.local()
 
-def get_current_db():
-    """Get the current study DB alias from thread-local storage."""
+def get_current_db() -> str:
+    """Get current DB with fallback to default."""
     return getattr(THREAD_LOCAL, 'current_db', 'default')
 
 def set_current_db(db_alias: str) -> None:
-    """Set the current study DB alias in thread-local storage."""
-    setattr(THREAD_LOCAL, 'current_db', db_alias)
+    """Set current DB with validation."""
+    if db_alias and isinstance(db_alias, str):
+        setattr(THREAD_LOCAL, 'current_db', db_alias)
+    else:
+        logger.warning(f"Invalid db_alias: {db_alias}, using default")
+        setattr(THREAD_LOCAL, 'current_db', 'default')
 
 class StudyDBRouter:
-    # Keep all management/metadata apps on the default DB.
-    management_apps = [
-        'auth', 'admin', 'contenttypes', 'sessions', 'messages', 'staticfiles',
-        'tenancy', 'web', 'parler'  # ensure parler models live in management DB
-    ]
+    management_apps = {
+        'auth', 'admin', 'contenttypes', 'sessions', 
+        'messages', 'staticfiles', 'tenancy', 'web', 'parler'
+    }
 
-    def db_for_read(self, model, **hints):
-        return 'default' if model._meta.app_label in self.management_apps else get_current_db()
+    def db_for_read(self, model, **hints) -> str:
+        try:
+            if model._meta.app_label in self.management_apps:
+                return 'default'
+            return get_current_db()
+        except Exception as e:
+            logger.error(f"Router error: {e}")
+            return 'default'
 
-    def db_for_write(self, model, **hints):
-        return 'default' if model._meta.app_label in self.management_apps else get_current_db()
+    def db_for_write(self, model, **hints) -> str:
+        return self.db_for_read(model, **hints)
 
-    def allow_relation(self, obj1, obj2, **hints):
+    def allow_relation(self, obj1, obj2, **hints) -> Optional[bool]:
         db1 = self.db_for_read(obj1.__class__)
         db2 = self.db_for_read(obj2.__class__)
         return db1 == db2 if db1 and db2 else None
 
-    def allow_migrate(self, db, app_label, model_name=None, **hints):
+    def allow_migrate(self, db, app_label, model_name=None, **hints) -> bool:
         if db == 'default':
             return app_label in self.management_apps
         if db.startswith(settings.STUDY_DB_PREFIX):

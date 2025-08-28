@@ -39,7 +39,7 @@
     input.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => applyFilter(e.target.value), 300);
-    });
+    }, { passive: true });
 
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -55,7 +55,6 @@
 
     document.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        // avoid hijacking when typing elsewhere
         const tag = (document.activeElement?.tagName || '').toLowerCase();
         if (['input', 'textarea', 'select'].includes(tag) && document.activeElement !== input) return;
         e.preventDefault();

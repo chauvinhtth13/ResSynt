@@ -1,28 +1,49 @@
-# apps/tenancy/signals.py
+# apps/tenancy/signals.py - OPTIMIZED
 from django.core.signals import request_finished
 from django.db import connections
 from django.conf import settings
 from django.core.cache import cache
 import logging
+from typing import Set
 
 logger = logging.getLogger('apps.tenancy')
-USAGE_CACHE_KEY_PREFIX = 'study_db_usage_'
 
-def release_unused_dbs(sender, **kwargs):
-    # Close old connections first
-    for conn in connections.all():
-        conn.close_if_unusable_or_obsolete()
-
-    # Remove inactive study DBs from connections.databases
-    for db_alias in list(connections.databases.keys()):
-        if db_alias != 'default' and db_alias.startswith(settings.STUDY_DB_PREFIX):
-            usage_key = f"{USAGE_CACHE_KEY_PREFIX}{db_alias}"
+class DBConnectionManager:
+    """Manage DB connections efficiently."""
+    
+    USAGE_CACHE_KEY_PREFIX = 'study_db_usage_'
+    BATCH_SIZE = 10  # Process in batches
+    
+    @classmethod
+    def release_unused_dbs(cls, sender, **kwargs):
+        """Release unused study DBs."""
+        # Close unusable connections first
+        for conn in connections.all():
+            conn.close_if_unusable_or_obsolete()
+        
+        # Batch process DB aliases
+        study_aliases = [
+            alias for alias in connections.databases.keys()
+            if alias != 'default' and alias.startswith(settings.STUDY_DB_PREFIX)
+        ]
+        
+        to_remove: Set[str] = set()
+        for alias in study_aliases[:cls.BATCH_SIZE]:  # Process limited batch
+            usage_key = f"{cls.USAGE_CACHE_KEY_PREFIX}{alias}"
             if not cache.get(usage_key):
-                if db_alias in connections.databases:
-                    del connections.databases[db_alias]
-                    logger.debug(f"Released unused DB: {db_alias}")
+                to_remove.add(alias)
             else:
-                # Reset usage flag after check to allow unloading if not used in next cycle
-                cache.delete(usage_key)
+                cache.delete(usage_key)  # Reset for next cycle
+        
+        # Batch remove
+        for alias in to_remove:
+            try:
+                if alias in connections:
+                    connections[alias].close()
+                del connections.databases[alias]
+                logger.debug(f"Released: {alias}")
+            except Exception as e:
+                logger.error(f"Error releasing {alias}: {e}")
 
-request_finished.connect(release_unused_dbs)
+# Connect optimized handler
+request_finished.connect(DBConnectionManager.release_unused_dbs)

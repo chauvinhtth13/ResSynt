@@ -71,7 +71,7 @@ html, body {
   }
 }
 
-/* Sidebar animations */
+/* === Sidebar Styles === */
 #sidebar {
   width: 100%;
   transform: translateX(-100%);
@@ -123,9 +123,8 @@ body[data-sidebar="open"] #overlay {
   visibility: visible;
 }
 
-/* Content performance */
+/* === Content Performance === */
 main section { 
   content-visibility: auto; 
   contain-intrinsic-size: 600px; 
 }
-

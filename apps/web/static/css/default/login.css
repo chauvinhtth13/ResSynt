@@ -1,3 +1,6 @@
+/* This file only contains styles unique to the login page.
+   All shared styles are in base.css */
+
 /* This custom style is necessary for the blurred background effect */
 .blur-background::before {
     content: "";
@@ -9,9 +12,9 @@
     background: url('../../images/default/bg.webp') no-repeat center center;
     background-size: cover;
     /* Apply the blur effect */
-    filter: blur(10px);
+    filter: blur(2px);
     /* Ensure the blurred layer is behind the content */
     z-index: -1;
     /* Improve performance on some browsers */
-    transform: scale(1); 
+    transform: scale(1.4); 
 }

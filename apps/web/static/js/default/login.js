@@ -1,3 +1,4 @@
+// static/js/default/login.js
 (() => {
   class ResSyncLoginForm {
     constructor() {
@@ -22,13 +23,10 @@
         return;
       }
 
-      // ⚠️ Sửa logic khởi tạo ban đầu theo yêu cầu
-      // Mật khẩu ban đầu luôn ẩn, nên hiển thị biểu tượng 'eyeOff'
       if (password.type === 'password') {
         eyeOn?.classList.add('hidden');
         eyeOff?.classList.remove('hidden');
       } else {
-        // Trường hợp không mong muốn, nhưng vẫn xử lý phòng hờ
         eyeOn?.classList.remove('hidden');
         eyeOff?.classList.add('hidden');
       }
@@ -73,7 +71,6 @@
       toggle.setAttribute('aria-pressed', String(!isVisible));
       toggle.setAttribute('aria-label', window.trans?.(isVisible ? 'Show password' : 'Hide password') || (isVisible ? 'Show password' : 'Hide password'));
       
-      // Logic này đã đúng, không cần thay đổi
       eyeOn?.classList.toggle('hidden', isVisible);
       eyeOff?.classList.toggle('hidden', !isVisible);
     }
