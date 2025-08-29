@@ -53,13 +53,7 @@
                                 <td class="h-16 whitespace-nowrap px-4 py-4 font-medium text-slate-800 sm:px-6" data-col="code">{{ study.code }}</td>
                                 <td class="h-16 px-4 py-4 text-slate-600 sm:px-6" data-col="name">
                                     <div class="overflow-hidden text-ellipsis">
-                                        {% with study.name=study.name|default:"" %}
-                                            {% if study.name %}
-                                                {{ study.name }}
-                                            {% else %}
-                                                {% trans "No study name available" %}
-                                            {% endif %}
-                                        {% endwith %}
+                                        {{ study.name|default:"No study name available" }}
                                     </div>
                                 </td>
                                 <td class="h-16 whitespace-nowrap px-4 py-4 text-slate-600 sm:px-6" data-col="updated">{{ study.updated_at|date:"d-m-Y H:i:s" }}</td>

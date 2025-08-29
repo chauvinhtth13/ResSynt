@@ -1,4 +1,4 @@
-# apps/tenancy/db_router.py - OPTIMIZED
+# apps/tenancy/db_router.py - FIXED
 import threading
 from typing import Optional
 from django.conf import settings
@@ -20,9 +20,14 @@ def set_current_db(db_alias: str) -> None:
         setattr(THREAD_LOCAL, 'current_db', 'default')
 
 class StudyDBRouter:
+    # Apps that MUST stay in management DB
     management_apps = {
         'auth', 'admin', 'contenttypes', 'sessions', 
-        'messages', 'staticfiles', 'tenancy', 'web', 'parler'
+        'messages', 'staticfiles', 'tenancy', 'web', 'parler',
+        'axes',  # ADD THIS - axes must be in management DB
+        'axes_accessattempt',  # ADD THIS
+        'axes_accesslog',  # ADD THIS
+        'axes_accessfailurelog'  # ADD THIS
     }
 
     def db_for_read(self, model, **hints) -> str:
@@ -43,6 +48,10 @@ class StudyDBRouter:
         return db1 == db2 if db1 and db2 else None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints) -> bool:
+        # CRITICAL: Allow axes migrations on default DB
+        if app_label == 'axes':
+            return db == 'default'
+        
         if db == 'default':
             return app_label in self.management_apps
         if db.startswith(settings.STUDY_DB_PREFIX):

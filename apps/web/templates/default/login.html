@@ -111,15 +111,14 @@
                         {% get_current_language as CURRENT_LANG %}
                         {% get_available_languages as LANGS %}
                         {% get_language_info_list for LANGS as languages %}
-                        <form method="post" action="{% url 'set_language' %}" class="m-2 space-y-1">
+                        <form method="post" action="/i18n/setlang/" class="m-2 space-y-1">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{{ request.path }}">
                             {% for lang in languages %}
-                            {# lang.code, lang.name_local, lang.name, lang.bidi #}
                             <button type="submit" name="language" value="{{ lang.code }}" role="menuitemradio"
                                 aria-checked="{% if lang.code == CURRENT_LANG %}true{% else %}false{% endif %}"
                                 class="flex w-full items-center gap-0 px-3 py-2 text-sm rounded-md hover:ring-1 {% if lang.code == CURRENT_LANG %}font-semibold bg-blue-100{% endif %}">
-                                <span class="truncate">{{ lang.name_local|default:lang.name }}</span>
+                                <span class="truncate">{{ lang.name_local|capfirst }}</span>
                             </button>
                             {% endfor %}
                         </form>
@@ -132,13 +131,15 @@
                     <h2 class="text-3xl font-bold text-slate-900">{% trans 'Sign in to platform' %}</h2>
                     <p class="mt-2 text-base text-slate-600">{% trans 'End-to-end automation, from data intake to smart reporting.' %}</p>
                 </div>
+
                 <form id="loginForm" action="{% url 'login' %}" method="post" class="mx-auto w-full max-w-md space-y-6"
                     novalidate aria-describedby="form-help">
                     {% csrf_token %}
-
-                    {% if form.non_field_errors %}
-                    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-                        <span>{{ form.non_field_errors|join:" " }}</span>
+                    
+                    <!-- General error message -->
+                    {% if error_message %}
+                    <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                        <span>{{ error_message }}</span>
                     </div>
                     {% endif %}
 
@@ -152,11 +153,10 @@
                             class="mt-1 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-0 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
                             aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
                             aria-describedby="username-error" />
-                        {% if form.username.errors %}
-                        <p id="username-error" class="mt-1 text-sm text-red-600">
-                            {{ form.username.errors|join:" " }}
-                        </p>
-                        {% endif %}
+
+                            {% if field_errors.username %}
+                            <p class="mt-1 text-sm text-red-600">{{ field_errors.username }}</p>
+                            {% endif %}
                     </div>
 
                     <div>
@@ -188,10 +188,8 @@
 
                             </button>
                         </div>
-                        {% if form.password.errors %}
-                        <p id="password-error" class="mt-1 text-sm text-red-600">
-                            {{ form.password.errors|join:" " }}
-                        </p>
+                        {% if field_errors.password %}
+                        <p class="mt-1 text-sm text-red-600">{{ field_errors.password }}</p>
                         {% endif %}
                     </div>
 

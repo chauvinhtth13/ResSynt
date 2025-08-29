@@ -39,25 +39,16 @@
 
   // Back trap
   const initBackTrap = () => {
-    if (!history?.pushState) return;
-
-    const chooseStudyForm = qs('[data-choose-study-form]');
-    if (chooseStudyForm) {
-      chooseStudyForm.addEventListener('submit', () => {
-        const state = { timestamp: Date.now() };
-        history.pushState(state, '', location.href);
-        history.pushState(state, '', location.href);
+      // Disable browser back button
+      history.pushState(null, null, location.href);
+      
+      window.addEventListener('popstate', (e) => {
+          history.pushState(null, null, location.href);
+          // Show warning instead of allowing back
+          if (confirm('Do you want to go back to study selection? This will release the current database.')) {
+              window.location.href = '/select-study/';
+          }
       });
-    }
-
-    let navigationLock = false;
-    addEventListener('popstate', (e) => {
-      if (!navigationLock) {
-        navigationLock = true;
-        history.go(1);
-        setTimeout(() => { navigationLock = false; }, 100);
-      }
-    });
   };
 
   // Force reload on back/forward
