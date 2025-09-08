@@ -174,8 +174,8 @@ USE_TZ = True
 PARLER_DEFAULT_LANGUAGE_CODE = 'en'
 PARLER_LANGUAGES = {
     None: (
-        {'code': 'en'},
-        {'code': 'vi'},
+        {'code': 'en', 'name': 'English'},
+        {'code': 'vi', 'name': 'Tiếng Việt'},
     ),
     'default': {
         'fallbacks': ['en'],
@@ -240,60 +240,55 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
+        "simple": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
-            "level": "DEBUG" if DEBUG else "WARNING",
+            "formatter": "simple",
+            "level": "WARNING",
         },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "verbose",
+            "formatter": "simple",
             "filename": str(LOGS_DIR / "django.log"),
             "encoding": "utf-8",
             "maxBytes": 5 * 1024 * 1024,
-            "backupCount": 3,  # Reduced backup count to save space
-            "level": "DEBUG" if DEBUG else "WARNING",  # Raised to WARNING in prod to reduce logs
+            "backupCount": 3,
+            "level": "WARNING",
             "delay": True,
         },
     },
     "root": {
-        "handlers": ["console", "file"] if DEBUG else ["file"],  # No console in prod
-        "level": "DEBUG" if DEBUG else "WARNING",
+        "handlers": ["console", "file"],
+        "level": "WARNING",
     },
     "loggers": {
         "django": {
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "DEBUG" if DEBUG else "WARNING",
+            "handlers": ["console", "file"],
+            "level": "WARNING",
             "propagate": False,
         },
-        "django.utils.autoreload": {
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "backend.tenancy": {  # Updated to match layout
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "DEBUG" if DEBUG else "WARNING",
+        "backend.tenancy": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
             "propagate": False,
         },
         "backend.studies": {  # Added logger for studies app to match layout
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "DEBUG" if DEBUG else "WARNING",
+            "handlers": ["console", "file"],
+            "level": "WARNING",
             "propagate": False,
         },
         "axes": {
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "DEBUG" if DEBUG else "WARNING",
+            "handlers": ["console", "file"],
+            "level": "WARNING",
             "propagate": False,
         },
-        # Removed "apps.web" logger as the app is not in the layout
     },
 }
 
-# Cache Configuration (environment-aware)
+
+# --- CACHES and other settings continue below ---
 if DEBUG:
     CACHES = {
         "default": {
@@ -306,7 +301,6 @@ if DEBUG:
         }
     }
 else:
-    # Production uses Redis
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",

@@ -26,76 +26,80 @@ if not admin.site.is_registered(User):
 
 # Inline for RolePermission in Role and Permission
 class RolePermissionInline(admin.TabularInline):
+    """Inline admin for RolePermission."""
     model = RolePermission
-    extra = 1
+    extra = 0
     verbose_name = "Role Permission"
     verbose_name_plural = "Role Permissions"
 
 
 # Inline for StudySite in Study and Site
 class StudySiteInline(admin.TabularInline):
+    """Inline admin for StudySite in Study and Site admin."""
     model = StudySite
-    extra = 1
-    verbose_name ="Study-Site Link"
-    verbose_name_plural ="Study-Site Links"
+    extra = 0
+    verbose_name = "Study-Site Link"
+    verbose_name_plural = "Study-Site Links"
     readonly_fields = ('created_at', 'updated_at')
 
-# Inline for StudyMembership in Study, StudySite, and Role
-class StudyMembershipInline(admin.TabularInline):
-    model = StudyMembership
-    extra = 1
-    verbose_name ="Study Membership"
-    verbose_name_plural ="Study Memberships"
-    readonly_fields = ('assigned_at',)
-
-    def get_parent_object_from_request(self, request):
-        """
-        Returns the parent object from the request or `None`.
-        """
-        resolved = request.resolver_match
-        if resolved and 'object_id' in resolved.kwargs:
-            object_id = resolved.kwargs['object_id']
-            parent_model = self.parent_model
-            try:
-                return parent_model.objects.get(pk=object_id)
-            except parent_model.DoesNotExist:
-                return None
-        return None
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'study_site':
-            parent_obj = self.get_parent_object_from_request(request)
-            if isinstance(parent_obj, Study):
-                kwargs['queryset'] = StudySite.objects.filter(study=parent_obj)
-            elif isinstance(parent_obj, StudySite):
-                kwargs['queryset'] = StudySite.objects.filter(pk=parent_obj.pk)
-            else:
-                kwargs['queryset'] = StudySite.objects.none()
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+# class StudyMembershipInline(admin.TabularInline):
+#     model = StudyMembership
+#     extra = 0
+#     verbose_name = "Study Membership"
+#     verbose_name_plural = "Study Memberships"
+#     readonly_fields = ('assigned_at',)
+#     filter_horizontal = ('study_sites',)
+#     autocomplete_fields = ['user', 'assigned_by', 'study_sites']
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'code', 'created_at', 'updated_at')  # FIXED: Added code
-    search_fields = ('title', 'code')  # FIXED: Changed from abbreviation to code
+    """Admin for Role model."""
+    list_display = ('title', 'code', 'created_at', 'updated_at')
+    search_fields = ('title', 'code')
     list_filter = ('created_at', 'updated_at')
     inlines = [RolePermissionInline]
     readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
+    list_select_related = True
 
 @admin.register(Permission)
 class PermissionAdmin(admin.ModelAdmin):
+    """Admin for Permission model."""
     list_display = ('code', 'name', 'created_at', 'updated_at')
     search_fields = ('code', 'name')
     list_filter = ('created_at', 'updated_at')
     inlines = [RolePermissionInline]
     readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
+    list_select_related = True
 
 @admin.register(Study)
 class StudyAdmin(TranslatableAdmin):
-    list_display = ('code', 'name', 'status', 'db_name', 'created_at', 'updated_at')
+    """Admin for Study model."""
+    list_display = ('code', 'name', 'status', 'db_name', 'created_at', 'updated_at', 'created_by')
     search_fields = ('code', 'translations__name', 'db_name')
     list_filter = ('status', 'created_at', 'updated_at')
-    inlines = [StudySiteInline, StudyMembershipInline]
+    inlines = [StudySiteInline]
+    readonly_fields = ('created_by','created_at', 'updated_at')
+    ordering = ('-created_at',)
+    date_hierarchy = 'created_at'
+    def save_model(self, request, obj, form, change):
+        # Robustly assign created_by only if not set or on creation
+        if not obj.created_by or not change:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+# Register StudySite admin for autocomplete support
+@admin.register(StudySite)
+class StudySiteAdmin(admin.ModelAdmin):
+    """Admin for StudySite model."""
+    search_fields = ('site__code', 'site__name')
+    list_display = ('id', 'site', 'study', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
+    autocomplete_fields = ['site', 'study']
+    list_select_related = ('site', 'study')
 
 @admin.register(Site)
 class SiteAdmin(TranslatableAdmin):
@@ -123,52 +127,56 @@ class UserChoiceField(forms.ModelChoiceField):
         return obj.username # type: ignore[name-defined]
 
 class StudyMembershipForm(forms.ModelForm):
-    # Override fields with custom choice fields
-    study = StudyCodeChoiceField(
-        queryset=Study.objects.all().order_by('code'),
-        label="Study"
-    )
-    study_site = StudySiteCodeChoiceField(
-        queryset=StudySite.objects.none(),
-        label="Study Site",
-        required=False
-    )
-    user = UserChoiceField(
-        queryset=User.objects.all().order_by('username'),
-        label="User"
-    )
-    
+    """Custom form for StudyMembership to filter study_sites by selected study."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set default: can_access_all_sites = True if creating new
+        if not self.instance.pk:
+            self.fields['can_access_all_sites'].initial = True
+
+        # Filter study_sites by selected study
+        study = None
+        if self.instance and self.instance.pk and self.instance.study:
+            study = self.instance.study
+        elif 'study' in self.data:
+            try:
+                study_id = self.data.get('study')
+                if study_id:
+                    study = Study.objects.get(pk=study_id)
+            except Exception:
+                pass
+        from django.forms.models import ModelMultipleChoiceField
+        if isinstance(self.fields['study_sites'], ModelMultipleChoiceField):
+            if study:
+                self.fields['study_sites'].queryset = StudySite.objects.filter(study=study)
+            else:
+                self.fields['study_sites'].queryset = StudySite.objects.none()
     class Meta:
         model = StudyMembership
         fields = '__all__'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Handle study_site queryset based on selected study
-        if self.instance.pk and self.instance.study:
-            self.fields['study_site'].queryset = StudySite.objects.filter(  # type: ignore[name-defined]
-                study=self.instance.study
-            ).select_related('site')
-        
-        # If form is submitted with a study value
-        if 'study' in self.data:
-            try:
-                study_id = int(self.data.get('study'))  # type: ignore[name-defined]
-                self.fields['study_site'].queryset = StudySite.objects.filter(  # type: ignore[name-defined]
-                    study_id=study_id
-                ).select_related('site')
-            except (ValueError, TypeError):
-                pass
+        widgets = {
+            'study_sites': forms.CheckboxSelectMultiple,
+        }
 
 @admin.register(StudyMembership)
 class StudyMembershipAdmin(admin.ModelAdmin):
+    """Admin for StudyMembership with optimized UX and performance."""
     form = StudyMembershipForm
-    list_display = ('get_user_display', 'get_study_code', 'get_site_code', 'role', 'assigned_at')
+    list_display = ('get_user_display', 'get_study_code', 'get_sites_display', 'role', 'assigned_at', 'is_active', 'can_access_all_sites')
     search_fields = ('user__username', 'user__email', 'user__first_name', 'user__last_name', 'study__code', 'role__title')
-    list_filter = ('role', 'assigned_at', 'study')
-    readonly_fields = ('assigned_at',)
-    
+    list_filter = ('role', 'assigned_at', 'study', 'is_active', 'can_access_all_sites')
+    readonly_fields = ('assigned_by','assigned_at')
+    filter_horizontal = ('study_sites',)
+    autocomplete_fields = ['user', 'assigned_by', 'role', 'study']
+    ordering = ('-assigned_at',)
+    date_hierarchy = 'assigned_at'
+
+    def save_model(self, request, obj, form, change):
+        # Robustly assign assigned_by only if not set or changed
+        if not obj.assigned_by or not change:
+            obj.assigned_by = request.user
+        super().save_model(request, obj, form, change)
+
     @admin.display(description="User")
     def get_user_display(self, obj):
         user = obj.user
@@ -181,17 +189,14 @@ class StudyMembershipAdmin(admin.ModelAdmin):
     def get_study_code(self, obj):
         return obj.study.code
 
-    @admin.display(description="Site Code")
-    def get_site_code(self, obj):
-        # FIXED: Updated to use many-to-many relationship
-        sites = obj.study_sites.all()
-        if obj.can_access_all_sites:
+    @admin.display(description="Sites")
+    def get_sites_display(self, obj):
+        if obj.can_access_all_sites or not obj.study_sites.exists():
             return "All Sites"
-        elif sites:
-            return ", ".join([site.site.code for site in sites])
-        return '-'
+        return ", ".join([site.site.code for site in obj.study_sites.all()])
 
     def get_queryset(self, request):
+        # Optimize queryset for list display
         return super().get_queryset(request).select_related(
-            'user', 'study', 'role'
+            'user', 'study', 'role', 'assigned_by'
         ).prefetch_related('study_sites__site')

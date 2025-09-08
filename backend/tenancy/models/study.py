@@ -77,10 +77,6 @@ class Study(TranslatableModel):
             max_length=255,
             db_index=True,
             verbose_name=_("Name")
-        ),
-        description=models.TextField(
-            blank=True,
-            verbose_name=_("Description")
         )
     )
 
@@ -116,13 +112,6 @@ class Study(TranslatableModel):
 class Site(TranslatableModel):
     """Research Site/Location"""
     
-    class Type(models.TextChoices):
-        HOSPITAL = 'hospital', _('Hospital')
-        COMMUNITY = 'community', _('Community')
-        LABORATORY = 'laboratory', _('Laboratory')
-        UNIVERSITY = 'university', _('University')
-        OTHER = 'other', _('Other')
-    
     code = models.CharField(
         max_length=50,
         unique=True,
@@ -140,38 +129,7 @@ class Site(TranslatableModel):
         db_index=True,
         verbose_name=_("Abbreviation")
     )
-    
-    type = models.CharField(
-        max_length=20,
-        choices=Type.choices,
-        default=Type.HOSPITAL,
-        verbose_name=_("Site Type")
-    )
-    
-    # Contact information
 
-    country = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name=_("Country")
-    )
-    
-    # Site management
-    site_coordinator = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='sites_coordinated',
-        verbose_name=_("Site Coordinator")
-    )
-    
-    is_active = models.BooleanField(
-        default=True,
-        db_index=True,
-        verbose_name=_("Is Active")
-    )
-    
     # Metadata
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -197,7 +155,7 @@ class Site(TranslatableModel):
         verbose_name_plural = _("Study Sites")
         ordering = ['code']
         indexes = [
-            models.Index(fields=['is_active', 'code'], name='idx_site_active_code'),
+            models.Index(fields=['code'], name='idx_site_code'),
         ]
 
     def __str__(self):
@@ -222,13 +180,6 @@ class StudySite(models.Model):
         verbose_name=_("Site")
     )
     
-    # Site-specific study configuration
-    site_study_id = models.CharField(
-        max_length=50,
-        verbose_name=_("Site Study ID"),
-        help_text=_("Site-specific identifier for this study")
-    )
-    
     # Metadata
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -248,15 +199,11 @@ class StudySite(models.Model):
             models.UniqueConstraint(
                 fields=['study', 'site'],
                 name='unique_study_site'
-            ),
-            models.UniqueConstraint(
-                fields=['study', 'site_study_id'],
-                name='unique_site_study_id'
             )
         ]
         indexes = [
             models.Index(fields=['study'], name='idx_studysite'),
-            models.Index(fields=['site'], name='idx_sitetudy'),
+            models.Index(fields=["site"], name="ix_studysite_site"),
         ]
 
     def __str__(self):

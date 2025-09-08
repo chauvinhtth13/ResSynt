@@ -11,18 +11,16 @@ class RoleType:
     ADMIN = 'ADMIN'
     DATA_MANAGER = 'DM'
     RESEARCH_MANAGER = 'RM'
-    MONITOR = 'MON'
+    RESEARCH_MONITOR = 'MON'
     INVESTIGATOR = 'PI'
-    VIEWER = 'VIEWER'
     RESEARCH_STAFF = 'RS'
 
     CHOICES = [
         (ADMIN, _('Administrator')),
         (DATA_MANAGER, _('Data Manager')),
-        (RESEARCH_MANAGER, _('Clinical Research Coordinator')),
-        (MONITOR, _('Monitor')),
+        (RESEARCH_MANAGER, _('Research Manager')),
+        (RESEARCH_MONITOR, _('Research Monitor')),
         (INVESTIGATOR, _('Principal Investigator')),
-        (VIEWER, _('Viewer')),
         (RESEARCH_STAFF, _('Research Staff')),
     ]
 
@@ -123,8 +121,8 @@ class Role(models.Model):
                     Permission.STUDY_VIEW, Permission.STUDY_MANAGE, Permission.STUDY_USERS, Permission.STUDY_SITES,
                 ]
             },
-            RoleType.MONITOR: {
-                'title': _('Monitor'),
+            RoleType.RESEARCH_MONITOR: {
+                'title': _('Research Monitor'),
                 'code': 'MON',
                 'description': _('View and audit study data'),
                 'permissions': [
@@ -139,14 +137,6 @@ class Role(models.Model):
                 'permissions': [
                     Permission.DATA_VIEW, Permission.ANALYTICS_VIEW, Permission.REPORTS_VIEW,
                     Permission.STUDY_VIEW, Permission.STUDY_MANAGE, Permission.STUDY_USERS, Permission.STUDY_SITES,
-                ]
-            },
-            RoleType.VIEWER: {
-                'title': _('Viewer'),
-                'code': 'VIEWER',
-                'description': _('Read-only access'),
-                'permissions': [
-                    Permission.DATA_VIEW,
                 ]
             },
             RoleType.RESEARCH_STAFF: {
@@ -421,14 +411,12 @@ class StudyMembership(models.Model):
         verbose_name=_("Role")
     )
 
-    # Site-specific access (null = all sites in study)
     study_sites = models.ManyToManyField(
         'StudySite',
         blank=True,
         related_name="memberships",
         verbose_name=_("Study Sites"),
-        help_text=_(
-            "Specific sites within the study. Leave empty for all sites.")
+        help_text=_("Specific sites within the study. Leave empty for all sites.")
     )
 
     # Access control
@@ -450,12 +438,6 @@ class StudyMembership(models.Model):
         verbose_name=_("Assigned At")
     )
 
-    expires_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name=_("Expires At"),
-        help_text=_("Access expiration date")
-    )
 
     # Metadata
     assigned_by = models.ForeignKey(
@@ -473,7 +455,7 @@ class StudyMembership(models.Model):
     )
 
     class Meta:
-        db_table = '"management"."study_memberships"'  # FIXED: Added management schema
+        db_table = '"management"."study_memberships"'
         verbose_name = _("Study Membership")
         verbose_name_plural = _("Study Memberships")
         constraints = [
@@ -483,46 +465,34 @@ class StudyMembership(models.Model):
             )
         ]
         indexes = [
-            models.Index(fields=['user', 'study', 'is_active'],
-                         name='idx_membership_user_study'),
-            models.Index(fields=['study', 'is_active'],
-                         name='idx_membership_study'),
-            models.Index(fields=['expires_at'],
-                         name='idx_membership_expires'),
+            models.Index(fields=['user', 'study', 'is_active'], name='idx_membership_user_study'),
+            models.Index(fields=['study', 'is_active'], name='idx_membership_study'),
+            # removed expires_at index
         ]
 
     def __str__(self):
-        sites_str = "All sites" if self.can_access_all_sites else f"{self.study_sites.count()} sites"
+        if self.can_access_all_sites or not self.study_sites.exists():
+            sites_str = "All sites"
+        else:
+            sites_str = ", ".join([s.site.code for s in self.study_sites.all()])
         return f"{self.user.username} - {self.study.code} - {self.role.title} ({sites_str})"
 
     def clean(self):
         """Validate membership data"""
-        # FIXED: Only check study_sites if the instance has been saved (has pk)
-        if self.pk:  # Only validate if instance is saved
+        if self.pk:
             if self.can_access_all_sites and self.study_sites.exists():
-                raise ValidationError(
-                    _("Cannot specify sites when 'can_access_all_sites' is True")
-                )
-
-            # Verify sites belong to the study
+                raise ValidationError(_("Cannot specify sites when 'can_access_all_sites' is True"))
+            # Verify all selected sites belong to the study
             if self.study_sites.exists():
                 invalid_sites = self.study_sites.exclude(study=self.study)
                 if invalid_sites.exists():
-                    raise ValidationError(
-                        _("Selected sites must belong to the study")
-                    )
-
+                    raise ValidationError(_("Selected sites must belong to the study"))
         super().clean()
 
     def has_site_access(self, site_id):
         """Check if user has access to specific site"""
-        if self.can_access_all_sites:
+        if self.can_access_all_sites or not self.study_sites.exists():
             return True
         return self.study_sites.filter(site_id=site_id).exists()
 
-    def is_expired(self):
-        """Check if membership is expired"""
-        from django.utils import timezone
-        if self.expires_at:
-            return timezone.now() > self.expires_at
-        return False
+    # removed is_expired method
