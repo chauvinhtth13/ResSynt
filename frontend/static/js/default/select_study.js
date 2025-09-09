@@ -1,4 +1,4 @@
-// static/js/default/select_study.js
+// frontend\static\js\default\select_study.js
 (() => {
   const { initDropdowns, initLanguageSwitcher, registerInit } = window.ResSyncBase;
 

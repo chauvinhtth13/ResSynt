@@ -1,4 +1,4 @@
-// static/js/default/dashboard.js
+// frontend\static\js\default\dashboard.js
 (() => {
   const { qs, initDropdowns, trapFocusWithin, initLanguageSwitcher, registerInit } = window.ResSyncBase;
 

@@ -1,4 +1,4 @@
-// static/js/default/login.js
+// frontend\static\js\default\login.js
 (() => {
   class ResSyncLoginForm {
     constructor() {

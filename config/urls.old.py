@@ -5,7 +5,6 @@ from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from django.views.decorators.cache import never_cache
 from django.shortcuts import redirect
-from backend.web.views import custom_login, select_study, dashboard
 from django.conf import settings
 
 handler404 = 'django.views.defaults.page_not_found'

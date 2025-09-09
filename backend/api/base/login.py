@@ -1,3 +1,4 @@
+# backend/api/base/login.py
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
@@ -7,16 +8,33 @@ User = get_user_model()
 
 class UsernameOrEmailAuthenticationForm(AuthenticationForm):
     username = forms.CharField(
-        label=_("Username or email"),
+        label=_("Username or email"),  # English label
         widget=forms.TextInput(attrs={
             "autofocus": True,
             "placeholder": _("Username or email"),
             "id": "username",
+            "class": "form-control",
         }),
     )
+    
+    password = forms.CharField(
+        label=_("Password"),  # English label
+        widget=forms.PasswordInput(attrs={
+            "placeholder": _("Password"),
+            "id": "password",
+            "class": "form-control",
+        }),
+    )
+    
+    error_messages = {
+        'invalid_login': _(
+            "Please enter a correct username and password. "
+            "Note that both fields may be case-sensitive."
+        ),
+        'inactive': _("This account is inactive."),
+    }
 
     def clean(self):
-        # Get raw input
         username_or_email = self.cleaned_data.get("username")
         password = self.cleaned_data.get("password")
 
@@ -24,25 +42,25 @@ class UsernameOrEmailAuthenticationForm(AuthenticationForm):
             # Determine actual username
             actual_username = username_or_email
 
-            # If string looks like email, try to find user by email (case-insensitive)
+            # If input looks like email, try to find user by email
             if "@" in username_or_email:
                 try:
                     user = User.objects.get(email__iexact=username_or_email)
                     actual_username = getattr(user, User.USERNAME_FIELD, "username")
                 except User.DoesNotExist:
-                    # Not found by email -> let authenticate fail normally
                     pass
                 except User.MultipleObjectsReturned:
                     raise forms.ValidationError(
                         _("Multiple accounts use this email. Please use your username.")
                     )
 
-            # Call authenticate (Django default backend needs username + password)
+            # Authenticate user
             self.user_cache = authenticate(
                 self.request,
                 username=actual_username,
                 password=password,
             )
+            
             if self.user_cache is None:
                 raise self.get_invalid_login_error()
             else:

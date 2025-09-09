@@ -1,8 +1,8 @@
-<!-- templates/default/login.html -->
+<!-- frontend\templates\authentication\login.html -->
 {% load static i18n %}
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
-<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
 
 <head>
     <meta charset="UTF-8">
@@ -103,8 +103,8 @@
                         <span class="sr-only">{% trans 'Select language' %}</span>
                         <span class="font-semibold text-sm tracking-wider ml-1">
                             {% get_current_language as CURRENT_LANG %}
-                            {% get_language_info for CURRENT_LANG as lang %}
-                            {{ lang.name_local}}
+                            {% get_language_info for CURRENT_LANG as current_lang_info %}
+                            <span">{{ current_lang_info.name_local }}</span>
                         </span>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                             stroke="currentColor" aria-hidden="true" class="size-5 ml-1">
@@ -113,7 +113,6 @@
                     </button>
                     <div id="lang-menu" role="menu" aria-labelledby="lang-button" data-dropdown-menu hidden
                         class="absolute right-0 mt-2 min-w-[10em] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
-                        {% get_current_language as CURRENT_LANG %}
                         {% get_available_languages as LANGS %}
                         {% get_language_info_list for LANGS as languages %}
                         <form method="post" action="/i18n/setlang/" class="m-2 space-y-1">

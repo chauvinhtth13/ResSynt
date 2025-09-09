@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model  # FIXED: Use get_user_model() function
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from parler.admin import TranslatableAdmin
+from django.contrib.admin import AdminSite
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
@@ -95,7 +96,7 @@ class StudyAdmin(TranslatableAdmin):
 class StudySiteAdmin(admin.ModelAdmin):
     """Admin for StudySite model."""
     search_fields = ('site__code', 'site__name')
-    list_display = ('id', 'site', 'study', 'created_at', 'updated_at')
+    list_display = ('site', 'study', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ('-created_at',)
     autocomplete_fields = ['site', 'study']

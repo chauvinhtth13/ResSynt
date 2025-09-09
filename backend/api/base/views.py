@@ -1,15 +1,17 @@
-# apps/web/views.py
-"""
-Views for ResSync Platform web app.
-Handles study selection and custom login with language and tenancy support.
-"""
+# # backend\api\base\views.py
+# """
+# Views for ResSync Platform web app.
+# Handles study selection and custom login with language and tenancy support.
+# """
 import logging
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.utils.translation import gettext_lazy as _, get_language, activate
+from django.conf import settings
 from django.db.models import Q
 from django.views.decorators.cache import never_cache  # Ensure imported
+from django.views.decorators.http import require_http_methods
 from django.db import connections
 from django.conf import settings
 from backend.tenancy.models import Study, StudyMembership
@@ -19,8 +21,9 @@ logger = logging.getLogger('apps.web')
 
 @never_cache
 @login_required
+@require_http_methods(["GET", "POST"])
 def select_study(request):
-    """Handle study selection for authenticated users, redirect superusers to admin."""
+    # """Handle study selection for authenticated users, redirect superusers to admin."""
     if request.GET.get('clear') or 'clear_study' in request.POST:
         request.session.pop('current_study', None)
         logger.info(f"Cleared current_study for user {request.user.pk} on select_study access.")
@@ -30,35 +33,33 @@ def select_study(request):
         return redirect('admin:index')
 
     # Set default language to Vietnamese if not set
-    """Get language from session or default to Vietnamese, then render dashboard."""
+    # Set language with Vietnamese as default
     language = get_language()
-    if not language:
-        language = 'vi'
+    if not language or language not in [lang[0] for lang in settings.LANGUAGES]:
+        language = 'vi'  # Default to Vietnamese
         activate(language)
         request.session['django_language'] = language
 
-    # Fetch unique studies the user has access to
+
+    # Chỉ lấy các nghiên cứu user có quyền truy cập và status là active
     studies_qs = (
         Study.objects
-        .filter(memberships__user=request.user)
-        .select_related()  # Optimize foreign key lookups
+        .filter(memberships__user=request.user, memberships__is_active=True, status=Study.Status.ACTIVE)
+        .select_related()
         .distinct()
         .order_by('code')
         .prefetch_related('translations')
-        .only('id', 'code', 'db_name', 'created_at')  # Only fetch needed fields
+        .only('id', 'code', 'db_name', 'created_at', 'updated_at', 'status')
     )
 
     # Apply search filter if query exists
     if query := request.GET.get('q', '').strip():
         studies_qs = studies_qs.filter(
             Q(code__icontains=query) |
-            Q(translations__language_code=language, translations__name__icontains=query) |
-            Q(translations__language_code=language, translations__introduction__icontains=query)
+            Q(translations__language_code=language, translations__name__icontains=query)
         )
 
-    studies = list(studies_qs)  # Materialize for set_current_language
-
-    # Set translation language for studies
+    studies = list(studies_qs)
     for study in studies:
         study.set_current_language(language)
 
@@ -83,8 +84,13 @@ def select_study(request):
     return render(request, 'default/select_study.html', context)
 
 @never_cache
+@require_http_methods(["GET", "POST"])
 def custom_login(request):
-    """Custom login view redirecting superusers to admin and others to study selection."""
+    # Set Vietnamese as default for login page
+    if not get_language():
+        activate('vi')
+        request.session['django_language'] = 'vi'
+
     if request.user.is_authenticated:
         return redirect('admin:index' if request.user.is_superuser else 'select_study')
 
@@ -95,19 +101,20 @@ def custom_login(request):
         logger.info(f"User {user.pk} logged in.")
         return redirect('admin:index' if user.is_superuser else 'select_study')
 
-    return render(request, 'default/login.html', {'form': form})
+    return render(request, 'authentication/login.html', {'form': form})
 
 @never_cache
 @login_required
+@require_http_methods(["GET", "POST"])
 def dashboard(request, study_code=None):
-    """Get language from session or default to Vietnamese, then render dashboard."""
+    # Ensure Vietnamese is set
     language = get_language()
-    if not language:
+    if not language or language not in [lang[0] for lang in settings.LANGUAGES]:
         language = 'vi'
         activate(language)
         request.session['django_language'] = language
 
-    """Render the dashboard for the selected study."""
+    # """Render the dashboard for the selected study."""
     study = getattr(request, 'study', None)
     if not study:
         logger.warning(f"No study selected for user {request.user.pk}; redirecting to select_study.")

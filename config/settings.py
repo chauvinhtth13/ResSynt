@@ -59,8 +59,12 @@ MIDDLEWARE = [
     "axes.middleware.AxesMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "backend.tenancy.middleware.NoCacheMiddleware",
+    # Optimized custom middleware
+    "backend.tenancy.middleware.SecurityHeadersMiddleware",
+    "backend.tenancy.middleware.PerformanceMonitoringMiddleware",
     "backend.tenancy.middleware.StudyRoutingMiddleware",
+    "backend.tenancy.middleware.CacheControlMiddleware",
+    "backend.tenancy.middleware.DatabaseConnectionCleanupMiddleware",
 ]
 
 # Templates
@@ -92,47 +96,82 @@ if not DEBUG:
     ]
 
 # Database configuration with proper fallback
-def get_database_config():
-    """Get database configuration with validation."""
-    db_url = env("DATABASE_URL")
+class DatabaseConfig:
+    """Centralized database configuration with validation and pooling"""
     
-    if db_url:
-        db_config = env.db("DATABASE_URL")
-    else:
-        # Fallback to individual settings
-        db_config = {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": env("PGDATABASE"),  # This should be 'db_management'
-            "USER": env("PGUSER"),
-            "PASSWORD": env("PGPASSWORD"),
-            "HOST": env("PGHOST"),
-            "PORT": env("PGPORT"),
-        }
+    @staticmethod
+    def get_management_db():
+        """Get optimized management database config"""
+        db_url = env("DATABASE_URL")
         
-        # Validate password in production
-        if not DEBUG and not db_config["PASSWORD"]:
-            raise ValueError("PGPASSWORD is required in production")
+        if db_url:
+            config = env.db("DATABASE_URL")
+        else:
+            config = {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": env("PGDATABASE"),
+                "USER": env("PGUSER"),
+                "PASSWORD": env("PGPASSWORD"),
+                "HOST": env("PGHOST"),
+                "PORT": env.int("PGPORT"),
+            }
+        
+        # Connection pooling optimization
+        config.update({
+            "CONN_MAX_AGE": 0 if DEBUG else 600,  # 10 min connection reuse
+            "CONN_HEALTH_CHECKS": not DEBUG,
+            "ATOMIC_REQUESTS": False,  # Don't wrap every request in transaction
+            "AUTOCOMMIT": True,
+            "OPTIONS": {
+                "options": "-c search_path=management,public",
+                "sslmode": "disable" if DEBUG else "require",
+                "connect_timeout": 10,
+                "client_encoding": "UTF8",
+                # PostgreSQL connection pool settings
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+            },
+            "TIME_ZONE": env("TIME_ZONE"),
+        })
+        
+        # Add connection pool for production
+        if not DEBUG:
+            config["OPTIONS"].update({
+                "pool": True,  # Enable connection pooling
+                "pool_size": 10,  # Number of connections to maintain
+                "max_overflow": 20,  # Maximum overflow connections
+                "pool_recycle": 3600,  # Recycle connections after 1 hour
+                "pool_pre_ping": True,  # Verify connections before use
+            })
+        
+        return config
     
-    # Add connection pool settings
-    conn_max_age = env("PG_CONN_MAX_AGE") if not DEBUG else 0
-    db_config.update({
-        "CONN_MAX_AGE": conn_max_age,
-        "CONN_HEALTH_CHECKS": not DEBUG,
-        "ATOMIC_REQUESTS": False,
-        "AUTOCOMMIT": True,
-        "OPTIONS": {
-            "options": "-c search_path=management,public",  # Keep this for management schema
-            "sslmode": "disable" if DEBUG else "require",
-            "connect_timeout": 10,
-            "client_encoding": "UTF8",
-        },
-        "TIME_ZONE": env("TIME_ZONE"),
-    })
-    
-    return db_config
+    @staticmethod
+    def get_study_db_config(db_name: str):
+        """Get optimized study database config"""
+        return {
+            "ENGINE": env("STUDY_DB_ENGINE"),
+            "NAME": db_name,
+            "USER": env("STUDY_PGUSER"),
+            "PASSWORD": env("STUDY_PGPASSWORD"),
+            "HOST": env("STUDY_PGHOST"),
+            "PORT": env.int("STUDY_PGPORT"),
+            "CONN_MAX_AGE": 0 if DEBUG else 300,  # 5 min for study DBs
+            "CONN_HEALTH_CHECKS": True,
+            "ATOMIC_REQUESTS": False,
+            "OPTIONS": {
+                "options": f"-c search_path={env('STUDY_DB_SEARCH_PATH')},public",
+                "sslmode": "disable" if DEBUG else "require",
+                "connect_timeout": 5,
+                "statement_timeout": "30000",  # 30 seconds timeout
+                "idle_in_transaction_session_timeout": "60000",  # 60 seconds
+            },
+        }
 
 DATABASES = {
-    "default": get_database_config()
+    "default": DatabaseConfig.get_management_db()
 }
 
 DATABASES["default"]["OPTIONS"]["options"] = "-c search_path=management,public"
@@ -141,17 +180,8 @@ DATABASES["default"]["OPTIONS"]["options"] = "-c search_path=management,public"
 DATABASE_ROUTERS = ['backend.tenancy.db_router.TenantRouter'] 
 
 # Study Database Settings
-STUDY_DB_AUTO_REFRESH_SECONDS = env.int("STUDY_DB_AUTO_REFRESH_SECONDS")
 STUDY_DB_PREFIX = env("STUDY_DB_PREFIX")
 STUDY_DB_ENGINE = env("STUDY_DB_ENGINE")
-
-# Study DB connection settings (with fallback to management DB settings)
-STUDY_DB_HOST = env("STUDY_PGHOST", default=DATABASES["default"].get("HOST", "localhost"))
-STUDY_DB_PORT = env("STUDY_PGPORT", default=DATABASES["default"].get("PORT", "5432"))
-STUDY_DB_USER = env("STUDY_PGUSER", default=DATABASES["default"].get("USER", "postgres"))
-STUDY_DB_PASSWORD = env("STUDY_PGPASSWORD", default=DATABASES["default"].get("PASSWORD", ""))
-STUDY_DB_SEARCH_PATH = env("STUDY_SEARCH_PATH")
-
 
 
 # Custom User Model

@@ -95,9 +95,14 @@ class Study(TranslatableModel):
             )
         ]
 
+
     def clean(self):
-        if self.db_name and not self.db_name.startswith('db_study_'):
-            self.db_name = f'db_study_{self.code.lower()}'
+        # Đảm bảo db_name luôn đúng format: db_study_[study_code]
+        if not self.code:
+            raise ValidationError({'code': _('Study code is required to generate db_name.')})
+        expected_db_name = f'db_study_{self.code.lower()}'
+        if self.db_name != expected_db_name:
+            self.db_name = expected_db_name
         super().clean()
 
     def save(self, *args, **kwargs):
