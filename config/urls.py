@@ -8,8 +8,6 @@ from django.shortcuts import redirect
 from django.conf import settings
 from backend.api.base import views as base_views
 
-handler404 = 'django.views.defaults.page_not_found'
-
 def root_redirect(request):
     """Redirect root based on auth status."""
     if request.user.is_authenticated:

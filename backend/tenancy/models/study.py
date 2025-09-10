@@ -3,7 +3,6 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
 from parler.models import TranslatableModel, TranslatedFields
 
 
@@ -11,19 +10,19 @@ class Study(TranslatableModel):
     """Study/Research Project - Main tenant entity"""
     
     class Status(models.TextChoices):
-        PLANNING = 'planning', _('Planning')
-        ACTIVE = 'active', _('Active')
-        ARCHIVED = 'archived', _('Archived')
+        PLANNING = 'planning', 'Planning'
+        ACTIVE = 'active', 'Active'
+        ARCHIVED = 'archived', 'Archived'
 
     code = models.CharField(
         max_length=50,
         unique=True,
         db_index=True,
-        verbose_name=_("Study Code"),
-        help_text=_("Unique code for the study (e.g., STUDY001)"),
+        verbose_name="Study Code",
+        help_text="Unique code for the study (e.g., STUDY001)",
         validators=[RegexValidator(
             regex=r'^[A-Z0-9_]+$',
-            message=_("Code must contain only uppercase letters, numbers, and underscores")
+            message="Code must contain only uppercase letters, numbers, and underscores"
         )]
     )
     
@@ -31,8 +30,8 @@ class Study(TranslatableModel):
         max_length=100,
         unique=True,
         db_index=True,
-        verbose_name=_("Database Name"),
-        help_text=_("Name of the database for this study")
+        verbose_name="Database Name",
+        help_text="Name of the database for this study"
     )
     
     status = models.CharField(
@@ -40,7 +39,7 @@ class Study(TranslatableModel):
         choices=Status.choices,
         default=Status.PLANNING,
         db_index=True,
-        verbose_name=_("Status")
+        verbose_name="Status"
     )
     
     # Relationships
@@ -48,18 +47,18 @@ class Study(TranslatableModel):
         "Site",
         through="StudySite",
         related_name="studies",
-        verbose_name=_("Sites")
+        verbose_name="Sites"
     )
     
     # Metadata
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("Created At")
+        verbose_name="Created At"
     )
     
     updated_at = models.DateTimeField(
         auto_now=True,
-        verbose_name=_("Updated At")
+        verbose_name="Updated At"
     )
     
     created_by = models.ForeignKey(
@@ -68,7 +67,7 @@ class Study(TranslatableModel):
         blank=True,
         on_delete=models.SET_NULL,
         related_name='studies_created',
-        verbose_name=_("Created By")
+        verbose_name="Created By"
     )
 
     # Translatable fields
@@ -76,14 +75,14 @@ class Study(TranslatableModel):
         name=models.CharField(
             max_length=255,
             db_index=True,
-            verbose_name=_("Name")
+            verbose_name="Name"
         )
     )
 
     class Meta(TranslatableModel.Meta):
-        db_table = 'study_information'  # FIXED: Added management schema
-        verbose_name = _("Studies Information")
-        verbose_name_plural = _("Studies Information")
+        db_table = 'study_information'
+        verbose_name = "Studies Information"
+        verbose_name_plural = "Studies Information"
         ordering = ['-created_at', 'code']
         indexes = [
             models.Index(fields=['status', 'code'], name='idx_study_status_code'),
@@ -99,7 +98,7 @@ class Study(TranslatableModel):
     def clean(self):
         # Đảm bảo db_name luôn đúng format: db_study_[study_code]
         if not self.code:
-            raise ValidationError({'code': _('Study code is required to generate db_name.')})
+            raise ValidationError({'code': 'Study code is required to generate db_name.'})
         expected_db_name = f'db_study_{self.code.lower()}'
         if self.db_name != expected_db_name:
             self.db_name = expected_db_name
@@ -121,10 +120,10 @@ class Site(TranslatableModel):
         max_length=50,
         unique=True,
         db_index=True,
-        verbose_name=_("Site Code"),
+        verbose_name="Site Code",
         validators=[RegexValidator(
             regex=r'^[A-Z0-9_]+$',
-            message=_("Code must contain only uppercase letters, numbers, and underscores")
+            message="Code must contain only uppercase letters, numbers, and underscores"
         )]
     )
     
@@ -132,32 +131,32 @@ class Site(TranslatableModel):
         max_length=10,
         unique=True,
         db_index=True,
-        verbose_name=_("Abbreviation")
+        verbose_name="Abbreviation"
     )
 
     # Metadata
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("Created At")
+        verbose_name="Created At"
     )
     
     updated_at = models.DateTimeField(
         auto_now=True,
-        verbose_name=_("Updated At")
+        verbose_name="Updated At"
     )
 
     # Translatable fields
     translations = TranslatedFields(
         name=models.CharField(
             max_length=255,
-            verbose_name=_("Name")
+            verbose_name="Name"
         ),
     )
 
     class Meta(TranslatableModel.Meta):
-        db_table = 'study_sites'  # FIXED: Added management schema
-        verbose_name = _("Study Sites")
-        verbose_name_plural = _("Study Sites")
+        db_table = 'study_sites'
+        verbose_name = "Study Sites"
+        verbose_name_plural = "Study Sites"
         ordering = ['code']
         indexes = [
             models.Index(fields=['code'], name='idx_site_code'),
@@ -175,31 +174,31 @@ class StudySite(models.Model):
         Study,
         on_delete=models.CASCADE,
         related_name="study_sites",
-        verbose_name=_("Study")
+        verbose_name="Study"
     )
     
     site = models.ForeignKey(
         Site,
         on_delete=models.CASCADE,
         related_name="site_studies",
-        verbose_name=_("Site")
+        verbose_name="Site"
     )
     
     # Metadata
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("Created At")
+        verbose_name="Created At"
     )
     
     updated_at = models.DateTimeField(
         auto_now=True,
-        verbose_name=_("Updated At")
+        verbose_name="Updated At"
     )
 
     class Meta:
-        db_table = 'study_site_links'  # FIXED: Added management schema
-        verbose_name = _("Study-Site Links")
-        verbose_name_plural = _("Study-Site Links")
+        db_table = 'study_site_links'
+        verbose_name = "Study-Site Links"
+        verbose_name_plural = "Study-Site Links"
         constraints = [
             models.UniqueConstraint(
                 fields=['study', 'site'],

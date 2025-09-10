@@ -2,16 +2,15 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
-from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
     """Extended User model for ResSync platform"""
     
     class Status(models.TextChoices):
-        ACTIVE = 'active', _('Active')
-        INACTIVE = 'inactive', _('Inactive')
-        SUSPENDED = 'suspended', _('Suspended')
+        ACTIVE = 'active', 'Active'
+        INACTIVE = 'inactive', 'Inactive'
+        SUSPENDED = 'suspended', 'Suspended'
     
     # Status tracking
     status = models.CharField(
@@ -19,7 +18,7 @@ class User(AbstractUser):
         choices=Status.choices,
         default=Status.ACTIVE,
         db_index=True,
-        verbose_name=_("Status")
+        verbose_name="Status"
     )
     
     # Study tracking
@@ -29,52 +28,52 @@ class User(AbstractUser):
         blank=True,
         on_delete=models.SET_NULL,
         related_name='last_accessed_by',
-        verbose_name=_("Last Study Accessed")
+        verbose_name="Last Study Accessed"
     )
     
     last_study_accessed_at = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name=_("Last Study Access Time")
+        verbose_name="Last Study Access Time"
     )
     
     # Security fields
     must_change_password = models.BooleanField(
         default=False,
-        verbose_name=_("Must Change Password")
+        verbose_name="Must Change Password"
     )
     
     password_changed_at = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name=_("Password Changed At")
+        verbose_name="Password Changed At"
     )
     
     failed_login_attempts = models.IntegerField(
         default=0,
-        verbose_name=_("Failed Login Attempts")
+        verbose_name="Failed Login Attempts"
     )
     
     last_failed_login = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name=_("Last Failed Login")
+        verbose_name="Last Failed Login"
     )
     
     # Metadata
     notes = models.TextField(
         blank=True,
-        verbose_name=_("Notes")
+        verbose_name="Notes"
     )
     
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("Created At")
+        verbose_name="Created At"
     )
     
     updated_at = models.DateTimeField(
         auto_now=True,
-        verbose_name=_("Updated At")
+        verbose_name="Updated At"
     )
     
     created_by = models.ForeignKey(
@@ -83,13 +82,13 @@ class User(AbstractUser):
         blank=True,
         on_delete=models.SET_NULL,
         related_name='users_created',
-        verbose_name=_("Created By")
+        verbose_name="Created By"
     )
     
     class Meta:
         db_table = 'auth_user'
-        verbose_name = _("Authentication User")
-        verbose_name_plural = _("Authentication Users")
+        verbose_name = "Authentication User"
+        verbose_name_plural = "Authentication Users"
         indexes = [
             models.Index(fields=['username'], name='idx_user_username'),
             models.Index(fields=['email'], name='idx_user_email'),
@@ -106,18 +105,18 @@ class User(AbstractUser):
     
     def has_study_access(self, study):
         """Check if user has access to a specific study"""
-        return self.study_memberships.filter( # type: ignore
+        return self.study_memberships.filter( # pyright: ignore[reportAttributeAccessIssue]
             study=study,
-            is_active=True  # FIXED: Added is_active check
+            is_active=True
         ).exists()
     
     def get_study_permissions(self, study):
         """Get all permissions for a specific study"""
         from django.db.models import Q
         
-        memberships = self.study_memberships.filter( # type: ignore
+        memberships = self.study_memberships.filter( # pyright: ignore[reportAttributeAccessIssue]
             study=study,
-            is_active=True  # FIXED: Added is_active check
+            is_active=True
         ).select_related('role').prefetch_related(
             'role__role_permissions__permission'
         )

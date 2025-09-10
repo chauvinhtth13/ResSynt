@@ -13,7 +13,6 @@
     <!-- Preload critical resources -->
     <link rel="preload" href="{% static 'css/default/base.css' %}" as="style">
     <link rel="preload" href="{% static 'css/default/login.css' %}" as="style">
-    <link rel="preload" href="{% static 'images/default/logo.webp' %}" as="image">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'css/default/base.css' %}" />
@@ -73,7 +72,7 @@
                         </div>
                         <div class="flex-grow">
                             <strong class="font-semibold text-gray-900">{% trans 'Dynamic Research Dashboards'%}</strong>
-                            <p class="text-gray-600 text-sm">{% trans 'Summarize project progress and data status in real time.' %}</p>
+                            <p class="text-gray-600 text-sm">{% trans 'Summarize project progress and data status inreal time.' %}</p>
                         </div>
                     </li>
                     <li class="flex items-center gap-2">
@@ -104,7 +103,8 @@
                         <span class="font-semibold text-sm tracking-wider ml-1">
                             {% get_current_language as CURRENT_LANG %}
                             {% get_language_info for CURRENT_LANG as current_lang_info %}
-                            <span">{{ current_lang_info.name_local }}</span>
+                            <span">{{ current_lang_info.name_local }}
+                        </span>
                         </span>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                             stroke="currentColor" aria-hidden="true" class="size-5 ml-1">
@@ -139,11 +139,15 @@
                 <form id="loginForm" action="{% url 'login' %}" method="post" class="mx-auto w-full max-w-md space-y-6"
                     novalidate aria-describedby="form-help">
                     {% csrf_token %}
-                    
-                    <!-- General error message -->
+
+                    <!-- General error message from form -->
                     {% if error_message %}
                     <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                         <span>{{ error_message }}</span>
+                    </div>
+                    {% elif form.non_field_errors %}
+                    <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                        {{ form.non_field_errors }}
                     </div>
                     {% endif %}
 
@@ -158,9 +162,9 @@
                             aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
                             aria-describedby="username-error" />
 
-                            {% if field_errors.username %}
-                            <p class="mt-1 text-sm text-red-600">{{ field_errors.username }}</p>
-                            {% endif %}
+                        {% if field_errors.username %}
+                        <p class="mt-1 text-sm text-red-600">{{ field_errors.username }}</p>
+                        {% endif %}
                     </div>
 
                     <div>
@@ -218,7 +222,7 @@
                 </p>
             </div>
         </div>
-    </div>        
+    </div>
     <script src="{% static 'js/default/base.js' %}"></script>
     <script src="{% static 'js/default/login.js' %}"></script>
 </body>

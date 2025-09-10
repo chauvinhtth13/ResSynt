@@ -3,7 +3,6 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
 
 
 class RoleType:
@@ -16,12 +15,12 @@ class RoleType:
     RESEARCH_STAFF = 'RS'
 
     CHOICES = [
-        (ADMIN, _('Administrator')),
-        (DATA_MANAGER, _('Data Manager')),
-        (RESEARCH_MANAGER, _('Research Manager')),
-        (RESEARCH_MONITOR, _('Research Monitor')),
-        (INVESTIGATOR, _('Principal Investigator')),
-        (RESEARCH_STAFF, _('Research Staff')),
+        (ADMIN, 'Administrator'),
+        (DATA_MANAGER, 'Data Manager'),
+        (RESEARCH_MANAGER, 'Research Manager'),
+        (RESEARCH_MONITOR, 'Research Monitor'),
+        (INVESTIGATOR, 'Principal Investigator'),
+        (RESEARCH_STAFF, 'Research Staff'),
     ]
 
 
@@ -32,11 +31,10 @@ class Role(models.Model):
         max_length=100,
         unique=True,
         db_index=True,
-        verbose_name=_("Title"),
+        verbose_name="Title",
         validators=[RegexValidator(
             regex=r'^[A-Za-z0-9\s\-_]+$',
-            message=_(
-                "Title can only contain letters, numbers, spaces, hyphens and underscores")
+            message="Title can only contain letters, numbers, spaces, hyphens and underscores"
         )]
     )
 
@@ -44,38 +42,38 @@ class Role(models.Model):
         max_length=50,
         unique=True,
         db_index=True,
-        verbose_name=_("Code"),
+        verbose_name="Code",
         validators=[RegexValidator(
             regex=r'^[A-Z_]+$',
-            message=_("Code must be uppercase letters and underscores only")
+            message="Code must be uppercase letters and underscores only"
         )]
     )
 
     description = models.TextField(
         blank=True,
-        verbose_name=_("Description")
+        verbose_name="Description"
     )
 
     is_system = models.BooleanField(
         default=False,
-        verbose_name=_("Is System Role"),
-        help_text=_("System roles cannot be modified or deleted")
+        verbose_name="Is System Role",
+        help_text="System roles cannot be modified or deleted"
     )
 
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("Created At")
+        verbose_name="Created At"
     )
 
     updated_at = models.DateTimeField(
         auto_now=True,
-        verbose_name=_("Updated At")
+        verbose_name="Updated At"
     )
 
     class Meta:
-        db_table = 'study_roles'  # FIXED: Added management schema
-        verbose_name = _("Roles of Study")
-        verbose_name_plural = _("Roles of Study")
+        db_table = 'study_roles'
+        verbose_name = "Roles of Study"
+        verbose_name_plural = "Roles of Study"
         ordering = ['title']
         indexes = [
             models.Index(fields=['code'], name='idx_role_code'),
@@ -89,9 +87,9 @@ class Role(models.Model):
         """Returns default role configurations"""
         return {
             RoleType.ADMIN: {
-                'title': _('Administrator'),
+                'title': 'Administrator',
                 'code': 'ADMIN',
-                'description': _('Full access to study management'),
+                'description': 'Full access to study management',
                 'permissions': [
                     Permission.DATA_VIEW, Permission.DATA_CREATE, Permission.DATA_UPDATE, Permission.DATA_DELETE, 
                     Permission.ANALYTICS_VIEW, Permission.REPORTS_VIEW, Permission.REPORTS_SCHEDULE, 
@@ -100,9 +98,9 @@ class Role(models.Model):
                 ]
             },
             RoleType.DATA_MANAGER: {
-                'title': _('Data Manager'),
+                'title': 'Data Manager',
                 'code': 'DM',
-                'description': _('Manage study data and exports'),
+                'description': 'Manage study data and exports',
                 'priority': 20,
                 'permissions': [
                     Permission.DATA_VIEW, Permission.DATA_CREATE, Permission.DATA_UPDATE, Permission.DATA_DELETE,
@@ -112,9 +110,9 @@ class Role(models.Model):
                 ]
             },
             RoleType.RESEARCH_MANAGER: {
-                'title': _('Research Manager'),
+                'title': 'Research Manager',
                 'code': 'RM',
-                'description': _('Manage study operations and users'),
+                'description': 'Manage study operations and users',
                 'permissions': [
                     Permission.DATA_VIEW, Permission.DATA_CREATE, Permission.DATA_UPDATE,
                     Permission.REPORTS_VIEW, Permission.REPORTS_SCHEDULE,
@@ -122,27 +120,27 @@ class Role(models.Model):
                 ]
             },
             RoleType.RESEARCH_MONITOR: {
-                'title': _('Research Monitor'),
+                'title': 'Research Monitor',
                 'code': 'MON',
-                'description': _('View and audit study data'),
+                'description': 'View and audit study data',
                 'permissions': [
                     Permission.DATA_VIEW, Permission.ANALYTICS_VIEW,
                     Permission.REPORTS_VIEW, Permission.AUDIT_VIEW,
                 ]
             },
             RoleType.INVESTIGATOR: {
-                'title': _('Principal Investigator'),
+                'title': 'Principal Investigator',
                 'code': 'PI',
-                'description': _('View study progress and reports'),
+                'description': 'View study progress and reports',
                 'permissions': [
                     Permission.DATA_VIEW, Permission.ANALYTICS_VIEW, Permission.REPORTS_VIEW,
                     Permission.STUDY_VIEW, Permission.STUDY_MANAGE, Permission.STUDY_USERS, Permission.STUDY_SITES,
                 ]
             },
             RoleType.RESEARCH_STAFF: {
-                'title': _('Research Staff'),
+                'title': 'Research Staff',
                 'code': 'RS',
-                'description': _('Data entry and report viewing access with report scheduling'),
+                'description': 'Data entry and report viewing access with report scheduling',
                 'permissions': [
                     Permission.DATA_VIEW, Permission.DATA_CREATE, Permission.DATA_UPDATE,
                     Permission.REPORTS_VIEW, Permission.REPORTS_SCHEDULE
@@ -153,12 +151,12 @@ class Role(models.Model):
     @classmethod
     def initialize_roles(cls):
         """Create default roles with permissions"""
-        Permission.initialize_permissions()  # Ensure permissions exist
+        Permission.initialize_permissions()
         
         created_count = 0
         for role_type, config in cls.get_default_roles().items():
             role, created = cls.objects.get_or_create(
-                code=config['code'],  # FIXED: Changed from role_type to config['code']
+                code=config['code'],
                 defaults={
                     'title': str(config['title']),
                     'description': str(config['description']),
@@ -168,7 +166,6 @@ class Role(models.Model):
             
             if created:
                 created_count += 1
-                # Add permissions
                 for perm_code in config['permissions']:
                     try:
                         permission = Permission.objects.get(code=perm_code)
@@ -190,11 +187,11 @@ class PermissionCategory:
     SYSTEM = 'system'
 
     CHOICES = [
-        (DATA, _('Data Management')),
-        (ANALYTICS, _('Analytics & Reports')),
-        (AUDIT, _('Audit & Compliance')),
-        (MANAGEMENT, _('Study Management')),
-        (SYSTEM, _('System Administration')),
+        (DATA, 'Data Management'),
+        (ANALYTICS, 'Analytics & Reports'),
+        (AUDIT, 'Audit & Compliance'),
+        (MANAGEMENT, 'Study Management'),
+        (SYSTEM, 'System Administration'),
     ]
 
 
@@ -231,47 +228,46 @@ class Permission(models.Model):
         max_length=50,
         unique=True,
         db_index=True,
-        verbose_name=_("Code")
+        verbose_name="Code"
     )
 
     name = models.CharField(
         max_length=100,
-        verbose_name=_("Name")
+        verbose_name="Name"
     )
 
     description = models.TextField(
         blank=True,
-        verbose_name=_("Description")
+        verbose_name="Description"
     )
 
     category = models.CharField(
         max_length=20,
         choices=PermissionCategory.CHOICES,
         db_index=True,
-        verbose_name=_("Category")
+        verbose_name="Category"
     )
 
     is_dangerous = models.BooleanField(
         default=False,
-        verbose_name=_("Is Dangerous"),
-        help_text=_(
-            "Marks permissions that can cause data loss or security issues")
+        verbose_name="Is Dangerous",
+        help_text="Marks permissions that can cause data loss or security issues"
     )
 
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("Created At")
+        verbose_name="Created At"
     )
 
     updated_at = models.DateTimeField(
         auto_now=True,
-        verbose_name=_("Updated At")
+        verbose_name="Updated At"
     )
 
     class Meta:
-        db_table = '"management"."study_permissions"'  # FIXED: Added management schema
-        verbose_name = _("Permission of Study")
-        verbose_name_plural = _("Permissions of Study")
+        db_table = '"management"."study_permissions"'
+        verbose_name = "Permission of Study"
+        verbose_name_plural = "Permissions of Study"
         ordering = ['category', 'code']
         indexes = [
             models.Index(fields=['category', 'code'],
@@ -286,44 +282,44 @@ class Permission(models.Model):
         """Returns default permissions to be created"""
         return [
             # Data permissions
-            (cls.DATA_VIEW, _('View Data'), _('View study data'),
+            (cls.DATA_VIEW, 'View Data', 'View study data',
              PermissionCategory.DATA, False),
-            (cls.DATA_CREATE, _('Create Data'), _(
-                'Create new data entries'), PermissionCategory.DATA, False),
-            (cls.DATA_UPDATE, _('Update Data'), _(
-                'Update existing data'), PermissionCategory.DATA, False),
-            (cls.DATA_DELETE, _('Delete Data'), _(
-                'Delete data entries'), PermissionCategory.DATA, True),
+            (cls.DATA_CREATE, 'Create Data',
+             'Create new data entries', PermissionCategory.DATA, False),
+            (cls.DATA_UPDATE, 'Update Data',
+             'Update existing data', PermissionCategory.DATA, False),
+            (cls.DATA_DELETE, 'Delete Data',
+             'Delete data entries', PermissionCategory.DATA, True),
 
             # Analytics permissions
-            (cls.ANALYTICS_VIEW, _('View Analytics'), _(
-                'View analytics dashboard'), PermissionCategory.ANALYTICS, False),
-            (cls.REPORTS_VIEW, _('View Reports'), _(
-                'View generated reports'), PermissionCategory.ANALYTICS, False),
-            (cls.REPORTS_SCHEDULE, _('Schedule Reports'), _(
-                'Schedule automatic reports'), PermissionCategory.ANALYTICS, False),
+            (cls.ANALYTICS_VIEW, 'View Analytics',
+             'View analytics dashboard', PermissionCategory.ANALYTICS, False),
+            (cls.REPORTS_VIEW, 'View Reports',
+             'View generated reports', PermissionCategory.ANALYTICS, False),
+            (cls.REPORTS_SCHEDULE, 'Schedule Reports',
+             'Schedule automatic reports', PermissionCategory.ANALYTICS, False),
 
             # Audit permissions
-            (cls.AUDIT_VIEW, _('View Audit Logs'), _(
-                'View audit trail'), PermissionCategory.AUDIT, False),
+            (cls.AUDIT_VIEW, 'View Audit Logs',
+             'View audit trail', PermissionCategory.AUDIT, False),
 
             # Study management
-            (cls.STUDY_VIEW, _('View Study'), _('View study information'),
+            (cls.STUDY_VIEW, 'View Study', 'View study information',
              PermissionCategory.MANAGEMENT, False),
-            (cls.STUDY_MANAGE, _('Manage Study'), _(
-                'Manage study settings'), PermissionCategory.MANAGEMENT, True),
-            (cls.STUDY_USERS, _('Manage Users'), _('Manage study users'),
+            (cls.STUDY_MANAGE, 'Manage Study',
+             'Manage study settings', PermissionCategory.MANAGEMENT, True),
+            (cls.STUDY_USERS, 'Manage Users', 'Manage study users',
              PermissionCategory.MANAGEMENT, True),
-            (cls.STUDY_SITES, _('Manage Sites'), _('Manage study sites'),
+            (cls.STUDY_SITES, 'Manage Sites', 'Manage study sites',
              PermissionCategory.MANAGEMENT, True),
 
             # System permissions
-            (cls.SYSTEM_ADMIN, _('System Admin'), _(
-                'Full system access'), PermissionCategory.SYSTEM, True),
-            (cls.SYSTEM_BACKUP, _('System Backup'), _(
-                'Create system backups'), PermissionCategory.SYSTEM, True),
-            (cls.SYSTEM_MONITOR, _('System Monitor'), _(
-                'Monitor system health'), PermissionCategory.SYSTEM, False),
+            (cls.SYSTEM_ADMIN, 'System Admin',
+             'Full system access', PermissionCategory.SYSTEM, True),
+            (cls.SYSTEM_BACKUP, 'System Backup',
+             'Create system backups', PermissionCategory.SYSTEM, True),
+            (cls.SYSTEM_MONITOR, 'System Monitor',
+             'Monitor system health', PermissionCategory.SYSTEM, False),
         ]
 
     @classmethod
@@ -352,25 +348,25 @@ class RolePermission(models.Model):
         Role,
         on_delete=models.CASCADE,
         related_name="role_permissions",
-        verbose_name=_("Role")
+        verbose_name="Role"
     )
 
     permission = models.ForeignKey(
         Permission,
         on_delete=models.CASCADE,
         related_name="permission_roles",
-        verbose_name=_("Permission")
+        verbose_name="Permission"
     )
 
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("Created At")
+        verbose_name="Created At"
     )
 
     class Meta:
-        db_table = '"management"."study_role_permissions"'  # FIXED: Added management schema
-        verbose_name = _("Role Permission")
-        verbose_name_plural = _("Role Permissions")
+        db_table = '"management"."study_role_permissions"'
+        verbose_name = "Role Permission"
+        verbose_name_plural = "Role Permissions"
         constraints = [
             models.UniqueConstraint(
                 fields=['role', 'permission'],
@@ -394,50 +390,49 @@ class StudyMembership(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="study_memberships",
-        verbose_name=_("User")
+        verbose_name="User"
     )
 
     study = models.ForeignKey(
         'Study',
         on_delete=models.CASCADE,
         related_name="memberships",
-        verbose_name=_("Study")
+        verbose_name="Study"
     )
 
     role = models.ForeignKey(
         Role,
         on_delete=models.PROTECT,
         related_name="study_memberships",
-        verbose_name=_("Role")
+        verbose_name="Role"
     )
 
     study_sites = models.ManyToManyField(
         'StudySite',
         blank=True,
         related_name="memberships",
-        verbose_name=_("Study Sites"),
-        help_text=_("Specific sites within the study. Leave empty for all sites.")
+        verbose_name="Study Sites",
+        help_text="Specific sites within the study. Leave empty for all sites."
     )
 
     # Access control
     is_active = models.BooleanField(
         default=True,
         db_index=True,
-        verbose_name=_("Is Active")
+        verbose_name="Is Active"
     )
 
     can_access_all_sites = models.BooleanField(
         default=False,
-        verbose_name=_("Can Access All Sites"),
-        help_text=_("If true, user has access to all sites in the study")
+        verbose_name="Can Access All Sites",
+        help_text="If true, user has access to all sites in the study"
     )
 
     # Dates
     assigned_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("Assigned At")
+        verbose_name="Assigned At"
     )
-
 
     # Metadata
     assigned_by = models.ForeignKey(
@@ -446,18 +441,18 @@ class StudyMembership(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="memberships_assigned",
-        verbose_name=_("Assigned By")
+        verbose_name="Assigned By"
     )
 
     updated_at = models.DateTimeField(
         auto_now=True,
-        verbose_name=_("Updated At")
+        verbose_name="Updated At"
     )
 
     class Meta:
         db_table = '"management"."study_memberships"'
-        verbose_name = _("Study Membership")
-        verbose_name_plural = _("Study Memberships")
+        verbose_name = "Study Membership"
+        verbose_name_plural = "Study Memberships"
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'study', 'role'],
@@ -467,7 +462,6 @@ class StudyMembership(models.Model):
         indexes = [
             models.Index(fields=['user', 'study', 'is_active'], name='idx_membership_user_study'),
             models.Index(fields=['study', 'is_active'], name='idx_membership_study'),
-            # removed expires_at index
         ]
 
     def __str__(self):
@@ -481,12 +475,11 @@ class StudyMembership(models.Model):
         """Validate membership data"""
         if self.pk:
             if self.can_access_all_sites and self.study_sites.exists():
-                raise ValidationError(_("Cannot specify sites when 'can_access_all_sites' is True"))
-            # Verify all selected sites belong to the study
+                raise ValidationError("Cannot specify sites when 'can_access_all_sites' is True")
             if self.study_sites.exists():
                 invalid_sites = self.study_sites.exclude(study=self.study)
                 if invalid_sites.exists():
-                    raise ValidationError(_("Selected sites must belong to the study"))
+                    raise ValidationError("Selected sites must belong to the study")
         super().clean()
 
     def has_site_access(self, site_id):
@@ -494,5 +487,3 @@ class StudyMembership(models.Model):
         if self.can_access_all_sites or not self.study_sites.exists():
             return True
         return self.study_sites.filter(site_id=site_id).exists()
-
-    # removed is_expired method

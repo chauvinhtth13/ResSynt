@@ -3,23 +3,22 @@ from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-from django.utils.translation import gettext_lazy as _
 
 
 class AuditLog(models.Model):
     """Audit trail for all data changes"""
     
     class Action(models.TextChoices):
-        CREATE = 'CREATE', _('Create')
-        UPDATE = 'UPDATE', _('Update')
-        DELETE = 'DELETE', _('Delete')
-        SOFT_DELETE = 'SOFT_DELETE', _('Soft Delete')
-        RESTORE = 'RESTORE', _('Restore')
-        EXPORT = 'EXPORT', _('Export')
-        LOGIN = 'LOGIN', _('Login')
-        LOGOUT = 'LOGOUT', _('Logout')
-        LOGIN_FAILED = 'LOGIN_FAILED', _('Login Failed')
-        PERMISSION_DENIED = 'PERMISSION_DENIED', _('Permission Denied')
+        CREATE = 'CREATE', 'Create'
+        UPDATE = 'UPDATE', 'Update'
+        DELETE = 'DELETE', 'Delete'
+        SOFT_DELETE = 'SOFT_DELETE', 'Soft Delete'
+        RESTORE = 'RESTORE', 'Restore'
+        EXPORT = 'EXPORT', 'Export'
+        LOGIN = 'LOGIN', 'Login'
+        LOGOUT = 'LOGOUT', 'Logout'
+        LOGIN_FAILED = 'LOGIN_FAILED', 'Login Failed'
+        PERMISSION_DENIED = 'PERMISSION_DENIED', 'Permission Denied'
     
     # Study and Site context
     study = models.ForeignKey(
@@ -28,14 +27,14 @@ class AuditLog(models.Model):
         null=True,
         blank=True,
         related_name='audit_logs',
-        verbose_name=_("Study")
+        verbose_name="Study"
     )
     
     site_id = models.IntegerField(
         null=True,
         blank=True,
         db_index=True,
-        verbose_name=_("Site ID")
+        verbose_name="Site ID"
     )
     
     # Generic relation to any model
@@ -44,14 +43,14 @@ class AuditLog(models.Model):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        verbose_name=_("Content Type")
+        verbose_name="Content Type"
     )
     
     object_id = models.CharField(
         max_length=255,
         null=True,
         blank=True,
-        verbose_name=_("Object ID")
+        verbose_name="Object ID"
     )
     
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -61,28 +60,28 @@ class AuditLog(models.Model):
         max_length=20,
         choices=Action.choices,
         db_index=True,
-        verbose_name=_("Action")
+        verbose_name="Action"
     )
     
     table_name = models.CharField(
         max_length=100,
         db_index=True,
-        verbose_name=_("Table Name")
+        verbose_name="Table Name"
     )
     
     record_display = models.CharField(
         max_length=255,
         blank=True,
-        verbose_name=_("Record Display"),
-        help_text=_("Human-readable representation of the record")
+        verbose_name="Record Display",
+        help_text="Human-readable representation of the record"
     )
     
     # Change tracking
     changes = models.JSONField(
         default=dict,
         blank=True,
-        verbose_name=_("Changes"),
-        help_text=_("JSON object with old and new values")
+        verbose_name="Changes",
+        help_text="JSON object with old and new values"
     )
     
     # User and request information
@@ -90,30 +89,30 @@ class AuditLog(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name='audit_logs',
-        verbose_name=_("Performed By")
+        verbose_name="Performed By"
     )
     
     performed_at = models.DateTimeField(
         auto_now_add=True,
         db_index=True,
-        verbose_name=_("Performed At")
+        verbose_name="Performed At"
     )
     
     ip_address = models.GenericIPAddressField(
         null=True,
         blank=True,
-        verbose_name=_("IP Address")
+        verbose_name="IP Address"
     )
     
     user_agent = models.TextField(
         blank=True,
-        verbose_name=_("User Agent")
+        verbose_name="User Agent"
     )
     
     session_key = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name=_("Session Key")
+        verbose_name="Session Key"
     )
     
     # Additional context
@@ -121,31 +120,31 @@ class AuditLog(models.Model):
         max_length=100,
         blank=True,
         db_index=True,
-        verbose_name=_("Request ID"),
-        help_text=_("Unique identifier for the request")
+        verbose_name="Request ID",
+        help_text="Unique identifier for the request"
     )
     
     notes = models.TextField(
         blank=True,
-        verbose_name=_("Notes")
+        verbose_name="Notes"
     )
 
     class Meta:
-        db_table = 'audit_logs'  # FIXED: Added management schema
-        verbose_name = _("Audit Log")
-        verbose_name_plural = _("Audit Logs")
+        db_table = 'audit_logs'
+        verbose_name = "Audit Log"
+        verbose_name_plural = "Audit Logs"
         ordering = ['-performed_at']
         indexes = [
             models.Index(fields=['study', 'performed_at'], 
-                        name='idx_audit_study_time'),
+                         name='idx_audit_study_time'),
             models.Index(fields=['performed_by', 'performed_at'], 
-                        name='idx_audit_user_time'),
+                         name='idx_audit_user_time'),
             models.Index(fields=['action', 'performed_at'], 
-                        name='idx_audit_action_time'),
+                         name='idx_audit_action_time'),
             models.Index(fields=['table_name', 'object_id'], 
-                        name='idx_audit_table_object'),
+                         name='idx_audit_table_object'),
             models.Index(fields=['request_id'], 
-                        name='idx_audit_request'),
+                         name='idx_audit_request'),
         ]
 
     def __str__(self):

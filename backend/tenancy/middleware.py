@@ -598,7 +598,6 @@ class CacheControlMiddleware:
         response["Cache-Control"] = "public, max-age=300"
         response["Vary"] = "Cookie, Accept-Encoding"
 
-
 class SecurityHeadersMiddleware:
     """
     Comprehensive security headers middleware.
@@ -675,7 +674,6 @@ class SecurityHeadersMiddleware:
             return self.CSP_POLICIES['api']
         else:
             return self.CSP_POLICIES['default']
-
 
 class PerformanceMonitoringMiddleware:
     """

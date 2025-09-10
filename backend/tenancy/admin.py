@@ -5,7 +5,6 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from parler.admin import TranslatableAdmin
 from django.contrib.admin import AdminSite
 from django import forms
-from django.utils.translation import gettext_lazy as _
 
 # Import models from correct location
 from .models import (
