@@ -14,7 +14,7 @@
       const eyeOn = document.getElementById('eyeOn');
       const eyeOff = document.getElementById('eyeOff');
       const submit = this.form.querySelector('.submit-btn');
-      // Lấy error elements
+      // Thêm: Lấy error elements
       const usernameError = document.getElementById('username-error');
       const passwordError = document.getElementById('password-error');
 
@@ -64,45 +64,20 @@
         if (e.key === 'Enter' && !username.value) e.preventDefault();
       }, { passive: true });
 
-      // Event listeners để clear error realtime khi input thay đổi
+      // Thêm: Event listeners để clear error realtime khi input thay đổi
       username?.addEventListener('input', () => {
+        console.debug('[login.js] Username input changed:', username.value); // Debug
         if (username.value.trim() !== '') {
-          this.clearFieldError(username, usernameError);
+          username.classList.remove('border-red-500', 'focus:ring-red-500');
+          usernameError?.classList.add('hidden');
         }
       });
 
       password?.addEventListener('input', () => {
+        console.debug('[login.js] Password input changed:', password.value); // Debug (note: password value sẽ không log full cho security, nhưng trim() ok)
         if (password.value.trim() !== '') {
-          this.clearFieldError(password, passwordError);
-        }
-      });
-
-      // Focus/Blur handling để chuyển border màu khi focus
-      username?.addEventListener('focus', () => {
-        if (username.getAttribute('aria-invalid') === 'true') {
-          username.classList.remove('border-red-400');
-          username.classList.add('border-blue-500');
-        }
-      });
-
-      username?.addEventListener('blur', () => {
-        if (username.getAttribute('aria-invalid') === 'true' && !username.value.trim()) {
-          username.classList.remove('border-blue-500');
-          username.classList.add('border-red-400');
-        }
-      });
-
-      password?.addEventListener('focus', () => {
-        if (password.getAttribute('aria-invalid') === 'true') {
-          password.classList.remove('border-red-400');
-          password.classList.add('border-blue-500');
-        }
-      });
-
-      password?.addEventListener('blur', () => {
-        if (password.getAttribute('aria-invalid') === 'true' && !password.value.trim()) {
-          password.classList.remove('border-blue-500');
-          password.classList.add('border-red-400');
+          password.classList.remove('border-red-500', 'focus:ring-red-500');
+          passwordError?.classList.add('hidden');
         }
       });
     }
@@ -120,87 +95,52 @@
       eyeOff?.classList.toggle('hidden', !isVisible);
     }
 
-    // Method để clear error của một field
-    clearFieldError(field, errorElement) {
-      if (!field || !errorElement) return;
-      
-      // Remove all border colors and reset to default
-      field.classList.remove('border-red-400', 'border-blue-500');
-      field.classList.add('border-transparent');
-      field.setAttribute('aria-invalid', 'false');
-      
-      // Hide error message - Tailwind way
-      errorElement.classList.add('hidden');
-      errorElement.classList.remove('flex');
-    }
-
-    // Method để set error cho một field
-    setFieldError(field, errorElement) {
-      if (!field || !errorElement) return;
-      
-      // Add red border (will be blue on focus due to focus event handlers)
-      field.classList.remove('border-transparent', 'border-blue-500');
-      field.classList.add('border-red-400');
-      field.setAttribute('aria-invalid', 'true');
-      
-      // Show error message - Tailwind way
-      errorElement.classList.remove('hidden');
-      errorElement.classList.add('flex');
-    }
-
-    // Method để reset tất cả error states
+    // Thêm: Method để reset tất cả error states
     resetErrors() {
       const { username, password, usernameError, passwordError } = this.elements;
-      this.clearFieldError(username, usernameError);
-      this.clearFieldError(password, passwordError);
+      username?.classList.remove('border-red-500', 'focus:ring-red-500');
+      password?.classList.remove('border-red-500', 'focus:ring-red-500');
+      usernameError?.classList.add('hidden');
+      passwordError?.classList.add('hidden');
+      console.debug('[login.js] Errors reset'); // Debug
     }
 
     handleSubmit(e) {
       const { username, password, submit, usernameError, passwordError } = this.elements;
-      
-      // Reset errors trước khi validate mới
-      this.resetErrors();
+      this.resetErrors(); // Reset trước khi validate mới
 
       let isValid = true;
-      let firstInvalidField = null;
 
-      // Validate username
-      if (!username?.value.trim()) {
-        this.setFieldError(username, usernameError);
+      if (username?.value.trim() === '') {
+        username.classList.add('border-red-500', 'focus:ring-red-500');
+        usernameError?.classList.remove('hidden');
         isValid = false;
-        firstInvalidField = firstInvalidField || username;
+        console.debug('[login.js] Username invalid'); // Debug
       }
 
-      // Validate password
-      if (!password?.value.trim()) {
-        this.setFieldError(password, passwordError);
+      if (password?.value.trim() === '') {
+        password.classList.add('border-red-500', 'focus:ring-red-500');
+        passwordError?.classList.remove('hidden');
         isValid = false;
-        firstInvalidField = firstInvalidField || password;
+        console.debug('[login.js] Password invalid'); // Debug
       }
 
-      // Prevent submit nếu đang submit hoặc không valid
       if (this.isSubmitting || !isValid) {
         e.preventDefault();
-        
-        // Focus vào field đầu tiên có lỗi
-        if (firstInvalidField) {
-          firstInvalidField.focus();
-        }
-        
+        console.debug('[login.js] Submit prevented:', { isSubmitting: this.isSubmitting, isValid }); // Debug
         return;
       }
-
-      // Set submitting state
       this.isSubmitting = true;
+
       submit.disabled = true;
       submit.classList.add('loading');
       submit.setAttribute('aria-busy', 'true');
       submit.querySelector('.spinner')?.classList.remove('hidden');
+      console.debug('[login.js] Submitting form'); // Debug
     }
 
     restoreIfFromBFCache() {
       const { submit } = this.elements;
-      
       window.addEventListener('pageshow', (evt) => {
         if (evt.persisted) {
           this.isSubmitting = false;
@@ -208,9 +148,6 @@
           submit.classList.remove('loading');
           submit.setAttribute('aria-busy', 'false');
           submit.querySelector('.spinner')?.classList.add('hidden');
-          
-          // Reset errors khi back từ cache
-          this.resetErrors();
         }
       }, { passive: true });
     }
@@ -219,7 +156,6 @@
   const initAll = () => {
     console.log('[login.js] Initializing, ResSyncBase:', window.ResSyncBase);
     new ResSyncLoginForm();
-    
     if (window.ResSyncBase) {
       window.ResSyncBase.initDropdowns('[data-dropdown]');
       window.ResSyncBase.initLanguageSwitcher();

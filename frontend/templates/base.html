@@ -1,0 +1,42 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'vi' }}" class="h-full bg-gray-200">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ResSync Platform - Research Study Management System">
+
+    <title>{% block title %}ResSync Platform{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        primary: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Ubuntu', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+                        mono: ['"SF Mono"', '"Monaco"', '"Inconsolata"', '"Fira Mono"', '"Droid Sans Mono"', '"Source Code Pro"', 'monospace'],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    {% block header %}
+    {% endblock %}
+
+    {% block body %}
+    {% endblock %}
+
+    <!-- Main JavaScript -->
+    <script src="{% static 'js/default/base.js' %}" defer></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

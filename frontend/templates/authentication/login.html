@@ -1,230 +1,150 @@
 <!-- frontend\templates\authentication\login.html -->
+{% extends 'base.html' %}
 {% load static i18n %}
-<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}
-<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{% block title %}ResSync - Sign In{% endblock %}
+{% block page_name %}login{% endblock %}
 
-    <title>ResSync — Sign in</title>
+{% block body %}
 
-    <!-- Preload critical resources -->
-    <link rel="preload" href="{% static 'css/default/base.css' %}" as="style">
-    <link rel="preload" href="{% static 'css/default/login.css' %}" as="style">
+<!-- Login Header - Separate from main header -->
+{% include 'includes/headers/simple_header.html' %}
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{% static 'css/default/base.css' %}" />
-    <link rel="stylesheet" href="{% static 'css/default/login.css' %}" />
-</head>
+<!-- Login Content -->
+<main class="w-full flex-grow content-center mb-20 md:mb-8 xl:mb-0 pb-12 bg-gradient-to-br from-[#9E3E33] to-[#335071]">
 
-<body class="bg-slate-50">
-    <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-
-        <div
-            class="blur-background relative z-10 flex flex-col items-center justify-center overflow-hidden p-6 text-white sm:p-10 lg:p-16 shadow-md">
-            <div class="relative z-20 flex flex-col items-center text-center"></div>
-            <h1 class="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 leading-tight whitespace-nowrap">
-                {% trans 'Welcome to' %}
-            </h1>
-            <div class="my-2">
-                <img src="{% static 'images/default/logo.webp' %}" alt="ResSync logo" class="h-auto w-full max-w-xs"
-                    loading="lazy" decoding="async" />
-            </div>
-
-            <div class="mt-4 flex flex-col text-left md:hidden lg:flex">
-                <p class="text-xl font-semibold mb-4 text-gray-700 drop-shadow-sm">{% trans 'Platform Features' %}</p>
-                <ul class="space-y-4">
-                    <li class="flex items-center gap-2">
-                        <div class="flex-shrink-0 p-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" class="size-10 text-blue-900 flex-shrink-0">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-                            </svg>
-                        </div>
-                        <div>
-                            <strong class="font-semibold text-gray-900">{% trans 'Efficient Data Management' %}</strong>
-                            <p class="text-gray-600 text-sm">{% trans 'Organize, query, and export research data with exceptional performance.' %}</p>
-                        </div>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <div class="flex-shrink-0 p-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" class="size-10 text-blue-900 flex-shrink-0">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                            </svg>
-                        </div>
-                        <div class="flex-grow">
-                            <strong class="font-semibold text-gray-900">{% trans 'Streamlined Data Entry' %}</strong>
-                            <p class="text-gray-600 text-sm">{% trans 'Rapid CRF entry with built-in format and logic checks to ensure accuracy.' %}</p>
-                        </div>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <div class="flex-shrink-0 p-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" class="size-10 text-blue-900 flex-shrink-0">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605" />
-                            </svg>
-                        </div>
-                        <div class="flex-grow">
-                            <strong class="font-semibold text-gray-900">{% trans 'Dynamic Research Dashboards'%}</strong>
-                            <p class="text-gray-600 text-sm">{% trans 'Summarize project progress and data status inreal time.' %}</p>
-                        </div>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <div class="flex-shrink-0 p-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" class="size-10 text-blue-900 flex-shrink-0">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
-                            </svg>
-                        </div>
-                        <div class="flex-grow">
-                            <strong class="font-semibold text-gray-900">{% trans 'Precise Scheduling and Tracking'%}</strong>
-                            <p class="text-gray-600 text-sm">{% trans 'Automated reminders and appointment tracking help research teams optimize their plans.' %}</p>
-                        </div>
-                    </li>
-                </ul>
+    <!-- Main content grid container - this is the first row -->
+    <div class="grid grid-cols-1 lg:grid-cols-[3fr_auto_2fr] gap-6 md:gap-12 xl:gap-20 2xl:gap-48 p-8 md:p-12 xl:p-20 2xl:p-48">
+        
+        <!-- Left Panel -->
+        <div class="hidden lg:flex justify-center items-center text-white">
+            <div class="w-full mx-auto">
+                <h1 class="text-3xl xl:text-4xl 2xl:text-5xl font-black mb-2">
+                    Welcome to ResSync Platform
+                </h1>
+                <p class="italic font-light text-sm xl:text-lg 2xl:text-2xl mb-8">
+                    End-to-End Research Data Management: Beyond Limits, Unleash Intelligent Discovery.
+                </p>
+                {% include 'includes/features_list.html' %}
             </div>
         </div>
 
-        <div class="relative flex flex-col items-center justify-center bg-slate-50 p-4 sm:p-6 lg:p-8">
-            <div
-                class="absolute top-4 md:top-6 left-1/2 md:left-auto md:right-6 -translate-x-1/2 md:translate-x-0 text-sm z-30">
-                <div class="relative" data-dropdown="language">
-                    <button id="lang-button" type="button" data-dropdown-trigger aria-haspopup="menu"
-                        aria-expanded="false" aria-controls="lang-menu"
-                        class="group inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-0 focus:ring-blue-500">
-                        <span class="sr-only">{% trans 'Select language' %}</span>
-                        <span class="font-semibold text-sm tracking-wider ml-1">
-                            {% get_current_language as CURRENT_LANG %}
-                            {% get_language_info for CURRENT_LANG as current_lang_info %}
-                            <span">{{ current_lang_info.name_local }}
-                        </span>
-                        </span>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" aria-hidden="true" class="size-5 ml-1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                        </svg>
-                    </button>
-                    <div id="lang-menu" role="menu" aria-labelledby="lang-button" data-dropdown-menu hidden
-                        class="absolute right-0 mt-2 min-w-[10em] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
-                        {% get_available_languages as LANGS %}
-                        {% get_language_info_list for LANGS as languages %}
-                        <form method="post" action="/i18n/setlang/" class="m-2 space-y-1">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.path }}">
-                            {% for lang in languages %}
-                            <button type="submit" name="language" value="{{ lang.code }}" role="menuitemradio"
-                                aria-checked="{% if lang.code == CURRENT_LANG %}true{% else %}false{% endif %}"
-                                class="flex w-full items-center gap-0 px-3 py-2 text-sm rounded-md hover:ring-1 {% if lang.code == CURRENT_LANG %}font-semibold bg-blue-100{% endif %}">
-                                <span class="truncate">{{ lang.name_local|capfirst }}</span>
-                            </button>
-                            {% endfor %}
-                        </form>
-                    </div>
-                </div>
-            </div>
+        <!-- Divider -->
+        <div class="hidden lg:block w-px self-stretch bg-gray-300/50"></div>
 
-            <div class="w-full max-w-md">
-                <div class="mb-8 text-center">
-                    <h2 class="text-3xl font-bold text-slate-900">{% trans 'Sign in to platform' %}</h2>
-                    <p class="mt-2 text-base text-slate-600">{% trans 'End-to-end automation, from data intake to smart reporting.' %}</p>
+        <!-- Right Panel - Login Form -->
+        <div class="flex justify-center items-center text-white">
+            <div class="w-full mx-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 xl:p-20 2xl:p-32">
+                <!-- Form Header -->
+                <div class="text-center mb-5 xl:mb-8">
+                    <h2 class="text-3xl 2xl:text-4xl font-black">{% trans 'SIGN IN' %}</h2>
                 </div>
-
-                <form id="loginForm" action="{% url 'login' %}" method="post" class="mx-auto w-full max-w-md space-y-6"
-                    novalidate aria-describedby="form-help">
+                <!-- Login Form -->
+                <form id="loginForm" action="{% url 'login' %}" method="post" novalidate aria-describedby="form-help">
                     {% csrf_token %}
 
-                    <!-- General error message from form -->
-                    {% if error_message %}
-                    <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-                        <span>{{ error_message }}</span>
-                    </div>
-                    {% elif form.non_field_errors %}
-                    <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-                        {{ form.non_field_errors }}
-                    </div>
-                    {% endif %}
-
-                    <div>
-                        <label for="username" class="block text-sm font-semibold text-gray-700 pb-1">
+                    <div class="mb-5 xl:mb-8">
+                        <label for="username" class="block text-base 2xl:text-lg font-medium mb-2">
                             {% trans 'Username or Email' %}
                         </label>
-                        <input id="username" name="username" type="text" autocomplete="username" enterkeyhint="next"
-                            required autocapitalize="none" autocorrect="off" spellcheck="false" autofocus
-                            value="{{ form.username.value|default:'' }}"
-                            class="mt-1 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-0 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
-                            aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
-                            aria-describedby="username-error" />
-
-                        {% if field_errors.username %}
-                        <p class="mt-1 text-sm text-red-600">{{ field_errors.username }}</p>
-                        {% endif %}
+                        <div class="relative block">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-gray-100" viewBox="0 0 16 16">
+                                    <path
+                                        d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
+                                </svg>
+                            </span>
+                            <input id="username" name="username" type="text" autocomplete="username" enterkeyhint="next"
+                                required autocapitalize="none" autocorrect="off" spellcheck="false" autofocus
+                                value="{{ form.username.value|default:'' }}"
+                                class="block w-full rounded-md bg-white/30 border border-transparent py-2 pr-3 pl-9 text-gray-100 placeholder:text-gray-100 placeholder:italic focus:outline-none focus:border-transparent focus:ring-1 focus:ring-blue-500 sm:text-sm" 
+                                aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
+                                aria-describedby="username-error"
+                                placeholder="{% trans 'Enter your username or email' %}" />
+                        </div>
+                        <!-- Error message cho username -->
+                        <div id="username-error" class="mt-1 text-red-300 text-sm flex hidden items-center"
+                            role="alert" aria-live="polite">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2" />
+                            </svg>
+                            <span class="ml-2">{% trans 'Please enter your username or email' %}</span>
+                        </div>
                     </div>
 
-                    <div>
-                        <label for="password" class="block text-sm font-semibold text-gray-700 pb-1">
+                    <div class="mb-5 xl:mb-8">
+                        <label for="password" class="block text-sm 2xl:text-lg font-medium mb-2">
                             {% trans 'Password' %}
                         </label>
-                        <div class="relative mt-1">
+                        <div class="relative block">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-gray-100" viewBox="0 0 16 16">
+                                    <path
+                                        d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8m4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5" />
+                                    <path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+                                </svg>
+                            </span>
                             <input id="password" name="password" type="password" autocomplete="current-password"
                                 enterkeyhint="done" required
-                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-gray-900 focus:border-blue-500 focus:ring-0 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
+                                class="block w-full rounded-md bg-white/30 border border-transparent py-2 pr-3 pl-9 text-gray-100 placeholder:text-gray-100 placeholder:italic focus:outline-none focus:border-transparent focus:ring-1 focus:ring-blue-500 sm:text-sm" 
                                 aria-invalid="{% if form.password.errors %}true{% else %}false{% endif %}"
-                                aria-describedby="password-error" />
+                                aria-describedby="password-error" placeholder="{% trans 'Enter your password' %}" />
                             <button type="button" id="passwordToggle"
-                                class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600 transition-colors"
                                 tabindex="-1" aria-label="Show password" aria-controls="password" aria-pressed="false">
 
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="1.5" stroke="currentColor" id="eyeOff" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-gray-100" id="eyeOff" viewBox="0 0 16 16">
+                                    <path
+                                        d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-2.79.588l.77.771A6 6 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755q-.247.248-.517.486z" />
+                                    <path
+                                        d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829" />
+                                    <path
+                                        d="M3.35 5.47q-.27.24-.518.487A13 13 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7 7 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12z" />
                                 </svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="1.5" stroke="currentColor" id="eyeOn" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-gray-100" id="eyeOn" viewBox="0 0 16 16">
+                                    <path
+                                        d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z" />
+                                    <path
+                                        d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
                                 </svg>
-
                             </button>
                         </div>
-                        {% if field_errors.password %}
-                        <p class="mt-1 text-sm text-red-600">{{ field_errors.password }}</p>
-                        {% endif %}
+                        <!-- Error message cho password -->
+                        <div id="password-error" class="mt-1 text-red-300 text-sm flex hidden items-center" role="alert" aria-live="polite">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2" />
+                            </svg>
+                            <span class="ml-2">{% trans 'Please enter your password' %}</span>
+                        </div>
                     </div>
 
                     <button type="submit"
-                        class="submit-btn inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-70 transition-colors duration-150"
+                        class="submit-btn mb-5 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white shadow hover:bg-blue-900 transition-colors duration-150"
                         id="submitBtn" aria-live="polite">
                         <span class="btn-text">{% trans 'Sign In' %}</span>
                         <span
-                            class="spinner ml-2 hidden h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+                            class="spinner ml-2 hidden h-4 w-4 rounded-full border-2 border-white border-t-transparent"
                             aria-hidden="true"></span>
                     </button>
                 </form>
             </div>
-
-            <div class="mt-8 border-t border-slate-200 pt-6 text-center text-sm text-slate-600">
-                <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                    {% trans 'Need support?' %} <a href="mailto:vinhc@oucru.org"
-                        class="font-medium text-blue-600 hover:underline">vinhc@oucru.org</a>
-                </p>
-                <p class="mt-4 text-xs text-slate-500">
-                    © {% now "Y" %} ResSync — {% trans 'designed by' %} Vinh Chau &amp; Duy Tuong Pham
-                </p>
-            </div>
         </div>
     </div>
-    <script src="{% static 'js/default/base.js' %}"></script>
-    <script src="{% static 'js/default/login.js' %}"></script>
-</body>
 
-</html>
+</main>
+<!-- Footer -->
+<footer class="absolute bottom-0 left-0 right-0 bg-black/20 backdrop-blur-sm text-white text-center p-4">
+    <p class="text-sm">
+        &copy; {% now "Y" %} {% trans 'ResSync Platform. All rights reserved. This platform was designed and developed by Vinh Chau and Pham Thuong Duy.' %}
+    </p>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/default/login.js' %}" defer></script>
+{% endblock %}
