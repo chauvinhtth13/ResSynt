@@ -15,81 +15,86 @@ debug capabilities in development. Always review and update settings based
 on deployment environment.
 """
 
-import threading
 import environ
 from pathlib import Path
+from django.utils.translation import gettext_lazy as _
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Environment variable management using django-environ.
-env = environ.Env()
+env = environ.Env(
+    DEBUG=(bool, False),
+    TENANCY_ENABLED=(bool, True),
+    FEATURE_PASSWORD_RESET=(bool, False),
+)
 
-# Read .env file if it exists.
+# Read .env file
 env_file = BASE_DIR / ".env"
 if env_file.exists():
     environ.Env.read_env(env_file)
-else:
-    print(f"Warning: {env_file} not found. Using environment variables.")
 
-# Core Security Settings
-# ----------------------
-# SECRET_KEY is used for cryptographic signing. Keep this secret in production.
+# ==========================================
+# CORE SETTINGS
+# ==========================================
+
 SECRET_KEY = env("SECRET_KEY")
-
-# Debug and Host Settings
-# -----------------------
-# DEBUG mode enables detailed error pages and disables optimizations.
 DEBUG = env("DEBUG")
-# ALLOWED_HOSTS specifies which hosts/domains can serve the app.
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-# CSRF_TRUSTED_ORIGINS for secure cross-origin requests.
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])  # type: ignore
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
-# URL Configuration
-# -----------------
-# ROOT_URLCONF points to the root URL configuration.
+# URLs
 ROOT_URLCONF = "config.urls"
-# WSGI_APPLICATION for WSGI deployment.
 WSGI_APPLICATION = "config.wsgi.application"
-# ASGI_APPLICATION for ASGI deployment (e.g., with channels).
 ASGI_APPLICATION = "config.asgi.application"
 
-# Application Definition
-# ----------------------
-# List of installed Django apps and third-party packages.
-INSTALLED_APPS = [
+# ==========================================
+# INSTALLED APPS (OPTIMIZED)
+# ==========================================
+
+DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+]
+
+THIRD_PARTY_APPS = [
     "rest_framework",
     "corsheaders",
     "axes",
+    'django_bootstrap5',
     "chartjs",
     "parler",
-    'backend.tenancy',
-    'backend.api',
+]
+
+LOCAL_APPS = [
+    "backend.tenancy",
+    "backend.api",
     "backend.studies",
 ]
 
-# Middleware
-# ----------
-# Middleware stack processes requests and responses globally.
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# ==========================================
+# MIDDLEWARE (SIMPLIFIED)
+# ==========================================
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware", 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "axes.middleware.AxesMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Optimized custom middleware for tenancy and performance.
+    "axes.middleware.AxesMiddleware",
+
     "backend.tenancy.middleware.SecurityHeadersMiddleware",
     "backend.tenancy.middleware.PerformanceMonitoringMiddleware",
     "backend.tenancy.middleware.StudyRoutingMiddleware",
@@ -97,9 +102,10 @@ MIDDLEWARE = [
     "backend.tenancy.middleware.DatabaseConnectionCleanupMiddleware",
 ]
 
-# Templates
-# ---------
-# Configuration for Django's template engine.
+# ==========================================
+# TEMPLATES
+# ==========================================
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -113,12 +119,11 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.i18n",
             ],
-            "debug": DEBUG,
         },
     },
 ]
 
-# Enable template caching in production for performance.
+# Template caching in production
 if not DEBUG:
     TEMPLATES[0]["OPTIONS"]["loaders"] = [
         ("django.template.loaders.cached.Loader", [
@@ -127,8 +132,13 @@ if not DEBUG:
         ]),
     ]
 
-# Database Configuration
-# ----------------------
+
+
+# ==========================================
+# DATABASE (SIMPLIFIED)
+# ==========================================
+
+# Main database
 class DatabaseConfig:
     """
     Centralized database configuration class.
@@ -177,7 +187,7 @@ class DatabaseConfig:
                 "keepalives_interval": 10,
                 "keepalives_count": 5,
             },
-            "TIME_ZONE": env("TIME_ZONE"),
+            "TIME_ZONE": 'Asia/Ho_Chi_Minh',
         })
 
         # Add advanced connection pooling in production.
@@ -219,276 +229,39 @@ class DatabaseConfig:
             },
         }
 
-# Database dictionary with default (management) DB.
+# Primary database configuration.
 DATABASES = {
     "default": DatabaseConfig.get_management_db()
 }
 
-# Ensure search path is set for default DB.
-DATABASES["default"]["OPTIONS"]["options"] = "-c search_path=management,public"
-
-# Database Routers
-# ----------------
 # Routers for multi-database (tenancy) setup.
 DATABASE_ROUTERS = ['backend.tenancy.db_router.TenantRouter']
 
-# Study Database Settings
-# -----------------------
+
 # Prefix for study database names and engine.
 STUDY_DB_PREFIX = env("STUDY_DB_PREFIX")
 STUDY_DB_ENGINE = env("STUDY_DB_ENGINE")
-
-# Custom User Model
-# -----------------
-# Overrides Django's default User model with tenancy-aware version.
-AUTH_USER_MODEL = 'tenancy.User'
-
-# Internationalization
-# --------------------
-# Language and timezone settings.
-LANGUAGE_CODE = env("DEFAULT_LANGUAGE")
-LANGUAGES = [
-    ("vi", "Tiếng Việt"),
-    ("en", "English"),
-]
-LOCALE_PATHS = [BASE_DIR / "locale"]
-USE_I18N = True
-TIME_ZONE = env("TIME_ZONE")
-DATE_FORMAT = env("DATE_FORMAT")
-TIME_FORMAT = env("TIME_FORMAT")
-DATETIME_FORMAT = env("DATETIME_FORMAT")
-USE_TZ = True
-
-# Parler settings for multilingual models.
-PARLER_DEFAULT_LANGUAGE_CODE = 'en'
-PARLER_LANGUAGES = {
-    None: (
-        {'code': 'en', 'name': 'English'},
-        {'code': 'vi', 'name': 'Tiếng Việt'},
-    ),
-    'default': {
-        'fallbacks': ['en'],
-        'hide_untranslated': False,
-    }
-}
-
-# Static Files
-# ------------
-# Settings for serving static files (CSS, JS, images).
-STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "frontend" / "static"]  # Directory for static files in frontend.
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_FINDERS = [
-    "django.contrib.staticfiles.finders.FileSystemFinder",
-    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-]
-
-# Use manifest storage in production for cache-busting.
-if not DEBUG:
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-
-# Media Files
-# -----------
-# Settings for user-uploaded files.
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
-# Authentication Redirects
-# ------------------------
-# URLs for login, logout, and redirects.
-LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/select-study/"
-LOGOUT_REDIRECT_URL = "/accounts/login/"
-# Feature flag for password reset functionality.
-FEATURE_PASSWORD_RESET = env.bool("FEATURE_PASSWORD_RESET")
-
-# Security Settings
-# -----------------
-# Environment-aware security enhancements.
-SESSION_ENGINE = "django.contrib.sessions.backends.cache" if not DEBUG else "django.contrib.sessions.backends.db"
-SESSION_COOKIE_SECURE = not DEBUG
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_AGE = 3600  # 1 hour session lifetime.
-SESSION_SAVE_EVERY_REQUEST = False  # Save only when session is modified.
-CSRF_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_HTTPONLY = True
-SECURE_SSL_REDIRECT = not DEBUG
-SECURE_HSTS_SECONDS = 0 if DEBUG else 31536000  # 1 year HSTS in production.
-SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
-SECURE_HSTS_PRELOAD = not DEBUG
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https") if not DEBUG else None
-X_FRAME_OPTIONS = "DENY"
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-SECURE_BROWSER_XSS_FILTER = True
-
-# Additional production security policies.
-if not DEBUG:
-    SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
-    CSRF_COOKIE_SAMESITE = "Strict"
-    SESSION_COOKIE_SAMESITE = "Strict"
-
-# Default Primary Key Field Type
-# ------------------------------
-# Use BigAutoField for all models by default.
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# Logging Configuration
-# ---------------------
-# Optimized logging with rotation and minimal overhead.
-LOGS_DIR = BASE_DIR / "logs"
-LOGS_DIR.mkdir(exist_ok=True)
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "simple": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
-            "level": "WARNING",
-        },
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "simple",
-            "filename": str(LOGS_DIR / "django.log"),
-            "encoding": "utf-8",
-            "maxBytes": 5 * 1024 * 1024,  # 5 MB per file.
-            "backupCount": 3,
-            "level": "WARNING",
-            "delay": True,  # Delay file creation until first log.
-        },
-        "axes_file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "simple",
-            "filename": str(LOGS_DIR / "axes.log"),
-            "encoding": "utf-8",
-            "maxBytes": 2 * 1024 * 1024,  # 2 MB per file.
-            "backupCount": 2,
-            "level": "WARNING",
-            "delay": True,
-        },
-    },
-    "root": {
-        "handlers": ["console", "file"],
-        "level": "WARNING",
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "backend.tenancy": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "backend.studies": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "axes": {
-            "handlers": ["axes_file", "console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-    },
-}
-
-# Caching Configuration
-# ---------------------
-# Use local memory cache in debug, Redis in production.
-if DEBUG:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "unique-snowflake",
-            "OPTIONS": {
-                "MAX_ENTRIES": 1000,
-                "CULL_FREQUENCY": 3,  # Cull 1/3 of cache when full.
-            }
-        }
-    }
-else:
-    CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": env("REDIS_URL"),
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                "CONNECTION_POOL_KWARGS": {
-                    "max_connections": 50,
-                    "retry_on_timeout": True,
-                },
-                "SOCKET_CONNECT_TIMEOUT": 5,
-                "SOCKET_TIMEOUT": 5,
-                "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
-                "IGNORE_EXCEPTIONS": True,  # Graceful failure if Redis is unavailable.
-            },
-            "KEY_PREFIX": "ressync",
-            "VERSION": 1,
-        }
-    }
-
-# Cache middleware settings.
-CACHE_MIDDLEWARE_SECONDS = 300 if not DEBUG else 0
-CACHE_MIDDLEWARE_KEY_PREFIX = 'ressync'
-
-# Email Configuration
-# -------------------
-# SMTP settings for password reset if enabled.
-if FEATURE_PASSWORD_RESET:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = env("EMAIL_HOST")
-    EMAIL_PORT = env.int("EMAIL_PORT")
-    EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
-    EMAIL_HOST_USER = env("EMAIL_HOST_USER")
-    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
-
-    # Validate required settings in production.
-    if not DEBUG and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
-        raise ValueError("EMAIL_HOST_USER and EMAIL_HOST_PASSWORD are required when FEATURE_PASSWORD_RESET is True")
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
-# Custom Settings
-# ---------------
-# Tenancy-related feature flags and prefixes.
-TENANCY_ENABLED = env.bool("TENANCY_ENABLED")
 TENANCY_STUDY_CODE_PREFIX = env("TENANCY_STUDY_CODE_PREFIX")
 
-# Thread-local storage for request-scoped data.
-THREAD_LOCAL = threading.local()
+# ==========================================
+# AUTHENTICATION
+# ==========================================
 
-# Authentication Backends
-# -----------------------
-# Backends for authentication, including Axes for brute-force protection.
+AUTH_USER_MODEL = "tenancy.User"
+
 AUTHENTICATION_BACKENDS = [
-    'axes.backends.AxesStandaloneBackend',  # For django-axes 8.0.0
-    'django.contrib.auth.backends.ModelBackend',
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
-# Axes Configuration
-# ------------------
-# Settings for django-axes to prevent brute-force login attempts.
-AXES_FAILURE_LIMIT = 8  # Number of failed attempts before lockout.
-AXES_COOLOFF_TIME = None  # Hours to wait after lockout.
-AXES_RESET_ON_SUCCESS = True  # Reset counter on successful login.
-AXES_LOCKOUT_PARAMETERS = [['username']]  # Lock by username only.
-AXES_USERNAME_FORM_FIELD = 'username'
-AXES_HANDLER = 'axes.handlers.database.AxesDatabaseHandler'
-AXES_CACHE = 'default'
-AXES_ENABLED = True  # Disable in debug if needed by setting to False.
-AXES_VERBOSE = DEBUG
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
 
-# Password Hashers
-# ----------------
-# Preferred hashers for secure password storage.
+# Password hashers (only keep Argon2 and PBKDF2)
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -496,12 +269,303 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
 ]
 
-# Password Validation
-# --------------------
-# Validators to enforce strong passwords.
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+# ==========================================
+# AXES (BRUTE FORCE PROTECTION)
+# ==========================================
+
+AXES_FAILURE_LIMIT = 5  # Reduced from 8
+AXES_COOLOFF_TIME = 1  # 1 hour cooloff
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_PARAMETERS = [["username"]]
+AXES_ENABLED = not DEBUG  # Disable in development
+
+# ==========================================
+# INTERNATIONALIZATION
+# ==========================================
+
+# Enable i18n
+USE_I18N = True
+USE_L10N = True  # Localization for dates, numbers
+USE_TZ = True
+
+# Default language
+LANGUAGE_CODE = 'vi'  # Vietnamese as default
+
+# Available languages
+LANGUAGES = [
+    ('vi', _('Vietnamese')),  # Tiếng Việt
+    ('en', _('English')),     # Tiếng Anh
 ]
+
+LANGUAGE_COOKIE_NAME = 'django_language'
+LANGUAGE_COOKIE_AGE = None  # Browser session
+LANGUAGE_COOKIE_DOMAIN = None
+LANGUAGE_COOKIE_PATH = '/'
+LANGUAGE_COOKIE_SECURE = False
+LANGUAGE_COOKIE_HTTPONLY = False
+LANGUAGE_COOKIE_SAMESITE = 'Lax'
+
+# Locale paths - where translation files are stored
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
+
+# Time zone
+TIME_ZONE = 'Asia/Ho_Chi_Minh'  # Vietnam timezone
+
+# Date and time formats for Vietnamese
+DATE_FORMAT = 'd/m/Y'
+TIME_FORMAT = 'H:i'
+DATETIME_FORMAT = 'd/m/Y H:i:s'
+YEAR_MONTH_FORMAT = 'F Y'
+MONTH_DAY_FORMAT = 'j F'
+SHORT_DATE_FORMAT = 'd/m/Y'
+SHORT_DATETIME_FORMAT = 'd/m/Y H:i'
+
+# Input formats for forms
+DATE_INPUT_FORMATS = [
+    '%d/%m/%Y',  # '25/10/2006'
+    '%d-%m-%Y',  # '25-10-2006'
+    '%Y-%m-%d',  # '2006-10-25'
+]
+
+TIME_INPUT_FORMATS = [
+    '%H:%M:%S',  # '14:30:59'
+    '%H:%M',     # '14:30'
+]
+
+DATETIME_INPUT_FORMATS = [
+    '%d/%m/%Y %H:%M:%S',
+    '%d/%m/%Y %H:%M',
+    '%d-%m-%Y %H:%M:%S',
+    '%d-%m-%Y %H:%M',
+    '%Y-%m-%d %H:%M:%S',
+    '%Y-%m-%d %H:%M',
+]
+
+# Number formats
+USE_THOUSAND_SEPARATOR = True
+THOUSAND_SEPARATOR = '.'
+DECIMAL_SEPARATOR = ','
+NUMBER_GROUPING = 3
+
+# First day of week (0=Monday, 6=Sunday)
+FIRST_DAY_OF_WEEK = 1  # Monday
+
+# Parler settings for multilingual models.
+PARLER_DEFAULT_LANGUAGE_CODE = 'en'
+PARLER_LANGUAGES = {
+    None: tuple({"code": code} for code, _ in LANGUAGES),
+    'default': {
+        'fallbacks': ['en'],
+        'hide_untranslated': False,
+    }
+}
+
+# ==========================================
+# STATIC & MEDIA FILES
+# ==========================================
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "frontend" / "static"] if (BASE_DIR / "frontend" / "static").exists() else []
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+if not DEBUG:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+
+# ==========================================
+# BOOTSTRAP5 SETTINGS
+# ==========================================
+BOOTSTRAP5 = {
+    # CSS: Sử dụng local file để tránh phụ thuộc CDN (tốc độ nhanh hơn, offline ok, nhưng cần collectstatic)
+    'css_url': {
+        'url': f"{STATIC_URL}css/bootstrap/bootstrap.min.css",  # Đảm bảo path tồn tại: frontend/static/css/default/bootstrap.min.css
+        # Bỏ integrity/crossorigin vì local, nhưng nếu dùng CDN thì thêm để security
+    },
+
+    # The complete URL to the Bootstrap bundle JavaScript file.
+    "javascript_url": {
+        'url': f"{STATIC_URL}js/bootstrap/bootstrap.bundle.min.js",
+    },
+
+    'required_css_class': 'required',
+    'error_css_class': 'is-invalid',
+    'success_css_class': 'is-valid',
+
+    'wrapper_class': 'mb-3',
+
+    'inline_wrapper_class': '',
+
+    'horizontal_label_class': 'col-sm-2',
+
+    'horizontal_field_class': 'col-sm-10',
+
+    'horizontal_field_offset_class': 'offset-sm-2',
+
+    'set_placeholder': True,
+
+    'server_side_validation': True,
+
+    'formset_renderers':{
+        'default': 'django_bootstrap5.renderers.FormsetRenderer',
+    },
+    'form_renderers': {
+        'default': 'django_bootstrap5.renderers.FormRenderer',
+    },
+    'field_renderers': {
+        'default': 'django_bootstrap5.renderers.FieldRenderer',
+    },
+}
+
+# ==========================================
+# SECURITY
+# ==========================================
+
+# Session settings
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"  # Better than cache-only
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SAMESITE = "Lax" if DEBUG else "Strict"
+
+# CSRF settings
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SAMESITE = "Lax" if DEBUG else "Strict"
+
+# Security headers
+SECURE_SSL_REDIRECT = not DEBUG
+X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# HSTS (only in production)
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# ==========================================
+# CACHING (SIMPLIFIED)
+# ==========================================
+
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+else:
+    # Use Redis in production if available
+    redis_url = env("REDIS_URL")
+    if redis_url:
+        CACHES = {
+            "default": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": redis_url,
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                    "IGNORE_EXCEPTIONS": True,  # Fallback if Redis fails
+                }
+            }
+        }
+    else:
+        # Fallback to database cache
+        CACHES = {
+            "default": {
+                "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+                "LOCATION": "cache_table",
+            }
+        }
+
+# ==========================================
+# LOGGING (SIMPLIFIED)
+# ==========================================
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "django.log",
+            "maxBytes": 5242880,  # 5MB
+            "backupCount": 3,
+        },
+    },
+    "root": {
+        "handlers": ["console"] if DEBUG else ["console", "file"],
+        "level": "INFO" if DEBUG else "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"] if DEBUG else ["console", "file"],
+            "level": "INFO" if DEBUG else "WARNING",
+            "propagate": False,
+        },
+    },
+}
+
+# ==========================================
+# EMAIL (ONLY IF NEEDED)
+# ==========================================
+
+if env("FEATURE_PASSWORD_RESET"):
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = env("EMAIL_HOST")
+    EMAIL_PORT = env.int("EMAIL_PORT")
+    EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
+    EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# ==========================================
+# REST FRAMEWORK
+# ==========================================
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ] if not DEBUG else [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+}
+
+# ==========================================
+# CORS CONFIGURATION
+# ==========================================
+
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Authentication Redirects
+# ------------------------
+# URLs for login, logout, and redirects.
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/select-study/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+# ==========================================
+# OTHER SETTINGS
+# ==========================================
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

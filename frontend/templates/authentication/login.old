@@ -1,0 +1,150 @@
+<!-- frontend\templates\authentication\login.html -->
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}ResSync - Sign In{% endblock %}
+{% block page_name %}login{% endblock %}
+
+{% block body %}
+
+<!-- Login Header - Separate from main header -->
+{% include 'includes/headers/simple_header.html' %}
+
+<!-- Login Content -->
+<main class="w-full flex-grow content-center bg-gradient-to-br from-[#9E3E33] to-[#335071]">
+
+    <!-- Main content grid container - this is the first row -->
+    <div class="grid grid-cols-1 lg:grid-cols-[3fr_auto_2fr]">
+        
+        <!-- Left Panel -->
+        <div class="hidden lg:flex justify-center items-center text-white">
+            <div class="w-full mx-auto">
+                <h1 class="text-3xl xl:text-4xl 2xl:text-5xl font-black">
+                    Welcome to ResSync Platform
+                </h1>
+                <p class="italic font-light text-sm xl:text-lg 2xl:text-2xl">
+                    End-to-End Research Data Management: Beyond Limits, Unleash Intelligent Discovery.
+                </p>
+                {% include 'includes/features_list.html' %}
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="hidden lg:block w-px self-stretch bg-gray-300/50"></div>
+
+        <!-- Right Panel - Login Form -->
+        <div class="flex justify-center items-center text-white">
+            <div class="w-full mx-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl">
+                <!-- Form Header -->
+                <div class="text-center mb-5 xl:mb-8">
+                    <h2 class="text-3xl 2xl:text-4xl font-black">{% trans 'SIGN IN' %}</h2>
+                </div>
+                <!-- Login Form -->
+                <form id="loginForm" action="{% url 'login' %}" method="post" novalidate aria-describedby="form-help">
+                    {% csrf_token %}
+
+                    <div class="mb-5 xl:mb-8">
+                        <label for="username" class="block text-base 2xl:text-lg font-medium mb-2">
+                            {% trans 'Username or Email' %}
+                        </label>
+                        <div class="relative block">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-gray-100" viewBox="0 0 16 16">
+                                    <path
+                                        d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
+                                </svg>
+                            </span>
+                            <input id="username" name="username" type="text" autocomplete="username" enterkeyhint="next"
+                                required autocapitalize="none" autocorrect="off" spellcheck="false" autofocus
+                                value="{{ form.username.value|default:'' }}"
+                                class="block w-full rounded-md bg-white/30 border border-transparent py-2 pr-3 pl-9 text-gray-100 placeholder:text-gray-100 placeholder:italic focus:outline-none focus:border-transparent focus:ring-1 focus:ring-blue-500 sm:text-sm" 
+                                aria-invalid="{% if form.username.errors %}true{% else %}false{% endif %}"
+                                aria-describedby="username-error"
+                                placeholder="{% trans 'Enter your username or email' %}" />
+                        </div>
+                        <!-- Error message cho username -->
+                        <div id="username-error" class="mt-1 text-red-300 text-sm flex hidden items-center"
+                            role="alert" aria-live="polite">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2" />
+                            </svg>
+                            <span class="ml-2">{% trans 'Please enter your username or email' %}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-5 xl:mb-8">
+                        <label for="password" class="block text-sm 2xl:text-lg font-medium mb-2">
+                            {% trans 'Password' %}
+                        </label>
+                        <div class="relative block">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-gray-100" viewBox="0 0 16 16">
+                                    <path
+                                        d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8m4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5" />
+                                    <path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+                                </svg>
+                            </span>
+                            <input id="password" name="password" type="password" autocomplete="current-password"
+                                enterkeyhint="done" required
+                                class="block w-full rounded-md bg-white/30 border border-transparent py-2 pr-3 pl-9 text-gray-100 placeholder:text-gray-100 placeholder:italic focus:outline-none focus:border-transparent focus:ring-1 focus:ring-blue-500 sm:text-sm" 
+                                aria-invalid="{% if form.password.errors %}true{% else %}false{% endif %}"
+                                aria-describedby="password-error" placeholder="{% trans 'Enter your password' %}" />
+                            <button type="button" id="passwordToggle"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600 transition-colors"
+                                tabindex="-1" aria-label="Show password" aria-controls="password" aria-pressed="false">
+
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-gray-100" id="eyeOff" viewBox="0 0 16 16">
+                                    <path
+                                        d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-2.79.588l.77.771A6 6 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755q-.247.248-.517.486z" />
+                                    <path
+                                        d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829" />
+                                    <path
+                                        d="M3.35 5.47q-.27.24-.518.487A13 13 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7 7 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12z" />
+                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-gray-100" id="eyeOn" viewBox="0 0 16 16">
+                                    <path
+                                        d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z" />
+                                    <path
+                                        d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
+                                </svg>
+                            </button>
+                        </div>
+                        <!-- Error message cho password -->
+                        <div id="password-error" class="mt-1 text-red-300 text-sm flex hidden items-center" role="alert" aria-live="polite">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2" />
+                            </svg>
+                            <span class="ml-2">{% trans 'Please enter your password' %}</span>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                        class="submit-btn mb-5 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white shadow hover:bg-blue-900 transition-colors duration-150"
+                        id="submitBtn" aria-live="polite">
+                        <span class="btn-text">{% trans 'Sign In' %}</span>
+                        <span
+                            class="spinner ml-2 hidden h-4 w-4 rounded-full border-2 border-white border-t-transparent"
+                            aria-hidden="true"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</main>
+<!-- Footer -->
+<footer class="bottom-0 bg-gradient-to-r from-[#9E3E33] to-[#335071] text-white text-center p-4">
+    <p class="text-sm">
+        &copy; {% now "Y" %} {% trans 'ResSync Platform. All rights reserved. This platform was designed and developed by Vinh Chau and Pham Thuong Duy.' %}
+    </p>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/default/login.js' %}" defer></script>
+{% endblock %}
