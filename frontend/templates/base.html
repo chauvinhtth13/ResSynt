@@ -3,8 +3,6 @@
 {% load i18n %}
 {% load static %}
 {% get_current_language as LANGUAGE_CODE %}
-{% bootstrap_setting "color_mode" as COLOR_MODE %}
-{% bootstrap_setting "javascript_in_head" as BOOTSTRAP_JAVASCRIPT_IN_HEAD %}
 <html lang="{{ LANGUAGE_CODE|default:'vi' }}" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -13,7 +11,10 @@
     <title>{% block title %}ResSync Platform{% endblock %}</title>
     
     <link rel="stylesheet" href="{% static 'font/bootstrap-icons/bootstrap-icons.css' %}" />
-    <link rel="stylesheet" href="{% static 'font/open-sans/open-sans.css' %}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  ...
 
     {% bootstrap_css %}
     {% if BOOTSTRAP_JAVASCRIPT_IN_HEAD %}{% bootstrap_javascript %}{% endif %}

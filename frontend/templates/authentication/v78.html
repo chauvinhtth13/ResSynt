@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Đăng Nhập - ResSync Platform{% endblock %}
+
+{% block extra_head %}
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Prevent zoom on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    
+    <style>
+        /* Minimal Custom CSS - Only essentials */
+        :root {
+            --primary-color: #335071;
+            --secondary-color: #9E3E33;
+            --gradient: linear-gradient(135deg, #9E3E33 0%, #335071 100%);
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Gradient backgrounds */
+        .bg-gradient-custom {
+            background: var(--gradient);
+        }
+
+        .text-gradient {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Form inputs */
+        .form-control-icon {
+            padding-left: 2.75rem;
+            padding-right: 2.75rem;
+        }
+
+        .input-icon-left,
+        .input-icon-right {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 3;
+        }
+
+        .input-icon-left {
+            left: 0.875rem;
+        }
+
+        .input-icon-right {
+            right: 0.875rem;
+        }
+
+        .form-control:focus ~ .input-icon-left {
+            color: var(--primary-color);
+        }
+
+        /* Password toggle button */
+        .btn-toggle-password {
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            padding: 0.25rem;
+            cursor: pointer;
+        }
+
+        .btn-toggle-password:hover {
+            color: var(--primary-color);
+        }
+
+        /* Button gradient */
+        .btn-gradient {
+            background: var(--gradient);
+            border: none;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-gradient:hover {
+            color: white;
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        /* Language switch pills */
+        .btn-group-language {
+            background: #f1f5f9;
+            border-radius: 50px;
+            padding: 3px;
+        }
+
+        .btn-group-language .btn {
+            border-radius: 50px !important;
+            border: none;
+            font-size: 0.875rem;
+            padding: 0.375rem 1rem;
+        }
+
+        .btn-group-language .btn.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Copyright footer */
+        .copyright-text {
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #9e9e9e;
+            text-align: center;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 991px) {
+            .form-control-icon {
+                padding-left: 2.5rem;
+                padding-right: 2.5rem;
+            }
+            
+            .input-icon-left {
+                left: 0.75rem;
+            }
+            
+            .input-icon-right {
+                right: 0.75rem;
+            }
+            
+            .copyright-text {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 575px) {
+            body {
+                font-size: 0.9375rem;
+            }
+            
+            .form-control-icon {
+                padding-left: 2.25rem;
+                padding-right: 2.25rem;
+                height: calc(2.5rem + 2px);
+            }
+            
+            .input-icon-left,
+            .input-icon-right {
+                font-size: 0.875rem;
+            }
+            
+            .copyright-text {
+                font-size: 0.65rem;
+                bottom: 0.5rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center p-0">
+        <div class="row g-0 w-100 bg-white shadow-lg" style="max-width: 1400px; min-height: 600px;">
+            
+            <!-- Left Section: Welcome Content -->
+            <div class="col-lg-8 bg-gradient-custom text-white p-5 d-none d-lg-flex flex-column justify-content-center">
+                <div class="mb-5">
+                    <h1 class="display-5 fw-light mb-4">
+                        {% trans "Chào mừng đến với Phần Mềm Quản Lý" %}
+                    </h1>
+                    <p class="fs-5 opacity-90 mb-3">
+                        {% trans "Phần mềm của chúng tôi cung cấp các giải pháp hiện đại để quản lý dữ liệu, tối ưu hóa quy trình làm việc và nâng cao hiệu suất kinh doanh." %}
+                    </p>
+                    <p class="opacity-75">
+                        {% trans "Với giao diện thân thiện và tính năng mạnh mẽ, bạn có thể dễ dàng theo dõi, phân tích và ra quyết định nhanh chóng." %}
+                    </p>
+                </div>
+                
+                <!-- Features -->
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white bg-opacity-25 rounded-2 p-2 me-3">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <span>{% trans "Phân tích dữ liệu thời gian thực" %}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white bg-opacity-25 rounded-2 p-2 me-3">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <span>{% trans "Bảo mật đa lớp tiên tiến" %}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white bg-opacity-25 rounded-2 p-2 me-3">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </div>
+                            <span>{% trans "Đồng bộ đa nền tảng" %}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Section: Login Form -->
+            <div class="col-lg-4 p-4 p-lg-5 d-flex flex-column justify-content-center position-relative">
+                
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-box-seam-fill fs-3 text-gradient me-2"></i>
+                        <span class="fs-4 fw-bold text-gradient">ResSync</span>
+                    </div>
+                    <div class="btn-group btn-group-sm btn-group-language" role="group">
+                        <button type="button" class="btn active" data-lang="vi">VI</button>
+                        <button type="button" class="btn" data-lang="en">EN</button>
+                    </div>
+                </div>
+                
+                <!-- Title -->
+                <div class="mb-4">
+                    <h2 class="h3 fw-normal mb-2">{% trans "Đăng Nhập" %}</h2>
+                    <p class="text-muted small">{% trans "Vui lòng nhập thông tin để truy cập tài khoản của bạn." %}</p>
+                </div>
+                
+                <!-- Login Form -->
+                <form method="POST" action="{% url 'login' %}" id="loginForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+                    
+                    <!-- Email Input -->
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="small fw-medium">
+                            {% trans "Username or Email" %}
+                        </label>
+                        <div class="position-relative">
+                            <input type="text" 
+                                   class="form-control form-control-icon {% if form.username.errors %}is-invalid{% endif %}"
+                                   id="{{ form.username.id_for_label }}"
+                                   name="{{ form.username.name }}"
+                                   value="{{ form.username.value|default:'' }}"
+                                   placeholder="{% trans 'Enter username or email' %}"
+                                   required
+                                   autofocus>
+                            <i class="bi bi-person input-icon-left"></i>
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.username.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Password Input -->
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label small fw-medium">
+                            {% trans "Mật khẩu" %}
+                        </label>
+                        <div class="position-relative">
+                            <input type="password" 
+                                   class="form-control form-control-icon {% if form.password.errors %}is-invalid{% endif %}"
+                                   id="{{ form.password.id_for_label }}"
+                                   name="{{ form.password.name }}"
+                                   placeholder="{% trans 'Nhập mật khẩu' %}"
+                                   required>
+                            <i class="bi bi-lock input-icon-left"></i>
+                            <button type="button" 
+                                    class="btn-toggle-password input-icon-right"
+                                    data-bs-target="#{{ form.password.id_for_label }}"
+                                    aria-label="{% trans 'Hiển thị mật khẩu' %}"
+                                    tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.password.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 small">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            {{ form.non_field_errors.0 }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-gradient py-2">
+                            <span class="btn-text">{% trans "Đăng nhập" %}</span>
+                            <span class="spinner-border spinner-border-sm d-none" role="status">
+                                <span class="visually-hidden">{% trans "Loading..." %}</span>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Forgot Password -->
+                <div class="text-center mt-3">
+                    <a href="{% url 'password_reset' %}" class="text-decoration-none small">
+                        {% trans "Quên mật khẩu?" %}
+                    </a>
+                </div>
+                
+                <!-- Copyright -->
+                <div class="copyright-text">
+                    <div>&copy; {% now "Y" %} ResSync Platform</div>
+                    <div class="small opacity-75">
+                        {% trans "Designed by" %} Vinh Chau & P.T. Duy
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password Toggle
+            document.querySelectorAll('.btn-toggle-password').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const input = document.querySelector(this.dataset.bsTarget);
+                    const icon = this.querySelector('i');
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.replace('bi-eye', 'bi-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.replace('bi-eye-slash', 'bi-eye');
+                    }
+                });
+            });
+            
+            // Language Switch
+            const langBtns = document.querySelectorAll('.btn-group-language .btn');
+            langBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (this.classList.contains('active')) return;
+                    
+                    langBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Django language switch
+                    const form = new FormData();
+                    form.append('language', this.dataset.lang);
+                    form.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                    
+                    fetch('{% url "set_language" %}', {
+                        method: 'POST',
+                        body: form
+                    }).then(() => location.reload());
+                });
+            });
+            
+            // Form Validation
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(event) {
+                    if (!loginForm.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    } else {
+                        // Show loading
+                        const btn = this.querySelector('button[type="submit"]');
+                        btn.querySelector('.btn-text').classList.add('d-none');
+                        btn.querySelector('.spinner-border').classList.remove('d-none');
+                        btn.disabled = true;
+                    }
+                    loginForm.classList.add('was-validated');
+                });
+            }
+        });
+    </script>
+{% endblock %}

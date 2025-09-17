@@ -388,7 +388,7 @@ BOOTSTRAP5 = {
 
     # The complete URL to the Bootstrap bundle JavaScript file.
     "javascript_url": {
-        'url': f"{STATIC_URL}js/bootstrap/bootstrap.bundle.min.js",
+        'url': f"{STATIC_URL}js/bootstrap/bootstrap.bundle.js",
     },
 
     'required_css_class': 'required',

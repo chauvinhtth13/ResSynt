@@ -64,3 +64,91 @@
         </div>
     </div>
 </header>
+
+
+
+            <section class="col-12 col-lg-5 p-4 p-md-5 bg-white">
+                <div class="h-100 d-flex flex-column justify-content-center">
+                    
+                    <!-- Header with Logo and Language Switch -->
+                    <header class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
+
+                        <div class="lang-switch d-flex">
+                            <button type="button" class="btn btn-sm active" data-lang="vi">VI</button>
+                            <button type="button" class="btn btn-sm" data-lang="en">EN</button>
+                        </div>
+                    </header>
+
+                    <!-- Login Section -->
+                    <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                        <!-- Title -->
+                        <div class="text-center text-lg-start mb-4">
+                            <h2 class="h3 fw-bold mb-2">Đăng Nhập</h2>
+                            <p class="text-muted mb-0">Nhập thông tin để tiếp tục</p>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form novalidate>
+                            <!-- Email/Username -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium text-muted">
+                                    Email hoặc Tên đăng nhập
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-person text-muted"></i>
+                                    </span>
+                                    <input type="email" 
+                                           class="form-control border-start-0 bg-light" 
+                                           placeholder="name@example.com" 
+                                           required 
+                                           autofocus>
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="mb-3">
+                                <label class="form-label fw-medium text-muted">
+                                    Mật khẩu
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-lock text-muted"></i>
+                                    </span>
+                                    <input type="password" 
+                                           class="form-control border-start-0 border-end-0 bg-light" 
+                                           placeholder="••••••••" 
+                                           required
+                                           id="password">
+                                    <button class="btn btn-outline-secondary border-start-0 bg-light" 
+                                            type="button" 
+                                            onclick="togglePassword()">
+                                        <i class="bi bi-eye" id="passwordIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Forgot Password -->
+                            <div class="d-flex justify-content-end mb-4">
+                                <a href="#" class="text-decoration-none small">
+                                    Quên mật khẩu?
+                                </a>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">
+                                Đăng nhập
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Copyright -->
+                    <footer class="d-flex justify-content-between align-items-center">
+                        <div>&copy; {% now "Y" %} ResSync Platform</div>
+                        <div class="small opacity-75">
+                            {% trans "Designed by" %} Vinh Chau & P.T. Duy
+                        </div>
+                    </footer>
+
+                </div>
+            </section>
