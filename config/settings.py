@@ -382,7 +382,7 @@ if not DEBUG:
 BOOTSTRAP5 = {
     # CSS: Sử dụng local file để tránh phụ thuộc CDN (tốc độ nhanh hơn, offline ok, nhưng cần collectstatic)
     'css_url': {
-        'url': f"{STATIC_URL}css/bootstrap/bootstrap.min.css",  # Đảm bảo path tồn tại: frontend/static/css/default/bootstrap.min.css
+        'url': f"{STATIC_URL}css/bootstrap/bootstrap.css",  # Đảm bảo path tồn tại: frontend/static/css/default/bootstrap.min.css
         # Bỏ integrity/crossorigin vì local, nhưng nếu dùng CDN thì thêm để security
     },
 

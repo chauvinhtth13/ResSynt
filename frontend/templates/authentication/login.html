@@ -1,13 +1,1299 @@
 {% extends 'base.html' %}
-{% load django_bootstrap5 %}
-{% load i18n %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}{% trans "Login" %} - ResSync Platform{% endblock %}
+{% block title %}Đăng Nhập - ResSync Platform{% endblock %}
 
-{% block header %}
-{% include 'includes/headers/simple_header.html' %}
+{% block extra_head %}
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Prevent zoom on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    
+    <style>
+        /* Material Design Style với Bootstrap - Responsive Optimized */
+        :root {
+            /* Color Palette */
+            --primary-color: #335071;
+            --secondary-color: #9E3E33;
+            --gradient: linear-gradient(135deg, #9E3E33 0%, #335071 100%);
+            
+            /* Material Shadows */
+            --shadow-1: 0 2px 4px -1px rgba(0,0,0,0.2), 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12);
+            --shadow-2: 0 3px 5px -1px rgba(0,0,0,0.2), 0 6px 10px 0 rgba(0,0,0,0.14), 0 1px 18px 0 rgba(0,0,0,0.12);
+            --shadow-3: 0 5px 5px -3px rgba(0,0,0,0.2), 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12);
+            
+            /* Transitions */
+            --transition: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: #f8f9fa;
+        }
+
+        /* Main Container - Fixed Height */
+        .login-container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Row Full Height */
+        .row {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        /* Left Section - Hidden on < 992px */
+        .left-section {
+            background: var(--gradient);
+            padding: 3rem 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .left-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .left-content {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+        }
+
+        .left-section h1 {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 300;
+            margin-bottom: 1.25rem;
+            color: white;
+        }
+
+        .left-section p {
+            font-size: clamp(0.95rem, 2vw, 1.15rem);
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        /* Features List */
+        .features {
+            margin-top: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .feature-item i {
+            font-size: 1.1rem;
+            margin-right: 0.875rem;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .feature-item span {
+            font-size: clamp(0.875rem, 1.5vw, 1rem);
+        }
+
+        /* Right Section - Full height, no scroll */
+        .right-section {
+            background-color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Right Section Inner Container */
+        .right-section-inner {
+            padding: 1.5rem 2.5rem;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        @media (min-width: 992px) {
+            .right-section-inner {
+                padding: 2rem 3rem;
+            }
+        }
+
+        /* Header Row */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo i {
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+        }
+
+        /* Language Switch - Bootstrap Button Group Custom Style */
+        .language-switch {
+            background: #f1f5f9;
+            border-radius: 50px;
+            padding: 3px;
+        }
+
+        .language-switch .btn {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.875rem;
+            border-radius: 50px !important;
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            transition: all var(--transition);
+            font-weight: 500;
+        }
+
+        .language-switch .btn:hover {
+            color: var(--primary-color);
+        }
+
+        .language-switch .btn:focus {
+            box-shadow: none;
+        }
+
+        .language-switch .btn.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: var(--shadow-1);
+        }
+
+        /* Form Wrapper - Flex grow to center */
+        .form-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+            max-width: 380px;
+            margin: 0 auto;
+            padding: 0.5rem 0;
+        }
+
+        @media (max-width: 991px) {
+            .form-wrapper {
+                padding: 0;
+            }
+        }
+
+        /* Title & Subtitle */
+        .title {
+            font-size: clamp(1.5rem, 3vw, 1.875rem);
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+            color: #212529;
+        }
+
+        .subtitle {
+            font-size: clamp(0.875rem, 1.5vw, 1rem);
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        /* Material Input - Simplified Design */
+        .material-input {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .material-input .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.375rem;
+        }
+
+        .material-input .input-wrapper {
+            position: relative;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            padding: 0.75rem 2.75rem 0.75rem 2.75rem;
+            height: 44px;
+            font-size: 0.9375rem;
+            font-family: 'Open Sans', sans-serif;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .form-control-custom:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(51, 80, 113, 0.1);
+        }
+
+        .form-control-custom::placeholder {
+            color: #adb5bd;
+            font-size: 0.875rem;
+        }
+
+        /* Bootstrap Validation States */
+        .was-validated .form-control-custom:invalid,
+        .form-control-custom.is-invalid {
+            border-color: #dc3545;
+            padding-right: 2.75rem;
+        }
+
+        .was-validated .form-control-custom:invalid:focus,
+        .form-control-custom.is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        }
+
+        .was-validated .form-control-custom:valid,
+        .form-control-custom.is-valid {
+            border-color: #198754;
+        }
+
+        /* Input Icons - Left side */
+        .material-input .input-icon-left {
+            position: absolute;
+            left: 0.875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            font-size: 1rem;
+            pointer-events: none;
+            transition: color var(--transition);
+        }
+
+        .form-control-custom:focus ~ .input-icon-left {
+            color: var(--primary-color);
+        }
+
+        .form-control-custom.is-invalid ~ .input-icon-left {
+            color: #dc3545;
+        }
+
+        /* Password Toggle - Right side */
+        .password-toggle {
+            position: absolute;
+            right: 0.875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            border-radius: 4px;
+        }
+
+        .password-toggle:hover {
+            background: #f8f9fa;
+            color: var(--primary-color);
+        }
+
+        .password-toggle:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+            color: var(--primary-color);
+        }
+
+        .password-toggle:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        /* Invalid tooltip - Bootstrap enhancement */
+        .invalid-tooltip {
+            display: none;
+        }
+
+        .was-validated .form-control-custom:invalid ~ .invalid-tooltip {
+            display: none; /* Let Bootstrap's native validation messages show instead */
+        }
+
+        /* Invalid feedback - Use Bootstrap's built-in */
+        .invalid-feedback {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Custom tooltip style - Optional */
+        .tooltip-inner {
+            background-color: var(--primary-color);
+            font-size: 0.875rem;
+        }
+
+        .tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: var(--primary-color);
+        }
+
+        /* Button - Compact */
+        .btn-material {
+            width: 100%;
+            padding: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-radius: 10px;
+            background: var(--gradient);
+            border: none;
+            color: white;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-1);
+            margin-top: 1rem;
+        }
+
+        .btn-material:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-2);
+        }
+
+        .btn-material:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-1);
+        }
+
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple-animation 0.6s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* Forgot Password */
+        .forgot-password-wrapper {
+            text-align: center;
+            margin-top: 0.875rem;
+        }
+
+        .forgot-password {
+            font-size: 0.875rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            position: relative;
+            transition: all var(--transition);
+            display: inline-block;
+        }
+
+        .forgot-password::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color);
+            transition: width var(--transition);
+        }
+
+        .forgot-password:hover {
+            color: var(--secondary-color);
+        }
+
+        .forgot-password:hover::after {
+            width: 100%;
+        }
+
+        /* Copyright Footer - Absolute bottom */
+        .copyright-footer {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #9e9e9e;
+            font-size: 0.65rem;
+            white-space: nowrap;
+            width: 90%;
+        }
+
+        .copyright-footer p {
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .copyright-footer .fw-medium {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        @media (max-width: 375px) {
+            .copyright-footer {
+                font-size: 0.6rem;
+                bottom: 0.5rem;
+            }
+            
+            .copyright-footer p.small {
+                font-size: 0.55rem;
+            }
+        }
+
+        /* Alert Styling - Minimal override */
+        .alert {
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 991px) {
+            .alert {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8125rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from { 
+                opacity: 0; 
+                transform: translateX(-20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .animate-fade-left {
+            animation: fadeInLeft 0.8s ease-out;
+        }
+
+        /* Responsive - Breakpoint at 992px */
+        @media (max-width: 991px) {
+            .login-wrapper {
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .right-section {
+                max-width: 450px;
+                margin: 0 auto;
+                height: 100vh;
+                box-shadow: none;
+            }
+            
+            .right-section-inner {
+                padding: 1rem 1.5rem;
+                justify-content: center;
+                min-height: auto;
+            }
+            
+            .header-row {
+                margin-bottom: 1rem;
+            }
+            
+            .form-wrapper {
+                max-width: 100%;
+            }
+            
+            .title {
+                font-size: 1.5rem;
+                margin-bottom: 0.375rem;
+            }
+            
+            .subtitle {
+                font-size: 0.875rem;
+                margin-bottom: 1.25rem;
+            }
+            
+            .material-input {
+                margin-bottom: 1rem;
+            }
+            
+            .material-input .form-label {
+                font-size: 0.8125rem;
+            }
+            
+            .form-control-custom {
+                height: 42px;
+                padding: 0.625rem 2.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .material-input .input-icon-left {
+                font-size: 0.9rem;
+                left: 0.75rem;
+            }
+            
+            .password-toggle {
+                right: 0.75rem;
+                font-size: 1rem;
+            }
+            
+            .btn-material {
+                padding: 0.625rem;
+                font-size: 0.875rem;
+                margin-top: 0.875rem;
+            }
+            
+            .forgot-password-wrapper {
+                margin-top: 0.75rem;
+            }
+            
+            .copyright-footer {
+                font-size: 0.65rem;
+                bottom: 0.75rem;
+            }
+        }
+
+        /* Tablet Portrait - Height 800-1200px */
+        @media (max-width: 991px) and (min-height: 800px) and (max-height: 1200px) {
+            .right-section-inner {
+                padding: 1.5rem 2rem;
+            }
+            
+            .header-row {
+                margin-bottom: 1.5rem;
+            }
+            
+            .title {
+                font-size: 1.625rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .subtitle {
+                font-size: 0.9375rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .material-input {
+                margin-bottom: 1.25rem;
+            }
+            
+            .material-input label {
+                font-size: 0.875rem;
+            }
+            
+            .material-input input {
+                height: 44px;
+                font-size: 0.9375rem;
+            }
+            
+            .btn-material {
+                padding: 0.75rem;
+                margin-top: 1rem;
+            }
+            
+            .forgot-password-wrapper {
+                margin-top: 0.875rem;
+            }
+            
+            .copyright-footer {
+                font-size: 0.7rem;
+                bottom: 1rem;
+            }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 575px) {
+            .right-section-inner {
+                padding: 0.875rem 1.25rem;
+            }
+            
+            .header-row {
+                margin-bottom: 0.75rem;
+            }
+            
+            .logo {
+                font-size: 1.25rem;
+            }
+            
+            .logo i {
+                font-size: 1rem;
+            }
+            
+            .language-switch .btn {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.625rem;
+            }
+            
+            .title {
+                font-size: 1.375rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .subtitle {
+                font-size: 0.8125rem;
+                margin-bottom: 1rem;
+            }
+            
+            .material-input {
+                margin-bottom: 0.875rem;
+            }
+            
+            .material-input .form-label {
+                font-size: 0.75rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .form-control-custom {
+                height: 40px;
+                font-size: 0.8125rem;
+                padding: 0.5rem 2.25rem;
+            }
+            
+            .material-input .input-icon-left {
+                font-size: 0.875rem;
+                left: 0.625rem;
+            }
+            
+            .password-toggle {
+                right: 0.625rem;
+                font-size: 0.9rem;
+            }
+            
+            .btn-material {
+                padding: 0.5rem;
+                font-size: 0.8125rem;
+                margin-top: 0.75rem;
+            }
+            
+            .forgot-password-wrapper {
+                margin-top: 0.625rem;
+            }
+            
+            .copyright-footer {
+                font-size: 0.6rem;
+                bottom: 0.5rem;
+            }
+        }
+
+        /* Extra Small Mobile (iPhone SE, etc) */
+        @media (max-width: 375px) {
+            .right-section-inner {
+                padding: 0.75rem 1rem;
+            }
+            
+            .header-row {
+                margin-bottom: 0.625rem;
+            }
+            
+            .logo {
+                font-size: 1.125rem;
+            }
+            
+            .title {
+                font-size: 1.25rem;
+            }
+            
+            .subtitle {
+                font-size: 0.75rem;
+                margin-bottom: 0.875rem;
+            }
+            
+            .material-input {
+                margin-bottom: 0.75rem;
+            }
+            
+            .material-input label {
+                font-size: 0.7rem;
+            }
+            
+            .material-input input {
+                height: 38px;
+                padding: 0.5rem 2rem;
+                font-size: 0.75rem;
+            }
+            
+            .material-input .input-icon-left {
+                font-size: 0.8rem;
+                left: 0.5rem;
+            }
+            
+            .password-toggle {
+                right: 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .btn-material {
+                padding: 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Popular Mobile Devices - iPhone 12/13/14 Pro Max, Samsung Galaxy */
+        @media (max-width: 430px) and (min-height: 900px) and (max-height: 950px) {
+            .right-section-inner {
+                padding: 1.25rem 1.5rem;
+            }
+            
+            .header-row {
+                margin-bottom: 1.25rem;
+            }
+            
+            .title {
+                font-size: 1.625rem;
+                margin-bottom: 0.375rem;
+            }
+            
+            .subtitle {
+                font-size: 0.9375rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .material-input {
+                margin-bottom: 1.125rem;
+            }
+            
+            .material-input input {
+                height: 44px;
+                padding: 0.625rem 2.5rem;
+            }
+            
+            .btn-material {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+                margin-top: 1rem;
+            }
+            
+            .copyright-footer {
+                font-size: 0.7rem;
+                bottom: 1rem;
+            }
+        }
+
+        /* iPad Mini & Similar Tablets */
+        @media (min-width: 768px) and (max-width: 991px) and (min-height: 1000px) {
+            .right-section-inner {
+                padding: 2rem 3rem;
+            }
+            
+            .header-row {
+                margin-bottom: 2rem;
+            }
+            
+            .title {
+                font-size: 1.875rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+                margin-bottom: 2rem;
+            }
+            
+            .material-input {
+                margin-bottom: 1.5rem;
+            }
+            
+            .form-control-custom {
+                height: 50px;
+            }
+            
+            .btn-material {
+                padding: 0.875rem;
+                font-size: 1rem;
+                margin-top: 1.25rem;
+            }
+            
+            .copyright-footer {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Extra Large Screens */
+        @media (min-width: 1400px) {
+            .left-section {
+                padding: 4rem 5rem;
+            }
+            
+            .right-section-inner {
+                padding: 2.5rem 4rem;
+            }
+            
+            .form-wrapper {
+                max-width: 420px;
+            }
+        }
+
+        /* Height Responsive - For common mobile heights */
+        @media (max-height: 850px) and (max-width: 991px) {
+            .right-section-inner {
+                padding: 0.875rem 1.5rem;
+            }
+            
+            .header-row {
+                margin-bottom: 0.75rem;
+            }
+            
+            .title {
+                font-size: 1.375rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .subtitle {
+                font-size: 0.8125rem;
+                margin-bottom: 1rem;
+            }
+            
+            .material-input {
+                margin-bottom: 0.875rem;
+            }
+            
+            .material-input .form-label {
+                font-size: 0.75rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .form-control-custom {
+                height: 40px;
+                padding: 0.5rem 2.25rem;
+                font-size: 0.8125rem;
+            }
+            
+            .material-input .input-icon-left {
+                font-size: 0.875rem;
+            }
+            
+            .password-toggle {
+                font-size: 0.9rem;
+            }
+            
+            .btn-material {
+                padding: 0.625rem;
+                margin-top: 0.75rem;
+            }
+            
+            .forgot-password-wrapper {
+                margin-top: 0.625rem;
+            }
+            
+            .copyright-footer {
+                bottom: 0.5rem;
+                font-size: 0.6rem;
+            }
+        }
+
+        /* Compact for short screens */
+        @media (max-height: 700px) {
+            .header-row {
+                margin-bottom: 0.625rem;
+            }
+            
+            .title {
+                font-size: 1.25rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .subtitle {
+                font-size: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .material-input {
+                margin-bottom: 0.75rem;
+            }
+            
+            .material-input .form-label {
+                font-size: 0.7rem;
+                margin-bottom: 0.125rem;
+            }
+            
+            .form-control-custom {
+                height: 38px;
+                padding: 0.5rem 2rem;
+                font-size: 0.8125rem;
+            }
+            
+            .material-input .input-icon-left {
+                font-size: 0.8rem;
+                left: 0.5rem;
+            }
+            
+            .password-toggle {
+                right: 0.5rem;
+                font-size: 0.875rem;
+                padding: 0.125rem;
+            }
+            
+            .btn-material {
+                padding: 0.5rem;
+                margin-top: 0.625rem;
+                font-size: 0.8rem;
+            }
+            
+            .forgot-password-wrapper {
+                margin-top: 0.5rem;
+            }
+            
+            .copyright-footer {
+                bottom: 0.5rem;
+                font-size: 0.6rem;
+            }
+        }
+
+        /* Very Short Screens */
+        @media (max-height: 550px) {
+            .right-section-inner {
+                padding: 0.5rem 1rem;
+            }
+            
+            .header-row {
+                margin-bottom: 0.5rem;
+            }
+            
+            .material-input {
+                margin-bottom: 0.625rem;
+            }
+            
+            .material-input .form-label {
+                display: none;
+            }
+            
+            .form-control-custom {
+                height: 36px;
+                font-size: 0.75rem;
+                padding: 0.4rem 1.75rem;
+            }
+            
+            .material-input .input-icon-left {
+                font-size: 0.75rem;
+            }
+            
+            .password-toggle {
+                font-size: 0.8rem;
+            }
+            
+            .btn-material {
+                padding: 0.4rem;
+                font-size: 0.75rem;
+            }
+            
+            .copyright-footer {
+                display: none;
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block main %}
+    <div class="login-container">
+        <div class="login-wrapper">
+            <div class="row g-0 animate-slide-up">
+                <!-- Left Section: 8/12 width - Hidden < 992px -->
+                <div class="col-lg-8 left-section d-none d-lg-flex">
+                    <div class="left-content animate-fade-left">
+                        <h1>{% trans "Chào mừng đến với Phần Mềm Quản Lý" %}</h1>
+                        <p>{% trans "Phần mềm của chúng tôi cung cấp các giải pháp hiện đại để quản lý dữ liệu, tối ưu hóa quy trình làm việc và nâng cao hiệu suất kinh doanh." %}</p>
+                        <p>{% trans "Với giao diện thân thiện và tính năng mạnh mẽ, bạn có thể dễ dàng theo dõi, phân tích và ra quyết định nhanh chóng." %}</p>
+                        
+                        <div class="features">
+                            <div class="feature-item">
+                                <i class="bi bi-graph-up-arrow"></i>
+                                <span>{% trans "Phân tích dữ liệu thời gian thực" %}</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="bi bi-shield-check"></i>
+                                <span>{% trans "Bảo mật đa lớp tiên tiến" %}</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="bi bi-arrow-repeat"></i>
+                                <span>{% trans "Đồng bộ đa nền tảng" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Section: 4/12 width - Full width < 992px -->
+                <div class="col-lg-4 col-12 right-section">
+                    <div class="right-section-inner">
+                        <!-- Header -->
+                        <div class="header-row">
+                            <div class="logo">
+                                <i class="bi bi-box-seam-fill"></i>
+                                ResSync
+                            </div>
+                            <div class="btn-group language-switch" role="group" aria-label="{% trans 'Chọn ngôn ngữ' %}">
+                                <button type="button" class="btn btn-sm active" data-lang="vi">VI</button>
+                                <button type="button" class="btn btn-sm" data-lang="en">EN</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Wrapper -->
+                        <div class="form-wrapper">
+                            <!-- Title -->
+                            <h2 class="title">{% trans "Đăng Nhập" %}</h2>
+                            <p class="subtitle">{% trans "Vui lòng nhập thông tin để truy cập tài khoản của bạn." %}</p>
+                            
+                            <!-- Django Messages -->
+                            {% if messages %}
+                                <div class="mb-3">
+                                    {% for message in messages %}
+                                        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                                            <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-circle{% else %}info-circle{% endif %}-fill me-2"></i>
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'Đóng' %}"></button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Login Form -->
+                            <form method="POST" action="{% url 'login' %}" id="loginForm" class="needs-validation" novalidate>
+                                {% csrf_token %}
+                                
+                                {% if next %}
+                                    <input type="hidden" name="next" value="{{ next }}">
+                                {% endif %}
+                                
+                                <!-- Email Input -->
+                                <div class="material-input">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label">
+                                        {% trans "Email hoặc Tên đăng nhập" %}
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <input type="text" 
+                                               id="{{ form.username.id_for_label }}"
+                                               name="{{ form.username.name }}"
+                                               value="{{ form.username.value|default:'' }}"
+                                               placeholder="{% trans 'Nhập email hoặc tên đăng nhập' %}"
+                                               class="form-control-custom {% if form.username.errors %}is-invalid{% endif %}"
+                                               required
+                                               autofocus>
+                                        <i class="bi bi-person input-icon-left"></i>
+                                    </div>
+                                    {% if form.username.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.username.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Password Input -->
+                                <div class="material-input">
+                                    <label for="{{ form.password.id_for_label }}" class="form-label">
+                                        {% trans "Mật khẩu" %}
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <input type="password" 
+                                               id="{{ form.password.id_for_label }}"
+                                               name="{{ form.password.name }}"
+                                               placeholder="{% trans 'Nhập mật khẩu' %}"
+                                               class="form-control-custom {% if form.password.errors %}is-invalid{% endif %}"
+                                               required
+                                               minlength="6">
+                                        <i class="bi bi-lock input-icon-left"></i>
+                                        <button type="button" 
+                                                class="password-toggle"
+                                                data-bs-target="#{{ form.password.id_for_label }}"
+                                                aria-label="{% trans 'Hiển thị mật khẩu' %}"
+                                                tabindex="-1">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.password.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.password.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        {{ form.non_field_errors.0 }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Submit Button -->
+                                <button type="submit" class="btn btn-material w-100">
+                                    <span class="btn-text">{% trans "Đăng nhập" %}</span>
+                                    <span class="spinner-border spinner-border-sm d-none" role="status">
+                                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                                    </span>
+                                </button>
+                            </form>
+                            
+                            <!-- Forgot Password -->
+                            <div class="forgot-password-wrapper">
+                                <a href="#" class="forgot-password">
+                                    {% trans "Quên mật khẩu?" %}
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Copyright Footer -->
+                        <div class="copyright-footer">
+                            <p class="mb-1">&copy; {% now "Y" %} ResSync Platform</p>
+                            <p class="small">{% trans "Designed by" %} <span class="fw-medium">Vinh Chau</span> & <span class="fw-medium">Pham Thuong Duy</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Minimal JavaScript leveraging Bootstrap Bundle
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password Toggle
+            document.querySelectorAll('.password-toggle').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const input = document.querySelector(this.dataset.bsTarget);
+                    const icon = this.querySelector('i');
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.replace('bi-eye', 'bi-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.replace('bi-eye-slash', 'bi-eye');
+                    }
+                });
+            });
+            
+            // Language Switch - Using event delegation
+            const langSwitch = document.querySelector('.language-switch');
+            if (langSwitch) {
+                langSwitch.addEventListener('click', function(e) {
+                    const btn = e.target.closest('.btn');
+                    if (!btn || btn.classList.contains('active')) return;
+                    
+                    // Bootstrap button group - update active
+                    this.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Submit language change to Django
+                    const form = new FormData();
+                    form.append('language', btn.dataset.lang);
+                    form.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                    
+                    fetch('{% url "set_language" %}', {
+                        method: 'POST',
+                        body: form
+                    }).then(() => location.reload());
+                });
+            }
+            
+            // Form Validation - Using Bootstrap's validation
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    } else {
+                        // Show loading state
+                        const btn = form.querySelector('button[type="submit"]');
+                        btn.querySelector('.btn-text').classList.add('d-none');
+                        btn.querySelector('.spinner-border').classList.remove('d-none');
+                        btn.disabled = true;
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+            
+            // Auto-dismiss alerts after 5 seconds (using Bootstrap Alert API)
+            document.querySelectorAll('.alert').forEach(alert => {
+                setTimeout(() => {
+                    bootstrap.Alert.getOrCreateInstance(alert).close();
+                }, 5000);
+            });
+        });
+    </script>
 {% endblock %}
