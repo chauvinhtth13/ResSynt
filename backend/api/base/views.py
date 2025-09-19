@@ -2,7 +2,7 @@
 import logging
 from datetime import timedelta
 from typing import Optional, Dict, Any
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.utils.translation import gettext_lazy as _, get_language, activate
@@ -353,3 +353,12 @@ def dashboard(request, study_code=None):
         'tables': tables,
     }
     return render(request, 'default/dashboard.html', context)
+
+def logout_view(request):
+    """Logout view"""
+    if request.user.is_authenticated:
+        username = request.user.username
+        logger.info(f"User {username} logged out")
+    
+    logout(request)
+    return redirect('home')

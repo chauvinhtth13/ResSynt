@@ -65,8 +65,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "corsheaders",
-    "axes",
-    'django_bootstrap5',
+    "axes", 
     "chartjs",
     "parler",
 ]
@@ -251,6 +250,7 @@ AUTH_USER_MODEL = "tenancy.User"
 
 AUTHENTICATION_BACKENDS = [
     "axes.backends.AxesStandaloneBackend",
+    #"backend.api.base.login.EmailOrUsernameBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
@@ -273,12 +273,25 @@ PASSWORD_HASHERS = [
 # AXES (BRUTE FORCE PROTECTION)
 # ==========================================
 
-AXES_FAILURE_LIMIT = 5  # Reduced from 8
-AXES_COOLOFF_TIME = 1  # 1 hour cooloff
-AXES_RESET_ON_SUCCESS = True
-AXES_LOCKOUT_PARAMETERS = [["username"]]
-AXES_ENABLED = not DEBUG  # Disable in development
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
+AXES_COOLOFF_TIME = None  # None = permanent lock
+AXES_RESET_ON_SUCCESS = True  # Reset counter on successful login
 
+# IMPORTANT: Only lock by username, not IP
+AXES_LOCKOUT_PARAMETERS = ['username']  # Only lock by username
+
+# Disable IP-based locking
+AXES_LOCK_OUT_BY_IP_AND_USERNAME = False
+AXES_LOCK_OUT_BY_IP_ONLY = False
+
+# No custom handler needed - using signals instead
+AXES_LOCKOUT_CALLABLE = None
+AXES_LOCKOUT_TEMPLATE = None
+
+# Logging
+AXES_VERBOSE = True
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
 # ==========================================
 # INTERNATIONALIZATION
 # ==========================================
@@ -376,49 +389,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 if not DEBUG:
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 
-# ==========================================
-# BOOTSTRAP5 SETTINGS
-# ==========================================
-BOOTSTRAP5 = {
-    # CSS: Sử dụng local file để tránh phụ thuộc CDN (tốc độ nhanh hơn, offline ok, nhưng cần collectstatic)
-    'css_url': {
-        'url': f"{STATIC_URL}css/bootstrap/bootstrap.css",  # Đảm bảo path tồn tại: frontend/static/css/default/bootstrap.min.css
-        # Bỏ integrity/crossorigin vì local, nhưng nếu dùng CDN thì thêm để security
-    },
-
-    # The complete URL to the Bootstrap bundle JavaScript file.
-    "javascript_url": {
-        'url': f"{STATIC_URL}js/bootstrap/bootstrap.bundle.js",
-    },
-
-    'required_css_class': 'required',
-    'error_css_class': 'is-invalid',
-    'success_css_class': 'is-valid',
-
-    'wrapper_class': 'mb-3',
-
-    'inline_wrapper_class': '',
-
-    'horizontal_label_class': 'col-sm-2',
-
-    'horizontal_field_class': 'col-sm-10',
-
-    'horizontal_field_offset_class': 'offset-sm-2',
-
-    'set_placeholder': True,
-
-    'server_side_validation': True,
-
-    'formset_renderers':{
-        'default': 'django_bootstrap5.renderers.FormsetRenderer',
-    },
-    'form_renderers': {
-        'default': 'django_bootstrap5.renderers.FormRenderer',
-    },
-    'field_renderers': {
-        'default': 'django_bootstrap5.renderers.FieldRenderer',
-    },
-}
 
 # ==========================================
 # SECURITY
@@ -560,12 +530,14 @@ CORS_ALLOW_CREDENTIALS = True
 # Authentication Redirects
 # ------------------------
 # URLs for login, logout, and redirects.
-LOGIN_URL = "/accounts/login/"
+LOGIN_URL = "/"
 LOGIN_REDIRECT_URL = "/select-study/"
-LOGOUT_REDIRECT_URL = "/accounts/login/"
+LOGOUT_REDIRECT_URL = "/"
 
 # ==========================================
 # OTHER SETTINGS
 # ==========================================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'

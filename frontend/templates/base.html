@@ -1,23 +1,23 @@
 <!DOCTYPE html>
-{% load django_bootstrap5 %}
 {% load i18n %}
 {% load static %}
 {% get_current_language as LANGUAGE_CODE %}
-<html lang="{{ LANGUAGE_CODE|default:'vi' }}" data-bs-theme="light">
+<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="ResSync Platform - Research Study Management System">
     <title>{% block title %}ResSync Platform{% endblock %}</title>
     
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap/bootstrap.css' %}" />
     <link rel="stylesheet" href="{% static 'font/bootstrap-icons/bootstrap-icons.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/default/base.css' %}" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-  ...
 
-    {% bootstrap_css %}
-    {% if BOOTSTRAP_JAVASCRIPT_IN_HEAD %}{% bootstrap_javascript %}{% endif %}
     {% block extra_head %}{% endblock %}
 </head>
 
@@ -32,7 +32,7 @@
     {% block footer%}
     {% endblock %}
 
-    {% bootstrap_javascript %}
+    <script src="{% static 'js/bootstrap/bootstrap.bundle.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
 </body>
 

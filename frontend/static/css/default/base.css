@@ -1,0 +1,75 @@
+:root {
+    --bs-persian-red: #e64c3c;
+    --bs-royal-blue: #3c70e6;
+    --bs-navy-blue: #00298a;
+    --linear-gradient: linear-gradient(135deg, var(--bs-persian-red) 0%,  var(--bs-royal-blue) 100%);
+    --radial-gradient: radial-gradient(circle, var(--bs-royal-blue) 50%,  var(--bs-persian-red) 100%);
+}
+
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 100vw;
+    background-color: var(--bs-body-bg);
+    font-family: system-ui, -apple-system, 'Open Sans', 'Segoe UI', Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent
+}
+
+/* Button Gradient */
+.btn-hover {
+    background: var(--bs-royal-blue);
+    border: none;
+    /* Hiệu ứng chuyển tiếp */
+    transition: all 0.3s ease;
+
+}
+
+.btn-hover:hover {
+    background-color:  var(--bs-navy-blue);
+}
+
+.dropdown-toggle.modern {
+    border-radius: 8px;
+    background-color: --bs-body-bg;
+}
+
+.dropdown-toggle.modern:hover,
+.dropdown-toggle.modern:focus {
+    background-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-color: #ced4da;
+}
+
+.dropdown-menu.language-menu {
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    border: none;
+    padding: 8px;
+    background-color: #fff;
+}
+
+.dropdown-menu.language-menu li {
+    margin-bottom: 6px;
+}
+.dropdown-menu.language-menu li:last-child {
+    margin-bottom: 0;
+}
+/* Style for the form to make the button look like a link */
+.language-form {
+    width: 100%;
+}
+.language-form button {
+    width: 100%;
+    text-align: left;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.support-info {
+    background-color: var(--bs-tertiary-bg);
+    border-color: var(--bs-border-color-translucent) !important;
+}

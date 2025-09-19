@@ -1,621 +1,244 @@
-# SOME DESCRIPTIVE TITLE.
+# Vietnamese translation for PACKAGE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Chau Vinh <chauduongvinh@gmail.com>, 2025.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: ResSync 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-09 15:34+0700\n"
-"PO-Revision-Date: 2025-09-09 00:00+0700\n"
-"Last-Translator: Grok grok@x.ai\n"
-"Language-Team: Vietnamese vi@li.org\n"
+"POT-Creation-Date: 2025-09-18 23:37+0700\n"
+"PO-Revision-Date: 2025-09-18 23:40+0700\n"
+"Last-Translator: Gemini AI Assistant (Professional Review)\n"
+"Language-Team: Vietnamese <vi@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-#: .\backend\api\base\login.py:11 .\backend\api\base\login.py:14
+
+#: backend/api/base/login.py:11 backend/api/base/login.py:14
 msgid "Username or email"
-msgstr "Tên người dùng hoặc email"
-#: .\backend\api\base\login.py:21 .\backend\api\base\login.py:23
-#: .\frontend\templates\authentication\login.html:169
+msgstr "Tên đăng nhập hoặc email"
+
+#: backend/api/base/login.py:21 backend/api/base/login.py:23
+#: frontend/templates/authentication/login.html:79
 msgid "Password"
 msgstr "Mật khẩu"
-#: .\backend\api\base\login.py:31
+
+#: backend/api/base/login.py:31
 msgid ""
 "Please enter a correct username and password. Note that both fields may be "
 "case-sensitive."
-msgstr "Vui lòng nhập tên người dùng và mật khẩu đúng. Lưu ý rằng cả hai trường có thể phân biệt chữ hoa chữ thường."
-#: .\backend\api\base\login.py:34
+msgstr "Vui lòng nhập chính xác tên đăng nhập và mật khẩu. Lưu ý: Cả hai trường đều phân biệt chữ hoa chữ thường."
+
+#: backend/api/base/login.py:34
 msgid "This account is inactive."
-msgstr "Tài khoản này không hoạt động."
-#: .\backend\api\base\login.py:54
-msgid "Multiple accounts use this email. Please use your username."
-msgstr "Nhiều tài khoản sử dụng email này. Vui lòng sử dụng tên người dùng của bạn."
-#: .\backend\api\base\views.py:82 .\backend\api\studies\views.py:79
+msgstr "Tài khoản này đã bị vô hiệu hóa."
+
+#: backend/api/base/views.py:68 backend/api/base/views.py:101
+msgid ""
+"Account locked: too many login attempts. Please contact support to unlock "
+"your account."
+msgstr "Tài khoản bị khóa do đăng nhập sai quá nhiều lần. Vui lòng liên hệ bộ phận hỗ trợ để mở khóa."
+
+#: backend/api/base/views.py:94
+msgid "Failed login. Please verify and reenter your username and password."
+msgstr "Đăng nhập không thành công. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu."
+
+#: backend/api/base/views.py:310 backend/api/studies/views.py:79
 msgid "Invalid study selection."
 msgstr "Lựa chọn nghiên cứu không hợp lệ."
-#: .\backend\tenancy\apps.py:8
+
+#: backend/tenancy/admin.py:27
+msgid "Axes Block Status"
+msgstr "Trạng thái Khối Axes"
+
+#: backend/tenancy/apps.py:8
 msgid "Tenancy Management"
-msgstr "Quản lý Đơn vị"
-#: .\backend\tenancy\models\audit.py:13
-msgid "Create"
-msgstr "Tạo"
-#: .\backend\tenancy\models\audit.py:14
-msgid "Update"
-msgstr "Cập nhật"
-#: .\backend\tenancy\models\audit.py:15
-msgid "Delete"
-msgstr "Xóa"
-#: .\backend\tenancy\models\audit.py:16
-msgid "Soft Delete"
-msgstr "Xóa mềm"
-#: .\backend\tenancy\models\audit.py:17
-msgid "Restore"
-msgstr "Khôi phục"
-#: .\backend\tenancy\models\audit.py:18
-msgid "Export"
-msgstr "Xuất"
-#: .\backend\tenancy\models\audit.py:19
-msgid "Login"
-msgstr "Đăng nhập"
-#: .\backend\tenancy\models\audit.py:20
-msgid "Logout"
-msgstr "Đăng xuất"
-#: .\backend\tenancy\models\audit.py:21
-msgid "Login Failed"
-msgstr "Đăng nhập thất bại"
-#: .\backend\tenancy\models\audit.py:22
-msgid "Permission Denied"
-msgstr "Quyền bị từ chối"
-#: .\backend\tenancy\models\audit.py:31
-#: .\backend\tenancy\models\permission.py:404
-#: .\backend\tenancy\models\study.py:173
-msgid "Study"
-msgstr "Nghiên cứu"
-#: .\backend\tenancy\models\audit.py:38
-msgid "Site ID"
-msgstr "ID Địa điểm"
-#: .\backend\tenancy\models\audit.py:47
-msgid "Content Type"
-msgstr "Loại Nội dung"
-#: .\backend\tenancy\models\audit.py:54
-msgid "Object ID"
-msgstr "ID Đối tượng"
-#: .\backend\tenancy\models\audit.py:64
-#: .\frontend\templates\default\select_study.html:48
-msgid "Action"
-msgstr "Hành động"
-#: .\backend\tenancy\models\audit.py:70
-msgid "Table Name"
-msgstr "Tên Bảng"
-#: .\backend\tenancy\models\audit.py:76
-msgid "Record Display"
-msgstr "Hiển thị Bản ghi"
-#: .\backend\tenancy\models\audit.py:77
-msgid "Human-readable representation of the record"
-msgstr "Biểu diễn dễ đọc của bản ghi"
-#: .\backend\tenancy\models\audit.py:84
-msgid "Changes"
-msgstr "Thay đổi"
-#: .\backend\tenancy\models\audit.py:85
-msgid "JSON object with old and new values"
-msgstr "Đối tượng JSON với giá trị cũ và mới"
-#: .\backend\tenancy\models\audit.py:93
-msgid "Performed By"
-msgstr "Thực hiện Bởi"
-#: .\backend\tenancy\models\audit.py:99
-msgid "Performed At"
-msgstr "Thực hiện Tại"
-#: .\backend\tenancy\models\audit.py:105
-msgid "IP Address"
-msgstr "Địa chỉ IP"
-#: .\backend\tenancy\models\audit.py:110
-msgid "User Agent"
-msgstr "User Agent"
-#: .\backend\tenancy\models\audit.py:116
-msgid "Session Key"
-msgstr "Khóa Phiên"
-#: .\backend\tenancy\models\audit.py:124
-msgid "Request ID"
-msgstr "ID Yêu cầu"
-#: .\backend\tenancy\models\audit.py:125
-msgid "Unique identifier for the request"
-msgstr "Mã định danh duy nhất cho yêu cầu"
-#: .\backend\tenancy\models\audit.py:130 .\backend\tenancy\models\user.py:67
-msgid "Notes"
-msgstr "Ghi chú"
-#: .\backend\tenancy\models\audit.py:135
-msgid "Audit Log"
-msgstr "Nhật ký Kiểm toán"
-#: .\backend\tenancy\models\audit.py:136
-msgid "Audit Logs"
-msgstr "Nhật ký Kiểm toán"
-#: .\backend\tenancy\models\permission.py:19
-#: .\backend\tenancy\models\permission.py:92
-msgid "Administrator"
-msgstr "Quản trị viên"
-#: .\backend\tenancy\models\permission.py:20
-#: .\backend\tenancy\models\permission.py:103
-msgid "Data Manager"
-msgstr "Quản lý Dữ liệu"
-#: .\backend\tenancy\models\permission.py:21
-#: .\backend\tenancy\models\permission.py:115
-msgid "Research Manager"
-msgstr "Quản lý Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:22
-#: .\backend\tenancy\models\permission.py:125
-msgid "Research Monitor"
-msgstr "Giám sát Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:23
-#: .\backend\tenancy\models\permission.py:134
-msgid "Principal Investigator"
-msgstr "Nhà Nghiên cứu Chính"
-#: .\backend\tenancy\models\permission.py:24
-#: .\backend\tenancy\models\permission.py:143
-msgid "Research Staff"
-msgstr "Nhân viên Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:35
-msgid "Title"
-msgstr "Tiêu đề"
-#: .\backend\tenancy\models\permission.py:39
-msgid ""
-"Title can only contain letters, numbers, spaces, hyphens and underscores"
-msgstr "Tiêu đề chỉ có thể chứa chữ cái, số, khoảng trắng, dấu gạch ngang và dấu gạch dưới"
-#: .\backend\tenancy\models\permission.py:47
-#: .\backend\tenancy\models\permission.py:234
-msgid "Code"
-msgstr "Mã"
-#: .\backend\tenancy\models\permission.py:50
-msgid "Code must be uppercase letters and underscores only"
-msgstr "Mã chỉ được chứa chữ cái in hoa và dấu gạch dưới"
-#: .\backend\tenancy\models\permission.py:56
-#: .\backend\tenancy\models\permission.py:244
-msgid "Description"
-msgstr "Mô tả"
-#: .\backend\tenancy\models\permission.py:61
-msgid "Is System Role"
-msgstr "Là Vai trò Hệ thống"
-#: .\backend\tenancy\models\permission.py:62
-msgid "System roles cannot be modified or deleted"
-msgstr "Vai trò hệ thống không thể sửa đổi hoặc xóa"
-#: .\backend\tenancy\models\permission.py:67
-#: .\backend\tenancy\models\permission.py:263
-#: .\backend\tenancy\models\permission.py:367
-#: .\backend\tenancy\models\study.py:57 .\backend\tenancy\models\study.py:136
-#: .\backend\tenancy\models\study.py:186 .\backend\tenancy\models\user.py:72
-msgid "Created At"
-msgstr "Tạo Tại"
-#: .\backend\tenancy\models\permission.py:72
-#: .\backend\tenancy\models\permission.py:268
-#: .\backend\tenancy\models\permission.py:454
-#: .\backend\tenancy\models\study.py:62 .\backend\tenancy\models\study.py:141
-#: .\backend\tenancy\models\study.py:191 .\backend\tenancy\models\user.py:77
-msgid "Updated At"
-msgstr "Cập nhật Tại"
-#: .\backend\tenancy\models\permission.py:77
-#: .\backend\tenancy\models\permission.py:78
-msgid "Roles of Study"
-msgstr "Vai trò của Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:94
-msgid "Full access to study management"
-msgstr "Quyền truy cập đầy đủ vào quản lý nghiên cứu"
-#: .\backend\tenancy\models\permission.py:105
-msgid "Manage study data and exports"
-msgstr "Quản lý dữ liệu nghiên cứu và xuất khẩu"
-#: .\backend\tenancy\models\permission.py:117
-msgid "Manage study operations and users"
-msgstr "Quản lý hoạt động nghiên cứu và người dùng"
-#: .\backend\tenancy\models\permission.py:127
-msgid "View and audit study data"
-msgstr "Xem và kiểm toán dữ liệu nghiên cứu"
-#: .\backend\tenancy\models\permission.py:136
-msgid "View study progress and reports"
-msgstr "Xem tiến độ nghiên cứu và báo cáo"
-#: .\backend\tenancy\models\permission.py:145
-msgid "Data entry and report viewing access with report scheduling"
-msgstr "Quyền nhập dữ liệu và xem báo cáo với lập lịch báo cáo"
-#: .\backend\tenancy\models\permission.py:193
-msgid "Data Management"
-msgstr "Quản lý Dữ liệu"
-#: .\backend\tenancy\models\permission.py:194
-msgid "Analytics & Reports"
-msgstr "Phân tích & Báo cáo"
-#: .\backend\tenancy\models\permission.py:195
-msgid "Audit & Compliance"
-msgstr "Kiểm toán & Tuân thủ"
-#: .\backend\tenancy\models\permission.py:196
-msgid "Study Management"
-msgstr "Quản lý Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:197
-msgid "System Administration"
-msgstr "Quản trị Hệ thống"
-#: .\backend\tenancy\models\permission.py:239
-#: .\backend\tenancy\models\study.py:79 .\backend\tenancy\models\study.py:148
-msgid "Name"
-msgstr "Tên"
-#: .\backend\tenancy\models\permission.py:251
-msgid "Category"
-msgstr "Danh mục"
-#: .\backend\tenancy\models\permission.py:256
-msgid "Is Dangerous"
-msgstr "Nguy hiểm"
-#: .\backend\tenancy\models\permission.py:258
-msgid "Marks permissions that can cause data loss or security issues"
-msgstr "Đánh dấu quyền có thể gây mất dữ liệu hoặc vấn đề bảo mật"
-#: .\backend\tenancy\models\permission.py:273
-msgid "Permission of Study"
-msgstr "Quyền của Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:274
-msgid "Permissions of Study"
-msgstr "Quyền của Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:289
-msgid "View Data"
-msgstr "Xem Dữ liệu"
-#: .\backend\tenancy\models\permission.py:289
-msgid "View study data"
-msgstr "Xem dữ liệu nghiên cứu"
-#: .\backend\tenancy\models\permission.py:291
-msgid "Create Data"
-msgstr "Tạo Dữ liệu"
-#: .\backend\tenancy\models\permission.py:292
-msgid "Create new data entries"
-msgstr "Tạo mục dữ liệu mới"
-#: .\backend\tenancy\models\permission.py:293
-msgid "Update Data"
-msgstr "Cập nhật Dữ liệu"
-#: .\backend\tenancy\models\permission.py:294
-msgid "Update existing data"
-msgstr "Cập nhật dữ liệu hiện có"
-#: .\backend\tenancy\models\permission.py:295
-msgid "Delete Data"
-msgstr "Xóa Dữ liệu"
-#: .\backend\tenancy\models\permission.py:296
-msgid "Delete data entries"
-msgstr "Xóa mục dữ liệu"
-#: .\backend\tenancy\models\permission.py:299
-msgid "View Analytics"
-msgstr "Xem Phân tích"
-#: .\backend\tenancy\models\permission.py:300
-msgid "View analytics dashboard"
-msgstr "Xem bảng điều khiển phân tích"
-#: .\backend\tenancy\models\permission.py:301
-msgid "View Reports"
-msgstr "Xem Báo cáo"
-#: .\backend\tenancy\models\permission.py:302
-msgid "View generated reports"
-msgstr "Xem báo cáo được tạo"
-#: .\backend\tenancy\models\permission.py:303
-msgid "Schedule Reports"
-msgstr "Lập lịch Báo cáo"
-#: .\backend\tenancy\models\permission.py:304
-msgid "Schedule automatic reports"
-msgstr "Lập lịch báo cáo tự động"
-#: .\backend\tenancy\models\permission.py:307
-msgid "View Audit Logs"
-msgstr "Xem Nhật ký Kiểm toán"
-#: .\backend\tenancy\models\permission.py:308
-msgid "View audit trail"
-msgstr "Xem dấu vết kiểm toán"
-#: .\backend\tenancy\models\permission.py:311
-msgid "View Study"
-msgstr "Xem Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:311
-msgid "View study information"
-msgstr "Xem thông tin nghiên cứu"
-#: .\backend\tenancy\models\permission.py:313
-msgid "Manage Study"
-msgstr "Quản lý Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:314
-msgid "Manage study settings"
-msgstr "Quản lý cài đặt nghiên cứu"
-#: .\backend\tenancy\models\permission.py:315
-msgid "Manage Users"
-msgstr "Quản lý Người dùng"
-#: .\backend\tenancy\models\permission.py:315
-msgid "Manage study users"
-msgstr "Quản lý người dùng nghiên cứu"
-#: .\backend\tenancy\models\permission.py:317
-msgid "Manage Sites"
-msgstr "Quản lý Địa điểm"
-#: .\backend\tenancy\models\permission.py:317
-msgid "Manage study sites"
-msgstr "Quản lý địa điểm nghiên cứu"
-#: .\backend\tenancy\models\permission.py:321
-msgid "System Admin"
-msgstr "Quản trị Hệ thống"
-#: .\backend\tenancy\models\permission.py:322
-msgid "Full system access"
-msgstr "Quyền truy cập hệ thống đầy đủ"
-#: .\backend\tenancy\models\permission.py:323
-msgid "System Backup"
-msgstr "Sao lưu Hệ thống"
-#: .\backend\tenancy\models\permission.py:324
-msgid "Create system backups"
-msgstr "Tạo sao lưu hệ thống"
-#: .\backend\tenancy\models\permission.py:325
-msgid "System Monitor"
-msgstr "Giám sát Hệ thống"
-#: .\backend\tenancy\models\permission.py:326
-msgid "Monitor system health"
-msgstr "Giám sát sức khỏe hệ thống"
-#: .\backend\tenancy\models\permission.py:355
-#: .\backend\tenancy\models\permission.py:411
-msgid "Role"
-msgstr "Vai trò"
-#: .\backend\tenancy\models\permission.py:362
-msgid "Permission"
-msgstr "Quyền"
-#: .\backend\tenancy\models\permission.py:372
-msgid "Role Permission"
-msgstr "Quyền Vai trò"
-#: .\backend\tenancy\models\permission.py:373
-msgid "Role Permissions"
-msgstr "Quyền Vai trò"
-#: .\backend\tenancy\models\permission.py:397
-msgid "User"
-msgstr "Người dùng"
-#: .\backend\tenancy\models\permission.py:418
-#: .\backend\tenancy\models\study.py:154 .\backend\tenancy\models\study.py:155
-msgid "Study Sites"
-msgstr "Địa điểm Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:419
-msgid "Specific sites within the study. Leave empty for all sites."
-msgstr "Các địa điểm cụ thể trong nghiên cứu. Để trống cho tất cả địa điểm."
-#: .\backend\tenancy\models\permission.py:426
-msgid "Is Active"
-msgstr "Hoạt động"
-#: .\backend\tenancy\models\permission.py:431
-msgid "Can Access All Sites"
-msgstr "Có thể Truy cập Tất cả Địa điểm"
-#: .\backend\tenancy\models\permission.py:432
-msgid "If true, user has access to all sites in the study"
-msgstr "Nếu đúng, người dùng có quyền truy cập tất cả địa điểm trong nghiên cứu"
-#: .\backend\tenancy\models\permission.py:438
-msgid "Assigned At"
-msgstr "Gán Tại"
-#: .\backend\tenancy\models\permission.py:449
-msgid "Assigned By"
-msgstr "Gán Bởi"
-#: .\backend\tenancy\models\permission.py:459
-msgid "Study Membership"
-msgstr "Thành viên Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:460
-msgid "Study Memberships"
-msgstr "Thành viên Nghiên cứu"
-#: .\backend\tenancy\models\permission.py:484
-msgid "Cannot specify sites when 'can_access_all_sites' is True"
-msgstr "Không thể chỉ định địa điểm khi 'can_access_all_sites' là True"
-#: .\backend\tenancy\models\permission.py:489
-msgid "Selected sites must belong to the study"
-msgstr "Các địa điểm được chọn phải thuộc về nghiên cứu"
-#: .\backend\tenancy\models\study.py:14
-msgid "Planning"
-msgstr "Lập kế hoạch"
-#: .\backend\tenancy\models\study.py:15 .\backend\tenancy\models\user.py:12
-msgid "Active"
-msgstr "Hoạt động"
-#: .\backend\tenancy\models\study.py:16
-msgid "Archived"
-msgstr "Lưu trữ"
-#: .\backend\tenancy\models\study.py:22
-msgid "Study Code"
-msgstr "Mã Nghiên cứu"
-#: .\backend\tenancy\models\study.py:23
-msgid "Unique code for the study (e.g., STUDY001)"
-msgstr "Mã duy nhất cho nghiên cứu (ví dụ: STUDY001)"
-#: .\backend\tenancy\models\study.py:26 .\backend\tenancy\models\study.py:122
-msgid "Code must contain only uppercase letters, numbers, and underscores"
-msgstr "Mã chỉ được chứa chữ cái in hoa, số và dấu gạch dưới"
-#: .\backend\tenancy\models\study.py:34
-msgid "Database Name"
-msgstr "Tên Cơ sở dữ liệu"
-#: .\backend\tenancy\models\study.py:35
-msgid "Name of the database for this study"
-msgstr "Tên cơ sở dữ liệu cho nghiên cứu này"
-#: .\backend\tenancy\models\study.py:43 .\backend\tenancy\models\user.py:22
-msgid "Status"
-msgstr "Trạng thái"
-#: .\backend\tenancy\models\study.py:51
-msgid "Sites"
-msgstr "Địa điểm"
-#: .\backend\tenancy\models\study.py:71 .\backend\tenancy\models\user.py:86
-msgid "Created By"
-msgstr "Tạo Bởi"
-#: .\backend\tenancy\models\study.py:85 .\backend\tenancy\models\study.py:86
-msgid "Studies Information"
-msgstr "Thông tin Nghiên cứu"
-#: .\backend\tenancy\models\study.py:119
-msgid "Site Code"
-msgstr "Mã Địa điểm"
-#: .\backend\tenancy\models\study.py:130
-msgid "Abbreviation"
-msgstr "Viết tắt"
-#: .\backend\tenancy\models\study.py:180
-msgid "Site"
-msgstr "Địa điểm"
-#: .\backend\tenancy\models\study.py:196 .\backend\tenancy\models\study.py:197
-msgid "Study-Site Links"
-msgstr "Liên kết Nghiên cứu-Địa điểm"
-#: .\backend\tenancy\models\user.py:13
-msgid "Inactive"
-msgstr "Không hoạt động"
-#: .\backend\tenancy\models\user.py:14
-msgid "Suspended"
-msgstr "Bị đình chỉ"
-#: .\backend\tenancy\models\user.py:32
-msgid "Last Study Accessed"
-msgstr "Nghiên cứu Truy cập Cuối cùng"
-#: .\backend\tenancy\models\user.py:38
-msgid "Last Study Access Time"
-msgstr "Thời gian Truy cập Nghiên cứu Cuối cùng"
-#: .\backend\tenancy\models\user.py:44
-msgid "Must Change Password"
-msgstr "Phải Thay đổi Mật khẩu"
-#: .\backend\tenancy\models\user.py:50
-msgid "Password Changed At"
-msgstr "Mật khẩu Đã thay đổi Tại"
-#: .\backend\tenancy\models\user.py:55
-msgid "Failed Login Attempts"
-msgstr "Số lần Đăng nhập Thất bại"
-#: .\backend\tenancy\models\user.py:61
-msgid "Last Failed Login"
-msgstr "Đăng nhập Thất bại Cuối cùng"
-#: .\backend\tenancy\models\user.py:91
-msgid "Authentication User"
-msgstr "Người dùng Xác thực"
-#: .\backend\tenancy\models\user.py:92
-msgid "Authentication Users"
-msgstr "Người dùng Xác thực"
-#: .\frontend\templates\authentication\login.html:30
-msgid "Welcome to"
-msgstr "Chào mừng đến với"
-#: .\frontend\templates\authentication\login.html:38
-msgid "Platform Features"
-msgstr "Tính năng nền tảng"
-#: .\frontend\templates\authentication\login.html:49
-msgid "Efficient Data Management"
-msgstr "Quản lý dữ liệu hiệu quả"
-#: .\frontend\templates\authentication\login.html:50
-msgid "Organize, query, and export research data with exceptional performance."
-msgstr "Tổ chức, truy vấn và xuất dữ liệu nghiên cứu với hiệu suất vượt trội."
-#: .\frontend\templates\authentication\login.html:62
-msgid "Streamlined Data Entry"
-msgstr "Nhập liệu tinh gọn"
-#: .\frontend\templates\authentication\login.html:63
-msgid ""
-"Rapid CRF entry with built-in format and logic checks to ensure accuracy."
-msgstr "Nhập CRF nhanh chóng với các kiểm tra định dạng và logic tích hợp để đảm bảo tính chính xác."
-#: .\frontend\templates\authentication\login.html:75
-msgid "Dynamic Research Dashboards"
-msgstr "Bảng điều khiển Nghiên cứu động"
-#: .\frontend\templates\authentication\login.html:76
-msgid "Summarize project progress and data status in real time."
-msgstr "Tóm tắt tiến độ dự án và trạng thái dữ liệu trong thời gian thực."
-#: .\frontend\templates\authentication\login.html:88
-msgid "Precise Scheduling and Tracking"
-msgstr "Lập lịch và theo dõi chính xác"
-#: .\frontend\templates\authentication\login.html:89
-msgid ""
-"Automated reminders and appointment tracking help research teams optimize "
-"their plans."
-msgstr "Nhắc nhở tự động và theo dõi cuộc hẹn giúp các nhóm nghiên cứu tối ưu hóa kế hoạch của họ."
-#: .\frontend\templates\authentication\login.html:103
-#: .\frontend\templates\includes\header.html:42
-msgid "Select language"
-msgstr "Chọn ngôn ngữ"
-#: .\frontend\templates\authentication\login.html:136
-msgid "Sign in to platform"
-msgstr "Đăng nhập vào nền tảng"
-#: .\frontend\templates\authentication\login.html:137
-msgid "End-to-end automation, from data intake to smart reporting."
-msgstr "Tự động hóa toàn diện, từ nhập liệu đến báo cáo."
-#: .\frontend\templates\authentication\login.html:153
+msgstr "Quản lý Tổ chức"
+
+#: config/settings.py:295
+msgid "Vietnamese"
+msgstr "Tiếng Việt"
+
+#: config/settings.py:296
+msgid "English"
+msgstr "Tiếng Anh"
+
+#: frontend/templates/authentication/login.html:50
+msgid "Wellcome back"
+msgstr "Chào mừng trở lại"
+
+#: frontend/templates/authentication/login.html:67
 msgid "Username or Email"
-msgstr "Tên người dùng hoặc Email"
-#: .\frontend\templates\authentication\login.html:204
+msgstr "Tên đăng nhập hoặc Email"
+
+#: frontend/templates/authentication/login.html:72
+msgid "Enter username or email"
+msgstr "Nhập tên đăng nhập hoặc email..."
+
+#: frontend/templates/authentication/login.html:84
+msgid "Enter password"
+msgstr "Nhập mật khẩu..."
+
+#: frontend/templates/authentication/login.html:94
 msgid "Sign In"
 msgstr "Đăng nhập"
-#: .\frontend\templates\authentication\login.html:214
-msgid "Need support?"
-msgstr "Cần hỗ trợ?"
-#: .\frontend\templates\authentication\login.html:218
-msgid "designed by"
-msgstr "thiết kế bởi"
-#: .\frontend\templates\default\dashboard.html:26
+
+#: frontend/templates/authentication/login.html:101
+msgid "Forgot password?"
+msgstr "Quên mật khẩu?"
+
+#: frontend/templates/authentication/login.html:113
+msgid "ResSync. Designed by Chau Vinh & Pham Tuong Duy"
+msgstr "ResSync. Phát triển bởi Châu Vinh & Phạm Tường Duy"
+
+#: frontend/templates/default/dashboard.html:26
 msgid "Primary navigation"
-msgstr "Thanh điều hướng chính"
-#: .\frontend\templates\default\dashboard.html:38
+msgstr "Menu chính"
+
+#: frontend/templates/default/dashboard.html:34
 msgid "Study logo"
-msgstr "Logo Nghiên cứu"
-#: .\frontend\templates\default\dashboard.html:51
-msgid "Research Study"
-msgstr "Nghiên cứu"
-#: .\frontend\templates\default\select_study.html:30
+msgstr "Logo nghiên cứu"
+
+#: frontend/templates/default/select_study.html:30
 msgid "Search by Study ID or Name…"
-msgstr "Tìm kiếm theo ID hoặc Tên Nghiên cứu…"
-#: .\frontend\templates\default\select_study.html:38
+msgstr "Tìm theo Mã hoặc Tên Nghiên cứu…"
+
+#: frontend/templates/default/select_study.html:38
 msgid "List of Studies"
 msgstr "Danh sách Nghiên cứu"
-#: .\frontend\templates\default\select_study.html:45
+
+#: frontend/templates/default/select_study.html:45
 msgid "Study ID"
-msgstr "ID Nghiên cứu"
-#: .\frontend\templates\default\select_study.html:46
+msgstr "Mã Nghiên cứu"
+
+#: frontend/templates/default/select_study.html:46
 msgid "Study Name"
 msgstr "Tên Nghiên cứu"
-#: .\frontend\templates\default\select_study.html:47
+
+#: frontend/templates/default/select_study.html:47
 msgid "Last Updated"
-msgstr "Cập nhật lần cuối"
-#: .\frontend\templates\default\select_study.html:69
+msgstr "Cập nhật gần nhất"
+
+#: frontend/templates/default/select_study.html:48
+msgid "Action"
+msgstr "Thao tác"
+
+#: frontend/templates/default/select_study.html:69
 msgid "Enter Study"
-msgstr "Vào Nghiên cứu"
-#: .\frontend\templates\default\select_study.html:76
+msgstr "Truy cập Nghiên cứu"
+
+#: frontend/templates/default/select_study.html:76
 msgid "No studies found."
 msgstr "Không tìm thấy nghiên cứu nào."
-#: .\frontend\templates\includes\header.html:11
-msgid "Hide sidebar"
-msgstr "Ẩn thanh bên"
-#: .\frontend\templates\includes\header.html:17
-msgid "ResSync Logo"
-msgstr "Logo ResSync"
-#: .\frontend\templates\includes\header.html:24
-#: .\frontend\templates\studies\study_43en\sidebar.html:84
-msgid "Notifications"
-msgstr "Thông báo"
-#: .\frontend\templates\includes\header.html:92
-msgid "User menu"
-msgstr "Menu người dùng"
-#: .\frontend\templates\includes\header.html:101
-msgid "Choose another study"
-msgstr "Chọn nghiên cứu khác"
-#: .\frontend\templates\includes\header.html:113
-msgid "Log out"
-msgstr "Đăng xuất"
-#: .\frontend\templates\studies\study_43en\sidebar.html:9
+
+#: frontend/templates/error/lockout.html:24
+msgid "Account Locked"
+msgstr "Tài khoản Bị khóa"
+
+#: frontend/templates/error/lockout.html:28
+msgid ""
+"We've locked your account becauuse of multiple unsuccessful login attempts. "
+"Please contact support for assistance."
+msgstr "Chúng tôi đã khóa tài khoản của bạn do có nhiều lần đăng nhập không thành công. Vui lòng liên hệ bộ phận hỗ trợ để được trợ giúp."
+
+#: frontend/templates/error/lockout.html:45
+msgid "Back to Home"
+msgstr "Về Trang chủ"
+
+#: frontend/templates/includes/features_list.html:4
+msgid "ResSync System"
+msgstr "Hệ thống ResSync"
+
+#: frontend/templates/includes/features_list.html:6
+msgid "Analyzing data, shaping the future."
+msgstr "Kiến tạo tương lai từ dữ liệu."
+
+#: frontend/templates/includes/features_list.html:19
+msgid "Efficient Data Management"
+msgstr "Quản lý Dữ liệu Hiệu quả"
+
+#: frontend/templates/includes/features_list.html:22
+msgid "Robust and scalable solutions for managing research data."
+msgstr "Giải pháp mạnh mẽ, linh hoạt để quản lý dữ liệu nghiên cứu."
+
+#: frontend/templates/includes/features_list.html:35
+msgid "Streamlined Data Entry"
+msgstr "Nhập liệu Tối ưu"
+
+#: frontend/templates/includes/features_list.html:38
+msgid "Intelligent CRF entry with built-in validation."
+msgstr "Biểu mẫu CRF thông minh, tích hợp tính năng xác thực dữ liệu."
+
+#: frontend/templates/includes/features_list.html:51
+msgid "Dynamic Research Dashboards"
+msgstr "Bảng điều khiển Nghiên cứu Linh hoạt"
+
+#: frontend/templates/includes/features_list.html:54
+msgid "Real-time visualization of project progress and data integrity."
+msgstr "Trực quan hóa tiến độ dự án và tính toàn vẹn dữ liệu theo thời gian thực."
+
+#: frontend/templates/includes/features_list.html:67
+msgid "Precise Scheduling and Tracking"
+msgstr "Lên lịch và Giám sát Chính xác"
+
+#: frontend/templates/includes/features_list.html:70
+msgid "Automated notifications and integrated appointment tracking."
+msgstr "Tự động gửi thông báo và tích hợp quản lý lịch hẹn."
+
+#: frontend/templates/studies/study_43en/sidebar.html:9
 msgid "Dashboard"
 msgstr "Bảng điều khiển"
-#: .\frontend\templates\studies\study_43en\sidebar.html:15
+
+#: frontend/templates/studies/study_43en/sidebar.html:15
 msgid "Management Report"
 msgstr "Báo cáo Quản lý"
-#: .\frontend\templates\studies\study_43en\sidebar.html:20
+
+#: frontend/templates/studies/study_43en/sidebar.html:20
 msgid "Analytics Report"
 msgstr "Báo cáo Phân tích"
-#: .\frontend\templates\studies\study_43en\sidebar.html:30
+
+#: frontend/templates/studies/study_43en/sidebar.html:30
 msgid "Data Entry Forms"
-msgstr "Biểu mẫu nhập liệu"
-#: .\frontend\templates\studies\study_43en\sidebar.html:37
+msgstr "Biểu mẫu Nhập liệu"
+
+#: frontend/templates/studies/study_43en/sidebar.html:37
 msgid "Patient Information"
-msgstr "Thông tin bệnh nhân"
-#: .\frontend\templates\studies\study_43en\sidebar.html:39
-#: .\frontend\templates\studies\study_43en\sidebar.html:61
+msgstr "Thông tin Bệnh nhân"
+
+#: frontend/templates/studies/study_43en/sidebar.html:39
+#: frontend/templates/studies/study_43en/sidebar.html:61
 msgid "CRF"
 msgstr "CRF"
-#: .\frontend\templates\studies\study_43en\sidebar.html:44
-#: .\frontend\templates\studies\study_43en\sidebar.html:66
+
+#: frontend/templates/studies/study_43en/sidebar.html:44
+#: frontend/templates/studies/study_43en/sidebar.html:66
 msgid "Screening List"
 msgstr "Danh sách Sàng lọc"
-#: .\frontend\templates\studies\study_43en\sidebar.html:49
-#: .\frontend\templates\studies\study_43en\sidebar.html:71
+
+#: frontend/templates/studies/study_43en/sidebar.html:49
+#: frontend/templates/studies/study_43en/sidebar.html:71
 msgid "Enrollment List"
 msgstr "Danh sách Tuyển chọn"
-#: .\frontend\templates\studies\study_43en\sidebar.html:59
+
+#: frontend/templates/studies/study_43en/sidebar.html:59
 msgid "Contact Information"
-msgstr "Thông tin liên hệ"
-#: .\frontend\templates\studies\study_43en\sidebar.html:89
+msgstr "Thông tin Liên lạc"
+
+#: frontend/templates/studies/study_43en/sidebar.html:84
+msgid "Notifications"
+msgstr "Thông báo"
+
+#: frontend/templates/studies/study_43en/sidebar.html:89
 msgid "Visit Schedule"
-msgstr "Lịch trình thăm khám"
-#: .\frontend\templates\studies\study_43en\sidebar.html:99
+msgstr "Lịch tái khám"
+
+#: frontend/templates/studies/study_43en/sidebar.html:99
 msgid "Activity Log"
-msgstr "Nhật ký hoạt động"
-#: .\frontend\templates\studies\study_43en\sidebar.html:104
+msgstr "Nhật ký Hoạt động"
+
+#: frontend/templates/studies/study_43en/sidebar.html:104
 msgid "Data Log"
-msgstr "Nhật ký dữ liệu"
-#~ msgid "No study name available"
-#~ msgstr "Không có tên nghiên cứu"
-#~ msgid "Tiếng Việt"
-#~ msgstr "Tiếng Việt"
-#~ msgid "English"
-#~ msgstr "Tiếng Anh"
+msgstr "Nhật ký Dữ liệu"

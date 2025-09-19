@@ -51,7 +51,7 @@ class UsernameOrEmailAuthenticationForm(AuthenticationForm):
                     pass
                 except User.MultipleObjectsReturned:
                     raise forms.ValidationError(
-                        _("Multiple accounts use this email. Please use your username.")
+                        _("Multiple accounts use this email. Please choose another email.")
                     )
 
             # Authenticate user

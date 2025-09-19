@@ -1,0 +1,152 @@
+/* General Styles */
+main {
+    flex: 1;
+}
+
+.bg-linear-gradient{
+    background: var(--linear-gradient) !important;
+    opacity: 1;
+}
+
+.glass-effect {
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.p-responsive {
+    padding: 3rem !important;
+}
+ 
+.fs-title-1 {
+    font-weight: 600;
+    line-height: 1.2;
+    font-size: 2.25rem;
+}
+
+.fs-title-2 {
+    font-weight: 600;
+    line-height: 1.2;
+    font-size: 2.5rem;
+}
+
+.fs-bullet-list {
+    list-style-type: disc;
+    font-weight: 300;
+    line-height: 1.2;
+    font-size: calc(1.375rem + 1.5vw)
+}
+
+.fs-header-list {
+    font-weight: 600;
+    line-height: 1.2;
+    font-size: 1.25rem;
+}
+
+.fs-text-list {
+    font-weight: 300;
+    line-height: 1.2;
+    font-size: 1rem;
+}
+
+.copyright-text {
+    font-size: 0.75rem;
+}
+
+.link-hover {
+    transition: color 0.15s ease;
+}
+
+.link-hover:hover {
+    color: var(--bs-navy-blue) !important;
+}
+
+.form-control {
+    border-radius: 8px;
+    border-color: var(--bs-border-color);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: var(--bs-royal-blue);
+}
+
+
+.password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-container .form-control {
+    padding-right: 45px; /* Thêm padding để tránh che mất icon */
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    color: var(--text-muted-color);
+    transition: color 0.2s ease-in-out;
+    z-index: 2;
+}
+
+.password-toggle-icon:hover {
+    color: #333;
+}
+
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 768px) {
+    .p-responsive {
+        padding: 5rem !important;
+    }
+}
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .fs-title {
+        font-size: 2.5rem;
+    }
+    .fs-title-2 {
+        font-size: 3rem;
+    }
+    .copyright-text {
+        font-size: 0.875rem;
+    }
+    .logo-wrapper img {
+        height: 60px;
+    }
+    .p-responsive {
+        padding: 6rem !important;
+    }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 2400px) {
+    .display-4 {
+        font-size: 4.75rem;
+    }
+    .fs-title-1 {
+        font-size: 3rem;
+    }
+    .fs-title-2 {
+        font-size: 4.5rem;
+    }
+    .fs-header-list {
+        font-size: 1.75rem;
+    }
+    .fs-text-list {
+        font-size: 1.25rem;
+    }
+    .copyright-text {
+        font-size: 1rem;
+    }
+    .logo-wrapper img {
+        height: 80px;
+    }
+    .p-responsive {
+        padding: 12rem !important;
+    }
+}
