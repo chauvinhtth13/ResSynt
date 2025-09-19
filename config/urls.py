@@ -15,16 +15,13 @@ urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n"), name="set_language"),
     path("secret-admin/", admin.site.urls),
 
-    # Authentication 
+    # Authentication - FIX: Add name="login"
     path("", never_cache(base_views.custom_login), name=""),
     path("logout/", never_cache(base_views.logout_view), name="logout"),
 
     # Base app
     path("select-study/", base_views.select_study, name="select_study"),
     path("dashboard/", base_views.dashboard, name="dashboard"),
-
-    
-
 ]
 
 if settings.DEBUG:

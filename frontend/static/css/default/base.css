@@ -73,3 +73,11 @@ body {
     background-color: var(--bs-tertiary-bg);
     border-color: var(--bs-border-color-translucent) !important;
 }
+
+/* Divider dọc với đường gạch (dashed) */
+.divider {
+    width: 0; /* Không cần width vì dùng border */
+    height: 40px;
+    border-left: 2px dashed #000000; /* Đường nét đứt, độ dày 2px, màu xám */
+    margin: 0 20px;
+}

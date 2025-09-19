@@ -1,262 +1,324 @@
 # backend/tenancy/admin.py - FULL VERSION WITH AXES INTEGRATION
+import logging
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.urls import path, reverse
 from parler.admin import TranslatableAdmin
 from django.contrib.admin import AdminSite
 from django import forms
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
-from django.http import JsonResponse
+from django.utils import timezone
+from django.http import JsonResponse, HttpResponseRedirect
 
-# Import models from correct location
+# Import models
 from .models import (
     Role, Permission, RolePermission, Study, Site, 
     StudySite, StudyMembership
 )
 
-# Get the User model
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
 # ============================================
-# AXES FILTER
+# AXES BLOCKED FILTER
 # ============================================
 class AxesBlockedFilter(admin.SimpleListFilter):
-    title = _('Axes Block Status')
-    parameter_name = 'axes_blocked'
+    """Filter users by Axes block status"""
+    
+    title = 'Security Status'
+    parameter_name = 'axes_status'
     
     def lookups(self, request, model_admin):
+        """Return filter options"""
         return [
             ('blocked', 'Blocked'),
-            ('has_attempts','Has Failed Attempts'),
-            ('clean', 'No Failed Attempts'),
+            ('has_attempts', 'Has Failed Attempts'),
+            ('clean', 'Clean'),
         ]
     
     def queryset(self, request, queryset):
-        if self.value() == 'blocked':
-            # Filter users that are blocked
-            blocked_users = []
-            for user in queryset:
-                if user.is_axes_blocked:
-                    blocked_users.append(user.pk)
-            return queryset.filter(pk__in=blocked_users)
-            
-        elif self.value() == 'has_attempts':
-            # Users with failed attempts but not blocked
-            has_attempts = []
-            for user in queryset:
-                if user.axes_failure_count > 0 and not user.is_axes_blocked:
-                    has_attempts.append(user.pk)
-            return queryset.filter(pk__in=has_attempts)
-            
-        elif self.value() == 'clean':
-            # Users with no failed attempts
-            clean_users = []
-            for user in queryset:
-                if user.axes_failure_count == 0:
-                    clean_users.append(user.pk)
-            return queryset.filter(pk__in=clean_users)
+        """Filter queryset based on axes status"""
+        value = self.value()
         
-        return queryset
+        if not value:
+            return queryset
+        
+        filtered_ids = []
+        
+        for user in queryset:
+            try:
+                if hasattr(user, 'get_axes_status'):
+                    is_blocked, _, attempts = user.get_axes_status()
+                    
+                    if value == 'blocked' and is_blocked:
+                        filtered_ids.append(user.pk)
+                    elif value == 'has_attempts' and attempts > 0 and not is_blocked:
+                        filtered_ids.append(user.pk)
+                    elif value == 'clean' and attempts == 0:
+                        filtered_ids.append(user.pk)
+                else:
+                    if value == 'clean':
+                        filtered_ids.append(user.pk)
+                        
+            except Exception as e:
+                logger.debug(f"Error checking axes status for user {user.pk}: {e}")
+                if value == 'clean':
+                    filtered_ids.append(user.pk)
+        
+        return queryset.filter(pk__in=filtered_ids) if filtered_ids else queryset.none()
 
 
 # ============================================
-# USER ADMIN REGISTRATION
+# USER ADMIN 
 # ============================================
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     """Enhanced User Admin with Axes Integration"""
     
+    # List display configuration
     list_display = (
-        'username', 'email', 'first_name', 'last_name', 
-        'is_active', 'status', 'axes_status_display', 'axes_attempts_display',
-        'last_login', 'date_joined'
+        'username', 'email', 'full_name_display', 
+        'is_active', 'status', 'axes_status_text', 
+        'last_login_display', 'date_joined'
     )
     
-    list_filter = list(BaseUserAdmin.list_filter) + [
-        'status',
-        AxesBlockedFilter,
-    ]
+    # Filters
+    list_filter = (
+        'is_active', 'is_staff', 'is_superuser',
+        'status', AxesBlockedFilter,
+        'groups', 'date_joined', 'last_login'
+    )
     
+    # Search configuration
     search_fields = ('username', 'email', 'first_name', 'last_name')
     
-    readonly_fields = list(BaseUserAdmin.readonly_fields) + [
-        'axes_status_info', 'last_failed_login', 'failed_login_attempts',
-        'created_at', 'updated_at', 'last_study_accessed', 'last_study_accessed_at'
+    # Read-only fields
+    readonly_fields = (
+        'axes_status_display', 
+        'axes_attempts_count',
+        'last_failed_attempt',
+        'axes_security_info',
+        'created_at', 'updated_at', 'date_joined',
+        'last_login', 'last_study_accessed', 'last_study_accessed_at'
+    )
+    
+    # Fieldsets
+    fieldsets = (
+        (None, {
+            'fields': ('username', 'password')
+        }),
+        (_('Personal info'), {
+            'fields': ('first_name', 'last_name', 'email')
+        }),
+        (_('Permissions'), {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        (_('Security Status'), {
+            'fields': (
+                'status', 
+                'axes_status_display',
+                'axes_attempts_count',
+                'last_failed_attempt',
+                'axes_security_info',
+                'must_change_password', 
+                'password_changed_at'
+            ),
+            'classes': ('collapse',),
+        }),
+        (_('Important dates'), {
+            'fields': ('last_login', 'date_joined', 'created_at', 'updated_at')
+        }),
+        (_('Study Information'), {
+            'fields': ('last_study_accessed', 'last_study_accessed_at'),
+            'classes': ('collapse',),
+        }),
+        (_('Additional Info'), {
+            'fields': ('notes', 'created_by'),
+            'classes': ('collapse',),
+        }),
+    )
+    
+    # Admin actions
+    actions = [
+        'activate_and_unblock', 
+        'unblock_users', 
+        'reset_axes_attempts',
+        'force_password_change',
+        'export_security_report'
     ]
     
-    fieldsets = list(BaseUserAdmin.fieldsets) + [
-        ('Security Status', {
-            'fields': (
-                'status', 'axes_status_info',
-                'failed_login_attempts', 'last_failed_login',
-                'must_change_password', 'password_changed_at'
-            ),
-            'classes': ('collapse',),
-        }),
-        ('Study Information', {
-            'fields': (
-                'last_study_accessed', 'last_study_accessed_at'
-            ),
-            'classes': ('collapse',),
-        }),
-        ('Additional Info', {
-            'fields': (
-                'notes', 'created_at', 'updated_at', 'created_by'
-            ),
-            'classes': ('collapse',),
-        }),
-    ]
+    def get_queryset(self, request):
+        """Optimize queryset with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('created_by', 'last_study_accessed')
     
-    actions = ['activate_and_unblock', 'unblock_users', 'reset_login_attempts', 
-               'force_password_change', 'sync_with_axes']
+    # ============================================
+    # SIMPLE DISPLAY METHODS (NO COLORS/HTML)
+    # ============================================
     
-    def axes_status_display(self, obj):
-        """Display axes block status with color coding"""
-        is_blocked, reason, attempts = obj.get_axes_status()
-        
-        if is_blocked:
-            return format_html(
-                '<span style="color: red; font-weight: bold;">BLOCKED</span>'
-            )
-        elif attempts > 0:
-            # Warning if has failed attempts but not blocked yet
-            from axes.conf import settings as axes_settings
-            limit = axes_settings.AXES_FAILURE_LIMIT
-            color = 'orange' if attempts >= limit/2 else 'gray'
-            return format_html(
-                f'<span style="color: {color};">{attempts}/{limit}</span>'
-            )
-        else:
-            return format_html(
-                '<span style="color: green;">✓ OK</span>'
-            )
-    axes_status_display.short_description = 'Axes Status'  # type: ignore
-    axes_status_display.admin_order_field = 'failed_login_attempts' # type: ignore
+    @admin.display(description='Full Name')
+    def full_name_display(self, obj):
+        """Display full name or username"""
+        return obj.get_full_name() or obj.username
     
-    def axes_attempts_display(self, obj):
-        """Display failure attempts count"""
-        _, _, attempts = obj.get_axes_status()
-        if attempts > 0:
-            from axes.conf import settings as axes_settings
-            limit = axes_settings.AXES_FAILURE_LIMIT
-            percentage = (attempts / limit) * 100
+    @admin.display(description='Security')
+    def axes_status_text(self, obj):
+        """Simple text for axes status in list view"""
+        try:
+            is_blocked, _, attempts = obj.get_axes_status()
             
-            # Color based on severity
-            if percentage >= 100:
-                color = 'red'
-            elif percentage >= 75:
-                color = 'orange'
-            elif percentage >= 50:
-                color = 'yellow'
+            if is_blocked:
+                return "BLOCKED"
+            elif attempts > 0:
+                from axes.conf import settings as axes_settings
+                limit = axes_settings.AXES_FAILURE_LIMIT
+                return f"{attempts}/{limit}"
             else:
-                color = 'inherit'
-                
-            return format_html(
-                f'<span style="color: {color}; font-weight: bold;">{attempts}</span>'
-            )
-        return '0'
-    axes_attempts_display.short_description = 'Failed Attempts' # type: ignore
+                return "OK"
+        except:
+            return "-"
     
-    def axes_status_info(self, obj):
-        """Detailed axes status information for detail view"""
+    @admin.display(description='Last Login')
+    def last_login_display(self, obj):
+        """Display last login in readable format"""
+        if obj.last_login:
+            delta = timezone.now() - obj.last_login
+            if delta.days == 0:
+                return "Today"
+            elif delta.days == 1:
+                return "Yesterday"
+            elif delta.days < 30:
+                return f"{delta.days} days ago"
+            else:
+                return obj.last_login.strftime("%Y-%m-%d")
+        return "Never"
+    
+    # ============================================
+    # DETAIL VIEW FIELDS (SIMPLE TEXT)
+    # ============================================
+    
+    @admin.display(description='Axes Status')
+    def axes_status_display(self, obj):
+        """Current axes block status - simple text"""
         if not obj.pk:
-            return "Not available for new users"
+            return "-"
+        
+        try:
+            is_blocked, reason, _ = obj.get_axes_status()
             
-        is_blocked, reason, attempts = obj.get_axes_status()
-        
-        html_parts = []
-        
-        # Block status
-        if is_blocked:
-            html_parts.append(
-                f'<div style="padding: 10px; background: #ffebee; border: 1px solid #ef5350; border-radius: 4px;">'
-                f'<strong style="color: #c62828;">🔒 Account is BLOCKED</strong><br/>'
-                f'Reason: {reason or "Multiple failed login attempts"}<br/>'
-                f'<a href="#" onclick="return confirm(\'Unblock this user?\') && '
-                f'django.jQuery.post(\'{obj.pk}/unblock/\').done(function(){{location.reload();}});" '
-                f'class="button" style="margin-top: 5px;">Unblock User</a>'
-                f'</div>'
-            )
-        else:
-            html_parts.append(
-                '<div style="padding: 10px; background: #e8f5e9; border: 1px solid #66bb6a; border-radius: 4px;">'
-                '<strong style="color: #2e7d32;">✓ Account is not blocked</strong>'
-                '</div>'
-            )
-        
-        # Attempts info
-        from axes.conf import settings as axes_settings
-        limit = axes_settings.AXES_FAILURE_LIMIT
-        
-        html_parts.append(
-            f'<div style="margin-top: 10px;">'
-            f'<strong>Failed Login Attempts:</strong> {attempts} / {limit}<br/>'
-        )
-        
-        if attempts > 0:
-            percentage = (attempts / limit) * 100
-            bar_color = 'red' if percentage >= 80 else 'orange' if percentage >= 50 else 'green'
-            html_parts.append(
-                f'<div style="width: 200px; height: 20px; background: #e0e0e0; border-radius: 10px; margin-top: 5px;">'
-                f'<div style="width: {min(percentage, 100)}%; height: 100%; background: {bar_color}; '
-                f'border-radius: 10px;"></div>'
-                f'</div>'
-            )
-        
-        html_parts.append('</div>')
-        
-        # Recent failures
-        from axes.models import AccessFailureLog
-        recent_failures = AccessFailureLog.objects.filter(
-            username=obj.username
-        ).order_by('-attempt_time')[:5]
-        
-        if recent_failures:
-            html_parts.append(
-                '<div style="margin-top: 10px;">'
-                '<strong>Recent Failed Attempts:</strong><br/>'
-                '<ul style="margin: 5px 0;">'
-            )
-            for failure in recent_failures:
-                html_parts.append(
-                    f'<li>{failure.attempt_time.strftime("%Y-%m-%d %H:%M:%S")} - '
-                    f'IP: {failure.ip_address}</li>'
-                )
-            html_parts.append('</ul></div>')
-        
-        return format_html(''.join(html_parts))
-    axes_status_info.short_description = 'Axes Security Status' # type: ignore
+            if is_blocked:
+                return f"BLOCKED - {reason or 'Too many failed attempts'}"
+            else:
+                return "Not blocked"
+        except Exception as e:
+            logger.error(f"Error getting axes status: {e}")
+            return "-"
     
-    def save_model(self, request, obj, form, change):
-        """Override to log status changes"""
-        if change:
-            old_obj = User.objects.get(pk=obj.pk)
-            if old_obj.status != obj.status: # type: ignore
-                # Status is changing
-                if obj.status == User.Status.ACTIVE and old_obj.status == User.Status.BLOCKED: # type: ignore
-                    messages.success(
-                        request,
-                        f"User {obj.username} has been unblocked (axes locks cleared)."
-                    )
-                elif obj.status == User.Status.BLOCKED: # type: ignore
-                    messages.warning(
-                        request,
-                        f"User {obj.username} has been blocked."
-                    )
+    @admin.display(description='Failed Login Attempts')
+    def axes_attempts_count(self, obj):
+        """Current failed attempts from axes - simple text"""
+        if not obj.pk:
+            return "-"
         
-        super().save_model(request, obj, form, change)
+        try:
+            from axes.conf import settings as axes_settings
+            _, _, attempts = obj.get_axes_status()
+            limit = axes_settings.AXES_FAILURE_LIMIT
+            
+            return f"{attempts} / {limit}"
+            
+        except Exception as e:
+            logger.error(f"Error getting attempts count: {e}")
+            return "-"
     
-    @admin.action(description="Change status to ACTIVE and unblock")
+    @admin.display(description='Last Failed Login')
+    def last_failed_attempt(self, obj):
+        """Get last failed login from axes logs - simple text"""
+        if not obj.pk:
+            return "-"
+        
+        try:
+            from axes.models import AccessFailureLog
+            
+            last_failure = AccessFailureLog.objects.filter(
+                username=obj.username
+            ).order_by('-attempt_time').first()
+            
+            if last_failure:
+                return f"{last_failure.attempt_time.strftime('%Y-%m-%d %H:%M')} (IP: {last_failure.ip_address})"
+            
+            return "No failed attempts"
+            
+        except Exception as e:
+            logger.error(f"Error getting last failed attempt: {e}")
+            return "-"
+    
+    @admin.display(description='Security Information')
+    def axes_security_info(self, obj):
+        """Security summary - simple text with unblock link"""
+        if not obj.pk:
+            return "-"
+        
+        try:
+            from axes.conf import settings as axes_settings
+            from axes.models import AccessFailureLog
+            
+            is_blocked, _, attempts = obj.get_axes_status()
+            limit = axes_settings.AXES_FAILURE_LIMIT
+            
+            # Build simple info
+            lines = []
+            
+            # Status with unblock link if needed
+            if is_blocked:
+                unblock_url = reverse('admin:tenancy_user_unblock', args=[obj.pk])
+                lines.append(f'Status: BLOCKED - <a href="{unblock_url}">Unblock</a>')
+            else:
+                lines.append('Status: Active')
+            
+            # Attempts
+            lines.append(f'Attempts: {attempts}/{limit}')
+            
+            # Recent failures
+            recent_failures = AccessFailureLog.objects.filter(
+                username=obj.username
+            ).order_by('-attempt_time')[:3]
+            
+            if recent_failures:
+                lines.append('Recent failures:')
+                for failure in recent_failures:
+                    lines.append(
+                        f'- {failure.attempt_time.strftime("%Y-%m-%d %H:%M")} '
+                        f'(IP: {failure.ip_address})'
+                    )
+            
+            return mark_safe('<br>'.join(lines))
+            
+        except Exception as e:
+            logger.error(f"Error getting security info: {e}")
+            return "-"
+    
+    # ============================================
+    # ADMIN ACTIONS
+    # ============================================
+    
+    @admin.action(description="Activate and unblock selected users")
     def activate_and_unblock(self, request, queryset):
-        """Admin action to activate and unblock users"""
+        """Activate users and clear axes blocks"""
         count = 0
+        from backend.tenancy.models.user import User as UserModel
+        
         for user in queryset:
-            user.status = User.Status.ACTIVE # type: ignore
-            user.save()  # This will auto-trigger axes unblock
-            count += 1
+            user.status = UserModel.Status.ACTIVE
+            user.is_active = True
+            user.save()
+            if user.reset_axes_locks():
+                count += 1
         
         self.message_user(
             request,
@@ -264,77 +326,96 @@ class UserAdmin(BaseUserAdmin):
             messages.SUCCESS
         )
     
+    @admin.action(description="Unblock selected users")
     def unblock_users(self, request, queryset):
-        """Admin action to unblock selected users"""
-        unblocked_count = 0
-        failed_count = 0
+        """Clear axes blocks for selected users"""
+        success_count = 0
         
         for user in queryset:
             if user.reset_axes_locks():
-                unblocked_count += 1
-                self.log_change(request, user, f"Unblocked user via admin action")
-            else:
-                failed_count += 1
+                success_count += 1
+                self.log_change(request, user, "Unblocked via admin action")
         
-        if unblocked_count:
+        if success_count:
             self.message_user(
                 request,
-                f"Successfully unblocked {unblocked_count} user(s).",
+                f"Successfully unblocked {success_count} user(s).",
                 messages.SUCCESS
             )
-        
-        if failed_count:
-            self.message_user(
-                request,
-                f"Failed to unblock {failed_count} user(s). Check logs for details.",
-                messages.ERROR
-            )
-    unblock_users.short_description = "Unblock selected users (Reset Axes locks)" # type: ignore
     
-    def reset_login_attempts(self, request, queryset):
-        """Reset failed login attempt counters"""
+    @admin.action(description="Reset axes attempts")
+    def reset_axes_attempts(self, request, queryset):
+        """Reset axes attempts only"""
+        count = 0
+        from axes.utils import reset
+        
         for user in queryset:
-            user.failed_login_attempts = 0
-            user.last_failed_login = None
-            user.save(update_fields=['failed_login_attempts', 'last_failed_login'])
-            
-            # Also reset axes
-            user.reset_axes_locks()
+            try:
+                reset(username=user.username)
+                count += 1
+            except Exception as e:
+                logger.error(f"Error resetting axes for {user.username}: {e}")
         
         self.message_user(
             request,
-            f"Reset login attempts for {queryset.count()} user(s).",
+            f"Reset axes attempts for {count} user(s).",
             messages.SUCCESS
         )
-    reset_login_attempts.short_description = "Reset failed login attempts" # type: ignore
     
+    @admin.action(description="Force password change")
     def force_password_change(self, request, queryset):
-        """Force users to change password on next login"""
+        """Mark users to change password"""
         updated = queryset.update(must_change_password=True)
         self.message_user(
             request,
-            f"Marked {updated} user(s) to change password on next login.",
+            f"Marked {updated} user(s) for password change.",
             messages.SUCCESS
         )
-    force_password_change.short_description = "Force password change on next login" # type: ignore
     
-    def sync_with_axes(self, request, queryset):
-        """Sync user status with axes status"""
-        synced = 0
-        for user in queryset:
-            if user.sync_with_axes():
-                synced += 1
+    @admin.action(description="Export security report")
+    def export_security_report(self, request, queryset):
+        """Export security status as CSV"""
+        import csv
+        from django.http import HttpResponse
+        from axes.models import AccessFailureLog
         
-        self.message_user(
-            request,
-            f"Synced {synced} user(s) with axes status.",
-            messages.SUCCESS
-        )
-    sync_with_axes.short_description = "Sync status with axes" # type: ignore
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="security_report_{timezone.now().strftime("%Y%m%d_%H%M")}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow([
+            'Username', 'Email', 'Full Name', 'Status', 
+            'Is Blocked', 'Failed Attempts', 'Last Failed Login', 
+            'Last Successful Login', 'Date Joined'
+        ])
+        
+        for user in queryset:
+            is_blocked, _, attempts = user.get_axes_status()
+            
+            last_failure = AccessFailureLog.objects.filter(
+                username=user.username
+            ).order_by('-attempt_time').first()
+            
+            writer.writerow([
+                user.username,
+                user.email,
+                user.get_full_name(),
+                getattr(user, 'status', 'active'),
+                'Yes' if is_blocked else 'No',
+                attempts,
+                last_failure.attempt_time.strftime("%Y-%m-%d %H:%M") if last_failure else 'Never',
+                user.last_login.strftime("%Y-%m-%d %H:%M") if user.last_login else 'Never',
+                user.date_joined.strftime("%Y-%m-%d")
+            ])
+        
+        return response
+    
+    # ============================================
+    # CUSTOM VIEWS
+    # ============================================
     
     def get_urls(self):
         """Add custom URL for unblock action"""
-        from django.urls import path
         urls = super().get_urls()
         custom_urls = [
             path(
@@ -346,17 +427,55 @@ class UserAdmin(BaseUserAdmin):
         return custom_urls + urls
     
     def unblock_user_view(self, request, object_id):
-        """Handle AJAX unblock request"""
+        """Handle unblock user request"""
+        from backend.tenancy.models.user import User as UserModel
+        
         try:
             user = self.get_object(request, object_id)
-            if user and user.reset_axes_locks():
-                self.log_change(request, user, "Unblocked user via quick action")
-                return JsonResponse({'status': 'success'})
+            if user:
+                if user.reset_axes_locks():
+                    if getattr(user, 'status', None) == UserModel.Status.BLOCKED:
+                        user.status = UserModel.Status.ACTIVE
+                        user.is_active = True
+                        user.save()
+                    
+                    self.log_change(request, user, "Unblocked user")
+                    messages.success(request, f"Successfully unblocked {user.username}")
+                else:
+                    messages.info(request, f"User {user.username} was not blocked")
             else:
-                return JsonResponse({'status': 'error', 'message': 'Failed to unblock'})
+                messages.error(request, "User not found")
+                
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
-
+            messages.error(request, f"Error: {str(e)}")
+            logger.error(f"Error unblocking user {object_id}: {e}")
+        
+        return HttpResponseRedirect(f"../../{object_id}/change/")
+    
+    def save_model(self, request, obj, form, change):
+        """Handle model save with axes sync"""
+        from backend.tenancy.models.user import User as UserModel
+        
+        if change:
+            try:
+                old_obj = UserModel.objects.get(pk=obj.pk)
+                
+                if getattr(old_obj, 'status', None) != getattr(obj, 'status', None):
+                    if getattr(obj, 'status', None) == UserModel.Status.ACTIVE and getattr(old_obj, 'status', None) == UserModel.Status.BLOCKED:
+                        obj.reset_axes_locks()
+                        messages.success(request, f"User {obj.username} activated and axes locks cleared.")
+                    elif getattr(obj, 'status', None) == UserModel.Status.BLOCKED:
+                        messages.warning(request, f"User {obj.username} has been blocked.")
+                    
+                    self.log_change(
+                        request, obj, 
+                        f"Status changed: {getattr(old_obj, 'status', 'unknown')} → {getattr(obj, 'status', 'unknown')}"
+                    )
+                    
+            except UserModel.DoesNotExist:
+                pass
+        
+        super().save_model(request, obj, form, change)
 
 # ============================================
 # OTHER ADMIN REGISTRATIONS (không thay đổi)

@@ -1,0 +1,15 @@
+{% load static %}
+{% load i18n %}
+<!-- Header with Logo and Language Switch -->
+<header class="d-flex justify-content-between align-items-stretch px-4 py-2 bg-light shadow-sm">
+    <!-- Logo Section -->
+    <div class="align-content-center">
+        <img src="{% static 'images/default/logo.svg' %}" 
+            alt="ResSync Logo" 
+            height="30"
+            class="d-block">
+    </div>
+
+    <!-- Language Switcher -->
+    {% include 'includes/language_selector.html' %}
+</header>

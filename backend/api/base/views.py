@@ -1,251 +1,205 @@
 # backend\api\base\views.py (login section only)
 import logging
-from datetime import timedelta
-from typing import Optional, Dict, Any
-from django.contrib.auth import login, authenticate, logout
+from typing import Optional, Dict, Any, Tuple
+
+from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.utils.translation import gettext_lazy as _, get_language, activate
 from django.db.models import Q
 from django.db import connections
-from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 from django.core.cache import cache
 from django.conf import settings
+from django.http import HttpRequest, HttpResponseRedirect, HttpResponsePermanentRedirect, HttpResponse
+from typing import Union
 
 # Axes imports
+from axes.helpers import get_client_str
 from axes.models import AccessAttempt
 from axes.conf import settings as axes_settings
 from axes.handlers.proxy import AxesProxyHandler
-from axes.helpers import get_client_username
 
 # Local imports
-from backend.tenancy.models import Study, StudyMembership
+from backend.tenancy.models import Study
 from .login import UsernameOrEmailAuthenticationForm
+from .constants import LoginMessages, SessionKeys
 
 logger = logging.getLogger(__name__)
-
-# Initialize Axes handler (proxy ensures middleware context)
+User = get_user_model()
 axes_handler = AxesProxyHandler()
 
-# Cache keys
-CACHE_PREFIX = "ressync_"
-
+class LoginService:
+    """Service class to handle login logic and reduce code duplication"""
+    
+    @staticmethod
+    def get_actual_username(username_input: str) -> Optional[str]:
+        """Convert email to username if needed"""
+        if not username_input:
+            return None
+            
+        if "@" in username_input:
+            try:
+                user = User.objects.only('username').get(email__iexact=username_input)
+                return user.username
+            except (User.DoesNotExist, User.MultipleObjectsReturned):
+                return None
+        
+        return username_input if User.objects.filter(username__iexact=username_input).exists() else None
+    
+    @staticmethod
+    def check_account_status(request, actual_username: Optional[str]) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Check if account is locked and return status
+        Returns: (is_locked, error_context)
+        """
+        if not actual_username:
+            return False, {}
+        
+        # Check if account is locked by axes
+        if axes_handler.is_locked(request, {'username': actual_username}):
+            return True, {
+                'error_message': LoginMessages.ACCOUNT_LOCKED,
+            }
+        
+        return False, {}
+    
+    @staticmethod
+    def get_login_error_context(actual_username: Optional[str]) -> Dict[str, Any]:
+        """
+        Get error context based on login attempt
+        Simplified: same message for non-existent user and wrong password
+        """
+        if not actual_username:
+            # Don't reveal that user doesn't exist
+            return {
+                'error_message': LoginMessages.INVALID_CREDENTIALS,
+            }
+        
+        # Check attempt count
+        try:
+            attempt = AccessAttempt.objects.filter(username=actual_username).first()
+            if attempt:
+                failures = attempt.failures_since_start
+                limit = axes_settings.AXES_FAILURE_LIMIT
+                remaining = max(0, limit - failures)
+                
+                if remaining <= 0:
+                    return {
+                        'error_message': LoginMessages.ACCOUNT_LOCKED,
+                    }
+                
+                # Show warning if more than 1 attempt
+                if failures > 1 and remaining > 0:
+                    return {
+                        'error_message': LoginMessages.ACCOUNT_WILL_BE_LOCKED.format(remaining),
+                    }
+        except Exception as e:
+            logger.error(f"Error checking attempts for {actual_username}: {e}")
+        
+        # Default message for first wrong attempt
+        return {
+            'error_message': LoginMessages.INVALID_CREDENTIALS,
+        }
+    
+    @staticmethod
+    def clear_user_cache(username: str) -> None:
+        """Clear all cached data for a user"""
+        if not username:
+            return
+        
+        cache_keys = [
+            f'user_exists_{username}',
+            f'user_attempts_{username}',
+            f'user_actual_{username}',
+            f'axes_attempts_{username}',
+        ]
+        cache.delete_many(cache_keys)
 
 @never_cache
 @csrf_protect
 @require_http_methods(["GET", "POST"])
-def custom_login(request):
+def custom_login(request: HttpRequest) -> Union[HttpResponseRedirect, HttpResponsePermanentRedirect, HttpResponse]:
     """
-    Enhanced login view with better Axes integration.
-    Shows remaining attempts and lockout messages.
+    Optimized login view with simplified messages:
+    1. Invalid credentials: "Invalid username or password. Please try again."
+    2. Multiple failures: "Incorrect login. Account will be locked in X attempts."
+    3. Account locked: "Account locked. Please contact support."
     """
-    # Set Vietnamese as default for login page
+    # Set Vietnamese as default
     if not get_language():
         activate('vi')
         request.session['django_language'] = 'vi'
 
-    # Redirect if already authenticated
+    # Redirect if authenticated
     if request.user.is_authenticated:
         return redirect('admin:index' if request.user.is_superuser else 'select_study')
 
-    # Initialize context
     context: Dict[str, Any] = {}
-
+    
     if request.method == 'POST':
+        username_input = request.POST.get('username', '').strip()
+        actual_username = LoginService.get_actual_username(username_input) if username_input else None
+        
+        # Check if account is locked first (only if user exists to avoid info leakage)
+        is_locked, lock_context = LoginService.check_account_status(request, actual_username)
+        if is_locked:
+            form = UsernameOrEmailAuthenticationForm(request)
+            context.update(lock_context)
+            context['form'] = form
+            return render(request, 'authentication/login.html', context)
+        
+        # Proceed with form validation (authentication)
         form = UsernameOrEmailAuthenticationForm(request, data=request.POST)
-        username = request.POST.get('username', '')
-        if username:
-            request.session['last_failed_username'] = username
-        credentials = None
-        if username:
-            credentials = {'username': username}
-            is_locked = axes_handler.is_locked(request, credentials)
-            if is_locked:
-                # Show lockout as error_message and do not redirect
-                error_message = _("Account locked: too many login attempts. Please contact support to unlock your account.")
-                context['error_message'] = error_message
-                lockout_info = get_lockout_details(username)
-                if lockout_info is not None:
-                    context['lockout_info'] = lockout_info
-                context['form'] = form
-                return render(request, 'authentication/login.html', context)
         if form.is_valid():
+            # Successful login
             user = form.get_user()
-            if username:
-                clear_user_attempts(username)
-                request.session.pop('last_failed_username', None)
+            
+            # Clear session data
+            request.session.pop(SessionKeys.LAST_USERNAME, None)
+            
+            # Clear cache for this user
+            LoginService.clear_user_cache(user.username)
+
+            # Login and redirect
             login(request, user)
-            logger.info(f"User {user.pk} logged in successfully.")
+            logger.info(f"User {user.pk} ({user.username}) logged in successfully")
+            
+            next_url = request.GET.get('next', '')
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
             return redirect('admin:index' if user.is_superuser else 'select_study')
         else:
-            # Custom error message logic
-            error_message = None
-            if username:
-                attempts_info = get_attempts_info(username)
-                if attempts_info is not None:
-                    context['attempts_info'] = attempts_info
-                    failures = attempts_info.get('failures', 0)
-                    limit = attempts_info.get('limit', 5)
-                    remaining = attempts_info.get('remaining', limit)
-                    if failures <= 2:
-                        error_message = _("Failed login. Please verify and reenter your username and password.")
-                    elif failures >= 3 and remaining > 0:
-                        error_message = _(f"Failed login. Your account will be blocked after {remaining} failed login attempts!")
-                if credentials is not None:
-                    is_locked = axes_handler.is_locked(request, credentials)
-                    if is_locked:
-                        # Show lockout as error_message and do not redirect
-                        error_message = _("Account locked: too many login attempts. Please contact support to unlock your account.")
-                        context['error_message'] = error_message
-                        lockout_info = get_lockout_details(username)
-                        if lockout_info is not None:
-                            context['lockout_info'] = lockout_info
+            # Failed login - get appropriate error message
+            if username_input:
+                # Store for GET request (e.g., refresh)
+                request.session[SessionKeys.LAST_USERNAME] = username_input
+                
+                # Get error context
+                error_context = LoginService.get_login_error_context(actual_username)
+                context.update(error_context)
+            
             context['form'] = form
-            context['error_message'] = error_message
     else:
         # GET request
         form = UsernameOrEmailAuthenticationForm(request)
-        # Check if there's a stored username from previous attempt
-        last_username = request.session.get('last_failed_username', '')
+        
+        # Check if returning from failed attempt
+        last_username = request.session.get(SessionKeys.LAST_USERNAME)
         if last_username:
-            # Pre-fill the form
             form.initial['username'] = last_username
-            # Get attempts info
-            attempts_info = get_attempts_info(last_username)
-            if attempts_info is not None:
-                context['attempts_info'] = attempts_info
-            # Check if locked
-            credentials = {'username': last_username}
-            is_locked = axes_handler.is_locked(request, credentials)
+            
+            # Check if account is now locked
+            actual_username = LoginService.get_actual_username(last_username)
+            is_locked, lock_context = LoginService.check_account_status(request, actual_username)
             if is_locked:
-                lockout_info = get_lockout_details(last_username)
-                if lockout_info is not None:
-                    context['lockout_info'] = lockout_info
+                context.update(lock_context)
+        
         context['form'] = form
 
     return render(request, 'authentication/login.html', context)
-
-
-def get_lockout_details(username: str) -> Optional[Dict[str, Any]]:
-    """
-    Get detailed lockout information for a username.
-    """
-    if not username:
-        return None
-    
-    try:
-        # Get the latest attempt
-        attempt = AccessAttempt.objects.filter(
-            username=username
-        ).latest('attempt_time')
-        
-        # Calculate unlock time
-        cooloff_time = axes_settings.AXES_COOLOFF_TIME
-        
-        if isinstance(cooloff_time, int):
-            cooloff_delta = timedelta(hours=cooloff_time)
-        elif isinstance(cooloff_time, timedelta):
-            cooloff_delta = cooloff_time
-        else:
-            cooloff_delta = timedelta(hours=1)  # Default
-            
-        unlock_time = attempt.attempt_time + cooloff_delta
-        time_remaining = unlock_time - timezone.now()
-        
-        if time_remaining.total_seconds() > 0:
-            return {
-                'username': username,
-                'unlock_time': unlock_time,
-                'time_remaining': time_remaining,
-                'time_remaining_str': format_time_remaining(time_remaining),
-                'attempts': attempt.failures_since_start,
-            }
-    except AccessAttempt.DoesNotExist:
-        pass
-    except Exception as e:
-        logger.error(f"Error getting lockout details for {username}: {e}")
-    
-    return None
-
-
-def get_attempts_info(username: str) -> Optional[Dict[str, Any]]:
-    """
-    Get information about login attempts for a username.
-    """
-    if not username:
-        return None
-    
-    try:
-        # Get attempt count
-        attempt = AccessAttempt.objects.filter(
-            username=username
-        ).order_by('-attempt_time').first()
-        
-        if attempt:
-            failures = attempt.failures_since_start
-            limit = axes_settings.AXES_FAILURE_LIMIT
-            remaining = max(0, limit - failures)
-            
-            return {
-                'username': username,
-                'failures': failures,
-                'limit': limit,
-                'remaining': remaining,
-                'is_warning': remaining <= 2,
-                'is_critical': remaining <= 1,
-            }
-    except Exception as e:
-        logger.error(f"Error getting attempts info for {username}: {e}")
-    
-    return None
-
-
-def clear_user_attempts(username: str) -> None:
-    """
-    Clear failed login attempts for a user.
-    """
-    if not username:
-        return
-    
-    try:
-        # Clear from database
-        AccessAttempt.objects.filter(username=username).delete()
-        
-        # Clear from cache
-        cache.delete_many([
-            f"{CACHE_PREFIX}attempts_{username}",
-            f"{CACHE_PREFIX}locked_{username}"
-        ])
-        
-        logger.info(f"Cleared login attempts for {username}")
-    except Exception as e:
-        logger.error(f"Error clearing attempts for {username}: {e}")
-
-
-def format_time_remaining(time_remaining: timedelta) -> str:
-    """
-    Format time remaining in a human-readable format.
-    """
-    if not time_remaining:
-        return "a few seconds"
-    
-    total_seconds = int(time_remaining.total_seconds())
-    hours = total_seconds // 3600
-    minutes = (total_seconds % 3600) // 60
-    seconds = total_seconds % 60
-    
-    parts = []
-    if hours > 0:
-        parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
-    if minutes > 0:
-        parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
-    if hours == 0 and minutes == 0 and seconds > 0:
-        parts.append(f"{seconds} second{'s' if seconds > 1 else ''}")
-    
-    return " and ".join(parts) if parts else "a few seconds"
 
 @never_cache
 @login_required
@@ -354,11 +308,19 @@ def dashboard(request, study_code=None):
     }
     return render(request, 'default/dashboard.html', context)
 
+@login_required
+@never_cache
 def logout_view(request):
-    """Logout view"""
+    """Simple logout view"""
     if request.user.is_authenticated:
         username = request.user.username
         logger.info(f"User {username} logged out")
+        
+        # Clear user cache
+        LoginService.clear_user_cache(username)
     
+    # Clear all session data
+    request.session.flush()
     logout(request)
-    return redirect('home')
+    
+    return redirect('/')

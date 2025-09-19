@@ -94,10 +94,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "axes.middleware.AxesMiddleware",
 
-    "backend.tenancy.middleware.SecurityHeadersMiddleware",
-    "backend.tenancy.middleware.PerformanceMonitoringMiddleware",
-    "backend.tenancy.middleware.StudyRoutingMiddleware",
-    "backend.tenancy.middleware.CacheControlMiddleware",
+    'backend.tenancy.middleware.StudyRoutingMiddleware',
+    'backend.tenancy.middleware.CacheControlMiddleware',
+    'backend.tenancy.middleware.SecurityHeadersMiddleware',
+    'backend.tenancy.middleware.PerformanceMonitoringMiddleware',
     "backend.tenancy.middleware.DatabaseConnectionCleanupMiddleware",
 ]
 
@@ -274,9 +274,10 @@ PASSWORD_HASHERS = [
 # ==========================================
 
 AXES_ENABLED = True
-AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
+AXES_FAILURE_LIMIT = 7  # Lock after 5 failed attempts
 AXES_COOLOFF_TIME = None  # None = permanent lock
 AXES_RESET_ON_SUCCESS = True  # Reset counter on successful login
+AXES_LOCK_OUT_AT_FAILURE = False # Do not lock automatically
 
 # IMPORTANT: Only lock by username, not IP
 AXES_LOCKOUT_PARAMETERS = ['username']  # Only lock by username

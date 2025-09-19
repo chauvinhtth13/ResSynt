@@ -1,0 +1,27 @@
+{% load static %}
+{% load i18n %}
+<div class="dropdown">
+    <button class="btn dropdown-toggle modern" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {% get_language_info for LANGUAGE_CODE as lang_info %}
+        {% if request.resolver_match.url_name == 'select_study' or request.resolver_match.url_name == 'dashboard' %}
+            {{ LANGUAGE_CODE|upper }}
+        {% else %}
+            {{ lang_info.name_local }}
+        {% endif %}
+    </button>
+    <ul class="dropdown-menu language-menu" aria-labelledby="languageDropdown">
+        {% get_language_info_list for LANGUAGES as languages %}
+        {% for lang in languages %}
+        <li>
+            <form action="{% url 'set_language' %}" method="post" class="language-form">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.path }}">
+                <input name="language" type="hidden" value="{{ lang.code }}">
+                <button class="dropdown-item rounded {% if lang.code == LANGUAGE_CODE %}active{% endif %}" type="submit">
+                    {{ lang.name_local }}
+                </button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+</div>

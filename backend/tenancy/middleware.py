@@ -23,30 +23,22 @@ import time
 
 logger = logging.getLogger(__name__)
 
-
 class StudyRoutingMiddleware:
     """
-    Main middleware for study-based database routing with optimizations:
-    - Multi-level caching (request, session, Redis)
-    - Connection pooling management
-    - Lazy loading of expensive operations
-    - Compiled regex patterns for path matching
+    Main middleware for study-based database routing.
+    Optimized for performance with caching and lazy loading.
     """
     
     # Path configurations
     EXCLUDED_PATHS = frozenset([
-        "/select-study/", "/accounts/", "/admin/", "/secret-admin/",
+        "/", "/select-study/", "/accounts/", "/admin/", "/secret-admin/",
         "/rosetta/", "/i18n/", "/static/", "/media/", "/favicon.ico",
-        "/robots.txt", "/sitemap.xml", "/health/", "/metrics/"
+        "/robots.txt", "/sitemap.xml", "/health/", "/metrics/", "/logout/"
     ])
     
-    PROTECTED_PATHS = frozenset([
-        "/secret-admin/", "/rosetta/"
-    ])
-    
-    API_PATHS = frozenset([
-        "/api/", "/graphql/"
-    ])
+    PROTECTED_PATHS = frozenset(["/secret-admin/", "/rosetta/"])
+    API_PATHS = frozenset(["/api/", "/graphql/"])
+    STATIC_PATHS = frozenset(["/static/", "/media/"])
     
     # Cache configurations
     CACHE_PREFIX = "study_mw_"
@@ -56,10 +48,10 @@ class StudyRoutingMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self._compiled_patterns = self._compile_patterns()
-        self._path_cache = {}  # Cache path check results
-        
+    
+    @lru_cache(maxsize=128)
     def _compile_patterns(self) -> Dict[str, re.Pattern]:
-        """Pre-compile regex patterns for performance"""
+        """Pre-compile regex patterns for performance (cached)"""
         return {
             'excluded': re.compile(
                 r'^(' + '|'.join(re.escape(p) for p in self.EXCLUDED_PATHS) + r')'
@@ -70,340 +62,208 @@ class StudyRoutingMiddleware:
             'api': re.compile(
                 r'^(' + '|'.join(re.escape(p) for p in self.API_PATHS) + r')'
             ),
-            'static': re.compile(r'^/(static|media)/'),
+            'static': re.compile(
+                r'^(' + '|'.join(re.escape(p) for p in self.STATIC_PATHS) + r')'
+            ),
         }
     
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        """Main middleware processing"""
-        # Performance tracking
-        middleware_start = self._get_timestamp()
+        """Main middleware processing with optimized flow"""
+        start_time = time.time() if settings.DEBUG else None
         
         try:
-            # Fast path for static files
-            if self._is_static_request(request):
-                return self.get_response(request)
-            
-            # Security check for protected paths
-            if self._check_protected_path(request):
-                raise Http404("Page not found")
-            
-            # Check if path should use default database
-            if self._should_use_default_db(request):
+            # Fast paths - no database switching needed
+            if self._should_skip_processing(request):
                 set_current_db("default")
                 return self.get_response(request)
             
-            # Handle unauthenticated users
+            # Check authentication
             if not request.user.is_authenticated:
                 set_current_db("default")
                 return self.get_response(request)
             
-            # Superusers always use default database
+            # Superusers use default DB
             if request.user.is_superuser:
                 set_current_db("default")
-                setattr(request, "is_superuser_mode", True)
+                request.session['is_superuser_mode'] = True
                 return self.get_response(request)
             
-            # Get and validate study
-            study = self._get_validated_study(request)
-            if not study:
-                return self._handle_no_study(request)
+            # Get study for regular users
+            study = self._get_study_for_request(request)
             
-            # Setup study context with lazy loading
-            self._setup_study_context(request, study)
-            
-            # Process request with study database
-            response = self._process_with_study_db(request, study)
-            
-            # Add performance headers in debug mode
-            if settings.DEBUG:
-                elapsed = self._get_timestamp() - middleware_start
-                response['X-Processing-Time'] = f"{elapsed:.3f}ms"
-                response['X-Study-DB'] = study.db_name
-            
-            return response
-            
+            if study:
+                # Setup study context
+                self._setup_study_context(request, study)
+                
+                # Switch to study database
+                set_current_db(study.db_name)
+                study_db_manager.add_study_db(study.db_name)
+                
+                response = self.get_response(request)
+                
+                # Add debug headers
+                if settings.DEBUG:
+                    response['X-Study'] = study.code
+                    response['X-Database'] = study.db_name
+                    if start_time:
+                        response['X-Processing-Time'] = f"{(time.time() - start_time) * 1000:.2f}ms"
+                
+                return response
+            else:
+                # No study selected - use default DB
+                set_current_db("default")
+                return self.get_response(request)
+                
         except Exception as e:
-            logger.error(f"Middleware error for user {getattr(request.user, 'pk', 'anonymous')}: {e}", exc_info=True)
+            logger.error(f"Middleware error: user={getattr(request.user, 'pk', 'anon')}, path={request.path}, error={e}")
             set_current_db("default")
             
-            # Return JSON error for API requests
             if self._is_api_request(request):
                 return JsonResponse({
                     'error': 'Internal server error',
-                    'detail': str(e) if settings.DEBUG else 'An error occurred',
-                    'user': getattr(request.user, 'pk', 'anonymous'),
-                    'path': request.path
+                    'detail': str(e) if settings.DEBUG else 'An error occurred'
                 }, status=500)
-            
             raise
-        
         finally:
-            # Always reset to default database
+            # Always reset to default
             set_current_db("default")
     
-    def _get_timestamp(self) -> float:
-        """Get current timestamp in milliseconds"""
-        return time.time() * 1000
-    
-    def _is_static_request(self, request: HttpRequest) -> bool:
-        """Check if request is for static content"""
-        return bool(self._compiled_patterns['static'].match(request.path))
+    def _should_skip_processing(self, request: HttpRequest) -> bool:
+        """Check if request should skip study processing"""
+        path = request.path
+        
+        # Check static files first (most common)
+        if self._compiled_patterns['static'].match(path):
+            return True
+        
+        # Check excluded paths
+        if self._compiled_patterns['excluded'].match(path):
+            return True
+        
+        # Check protected paths for non-superusers
+        if (self._compiled_patterns['protected'].match(path) and 
+            hasattr(request, 'user') and 
+            request.user.is_authenticated and 
+            not request.user.is_superuser):
+            raise Http404("Page not found")
+        
+        return False
     
     def _is_api_request(self, request: HttpRequest) -> bool:
         """Check if request is for API endpoint"""
         return bool(self._compiled_patterns['api'].match(request.path))
     
-    def _check_protected_path(self, request: HttpRequest) -> bool:
-        """Check if path is protected for non-superusers"""
-        if not request.user.is_authenticated:
-            return False
-        
-        if request.user.is_superuser:
-            return False
-        
-        path = request.path
-        
-        # Check cache first
-        cache_key = f"path_protected_{path}"
-        if cache_key in self._path_cache:
-            return self._path_cache[cache_key]
-        
-        # Check pattern
-        is_protected = bool(self._compiled_patterns['protected'].match(path))
-        
-        # Cache result (limit cache size, remove oldest if needed)
-        if len(self._path_cache) >= 1000:
-            oldest_key = next(iter(self._path_cache))
-            self._path_cache.pop(oldest_key)
-        self._path_cache[cache_key] = is_protected
-        
-        return is_protected
-    
-    def _should_use_default_db(self, request: HttpRequest) -> bool:
-        """Check if request should use default database"""
-        path = request.path
-        
-        # Check cache
-        cache_key = f"path_excluded_{path}"
-        if cache_key in self._path_cache:
-            return self._path_cache[cache_key]
-        
-        # Check pattern
-        use_default = bool(self._compiled_patterns['excluded'].match(path))
-        
-        # Cache result (limit cache size, remove oldest if needed)
-        if len(self._path_cache) >= 1000:
-            oldest_key = next(iter(self._path_cache))
-            self._path_cache.pop(oldest_key)
-        self._path_cache[cache_key] = use_default
-        
-        return use_default
-    
-    def _get_validated_study(self, request: HttpRequest) -> Optional[Study]:
-        """
-        Get and validate study with multi-level caching:
-        1. Request-level cache (fastest)
-        2. Session cache
-        3. Redis cache
-        4. Database (slowest)
-        """
-        study_id = request.session.get("current_study")
+    def _get_study_for_request(self, request: HttpRequest) -> Optional[Study]:
+        """Get study for current request with caching"""
+        study_id = request.session.get('current_study')
         if not study_id:
             return None
         
-        # Level 1: Request cache
+        # Try request-level cache first
         if hasattr(request, '_cached_study'):
-            return getattr(request, '_cached_study', None)
+            return getattr(request, '_cached_study')
         
-        # Level 2: Session cache with validation
-        session_cache_key = f"study_obj_{study_id}"
-        if session_cache_key in request.session:
-            cached_data = request.session[session_cache_key]
-            if self._validate_cached_study(cached_data):
-                study = self._create_study_from_cache(cached_data)
-                setattr(request, '_cached_study', study)
-                return study
-        
-        # Level 3: Redis cache
-        redis_cache_key = f"{self.CACHE_PREFIX}study_{study_id}_user_{request.user.pk}"
-        cached_data = cache.get(redis_cache_key)
+        # Try Redis cache
+        cache_key = f"{self.CACHE_PREFIX}study_{study_id}_user_{request.user.pk}"
+        cached_data = cache.get(cache_key)
         
         if cached_data:
-            if self._validate_cached_study(cached_data):
-                study = self._create_study_from_cache(cached_data)
-                setattr(request, '_cached_study', study)
-                # Update session cache
-                request.session[session_cache_key] = cached_data
-                return study
+            study = self._create_study_from_cache(cached_data)
+            setattr(request, '_cached_study', study)
+            return study
         
-        # Level 4: Database query with optimizations
+        # Load from database
         try:
-            with transaction.atomic():
-                # Lock bản ghi Study trước, không join gì cả để tránh lỗi FOR UPDATE với outer join
-                study = (
-                    Study.objects
-                    .select_for_update(nowait=True)
-                    .get(id=study_id, status=Study.Status.ACTIVE)
+            study = (
+                Study.objects
+                .select_related('created_by')
+                .get(
+                    id=study_id,
+                    status=Study.Status.ACTIVE,
+                    memberships__user=request.user,
+                    memberships__is_active=True
                 )
-                # Sau đó mới truy vấn các quan hệ nếu cần
-                study = Study.objects.select_related('created_by').get(pk=study.pk)
-                # Access translations if needed, e.g., study.translations.<field>
-                
-                # Verify user has access
-                has_access = (
-                    StudyMembership.objects
-                    .filter(
-                        user=request.user,
-                        study=study,
-                        is_active=True
-                    )
-                    .exists()
-                )
-                
-                if not has_access:
-                    request.session.pop("current_study", None)
-                    request.session.pop(session_cache_key, None)
-                    logger.warning(f"User {request.user.pk} has no access to study {study_id}")
-                    return None
-                
-                # Cache the study data
-                cache_data = self._create_cache_data(study)
-                
-                # Update all cache levels
-                cache.set(redis_cache_key, cache_data, self.CACHE_TTL)
-                request.session[session_cache_key] = cache_data
-                setattr(request, '_cached_study', study)
-                return study
-                
-        except Study.DoesNotExist:
-            request.session.pop("current_study", None)
-            logger.warning(f"Study {study_id} not found or inactive")
-            return None
-        except Exception as e:
-            logger.error(f"Error fetching study {study_id}: {e}")
-            return None
-    
-    def _validate_cached_study(self, cached_data: Dict[str, Any]) -> bool:
-        """Validate cached study data"""
-        if not cached_data:
-            return False
-        
-        # Check required fields
-        required_fields = ['id', 'code', 'db_name', 'status']
-        if not all(field in cached_data for field in required_fields):
-            return False
-        
-        # Check if study is still active
-        return cached_data.get('status') == Study.Status.ACTIVE
-    
-    def _create_study_from_cache(self, cached_data: Dict[str, Any]) -> Study:
-        """Create Study object from cached data"""
-        study = Study(
-            id=cached_data['id'],
-            code=cached_data['code'],
-            db_name=cached_data['db_name'],
-            status=cached_data['status']
-        )
-        
-        # Add additional cached fields if available
-        for field in ['created_at', 'updated_at']:
-            if field in cached_data:
-                setattr(study, field, cached_data[field])
-        
-        return study
-    
-    def _create_cache_data(self, study: Study) -> Dict[str, Any]:
-        """Create cache data from Study object"""
-        return {
-            'id': getattr(study, 'id', None),
-            'code': getattr(study, 'code', None),
-            'db_name': getattr(study, 'db_name', None),
-            'status': getattr(study, 'status', None),
-            'created_at': study.created_at.isoformat() if hasattr(study, 'created_at') and study.created_at else None,
-            'updated_at': study.updated_at.isoformat() if hasattr(study, 'updated_at') and study.updated_at else None,
-        }
-    
-    def _setup_study_context(self, request: HttpRequest, study: Study) -> None:
-        """
-        Setup study context with lazy loading for performance.
-        Uses SimpleLazyObject to defer expensive operations until needed.
-        """
-        setattr(request, 'study', study)
-        # Use lazy loading for expensive operations
-        setattr(request, 'study_memberships', SimpleLazyObject(
-            lambda: self._get_cached_memberships(request.user, study)
-        ))
-        setattr(request, 'study_permissions', SimpleLazyObject(
-            lambda: self._get_cached_permissions(request.user, study)
-        ))
-        setattr(request, 'site_codes', SimpleLazyObject(
-            lambda: self._get_cached_site_codes(request.user, study)
-        ))
-        # Add study info to request for logging
-        setattr(request, 'study_code', getattr(study, 'code', None))
-        setattr(request, 'study_id', getattr(study, 'id', None))
-    
-    def _get_cached_memberships(self, user, study) -> list:
-        """Get cached study memberships with optimized query"""
-        cache_key = f"{self.CACHE_PREFIX}memberships_{user.pk}_{study.id}"
-        memberships = cache.get(cache_key)
-        
-        if memberships is None:
-            memberships = list(
-                StudyMembership.objects
-                .select_related('study', 'role')
-                .prefetch_related(
-                    'study_sites__site',
-                    'role__role_permissions__permission'
-                )
-                .filter(user=user, study=study, is_active=True)
             )
             
-            # Cache for shorter time as memberships can change
-            cache.set(cache_key, memberships, self.SHORT_CACHE_TTL)
+            # Cache the study
+            cache_data = {
+                'id': study.pk,
+                'code': study.code,
+                'db_name': study.db_name,
+                'status': study.status,
+            }
+            cache.set(cache_key, cache_data, self.CACHE_TTL)
             
-            logger.debug(f"Loaded {len(memberships)} memberships for user {user.pk} in study {study.code}")
-        
-        return memberships
+            setattr(request, '_cached_study', study)
+            return study
+            
+        except Study.DoesNotExist:
+            # Clear invalid study from session
+            request.session.pop('current_study', None)
+            logger.warning(f"Invalid study {study_id} for user {request.user.pk}")
+            return None
     
-    def _get_cached_permissions(self, user, study) -> Set[str]:
-        """Get cached study permissions"""
+    def _create_study_from_cache(self, cache_data: Dict[str, Any]) -> Study:
+        """Create Study object from cached data"""
+        study = Study(
+            id=cache_data['id'],
+            code=cache_data['code'],
+            db_name=cache_data['db_name'],
+            status=cache_data.get('status', Study.Status.ACTIVE)
+        )
+        return study
+    
+    def _setup_study_context(self, request: HttpRequest, study: Study) -> None:
+        """Setup study context with lazy loading"""
+        setattr(request, 'study', study)
+        setattr(request, 'study_id', study.pk)
+        setattr(request, 'study_code', study.code)
+        
+        # Use lazy loading for expensive operations
+        setattr(request, 'study_permissions', SimpleLazyObject(
+            lambda: self._get_permissions(request.user, study)
+        ))
+        setattr(request, 'site_codes', SimpleLazyObject(
+            lambda: self._get_site_codes(request.user, study)
+        ))
+    
+    def _get_permissions(self, user, study) -> Set[str]:
+        """Get cached permissions for user in study"""
         cache_key = f"{self.CACHE_PREFIX}perms_{user.pk}_{study.id}"
         permissions = cache.get(cache_key)
         
         if permissions is None:
             permissions = set()
-            memberships = self._get_cached_memberships(user, study)
+            memberships = StudyMembership.objects.filter(
+                user=user, study=study, is_active=True
+            ).select_related('role')
             
-            # Batch fetch all permissions
-            role_ids = [m.role_id for m in memberships]
-            if role_ids:
+            for membership in memberships:
                 perms = (
                     RolePermission.objects
-                    .filter(role_id__in=role_ids)
+                    .filter(role=membership.role)
                     .select_related('permission')
                     .values_list('permission__code', flat=True)
                 )
                 permissions.update(perms)
             
             cache.set(cache_key, permissions, self.CACHE_TTL)
-            
-            logger.debug(f"Loaded {len(permissions)} permissions for user {user.pk} in study {study.code}")
         
         return permissions
     
-    def _get_cached_site_codes(self, user, study) -> list:
-        """Get cached site codes with optimization"""
+    def _get_site_codes(self, user, study) -> list:
+        """Get cached site codes for user in study"""
         cache_key = f"{self.CACHE_PREFIX}sites_{user.pk}_{study.id}"
         site_codes = cache.get(cache_key)
         
         if site_codes is None:
             site_codes = set()
-            memberships = self._get_cached_memberships(user, study)
+            memberships = StudyMembership.objects.filter(
+                user=user, study=study, is_active=True
+            )
             
             for membership in memberships:
                 if membership.can_access_all_sites:
-                    # Get all sites for study
                     all_sites = (
                         StudySite.objects
                         .filter(study=study)
@@ -412,7 +272,6 @@ class StudyRoutingMiddleware:
                     )
                     site_codes.update(all_sites)
                 else:
-                    # Get assigned sites
                     assigned_sites = (
                         membership.study_sites
                         .select_related('site')
@@ -422,103 +281,8 @@ class StudyRoutingMiddleware:
             
             site_codes = list(site_codes)
             cache.set(cache_key, site_codes, self.CACHE_TTL)
-            
-            logger.debug(f"Loaded {len(site_codes)} sites for user {user.pk} in study {study.code}")
         
         return site_codes
-    
-    def _process_with_study_db(self, request: HttpRequest, study: Study) -> HttpResponse:
-        """Process request with study database context"""
-        try:
-            # Set current database
-            set_current_db(study.db_name)
-            
-            # Add study database to connection pool
-            study_db_manager.add_study_db(study.db_name)
-            
-            # Log database switch in debug mode
-            if settings.DEBUG:
-                logger.debug(f"Switched to database {study.db_name} for user {request.user.pk}")
-            
-            # Process request
-            response = self.get_response(request)
-            
-            # Add study info to response headers in debug mode
-            if settings.DEBUG:
-                response['X-Study-Code'] = study.code
-                response['X-Database'] = study.db_name
-            
-            return response
-            
-        except Exception as e:
-            logger.error(f"Error processing with study DB {study.db_name}: {e}", exc_info=True)
-            # Try to recover by using default database
-            set_current_db("default")
-            
-            if self._is_api_request(request):
-                return JsonResponse({
-                    'error': 'Database error',
-                    'detail': str(e) if settings.DEBUG else 'Database unavailable',
-                    'user': getattr(request.user, 'pk', 'anonymous'),
-                    'study': getattr(study, 'id', None)
-                }, status=503)
-            
-            raise
-    
-    def _handle_no_study(self, request: HttpRequest) -> HttpResponse:
-        """Handle case when no valid study is selected"""
-        # Check if user has any active studies
-        cache_key = f"{self.CACHE_PREFIX}has_studies_{request.user.pk}"
-        has_studies = cache.get(cache_key)
-        
-        if has_studies is None:
-            has_studies = (
-                StudyMembership.objects
-                .filter(
-                    user=request.user,
-                    study__status=Study.Status.ACTIVE,
-                    is_active=True
-                )
-                .exists()
-            )
-            # Cache for short time
-            cache.set(cache_key, has_studies, self.SHORT_CACHE_TTL)
-        
-        if has_studies:
-            logger.info(f"User {request.user.pk} redirected to study selection")
-            return redirect("select_study")
-        
-        # User has no active studies
-        messages.error(request, "You have no access to any active studies.")
-        logger.warning(f"User {request.user.pk} has no active study access")
-        
-        return redirect("login")
-
-    def _setup_language(self, request):
-        """Setup language with Vietnamese as default"""
-        from django.utils.translation import get_language, activate
-        
-        # Get current language from session or cookies
-        language = None
-        
-        # Check session first
-        if hasattr(request, 'session'):
-            language = request.session.get('django_language')
-        
-        # Check cookie if not in session
-        if not language and hasattr(request, 'COOKIES'):
-            language = request.COOKIES.get('django_language')
-        
-        # Default to Vietnamese if no language set
-        if not language:
-            language = 'vi'
-            activate(language)
-            if hasattr(request, 'session'):
-                request.session['django_language'] = language
-        else:
-            activate(language)
-        
-        return language
 
 class CacheControlMiddleware:
     """
@@ -733,7 +497,6 @@ class PerformanceMonitoringMiddleware:
                 f"path={request.path} status={response.status_code} "
                 f"duration={duration:.2f}ms user={getattr(request.user, 'pk', 'anonymous')}"
             )
-
 
 class DatabaseConnectionCleanupMiddleware:
     """
