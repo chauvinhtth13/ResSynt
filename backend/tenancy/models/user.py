@@ -107,12 +107,6 @@ class User(AbstractUser):
         verbose_name="Last Failed Login"
     )
     
-    # Metadata
-    notes = models.TextField(
-        blank=True,
-        verbose_name="Notes"
-    )
-    
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Created At"

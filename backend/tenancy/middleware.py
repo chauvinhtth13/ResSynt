@@ -6,19 +6,16 @@ connection pooling, and performance improvements.
 import logging
 import re
 from typing import Optional, Set, Dict, Any
-from contextlib import contextmanager
 from functools import lru_cache
 from django.http import HttpRequest, HttpResponse, Http404, JsonResponse
-from django.shortcuts import redirect
 from django.conf import settings
-from django.contrib import messages
 from django.core.cache import cache
-from django.db import transaction, connections
+from django.db import connections
 from django.utils.functional import SimpleLazyObject
-from django.utils.deprecation import MiddlewareMixin
+from django.utils import timezone
 from .models import StudyMembership, Study, RolePermission, StudySite
 from .db_loader import study_db_manager
-from .db_router import set_current_db, get_current_db
+from .db_router import set_current_db
 import time
 
 logger = logging.getLogger(__name__)
@@ -41,7 +38,7 @@ class StudyRoutingMiddleware:
     STATIC_PATHS = frozenset(["/static/", "/media/"])
     
     # Cache configurations
-    CACHE_PREFIX = "study_mw_"
+    CACHE_PREFIX = "study_"
     CACHE_TTL = 300  # 5 minutes
     SHORT_CACHE_TTL = 60  # 1 minute for frequently changing data
     
@@ -214,10 +211,13 @@ class StudyRoutingMiddleware:
         return study
     
     def _setup_study_context(self, request: HttpRequest, study: Study) -> None:
-        """Setup study context with lazy loading"""
+        """Setup study context with lazy loading and auto-update access tracking"""
         setattr(request, 'study', study)
         setattr(request, 'study_id', study.pk)
         setattr(request, 'study_code', study.code)
+        
+        # AUTO-UPDATE: Track user's study access
+        self._update_study_access(request.user, study)
         
         # Use lazy loading for expensive operations
         setattr(request, 'study_permissions', SimpleLazyObject(
@@ -227,6 +227,46 @@ class StudyRoutingMiddleware:
             lambda: self._get_site_codes(request.user, study)
         ))
     
+    def _update_study_access(self, user, study) -> None:
+        """Auto-update user's last study access"""
+        try:
+            # Import locally để tránh circular import
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            # Only update if study changed or last access was > 5 minutes ago
+            should_update = False
+            
+            # Check if attributes exist first
+            if hasattr(user, 'last_study_accessed_id'):
+                if user.last_study_accessed_id != study.id:
+                    should_update = True
+                elif hasattr(user, 'last_study_accessed_at') and user.last_study_accessed_at:
+                    time_diff = timezone.now() - user.last_study_accessed_at
+                    if time_diff.total_seconds() > 300:  # 5 minutes
+                        should_update = True
+                else:
+                    should_update = True
+            else:
+                should_update = True
+            
+            if should_update:
+                # Update using update() for better performance
+                User.objects.filter(pk=user.pk).update(
+                    last_study_accessed=study,
+                    last_study_accessed_at=timezone.now()
+                )
+                
+                # Refresh user object to get updated values
+                user.refresh_from_db(fields=['last_study_accessed', 'last_study_accessed_at'])
+                
+                # Log the access
+                logger.debug(f"Updated study access: user={user.username}, study={study.code}")
+                
+        except Exception as e:
+            # Don't break request if tracking fails
+            logger.error(f"Failed to update study access tracking: {e}")
+
     def _get_permissions(self, user, study) -> Set[str]:
         """Get cached permissions for user in study"""
         cache_key = f"{self.CACHE_PREFIX}perms_{user.pk}_{study.id}"

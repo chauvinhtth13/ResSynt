@@ -72,7 +72,7 @@ class Study(TranslatableModel):
 
     # Translatable fields
     translations = TranslatedFields(
-        name=models.CharField(
+        name=models.TextField(
             max_length=255,
             db_index=True,
             verbose_name="Name"
@@ -147,7 +147,7 @@ class Site(TranslatableModel):
 
     # Translatable fields
     translations = TranslatedFields(
-        name=models.CharField(
+        name=models.TextField(
             max_length=255,
             verbose_name="Name"
         ),
