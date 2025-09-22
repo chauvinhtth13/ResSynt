@@ -1,125 +1,123 @@
-# backend/tenancy/signals.py - FIXED VERSION
+# backend/tenancy/signals.py - SECURE VERSION
 from django.core.signals import request_finished
 from django.db import connections
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
-from django.utils import timezone
+from django.contrib.auth.signals import user_logged_in, user_login_failed
 from axes.signals import user_locked_out
 import logging
-from typing import Set
 
-logger = logging.getLogger('backend.tenancy')  # FIXED: Changed from 'apps.tenancy'
+logger = logging.getLogger('backend.tenancy')
 
-User = get_user_model()
+# Import the actual User model to avoid type issues
+from .models.user import User
 
-
-# ============================================
-# AXES SIGNAL HANDLERS
-# ============================================
 
 @receiver(user_locked_out)
 def handle_axes_lockout(sender, request, username, ip_address, **kwargs):
-    """When axes locks out a user, update their status"""
+    """When axes locks out a user, deactivate them immediately"""
     try:
         user = User.objects.get(username=username)
-        if user.status == User.Status.ACTIVE: # type: ignore
-            user.status = User.Status.BLOCKED # type: ignore
+        if user.is_active:
             user.is_active = False
+            user.save(update_fields=['is_active'])
+            logger.warning(f"SECURITY: User {username} deactivated due to axes lockout from IP {ip_address}")
             
             # Add note about the lockout
+            from django.utils import timezone
             timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
-            note = f"\n[{timestamp}] Auto-blocked by axes from IP {ip_address}"
-            user.notes = (user.notes or "") + note # type: ignore
-            
-            user.save(update_fields=['status', 'is_active', 'notes'])
-            logger.info(f"User {username} auto-blocked due to axes lockout from IP {ip_address}")
-            
-            # Send notification if configured
-            from django.core.mail import mail_admins
-            if getattr(settings, 'AXES_NOTIFY_ADMINS_ON_LOCKOUT', False):
-                mail_admins(
-                    f"User {username} blocked by axes",
-                    f"User {username} has been automatically blocked due to too many failed login attempts from IP {ip_address}.",
-                    fail_silently=True
-                )
-                
+            current_notes = user.notes or ""
+            user.notes = f"{current_notes}\n[{timestamp}] Auto-blocked: Too many failed login attempts from IP {ip_address}".strip()
+            user.save(update_fields=['notes'])
     except User.DoesNotExist:
         logger.warning(f"Axes lockout for non-existent user: {username}")
-    except Exception as e:
-        logger.error(f"Error handling axes lockout for {username}: {e}")
 
 
-@receiver(pre_save, sender=User)
-def sync_status_with_axes(sender, instance, **kwargs):
-    """Before saving, check if we need to sync with axes"""
-    if instance.pk:  # Only for existing users
-        try:
-            # Get the old instance
-            old_user = User.objects.filter(pk=instance.pk).first()
+@receiver(user_logged_in)
+def handle_successful_login(sender, request, user, **kwargs):
+    """Reset failed attempts ONLY for active users on successful login"""
+    # CRITICAL: Only reset if user is active (not blocked)
+    # Type check to ensure it's our custom User model
+    if not isinstance(user, User):
+        return
+        
+    if user.is_active:
+        # Reset failed attempts in our model
+        if hasattr(user, 'failed_login_attempts') and user.failed_login_attempts > 0:
+            user.failed_login_attempts = 0
+            user.last_failed_login = None
+            user.save(update_fields=['failed_login_attempts', 'last_failed_login'])
+            logger.info(f"Reset failed attempts for active user {user.username}")
             
-            if old_user:
-                # If changing to ACTIVE from BLOCKED, ensure axes is unblocked
-                if instance.status == User.Status.ACTIVE and old_user.status == User.Status.BLOCKED: # type: ignore
-                    instance.reset_axes_locks()
-                    instance.is_active = True
-                    logger.info(f"Auto-unblocking axes for user {instance.username} due to ACTIVE status")
-                
-                # If changing from any inactive status to ACTIVE
-                elif instance.status == User.Status.ACTIVE and old_user.status != User.Status.ACTIVE: # type: ignore
-                    instance.reset_axes_locks()
-                    instance.is_active = True
-                    logger.info(f"Resetting axes locks for user {instance.username} due to activation")
-                
-                # Log status changes
-                if old_user.status != instance.status: # type: ignore
-                    logger.info(f"User {instance.username} status changed from {old_user.status} to {instance.status}") # type: ignore
-                    
-        except Exception as e:
-            logger.error(f"Error in pre_save signal for user {instance.username}: {e}")
+        # Axes will auto-reset its own counters because AXES_RESET_ON_SUCCESS = True
+    else:
+        # This should never happen if backend is working correctly
+        logger.error(f"WARNING: Blocked user {user.username} somehow logged in! This should not happen!")
 
-# ============================================
-# DATABASE CONNECTION MANAGEMENT
-# ============================================
 
+@receiver(user_login_failed)
+def handle_failed_login(sender, credentials, request, **kwargs):
+    """Track failed login attempts"""
+    username = credentials.get('username')
+    if username:
+        try:
+            user = User.objects.get(username=username)
+            
+            # Increment failed attempts
+            user.failed_login_attempts += 1
+            
+            # Update last failed login time
+            from django.utils import timezone
+            user.last_failed_login = timezone.now()
+            
+            user.save(update_fields=['failed_login_attempts', 'last_failed_login'])
+            
+            # Log the failure
+            logger.info(f"Failed login attempt #{user.failed_login_attempts} for user {username}")
+            
+            # Check if user should be blocked based on attempt count
+            from axes.conf import settings as axes_settings
+            if user.failed_login_attempts >= axes_settings.AXES_FAILURE_LIMIT and user.is_active:
+                # User reached limit - deactivate them
+                user.is_active = False
+                user.save(update_fields=['is_active'])
+                logger.warning(f"SECURITY: User {username} auto-blocked after {user.failed_login_attempts} failed attempts")
+                
+        except User.DoesNotExist:
+            logger.info(f"Failed login attempt for non-existent user: {username}")
+
+
+# Database connection management
 class DBConnectionManager:
-    """Manage DB connections efficiently."""
+    """Manage DB connections efficiently"""
     
-    USAGE_CACHE_KEY_PREFIX = 'study_db_usage_'
-    BATCH_SIZE = 10  # Process in batches
+    CACHE_PREFIX = 'study_db_usage_'
+    BATCH_SIZE = 10
     
     @classmethod
     def release_unused_dbs(cls, sender, **kwargs):
-        """Release unused study DBs."""
-        # Close unusable connections first
+        """Release unused study DBs"""
         for conn in connections.all():
             conn.close_if_unusable_or_obsolete()
         
-        # Batch process DB aliases
         study_aliases = [
             alias for alias in connections.databases.keys()
             if alias != 'default' and alias.startswith(settings.STUDY_DB_PREFIX)
         ]
         
-        to_remove: Set[str] = set()
-        for alias in study_aliases[:cls.BATCH_SIZE]:  # Process limited batch
-            usage_key = f"{cls.USAGE_CACHE_KEY_PREFIX}{alias}"
+        for alias in study_aliases[:cls.BATCH_SIZE]:
+            usage_key = f"{cls.CACHE_PREFIX}{alias}"
             if not cache.get(usage_key):
-                to_remove.add(alias)
+                try:
+                    if alias in connections:
+                        connections[alias].close()
+                    del connections.databases[alias]
+                    logger.debug(f"Released: {alias}")
+                except Exception as e:
+                    logger.error(f"Error releasing {alias}: {e}")
             else:
-                cache.delete(usage_key)  # Reset for next cycle
-        
-        # Batch remove
-        for alias in to_remove:
-            try:
-                if alias in connections:
-                    connections[alias].close()
-                del connections.databases[alias]
-                logger.debug(f"Released: {alias}")
-            except Exception as e:
-                logger.error(f"Error releasing {alias}: {e}")
+                cache.delete(usage_key)
 
-# Connect optimized handler
 request_finished.connect(DBConnectionManager.release_unused_dbs)

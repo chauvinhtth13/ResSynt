@@ -9,7 +9,6 @@
 {% endblock %}
 
 {% block main %}
-
 <main class="row g-0">
 
     <!-- Features Section - Hidden on mobile, visible from lg -->
@@ -19,60 +18,61 @@
 
     <!-- Login Section -->
     <section class="col-12 col-lg-5 d-flex flex-column justify-content-between">
-        <!-- header -->
-        <div class="d-flex justify-content-end align-items-stretch pe-3 pt-3">
+        <!-- Header with Language Selector -->
+        <div class="d-flex justify-content-end align-items-stretch pe-2 pe-md-3 pt-2 pt-md-3 flex-shrink-0">
             {% include 'includes/language_selector.html' %}
         </div>
 
-        <div class="p-responsive d-flex flex-column justify-content-center">
-            <!-- Title -->
-            <div class="mb-4 text-center">
-                <h2 class="fs-title-2 fw-bold mb-2">{% trans "Wellcome back" %}</h2>
+        <!-- Login Content -->
+        <div class="p-responsive d-flex flex-column justify-content-center align-items-center flex-grow-1">
+            <!-- Title and Logo -->
+            <div class="mb-4 text-center w-100 w-md-75 mx-auto">
+                <h2 class="fs-title-2 fw-bold mb-2">{% trans "Welcome back" %}</h2>
                 <div class="logo-wrapper">
                     <img src="{% static 'images/default/logo.svg' %}" 
-                        alt="ResSync Logo" 
-                        height="50"
-                        class="d-block mx-auto">
+                         alt="ResSync Logo" 
+                         height="50"
+                         class="d-block mx-auto">
                 </div>
             </div>
 
+            <!-- Error Message -->
             {% if error_message %}
-            <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <div class="alert alert-danger d-flex align-items-center w-100 w-md-75 mx-auto" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-3"></i>
                 <div class="small">{{ error_message }}</div>
             </div>
             {% endif %}
 
-        
-        <!-- Login Form -->
-            <form method="POST" id="loginForm">
+            <!-- Login Form -->
+            <form method="POST" id="loginForm" class="w-100 w-md-75 mx-auto">
                 {% csrf_token %}
 
                 <!-- Username/Email Input -->
                 <div class="mb-4">
                     <label class="form-label fs-5 fw-semibold" for="username">
-                        <i class="bi bi-person-fill me-2 text-muted"></i> {% trans "Username or Email" %}
+                        <i class="bi bi-person-fill me-1 text-muted"></i> {% trans "Username or Email" %}
                     </label>
                     <input type="text" id="username" name="username"
-                            class="form-control px-4 py-3 fs-5"
-                            value="{{ form.username.value|default:'' }}"
-                            placeholder="{% trans 'Enter username or email' %}" 
-                            required autofocus>
+                           class="form-control px-4 py-3 fs-5"
+                           value="{{ form.username.value|default:'' }}"
+                           placeholder="{% trans 'Enter username or email' %}" 
+                           required autofocus>
                 </div>
                 
                 <!-- Password Input -->
                 <div class="mb-4">
-                    <label class="form-label fs-5 fw-semibold" for="password">
-                        <i class="bi bi-lock-fill me-2 text-muted"></i> {% trans "Password" %}
+                    <label class="form-label fs-5 fw-semibold" for="passwordInput">
+                        <i class="bi bi-lock-fill me-1 text-muted"></i> {% trans "Password" %}
                     </label>
-                    <div class="password-input-container">
+                    <div class="password-input-container position-relative">
                         <input id="passwordInput" name="password" type="password"
-                                class="form-control px-4 py-3 fs-5"
-                                placeholder="{% trans 'Enter password' %}"
-                                required autofocus>
-                        <span class="password-toggle-icon" id="togglePassword">
+                               class="form-control px-4 py-3 fs-5"
+                               placeholder="{% trans 'Enter password' %}"
+                               required>
+                        <button type="button" class="password-toggle-icon btn btn-link position-absolute top-50 end-0 translate-middle-y me-3" id="togglePassword" aria-label="{% trans 'Toggle password visibility' %}">
                             <i class="bi bi-eye-slash fs-4" id="toggleIcon"></i>
-                        </span>
+                        </button>
                     </div>
                 </div>
 
@@ -83,35 +83,27 @@
             </form>
 
             <!-- Forgot Password -->
-            <div class="text-center">
-                <a href="#" class="text-decoration-none fw-bold link-hover">
+            <div class="text-center w-100 w-md-75 mx-auto">
+                <a href="{% url 'password_reset' %}" class="text-decoration-none fw-bold link-hover">
                     {% trans "Forgotten password?" %}
                 </a>
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="text-center">
-            <!-- <nav class="mb-2">
-                <a href="/about" class="mx-3 text-decoration-none link-hover">About Us</a>
-                <a href="/contact" class="mx-3 text-decoration-none link-hover">Contact</a>
-
-            </nav> -->
-
+        <footer class="text-center mt-auto pb-3 flex-shrink-0">
             <p class="small text-muted mb-1">
                 {% trans 'Need help? Contact our support team at:' %}
                 <a href="mailto:ressync@oucru.org" class="text-decoration-none fw-medium d-inline-flex align-items-center">
                     ressync@oucru.org
                 </a>
             </p>
-            <p class="copyright-text text-muted">
+            <p class="small text-muted mb-0">
                 {% trans 'Designed by Chau Vinh & Pham Tuong Duy' %}
             </p>
-        </div>
-
+        </footer>
     </section>
 </main>
-
 {% endblock %}
 
 {% block extra_js %}

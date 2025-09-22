@@ -74,6 +74,8 @@ LOCAL_APPS = [
     "backend.tenancy",
     "backend.api",
     "backend.studies",
+    "backend.studies.study_43en",
+    "backend.studies.study_44en",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -82,6 +84,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # MIDDLEWARE (SIMPLIFIED)
 # ==========================================
 
+# Middleware order is important - axes should be after AuthenticationMiddleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware", 
@@ -89,15 +92,14 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # Auth first
+    "axes.middleware.AxesMiddleware",  # Then axes to track attempts
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "axes.middleware.AxesMiddleware",
-
-    'backend.tenancy.middleware.StudyRoutingMiddleware',
-    'backend.tenancy.middleware.CacheControlMiddleware',
-    'backend.tenancy.middleware.SecurityHeadersMiddleware',
-    'backend.tenancy.middleware.PerformanceMonitoringMiddleware',
+    "backend.tenancy.middleware.StudyRoutingMiddleware",
+    "backend.tenancy.middleware.CacheControlMiddleware",
+    "backend.tenancy.middleware.SecurityHeadersMiddleware",
+    "backend.tenancy.middleware.PerformanceMonitoringMiddleware",
     "backend.tenancy.middleware.DatabaseConnectionCleanupMiddleware",
 ]
 
@@ -249,9 +251,9 @@ TENANCY_STUDY_CODE_PREFIX = env("TENANCY_STUDY_CODE_PREFIX")
 AUTH_USER_MODEL = "tenancy.User"
 
 AUTHENTICATION_BACKENDS = [
-    "axes.backends.AxesStandaloneBackend",
-    #"backend.api.base.login.EmailOrUsernameBackend",
-    "django.contrib.auth.backends.ModelBackend",
+    "axes.backends.AxesStandaloneBackend",  # Axes first to track attempts
+    "backend.tenancy.backends.BlockedUserBackend",  # Our custom backend second
+    "django.contrib.auth.backends.ModelBackend",  # Default Django backend last
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -277,7 +279,7 @@ AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 7  # Lock after 5 failed attempts
 AXES_COOLOFF_TIME = None  # None = permanent lock
 AXES_RESET_ON_SUCCESS = True  # Reset counter on successful login
-AXES_LOCK_OUT_AT_FAILURE = False # Do not lock automatically
+AXES_LOCK_OUT_AT_FAILURE = True # Do not lock automatically
 
 # IMPORTANT: Only lock by username, not IP
 AXES_LOCKOUT_PARAMETERS = ['username']  # Only lock by username
@@ -286,9 +288,11 @@ AXES_LOCKOUT_PARAMETERS = ['username']  # Only lock by username
 AXES_LOCK_OUT_BY_IP_AND_USERNAME = False
 AXES_LOCK_OUT_BY_IP_ONLY = False
 
+# Use database handler for better reliability
+AXES_HANDLER = 'axes.handlers.database.AxesDatabaseHandler'
+
 # No custom handler needed - using signals instead
-AXES_LOCKOUT_CALLABLE = None
-AXES_LOCKOUT_TEMPLATE = None
+AXES_LOCKOUT_TEMPLATE = 'errors/lockout.html'
 
 # Logging
 AXES_VERBOSE = True

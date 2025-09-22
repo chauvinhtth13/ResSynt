@@ -1,4 +1,4 @@
-# backend\api\base\views.py (login section only)
+# backend\api\base\views.py (login section only - UPDATED)
 import logging
 from typing import Optional, Dict, Any, Tuple
 
@@ -21,14 +21,14 @@ from axes.helpers import get_client_str
 from axes.models import AccessAttempt
 from axes.conf import settings as axes_settings
 from axes.handlers.proxy import AxesProxyHandler
+from axes.exceptions import AxesBackendPermissionDenied
 
 # Local imports
-from backend.tenancy.models import Study
+from backend.tenancy.models import Study, User
 from .login import UsernameOrEmailAuthenticationForm
 from .constants import LoginMessages, SessionKeys
 
 logger = logging.getLogger(__name__)
-User = get_user_model()
 axes_handler = AxesProxyHandler()
 
 class LoginService:
@@ -58,10 +58,23 @@ class LoginService:
         if not actual_username:
             return False, {}
         
-        # Check if account is locked by axes
+        # First check if user is blocked in database
+        try:
+            user = User.objects.get(username=actual_username)
+            if not user.is_active:
+                # User is blocked in database
+                return True, {
+                    'error_message': LoginMessages.ACCOUNT_LOCKED,
+                    'is_permanently_blocked': True
+                }
+        except User.DoesNotExist:
+            pass
+        
+        # Then check if blocked by axes
         if axes_handler.is_locked(request, {'username': actual_username}):
             return True, {
                 'error_message': LoginMessages.ACCOUNT_LOCKED,
+                'is_axes_blocked': True
             }
         
         return False, {}
@@ -127,6 +140,8 @@ def custom_login(request: HttpRequest) -> Union[HttpResponseRedirect, HttpRespon
     1. Invalid credentials: "Invalid username or password. Please try again."
     2. Multiple failures: "Incorrect login. Account will be locked in X attempts."
     3. Account locked: "Account locked. Please contact support."
+    
+    IMPORTANT: Shows messages on login page instead of redirecting to axes lockout page
     """
     # Set Vietnamese as default
     if not get_language():
@@ -143,45 +158,106 @@ def custom_login(request: HttpRequest) -> Union[HttpResponseRedirect, HttpRespon
         username_input = request.POST.get('username', '').strip()
         actual_username = LoginService.get_actual_username(username_input) if username_input else None
         
-        # Check if account is locked first (only if user exists to avoid info leakage)
-        is_locked, lock_context = LoginService.check_account_status(request, actual_username)
-        if is_locked:
+        # IMPORTANT: Check if account is locked BEFORE axes processes the request
+        # This prevents the 429 response
+        if actual_username:
+            try:
+                user = User.objects.get(username=actual_username)
+                if not user.is_active:
+                    # User is blocked - don't let axes process this
+                    form = UsernameOrEmailAuthenticationForm(request)
+                    form.initial['username'] = username_input
+                    context['form'] = form
+                    context['error_message'] = LoginMessages.ACCOUNT_LOCKED
+                    
+                    logger.warning(f"Blocked user {actual_username} attempted login - showing message on login page")
+                    
+                    # Return 200 OK with error message (not 429)
+                    return render(request, 'authentication/login.html', context)
+            except User.DoesNotExist:
+                pass
+        
+        # Check axes lock status before attempting authentication
+        if actual_username and axes_handler.is_locked(request, {'username': actual_username}):
+            # Axes has locked this account - show message without triggering 429
             form = UsernameOrEmailAuthenticationForm(request)
-            context.update(lock_context)
+            form.initial['username'] = username_input
             context['form'] = form
+            context['error_message'] = LoginMessages.ACCOUNT_LOCKED
+            
+            logger.warning(f"User {actual_username} is locked by axes - showing message on login page")
+            
+            # Return 200 OK with error message (not 429)
             return render(request, 'authentication/login.html', context)
         
-        # Proceed with form validation (authentication)
-        form = UsernameOrEmailAuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            # Successful login
-            user = form.get_user()
+        # Now proceed with authentication attempt
+        try:
+            # Create the form but don't let it trigger axes exception
+            form = UsernameOrEmailAuthenticationForm(request, data=request.POST)
             
-            # Clear session data
-            request.session.pop(SessionKeys.LAST_USERNAME, None)
-            
-            # Clear cache for this user
-            LoginService.clear_user_cache(user.username)
-
-            # Login and redirect
-            login(request, user)
-            logger.info(f"User {user.pk} ({user.username}) logged in successfully")
-            
-            next_url = request.GET.get('next', '')
-            if next_url and next_url.startswith('/'):
-                return redirect(next_url)
-            return redirect('admin:index' if user.is_superuser else 'select_study')
-        else:
-            # Failed login - get appropriate error message
-            if username_input:
-                # Store for GET request (e.g., refresh)
-                request.session[SessionKeys.LAST_USERNAME] = username_input
+            if form.is_valid():
+                # Successful login
+                user = form.get_user()
                 
-                # Get error context
-                error_context = LoginService.get_login_error_context(actual_username)
-                context.update(error_context)
+                # Double check user is active (should already be checked in form)
+                if not user.is_active:
+                    context['form'] = form
+                    context['error_message'] = LoginMessages.ACCOUNT_LOCKED
+                    return render(request, 'authentication/login.html', context)
+                
+                # Clear session data
+                request.session.pop(SessionKeys.LAST_USERNAME, None)
+                
+                # Clear cache for this user
+                LoginService.clear_user_cache(user.username)
+
+                # Login and redirect
+                login(request, user)
+                logger.info(f"User {user.pk} ({user.username}) logged in successfully")
+                
+                next_url = request.GET.get('next', '')
+                if next_url and next_url.startswith('/'):
+                    return redirect(next_url)
+                return redirect('admin:index' if user.is_superuser else 'select_study')
+            else:
+                # Failed login - get appropriate error message
+                if username_input:
+                    # Store for GET request (e.g., refresh)
+                    request.session[SessionKeys.LAST_USERNAME] = username_input
+                    
+                    # Get error context
+                    error_context = LoginService.get_login_error_context(actual_username)
+                    context.update(error_context)
+                
+                context['form'] = form
+                
+        except AxesBackendPermissionDenied as e:
+            # This shouldn't happen now since we check before, but handle it anyway
+            logger.warning(f"Caught AxesBackendPermissionDenied for {username_input}")
             
+            form = UsernameOrEmailAuthenticationForm(request)
+            form.initial['username'] = username_input
             context['form'] = form
+            context['error_message'] = LoginMessages.ACCOUNT_LOCKED
+            
+            # Return 200 OK with error message (not 429)
+            return render(request, 'authentication/login.html', context)
+        
+        except Exception as e:
+            # Catch any other axes-related exceptions
+            if '429' in str(e) or 'Too Many Requests' in str(e):
+                logger.warning(f"Caught axes 429 error for {username_input}")
+                
+                form = UsernameOrEmailAuthenticationForm(request)
+                form.initial['username'] = username_input
+                context['form'] = form
+                context['error_message'] = LoginMessages.ACCOUNT_LOCKED
+                
+                # Return 200 OK with error message (not 429)
+                return render(request, 'authentication/login.html', context)
+            else:
+                raise  # Re-raise if it's not an axes error
+            
     else:
         # GET request
         form = UsernameOrEmailAuthenticationForm(request)
@@ -205,7 +281,7 @@ def custom_login(request: HttpRequest) -> Union[HttpResponseRedirect, HttpRespon
 @login_required
 @require_http_methods(["GET", "POST"])
 def select_study(request):
-    # """Handle study selection for authenticated users, redirect superusers to admin."""
+    """Handle study selection for authenticated users, redirect superusers to admin."""
     if request.GET.get('clear') or 'clear_study' in request.POST:
         request.session.pop('current_study', None)
         logger.info(f"Cleared current_study for user {request.user.pk} on select_study access.")
@@ -215,15 +291,13 @@ def select_study(request):
         return redirect('admin:index')
 
     # Set default language to Vietnamese if not set
-    # Set language with Vietnamese as default
     language = get_language()
     if not language or language not in [lang[0] for lang in settings.LANGUAGES]:
         language = 'vi'  # Default to Vietnamese
         activate(language)
         request.session['django_language'] = language
 
-
-    # Chỉ lấy các nghiên cứu user có quyền truy cập và status là active
+    # Only get active studies user has access to
     studies_qs = (
         Study.objects
         .filter(memberships__user=request.user, memberships__is_active=True, status=Study.Status.ACTIVE)
@@ -258,7 +332,7 @@ def select_study(request):
                 study = next(s for s in studies if str(s.pk) == study_id)
                 request.session['current_study'] = study.pk
                 logger.info(f"User {request.user.pk} selected study {study.code}")
-                return redirect('dashboard')  # Redirect to dashboard after selection
+                return redirect('dashboard')
             except StopIteration:
                 logger.warning(f"Invalid study selection attempt by user {request.user.pk}: {study_id}")
                 context['error'] = _("Invalid study selection.")
@@ -269,6 +343,7 @@ def select_study(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def dashboard(request, study_code=None):
+    """Render the dashboard for the selected study."""
     # Ensure Vietnamese is set
     language = get_language()
     if not language or language not in [lang[0] for lang in settings.LANGUAGES]:
@@ -276,16 +351,15 @@ def dashboard(request, study_code=None):
         activate(language)
         request.session['django_language'] = language
 
-    # """Render the dashboard for the selected study."""
     study = getattr(request, 'study', None)
     if not study:
         logger.warning(f"No study selected for user {request.user.pk}; redirecting to select_study.")
         return redirect('select_study')
 
-    # Derive study folder from db_name (e.g., 'db_study_43en' -> 'study_43en')
+    # Derive study folder from db_name
     study_folder = study.db_name.replace('db_', '', 1) if study.db_name.startswith('db_') else study.db_name
 
-    # Fetch table names from study database (all user tables)
+    # Fetch table names from study database
     tables = []
     if 'access_data' in getattr(request, 'study_permissions', set()):
         try:

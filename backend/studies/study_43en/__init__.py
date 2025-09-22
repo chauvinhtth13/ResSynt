@@ -1,0 +1,1 @@
+default_app_config = 'backend.studies.study_43en.apps.Study43EnConfig'

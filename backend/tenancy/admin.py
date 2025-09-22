@@ -1,4 +1,4 @@
-# backend/tenancy/admin.py - FULL VERSION WITH AXES INTEGRATION
+# backend/tenancy/admin.py - CLEANED VERSION WITHOUT USER STATUS
 import logging
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -11,62 +11,73 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-# Import the actual User model from your models
+# Import models
 from .models.user import User
 from .models.study import Study, Site, StudySite
 from .models.permission import Role, Permission, RolePermission, StudyMembership
 from .models.audit import AuditLog
 
 logger = logging.getLogger(__name__)
-# Don't override your custom User model that has the Status attribute
-
 
 # ============================================
 # USER ADMIN
 # ============================================
 
+class StudyMembershipInline(admin.TabularInline):
+    """Inline display of user's study memberships with sorting and filtering"""
+    model = StudyMembership
+    fk_name = 'user'  # Specify which ForeignKey to use (user, not assigned_by)
+    extra = 0
+    can_delete = False
+    fields = ('study', 'role', 'is_active', 'can_access_all_sites', 'get_sites_display_inline', 'assigned_at')
+    readonly_fields = ('study', 'role', 'is_active', 'can_access_all_sites', 'get_sites_display_inline', 'assigned_at')
+    ordering = ['study__code']
+    
+    def get_sites_display_inline(self, obj):
+        """Display sites for inline"""
+        if obj.can_access_all_sites or not obj.study_sites.exists():
+            return "All Sites"
+        return ", ".join([site.site.code for site in obj.study_sites.all()])
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 class UserAdminForm(forms.ModelForm):
-    """Custom form for User admin with validation"""
+    """Custom form for User admin"""
     
     class Meta:
         model = User
         fields = '__all__'
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        status = cleaned_data.get('status')
-        is_active = cleaned_data.get('is_active')
-        
-        # Ensure consistency between status and is_active
-        if status == User.Status.BLOCKED and is_active:
-            raise ValidationError("Blocked users cannot be active")
-        
-        return cleaned_data
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    """Enhanced User Admin with Axes integration"""
+    """Enhanced User Admin with Axes integration - Simplified"""
     
     form = UserAdminForm
+    
+    # Add the inline for study memberships
+    inlines = [StudyMembershipInline]
     
     # List display configuration
     list_display = (
         'username',
         'email',
         'full_name_display',
-        'status_display',
+        'is_active_status',
         'axes_status_display',
-        'is_active',
         'is_superuser',
         'last_login_display',
         'study_count',
         'created_at',
     )
     
+    # FIXED: Removed 'status' from list_filter
     list_filter = (
-        'status',
         'is_active',
-        'is_superuser',
+        'is_superuser', 
         'is_staff',
         ('last_login', admin.DateFieldListFilter),
         ('created_at', admin.DateFieldListFilter),
@@ -93,16 +104,16 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('first_name', 'last_name')
         }),
         
-        (_('Status & Security'), {
+        (_('Account Status'), {
             'fields': (
-                'status',
                 'is_active',
                 'axes_status_combined',
                 'last_failed_login_readonly',
                 'must_change_password',
                 'password_changed_at',
+                'notes',
             ),
-            'description': 'Security status and axes integration information'
+            'description': 'Account status and security information. Uncheck "Active" to block user.'
         }),
         
         (_('Permissions'), {
@@ -115,22 +126,22 @@ class UserAdmin(BaseUserAdmin):
             'classes': ('collapse',),
         }),
         
-        (_('Study Access'), {
+        (_('Last Study Access'), {
             'fields': (
                 'last_study_info',
-                'study_access_history',
             ),
         }),
         
-        (_('Important Dates'), {
+        (_('Administrative Information'), {
             'fields': (
+                'created_by_readonly',
                 'last_login',
                 'date_joined',
                 'created_at',
                 'updated_at',
-                'created_by_readonly',
             ),
             'classes': ('collapse',),
+            'description': 'Shows who created this account and when'
         }),
     )
     
@@ -144,13 +155,10 @@ class UserAdmin(BaseUserAdmin):
         'created_by_readonly',
         'password_changed_at',
         'last_study_info',
-        'study_access_history',
     )
     
     # Actions
     actions = [
-        'unblock_users',
-        'block_users',
         'activate_users',
         'deactivate_users',
         'reset_axes_locks',
@@ -167,38 +175,27 @@ class UserAdmin(BaseUserAdmin):
         full_name = obj.get_full_name()
         return full_name if full_name else f"({obj.username})"
     
-    def status_display(self, obj):
-        """Display user status with axes sync"""
-        # Auto-sync with axes if needed
-        is_blocked, reason, attempts = obj.get_axes_status()
-        
-        # If axes is blocking but status is not BLOCKED, update it
-        if is_blocked and obj.status != User.Status.BLOCKED:
-            obj.status = User.Status.BLOCKED
-            obj.is_active = False
-            obj.save(update_fields=['status', 'is_active'])
-            
-        status_text = obj.get_status_display()
-        
-        # Add sync indicator if there's mismatch
-        if obj.status == User.Status.BLOCKED and not is_blocked:
-            status_text += " (manual)"
-        elif is_blocked and obj.status == User.Status.BLOCKED:
-            status_text += " (axes)"
-            
-        return status_text
+    def is_active_status(self, obj):
+        """Display user active status"""
+        if obj.is_active:
+            return "Active"
+        else:
+            # Check if blocked by axes
+            if obj.is_axes_blocked:
+                return "Blocked (Axes)"
+            else:
+                return "Blocked (Manual)"
     
     def axes_status_display(self, obj):
-        """Display axes blocking status with auto-sync"""
+        """Display axes blocking status"""
         from axes.conf import settings as axes_settings
         is_blocked, reason, attempts = obj.get_axes_status()
         
         # Auto-sync if mismatch detected
-        if is_blocked and obj.status != User.Status.BLOCKED:
-            # Axes is blocking but status is not BLOCKED - auto update
-            obj.status = User.Status.BLOCKED  
+        if is_blocked and obj.is_active:
+            # Axes is blocking but user is active - auto update
             obj.is_active = False
-            obj.save(update_fields=['status', 'is_active'])
+            obj.save(update_fields=['is_active'])
         
         # Get the failure limit
         limit = axes_settings.AXES_FAILURE_LIMIT
@@ -211,7 +208,7 @@ class UserAdmin(BaseUserAdmin):
             return f"0/{limit}"
     
     def axes_status_combined(self, obj):
-        """Combined axes status display - all info in one field"""
+        """Combined axes status display - detailed view"""
         if not obj.pk:
             return "N/A"
         
@@ -223,20 +220,15 @@ class UserAdmin(BaseUserAdmin):
             obj.failed_login_attempts = attempts
             obj.save(update_fields=['failed_login_attempts'])
         
-        # Get the failure limit from axes settings
         limit = axes_settings.AXES_FAILURE_LIMIT
         
-        # Format the display
         if is_blocked:
-            # BLOCKED status with attempts
             status_text = f"BLOCKED ({attempts}/{limit})"
             if reason:
                 status_text += f"\n{reason}"
         elif attempts > 0:
-            # Has attempts but not blocked yet
             status_text = f"Failed Attempts: {attempts}/{limit}"
         else:
-            # Clear - no attempts
             status_text = f"Clear (0/{limit})"
         
         return status_text
@@ -264,12 +256,11 @@ class UserAdmin(BaseUserAdmin):
         return obj.study_memberships.filter(is_active=True).count()
     
     def last_failed_login_readonly(self, obj):
-        """Display last failed login time - auto-updated from axes"""
+        """Display last failed login time"""
         if not obj.pk:
             return "Never"
         
         from axes.models import AccessFailureLog
-        from django.utils import timezone
         
         # Get latest failure from axes
         latest_failure = AccessFailureLog.objects.filter(
@@ -301,14 +292,20 @@ class UserAdmin(BaseUserAdmin):
         return "Never"
     
     def created_by_readonly(self, obj):
-        """Display who created this user"""
+        """Display which admin/staff user created this account"""
         if not obj.pk:
-            return "System"
+            return "System (Auto-created)"
         
         if obj.created_by:
-            return f"{obj.created_by.get_full_name() or obj.created_by.username}"
+            creator_name = obj.created_by.get_full_name() or obj.created_by.username
+            if obj.created_by.is_superuser:
+                return f"{creator_name} (Superuser)"
+            elif obj.created_by.is_staff:
+                return f"{creator_name} (Staff)"
+            else:
+                return f"{creator_name}"
         
-        return "System"
+        return "System (Auto-created)"
     
     def last_study_info(self, obj):
         """Display last accessed study with time"""
@@ -319,10 +316,8 @@ class UserAdmin(BaseUserAdmin):
         study_info = f"Study Code: {study.code}"
         
         if obj.last_study_accessed_at:
-            from django.utils import timezone
             delta = timezone.now() - obj.last_study_accessed_at
             
-            # Format time
             if delta.days == 0:
                 if delta.seconds < 3600:
                     minutes = delta.seconds // 60
@@ -341,111 +336,52 @@ class UserAdmin(BaseUserAdmin):
         
         return study_info
     
-    def study_access_history(self, obj):
-        """Display study access history and active memberships"""
-        if not obj.pk:
-            return "N/A"
-        
-        # Get all active study memberships
-        memberships = obj.study_memberships.filter(
-            is_active=True
-        ).select_related('study', 'role').order_by('-assigned_at')
-        
-        if not memberships:
-            return "No active study memberships"
-        
-        history = []
-        for membership in memberships[:5]:  # Show last 5 active studies
-            study_line = f"• {membership.study.code} - {membership.role.title}"
-            
-            # Add access time if this is the last accessed study
-            if obj.last_study_accessed and membership.study.id == obj.last_study_accessed.id:
-                study_line += " (Current)"
-            
-            # Add assignment date
-            study_line += f" - Assigned: {membership.assigned_at.strftime('%Y-%m-%d')}"
-            
-            history.append(study_line)
-        
-        # Add count if more than 5
-        total = memberships.count()
-        if total > 5:
-            history.append(f"... and {total - 5} more studies")
-        
-        return "\n".join(history)
-    
     # -------------------------
     # Actions
     # -------------------------
     
-    def unblock_users(self, request, queryset):
-        """Unblock selected users (both status and axes)"""
-        unblocked = 0
-        failed = 0
+    def activate_users(self, request, queryset):
+        """Activate selected users and reset axes locks"""
+        activated = 0
         
         for user in queryset:
-            try:
-                # Unblock in axes
-                user.reset_axes_locks()
-                
-                # Update status if blocked
-                if user.status == User.Status.BLOCKED:
-                    user.status = User.Status.ACTIVE
-                
-                # Ensure is_active
+            # Reset axes locks
+            user.reset_axes_locks()
+            
+            # Activate user
+            if not user.is_active:
                 user.is_active = True
-                
-                # Reset failed attempts
                 user.failed_login_attempts = 0
                 user.last_failed_login = None
-                
                 user.save()
-                unblocked += 1
+                activated += 1
                 
-                # Log the action
-                self.log_change(request, user, f"Unblocked user and reset axes locks")
-                
-            except Exception as e:
-                failed += 1
-                messages.error(request, f"Failed to unblock {user.username}: {str(e)}")
+                self.log_change(request, user, "Activated user and reset axes locks")
         
-        if unblocked:
+        if activated:
             messages.success(
                 request,
-                f"Successfully unblocked {unblocked} user(s) and reset their axes locks."
+                f"Successfully activated {activated} user(s) and reset their axes locks."
             )
-        if failed:
-            messages.error(request, f"Failed to unblock {failed} user(s).")
-    
-    def block_users(self, request, queryset):
-        """Block selected users"""
-        blocked = 0
-        
-        for user in queryset.exclude(is_superuser=True):
-            user.block_user(reason=f"Manually blocked by {request.user.username}")
-            blocked += 1
-            self.log_change(request, user, "Blocked user")
-        
-        messages.success(request, f"Successfully blocked {blocked} user(s).")
-    
-    def activate_users(self, request, queryset):
-        """Activate selected users"""
-        count = queryset.update(
-            status=User.Status.ACTIVE,
-            is_active=True
-        )
-        messages.success(request, f"Successfully activated {count} user(s).")
+        else:
+            messages.info(request, "Selected users were already active.")
     
     def deactivate_users(self, request, queryset):
-        """Deactivate selected users"""
-        count = queryset.exclude(is_superuser=True).update(
-            status=User.Status.INACTIVE,
-            is_active=False
-        )
-        messages.success(request, f"Successfully deactivated {count} user(s).")
+        """Deactivate selected users (block them)"""
+        count = 0
+        for user in queryset.exclude(is_superuser=True):
+            if user.is_active:
+                user.block_user(reason=f"Manually blocked by {request.user.username}")
+                count += 1
+                self.log_change(request, user, "Deactivated user")
         
+        if count:
+            messages.success(request, f"Successfully deactivated {count} user(s).")
+        else:
+            messages.info(request, "No users were deactivated.")
+    
     def reset_axes_locks(self, request, queryset):
-        """Reset axes locks without changing user status"""
+        """Reset axes locks without changing user active status"""
         reset_count = 0
         
         for user in queryset:
@@ -456,132 +392,147 @@ class UserAdmin(BaseUserAdmin):
         messages.success(request, f"Reset axes locks for {reset_count} user(s).")
     
     def sync_with_axes(self, request, queryset):
-        """Sync user status with axes status"""
+        """Sync user active status with axes status"""
         synced = 0
-        blocked = 0
-        cleared = 0
+        deactivated = 0
         
         for user in queryset:
             is_blocked, reason, attempts = user.get_axes_status()
             
-            # If axes is blocking but user status is not BLOCKED
-            if is_blocked and user.status != User.Status.BLOCKED:
-                user.status = User.Status.BLOCKED
+            # If axes is blocking but user is active
+            if is_blocked and user.is_active:
                 user.is_active = False
-                user.save(update_fields=['status', 'is_active'])
-                blocked += 1
+                user.save(update_fields=['is_active'])
+                deactivated += 1
                 synced += 1
-                self.log_change(request, user, f"Status synced to BLOCKED (axes: {reason})")
+                self.log_change(request, user, f"Deactivated due to axes: {reason}")
                 
-            # If user is BLOCKED but axes is not blocking (manual block - keep it)
-            elif user.status == User.Status.BLOCKED and not is_blocked:
-                # Don't change manually blocked users
+            # If user is blocked but axes is not blocking (manual block - keep it)
+            elif not user.is_active and not is_blocked:
                 messages.info(request, f"{user.username} is manually blocked (axes is clear)")
-                
-            # If both are clear
-            elif not is_blocked and user.status == User.Status.ACTIVE:
-                cleared += 1
         
-        if blocked:
-            messages.warning(request, f"Blocked {blocked} user(s) based on axes status.")
-        if cleared:
-            messages.success(request, f"{cleared} user(s) are clear and active.")
+        if deactivated:
+            messages.warning(request, f"Deactivated {deactivated} user(s) based on axes status.")
         if synced:
             messages.info(request, f"Synced {synced} user(s) with axes status.")
         
-        if not synced and not cleared:
+        if not synced:
             messages.info(request, "All users are already in sync with axes.")
     
     def force_sync_all_axes_status(self, request, queryset):
-        """Force sync ALL users status with axes (including clearing BLOCKED if axes is clear)"""
+        """Force sync ALL users status with axes (including reactivating if axes is clear)"""
         synced = 0
-        blocked = 0
-        unblocked = 0
+        deactivated = 0
+        reactivated = 0
         
         for user in queryset:
             is_blocked, reason, attempts = user.get_axes_status()
             changed = False
             
-            # If axes is blocking, ensure user is BLOCKED
+            # If axes is blocking, ensure user is deactivated
             if is_blocked:
-                if user.status != User.Status.BLOCKED:
-                    user.status = User.Status.BLOCKED
+                if user.is_active:
                     user.is_active = False
                     changed = True
-                    blocked += 1
+                    deactivated += 1
                     
-            # If axes is NOT blocking, ensure user is NOT BLOCKED (force clear)
+            # If axes is NOT blocking, ensure user is active (force clear)
             else:
-                if user.status == User.Status.BLOCKED:
-                    user.status = User.Status.ACTIVE
+                if not user.is_active:
                     user.is_active = True
                     changed = True
-                    unblocked += 1
+                    reactivated += 1
                     
             if changed:
-                user.save(update_fields=['status', 'is_active'])
+                user.save(update_fields=['is_active'])
                 synced += 1
-                action = "blocked by axes" if is_blocked else "unblocked (axes clear)"
+                action = "deactivated by axes" if is_blocked else "reactivated (axes clear)"
                 self.log_change(request, user, f"Force sync: {action}")
         
-        if blocked:
-            messages.warning(request, f"Blocked {blocked} user(s) based on axes.")
-        if unblocked:
-            messages.success(request, f"Unblocked {unblocked} user(s) (axes is clear).")
+        if deactivated:
+            messages.warning(request, f"Deactivated {deactivated} user(s) based on axes.")
+        if reactivated:
+            messages.success(request, f"Reactivated {reactivated} user(s) (axes is clear).")
         if not synced:
             messages.info(request, "All users already in sync with axes.")
         else:
             messages.info(request, f"Total synced: {synced} user(s)")
-        
+    
     # -------------------------
     # Save Methods
     # -------------------------
     
     def save_model(self, request, obj, form, change):
-        """Override save to auto-set created_by and handle axes sync"""
+        """Override save to handle activation/deactivation properly"""
         
         # Set created_by for new users
-        if not change and not obj.pk:  # Creating new user
+        if not change and not obj.pk:
             if not obj.created_by:
                 obj.created_by = request.user
         
-        # Check and sync with axes before saving
+        # Handle activation/deactivation for existing users
         if obj.pk:
-            is_blocked, reason, attempts = obj.get_axes_status()
+            # Get the original object from database
+            original = User.objects.get(pk=obj.pk)
             
-            # Update failed login attempts
-            obj.failed_login_attempts = attempts
-            
-            # Get last failed login from axes
-            from axes.models import AccessFailureLog
-            latest_failure = AccessFailureLog.objects.filter(
-                username=obj.username
-            ).order_by('-attempt_time').first()
-            
-            if latest_failure:
-                obj.last_failed_login = latest_failure.attempt_time
-            
-            # Sync status with axes if needed
-            if is_blocked and obj.status != User.Status.BLOCKED:
-                obj.status = User.Status.BLOCKED
-                obj.is_active = False
-                messages.warning(
-                    request, 
-                    f"User {obj.username} status set to BLOCKED due to axes lock"
+            # Check if is_active is being changed from False to True (unblocking)
+            if not original.is_active and obj.is_active:
+                # User is being activated - need to reset axes locks
+                obj.reset_axes_locks()
+                obj.failed_login_attempts = 0
+                obj.last_failed_login = None
+                
+                # Add note about manual unblock
+                from django.utils import timezone
+                timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+                current_notes = obj.notes or ""
+                obj.notes = f"{current_notes}\n[{timestamp}] Manually unblocked by {request.user.username}".strip()
+                
+                messages.success(
+                    request,
+                    f"User {obj.username} has been unblocked and axes locks have been reset."
                 )
+                logger.info(f"Admin {request.user.username} manually unblocked user {obj.username}")
+                
+            # Check if is_active is being changed from True to False (blocking)
+            elif original.is_active and not obj.is_active:
+                # User is being deactivated - add note
+                from django.utils import timezone
+                timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+                current_notes = obj.notes or ""
+                obj.notes = f"{current_notes}\n[{timestamp}] Manually blocked by {request.user.username}".strip()
+                
+                messages.warning(
+                    request,
+                    f"User {obj.username} has been blocked."
+                )
+                logger.info(f"Admin {request.user.username} manually blocked user {obj.username}")
+            
+            # Check axes status and warn if there's a mismatch
+            else:
+                is_blocked, reason, attempts = obj.get_axes_status()
+                
+                # Update failed login attempts
+                obj.failed_login_attempts = attempts
+                
+                # Get last failed login from axes
+                from axes.models import AccessFailureLog
+                latest_failure = AccessFailureLog.objects.filter(
+                    username=obj.username
+                ).order_by('-attempt_time').first()
+                
+                if latest_failure:
+                    obj.last_failed_login = latest_failure.attempt_time
+                
+                # Warn if axes is blocking but user is active
+                if is_blocked and obj.is_active:
+                    messages.error(
+                        request,
+                        f"Warning: User {obj.username} is marked as active but axes is still blocking them. "
+                        f"Use the 'Activate selected users' action to properly unblock."
+                    )
         
         super().save_model(request, obj, form, change)
-    
-    def save_formset(self, request, form, formset, change):
-        """Set assigned_by for StudyMembership inline"""
-        instances = formset.save(commit=False)
-        
-        for instance in instances:
-            if not instance.pk:  # New membership
-                instance.assigned_by = request.user
-            instance.save()
-        
-        formset.save_m2m()
     
     def get_queryset(self, request):
         """Optimize queryset with select_related and auto-sync axes status"""
@@ -589,19 +540,14 @@ class UserAdmin(BaseUserAdmin):
         qs = qs.select_related('last_study_accessed', 'created_by')
         
         # Auto-sync axes status for all users in list view
-        # This ensures status is always current with axes
         if hasattr(request, 'resolver_match') and request.resolver_match:
             if request.resolver_match.url_name == 'tenancy_user_changelist':
                 for user in qs:
                     is_blocked, _, _ = user.get_axes_status()
                     
-                    # If axes is blocking but status is not BLOCKED, update it
-                    if is_blocked and user.status != User.Status.BLOCKED:
-                        User.objects.filter(pk=user.pk).update(
-                            status=User.Status.BLOCKED,
-                            is_active=False
-                        )
-                        user.status = User.Status.BLOCKED
+                    # If axes is blocking but user is active, update it
+                    if is_blocked and user.is_active:
+                        User.objects.filter(pk=user.pk).update(is_active=False)
                         user.is_active = False
                         
         return qs
@@ -637,35 +583,25 @@ def update_user_study_access(user, study):
     """
     Helper function to update user's last study access.
     Call this from your middleware when user accesses a study.
-    
-    Usage in middleware:
-        from backend.tenancy.admin import update_user_study_access
-        update_user_study_access(request.user, study)
     """
     from django.utils import timezone
     
     if user and study:
-        # Update last study access
         user.last_study_accessed = study
         user.last_study_accessed_at = timezone.now()
         user.save(update_fields=['last_study_accessed', 'last_study_accessed_at'])
 
 # ============================================
-# OTHER ADMIN REGISTRATIONS (không thay đổi)
+# OTHER ADMIN REGISTRATIONS (unchanged)
 # ============================================
 
-# Inline for RolePermission in Role and Permission
 class RolePermissionInline(admin.TabularInline):
-    """Inline admin for RolePermission."""
     model = RolePermission
     extra = 0
     verbose_name = "Role Permission"
     verbose_name_plural = "Role Permissions"
 
-
-# Inline for StudySite in Study and Site
 class StudySiteInline(admin.TabularInline):
-    """Inline admin for StudySite in Study and Site admin."""
     model = StudySite
     extra = 0
     verbose_name = "Study-Site Link"
@@ -674,7 +610,6 @@ class StudySiteInline(admin.TabularInline):
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
-    """Admin for Role model."""
     list_display = ('title', 'code', 'created_at', 'updated_at')
     search_fields = ('title', 'code')
     list_filter = ('created_at', 'updated_at')
@@ -685,7 +620,6 @@ class RoleAdmin(admin.ModelAdmin):
 
 @admin.register(Permission)
 class PermissionAdmin(admin.ModelAdmin):
-    """Admin for Permission model."""
     list_display = ('code', 'name', 'created_at', 'updated_at')
     search_fields = ('code', 'name')
     list_filter = ('created_at', 'updated_at')
@@ -696,24 +630,21 @@ class PermissionAdmin(admin.ModelAdmin):
 
 @admin.register(Study)
 class StudyAdmin(TranslatableAdmin):
-    """Admin for Study model."""
     list_display = ('code', 'name', 'status', 'db_name', 'created_at', 'updated_at', 'created_by')
     search_fields = ('code', 'translations__name', 'db_name')
-    list_filter = ('status', 'created_at', 'updated_at')
+    list_filter = ('status', 'created_at', 'updated_at')  # This status is Study.status, not User.status
     inlines = [StudySiteInline]
     readonly_fields = ('created_by','created_at', 'updated_at')
     ordering = ('-created_at',)
     date_hierarchy = 'created_at'
+    
     def save_model(self, request, obj, form, change):
-        # Robustly assign created_by only if not set or on creation
         if not obj.created_by or not change:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
 
-# Register StudySite admin for autocomplete support
 @admin.register(StudySite)
 class StudySiteAdmin(admin.ModelAdmin):
-    """Admin for StudySite model."""
     search_fields = ('site__code', 'site__name')
     list_display = ('site', 'study', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
@@ -728,33 +659,33 @@ class SiteAdmin(TranslatableAdmin):
     list_filter = ('created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
 
-# Custom ModelChoiceField to display study code
-class StudyCodeChoiceField(forms.ModelChoiceField):
-    def label_from_instance(self, obj):
-        return obj.code # type: ignore[name-defined]
-
 class StudySiteCodeChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
-        return f"{obj.site.code}" # type: ignore[name-defined]
+        # Type assertion for Pylance
+        from .models.study import StudySite
+        if isinstance(obj, StudySite) and hasattr(obj, 'site') and hasattr(obj.site, 'code'):
+            return f"{obj.site.code}"
+        return str(obj)
 
 class UserChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
-        full_name = obj.get_full_name() # type: ignore[name-defined]
+        # Type assertion for Pylance - obj should be a User instance
+        if not isinstance(obj, User):
+            return str(obj)
+            
+        full_name = obj.get_full_name()
         if full_name:
-            return f"{obj.username} ({full_name})" # type: ignore[name-defined]
-        elif obj.email: # type: ignore[name-defined]
-            return f"{obj.username} ({obj.email})" # type: ignore[name-defined]
-        return obj.username # type: ignore[name-defined]
+            return f"{obj.username} ({full_name})"
+        elif obj.email:
+            return f"{obj.username} ({obj.email})"
+        return obj.username
 
 class StudyMembershipForm(forms.ModelForm):
-    """Custom form for StudyMembership to filter study_sites by selected study."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Set default: can_access_all_sites = True if creating new
         if not self.instance.pk:
             self.fields['can_access_all_sites'].initial = True
 
-        # Filter study_sites by selected study
         study = None
         if self.instance and self.instance.pk and self.instance.study:
             study = self.instance.study
@@ -765,12 +696,14 @@ class StudyMembershipForm(forms.ModelForm):
                     study = Study.objects.get(pk=study_id)
             except Exception:
                 pass
+        
         from django.forms.models import ModelMultipleChoiceField
         if isinstance(self.fields['study_sites'], ModelMultipleChoiceField):
             if study:
                 self.fields['study_sites'].queryset = StudySite.objects.filter(study=study)
             else:
                 self.fields['study_sites'].queryset = StudySite.objects.none()
+    
     class Meta:
         model = StudyMembership
         fields = '__all__'
@@ -780,7 +713,6 @@ class StudyMembershipForm(forms.ModelForm):
 
 @admin.register(StudyMembership)
 class StudyMembershipAdmin(admin.ModelAdmin):
-    """Admin for StudyMembership with optimized UX and performance."""
     form = StudyMembershipForm
     list_display = ('get_user_display', 'get_study_code', 'get_sites_display', 'role', 'assigned_at', 'is_active', 'can_access_all_sites')
     search_fields = ('user__username', 'user__email', 'user__first_name', 'user__last_name', 'study__code', 'role__title')
@@ -792,7 +724,6 @@ class StudyMembershipAdmin(admin.ModelAdmin):
     date_hierarchy = 'assigned_at'
 
     def save_model(self, request, obj, form, change):
-        # Robustly assign assigned_by only if not set or changed
         if not obj.assigned_by or not change:
             obj.assigned_by = request.user
         super().save_model(request, obj, form, change)
@@ -816,7 +747,6 @@ class StudyMembershipAdmin(admin.ModelAdmin):
         return ", ".join([site.site.code for site in obj.study_sites.all()])
 
     def get_queryset(self, request):
-        # Optimize queryset for list display
         return super().get_queryset(request).select_related(
             'user', 'study', 'role', 'assigned_by'
         ).prefetch_related('study_sites__site')

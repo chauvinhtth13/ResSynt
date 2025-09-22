@@ -1,7 +1,6 @@
-{% load static %}
-{% load i18n %}
+{% load static i18n %}
 <div class="dropdown">
-    <button class="btn dropdown-toggle modern" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+    <button class="btn dropdown-toggle modern btn-sm" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'Select language' %}"> <!-- Added aria-label for a11y; btn-sm for compact on mobile -->
         {% get_language_info for LANGUAGE_CODE as lang_info %}
         {% if request.resolver_match.url_name == 'select_study' or request.resolver_match.url_name == 'dashboard' %}
             {{ LANGUAGE_CODE|upper }}
@@ -17,7 +16,7 @@
                 {% csrf_token %}
                 <input name="next" type="hidden" value="{{ request.path }}">
                 <input name="language" type="hidden" value="{{ lang.code }}">
-                <button class="dropdown-item rounded {% if lang.code == LANGUAGE_CODE %}active{% endif %}" type="submit">
+                <button class="dropdown-item {% if lang.code == LANGUAGE_CODE %}active{% endif %}" type="submit"> <!-- Removed rounded if not needed; Bootstrap default ok -->
                     {{ lang.name_local }}
                 </button>
             </form>
