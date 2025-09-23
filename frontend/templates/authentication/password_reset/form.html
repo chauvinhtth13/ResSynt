@@ -1,0 +1,69 @@
+<!-- frontend\templates\authentication\password_reset\form.html -->
+<!-- {% load static i18n %}
+<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forgot password</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{font-family:"Roboto",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol",sans-serif}
+    @media (prefers-reduced-motion: reduce){
+      *:not([data-allow-motion="true"]){
+        animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important
+      }
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800">
+
+  <div class="bg-white p-10 rounded-2xl shadow-xl text-center w-full max-w-md border border-gray-200">
+    <h2 class="mb-3 text-3xl font-bold text-gray-800">Forgot password?</h2>
+    <p class="mb-3 text-base text-gray-600 leading-relaxed">
+      Please enter your registered email address. We will send you a link to reset your password.
+    </p>
+    <p class="text-sm text-gray-500">
+      If you need further assistance, please contact: <a href="mailto:vinhc@oucr.org" class="text-blue-500 hover:underline">vinhc@oucru.org</a>
+    </p>
+
+    <form action="{% url 'password_reset' %}" method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="mb-5 text-left">
+        <label for="id_email" class="block mb-2 text-gray-700 font-semibold">Email Address</label>
+        <input
+          type="email"
+          id="id_email"
+          name="email"
+          placeholder="Enter your email"
+          required
+          value="{{ form.email.value|default:'' }}"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition duration-300 ease-in-out"
+          aria-invalid="{% if form.email.errors %}true{% else %}false{% endif %}"
+        />
+        {% if form.email.errors %}
+          <p class="mt-2 text-sm text-red-600">{{ form.email.errors|join:" " }}</p>
+        {% endif %}
+        {% if form.non_field_errors %}
+          <p class="mt-2 text-sm text-red-600">{{ form.non_field_errors|join:" " }}</p>
+        {% endif %}
+      </div>
+
+      <button
+        type="submit"
+        class="w-full py-3.5 bg-indigo-700 text-white rounded-lg text-lg font-semibold cursor-pointer shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-300 ease-in-out"
+      >
+        Send password reset link
+      </button>
+    </form>
+
+    <a href="{% url 'login' %}" class="block mt-5 text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium transition duration-300 ease-in-out">
+      Return to login page
+    </a>
+  </div>
+
+</body>
+</html> -->

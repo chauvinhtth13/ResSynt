@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Sign In - ResSync Platform{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/default/authentication.css' %}" />
+{% endblock %}
+
+{% block main %}
+<main class="row g-0">
+
+    <!-- Features Section - Hidden on mobile, visible from lg -->
+    <section class="col-lg-7 p-responsive d-none d-lg-flex flex-column justify-content-center bg-linear-gradient text-white">
+        {% include 'includes/features_list.html' %}
+    </section>
+
+    <!-- Login Section -->
+    <section class="col-12 col-lg-5 d-flex flex-column justify-content-between">
+        <!-- Header with Language Selector -->
+        <div class="d-flex justify-content-end align-items-stretch pe-2 pe-md-3 pt-2 pt-md-3 flex-shrink-0">
+            {% include 'includes/language_selector.html' %}
+        </div>
+
+        <!-- Login Content -->
+        <div class="p-responsive d-flex flex-column justify-content-center align-items-center flex-grow-1">
+            <!-- Title and Logo -->
+            <div class="mb-4 text-center w-100 w-md-75 mx-auto">
+                <h2 class="fs-title-2 fw-bold mb-2">{% trans "Welcome back" %}</h2>
+                <div class="logo-wrapper">
+                    <img src="{% static 'images/default/logo.svg' %}" 
+                         alt="ResSync Logo" 
+                         height="50"
+                         class="d-block mx-auto">
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            {% if error_message %}
+            <div class="alert alert-danger d-flex align-items-center w-100 w-md-75 mx-auto" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-3"></i>
+                <div class="small">{{ error_message }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form method="POST" id="loginForm" class="w-100 w-md-75 mx-auto">
+                {% csrf_token %}
+
+                <!-- Username/Email Input -->
+                <div class="mb-4">
+                    <label class="form-label fs-5 fw-semibold" for="username">
+                        <i class="bi bi-person-fill me-1 text-muted"></i> {% trans "Username or Email" %}
+                    </label>
+                    <input type="text" id="username" name="username"
+                           class="form-control modern px-4 py-3 fs-5"
+                           value="{{ form.username.value|default:'' }}"
+                           placeholder="{% trans 'Enter username or email' %}" 
+                           required autofocus>
+                </div>
+                
+                <!-- Password Input -->
+                <div class="mb-4">
+                    <label class="form-label fs-5 fw-semibold" for="passwordInput">
+                        <i class="bi bi-lock-fill me-1 text-muted"></i> {% trans "Password" %}
+                    </label>
+                    <div class="password-input-container position-relative">
+                        <input id="passwordInput" name="password" type="password"
+                               class="form-control modern px-4 py-3 fs-5"
+                               placeholder="{% trans 'Enter password' %}"
+                               required>
+                        <button type="button" class="password-toggle-icon btn btn-link position-absolute top-50 end-0 translate-middle-y me-3" id="togglePassword" aria-label="{% trans 'Toggle password visibility' %}">
+                            <i class="bi bi-eye-slash fs-4" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-hover w-100 py-3 rounded-3 text-white fw-semibold mb-3 fs-5" id="submitBtn">
+                    <span id="btnText">{% trans "Sign In" %}</span>
+                </button>
+            </form>
+
+            <!-- Forgot Password -->
+            <div class="text-center w-100 w-md-75 mx-auto">
+                <a href="{% url 'password_reset' %}" class="text-decoration-none fw-bold link-hover">
+                    {% trans "Forgotten password?" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-auto pb-3 flex-shrink-0">
+            <p class="small text-muted mb-1">
+                {% trans 'Need help? Contact our support team at:' %}
+                <a href="mailto:ressync@oucru.org" class="text-decoration-none fw-medium d-inline-flex align-items-center link-hover">
+                    ressync@oucru.org
+                </a>
+            </p>
+            <p class="small text-muted mb-0">
+                {% trans 'Designed by Chau Vinh & Pham Tuong Duy' %}
+            </p>
+        </footer>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/default/login.js' %}" defer></script>
+{% endblock %}

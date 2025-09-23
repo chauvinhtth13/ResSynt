@@ -1,4 +1,4 @@
-# Vietnamese translations for ResSync.
+# SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-28 14:44+0700\n"
+"POT-Creation-Date: 2025-09-22 12:15+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,227 +17,291 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+#: .\backend\api\base\constants.py:8
+msgid "Invalid username or password. Please try again."
+msgstr "Tên người dùng hoặc mật khẩu không hợp lệ. Vui lòng thử lại."
 
-#: .\apps\tenancy\apps.py:8
-msgid "Tenancy Management"
-msgstr "Quản lý Đơn vị"
+#: .\backend\api\base\constants.py:9
+msgid "Account locked. Please contact support."
+msgstr "Tài khoản đã bị khóa. Vui lòng liên hệ với bộ phận hỗ trợ."
 
-#: .\apps\web\login.py:10 .\apps\web\login.py:13
+#: .\backend\api\base\constants.py:10
+#, python-brace-format
+msgid "Incorrect login. Account will be locked in {} attempts."
+msgstr "Đăng nhập không chính xác. Tài khoản sẽ bị khóa sau {} lần thử nữa."
+
+#: .\backend\api\base\constants.py:13 .\backend\api\base\login.py:37
+msgid "This account is inactive."
+msgstr "Tài khoản này đang không hoạt động."
+
+#: .\backend\api\base\constants.py:14 .\backend\api\base\login.py:38
+msgid "This account has been suspended."
+msgstr "Tài khoản này đã bị tạm ngưng."
+
+#: .\backend\api\base\constants.py:15 .\backend\api\base\login.py:39
+msgid "This account has been blocked."
+msgstr "Tài khoản này đã bị chặn."
+
+#: .\backend\api\base\constants.py:18
+msgid "Welcome back!"
+msgstr "Chào mừng bạn quay trở lại!"
+
+#: .\backend\api\base\constants.py:19
+msgid "You have been logged out successfully."
+msgstr "Bạn đã đăng xuất thành công."
+
+#: .\backend\api\base\constants.py:20
+msgid "Your password has been changed successfully."
+msgstr "Mật khẩu của bạn đã được thay đổi thành công."
+
+#: .\backend\api\base\constants.py:29
+msgid "Password reset link has been sent to your email."
+msgstr "Một liên kết đặt lại mật khẩu đã được gửi tới email của bạn."
+
+#: .\backend\api\base\constants.py:30
+msgid "Invalid or expired reset link."
+msgstr "Liên kết đặt lại không hợp lệ hoặc đã hết hạn."
+
+#: .\backend\api\base\constants.py:31
+msgid "No account found with this email address."
+msgstr "Không tìm thấy tài khoản nào với địa chỉ email này."
+
+#: .\backend\api\base\login.py:23
 msgid "Username or email"
 msgstr "Tên người dùng hoặc email"
 
-#: .\apps\web\login.py:37
-msgid "Multiple accounts use this email. Please use your username."
-msgstr "Nhiều tài khoản sử dụng email này. Vui lòng sử dụng tên người dùng của bạn."
-
-#: .\apps\web\templates\default\dashboard.html:18
-msgid "Primary navigation"
-msgstr "Thanh điều hướng chính"
-
-#: .\apps\web\templates\default\dashboard.html:26
-msgid "Study logo"
-msgstr "Logo Nghiên cứu"
-
-#: .\apps\web\templates\default\dashboard.html:34
-msgid "Research Study"
-msgstr "Nghiên cứu"
-
-#: .\apps\web\templates\default\login.html:22
-msgid "Welcome to"
-msgstr "Chào mừng đến với"
-
-#: .\apps\web\templates\default\login.html:30
-msgid "Platform Features"
-msgstr "Tính năng nền tảng"
-
-#: .\apps\web\templates\default\login.html:39
-msgid "Efficient Data Management"
-msgstr "Quản lý dữ liệu hiệu quả"
-
-#: .\apps\web\templates\default\login.html:40
-msgid "Organize, query, and export research data with exceptional performance."
-msgstr "Tổ chức, truy vấn và xuất dữ liệu nghiên cứu với hiệu suất vượt trội."
-
-#: .\apps\web\templates\default\login.html:50
-msgid "Streamlined Data Entry"
-msgstr "Nhập liệu tinh gọn"
-
-#: .\apps\web\templates\default\login.html:51
-msgid ""
-"Rapid CRF entry with built-in format and logic checks to ensure accuracy."
-msgstr "Nhập CRF nhanh chóng với các kiểm tra định dạng và logic tích hợp để đảm bảo tính chính xác."
-
-#: .\apps\web\templates\default\login.html:61
-msgid "Dynamic Research Dashboards"
-msgstr "Bảng điều khiển Nghiên cứu động"
-
-#: .\apps\web\templates\default\login.html:62
-msgid "Summarize project progress and data status in real time."
-msgstr "Tóm tắt tiến độ dự án và trạng thái dữ liệu trong thời gian thực."
-
-#: .\apps\web\templates\default\login.html:72
-msgid "Precise Scheduling and Tracking"
-msgstr "Lập lịch và theo dõi chính xác"
-
-#: .\apps\web\templates\default\login.html:73
-msgid ""
-"Automated reminders and appointment tracking help research teams optimize "
-"their plans."
-msgstr "Nhắc nhở tự động và theo dõi cuộc hẹn giúp các nhóm nghiên cứu tối ưu hóa kế hoạch của họ."
-
-#: .\apps\web\templates\default\login.html:92
-#: .\apps\web\templates\includes\header.html:41
-msgid "Select language"
-msgstr "Chọn ngôn ngữ"
-
-#: .\apps\web\templates\default\login.html:132
-msgid "Sign in to platform"
-msgstr "Đăng nhập vào nền tảng"
-
-#: .\apps\web\templates\default\login.html:137
-msgid "End-to-end automation, from data intake to smart reporting."
-msgstr "Tự động hóa toàn diện, từ nhập liệu đến báo cáo."
-
-#: .\apps\web\templates\default\login.html:150
-msgid "Username or Email"
-msgstr "Tên người dùng hoặc Email"
-
-#: .\apps\web\templates\default\login.html:177
+#: .\backend\api\base\login.py:29
+#: .\frontend\templates\authentication\login.html:66
 msgid "Password"
 msgstr "Mật khẩu"
 
-#: .\apps\web\templates\default\login.html:224
-msgid "Sign In"
-msgstr "Đăng nhập"
-
-#: .\apps\web\templates\default\login.html:232
-msgid "Need support?"
-msgstr "Cần hỗ trợ?"
-
-#: .\apps\web\templates\default\login.html:235
-msgid "designed by"
-msgstr "thiết kế bởi"
-
-#: .\apps\web\templates\default\select_study.html:29
-msgid "Search by Study ID or Name…"
-msgstr "Tìm kiếm theo ID hoặc Tên Nghiên cứu…"
-
-#: .\apps\web\templates\default\select_study.html:37
-msgid "List of Studies"
-msgstr "Danh sách Nghiên cứu"
-
-#: .\apps\web\templates\default\select_study.html:44
-msgid "Study ID"
-msgstr "ID Nghiên cứu"
-
-#: .\apps\web\templates\default\select_study.html:45
-msgid "Study Name"
-msgstr "Tên Nghiên cứu"
-
-#: .\apps\web\templates\default\select_study.html:46
-msgid "Last Updated"
-msgstr "Cập nhật lần cuối"
-
-#: .\apps\web\templates\default\select_study.html:47
-msgid "Action"
-msgstr "Hành động"
-
-#: .\apps\web\templates\default\select_study.html:60
-msgid "No study name available"
-msgstr "Không có tên nghiên cứu"
-
-#: .\apps\web\templates\default\select_study.html:74
-msgid "Enter Study"
-msgstr "Vào Nghiên cứu"
-
-#: .\apps\web\templates\default\select_study.html:81
-msgid "No studies found."
-msgstr "Không tìm thấy nghiên cứu nào."
-
-#: .\apps\web\templates\includes\header.html:10
-msgid "Hide sidebar"
-msgstr "Ẩn thanh bên"
-
-#: .\apps\web\templates\includes\header.html:16
-msgid "ResSync Logo"
-msgstr "Logo ResSync"
-
-#: .\apps\web\templates\includes\header.html:23
-#: .\apps\web\templates\studies\study_43en\sidebar.html:83
-msgid "Notifications"
-msgstr "Thông báo"
-
-#: .\apps\web\templates\includes\header.html:91
-msgid "User menu"
-msgstr "Menu người dùng"
-
-#: .\apps\web\templates\includes\header.html:100
-msgid "Choose another study"
-msgstr "Chọn nghiên cứu khác"
-
-#: .\apps\web\templates\includes\header.html:112
-msgid "Log out"
-msgstr "Đăng xuất"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:8
-msgid "Dashboard"
-msgstr "Bảng điều khiển"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:14
-msgid "Management Report"
-msgstr "Báo cáo Quản lý"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:19
-msgid "Analytics Report"
-msgstr "Báo cáo Phân tích"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:29
-msgid "Data Entry Forms"
-msgstr "Biểu mẫu nhập liệu"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:36
-msgid "Patient Information"
-msgstr "Thông tin bệnh nhân"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:38
-#: .\apps\web\templates\studies\study_43en\sidebar.html:60
-msgid "CRF"
-msgstr "CRF"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:43
-#: .\apps\web\templates\studies\study_43en\sidebar.html:65
-msgid "Screening List"
-msgstr "Danh sách Sàng lọc"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:48
-#: .\apps\web\templates\studies\study_43en\sidebar.html:70
-msgid "Enrollment List"
-msgstr "Danh sách Tuyển chọn"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:58
-msgid "Contact Information"
-msgstr "Thông tin liên hệ"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:88
-msgid "Visit Schedule"
-msgstr "Lịch trình thăm khám"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:98
-msgid "Activity Log"
-msgstr "Nhật ký hoạt động"
-
-#: .\apps\web\templates\studies\study_43en\sidebar.html:103
-msgid "Data Log"
-msgstr "Nhật ký dữ liệu"
-
-#: .\apps\web\views.py:79
+#: .\backend\api\base\views.py:338 .\backend\api\studies\views.py:79
 msgid "Invalid study selection."
 msgstr "Lựa chọn nghiên cứu không hợp lệ."
 
-#: .\config\settings.py:161
-msgid "Tiếng Việt"
+#: .\backend\tenancy\admin.py:99
+msgid "Authentication"
+msgstr "Xác thực"
+
+#: .\backend\tenancy\admin.py:103
+msgid "Personal Information"
+msgstr "Thông tin cá nhân"
+
+#: .\backend\tenancy\admin.py:107
+msgid "Account Status"
+msgstr "Trạng thái tài khoản"
+
+#: .\backend\tenancy\admin.py:119
+msgid "Permissions"
+msgstr "Quyền hạn"
+
+#: .\backend\tenancy\admin.py:129
+msgid "Last Study Access"
+msgstr "Lần truy cập nghiên cứu gần nhất"
+
+#: .\backend\tenancy\admin.py:135
+msgid "Administrative Information"
+msgstr "Thông tin quản trị"
+
+#: .\config\settings.py:312
+msgid "Vietnamese"
 msgstr "Tiếng Việt"
 
-#: .\config\settings.py:162
+#: .\config\settings.py:313
 msgid "English"
 msgstr "Tiếng Anh"
+
+#: .\frontend\templates\authentication\login.html:30
+msgid "Wellcome back"
+msgstr "Chào mừng trở lại"
+
+#: .\frontend\templates\authentication\login.html:54
+msgid "Username or Email"
+msgstr "Tên người dùng hoặc email"
+
+#: .\frontend\templates\authentication\login.html:59
+msgid "Enter username or email"
+msgstr "Nhập tên người dùng hoặc email"
+
+#: .\frontend\templates\authentication\login.html:71
+msgid "Enter password"
+msgstr "Nhập mật khẩu"
+
+#: .\frontend\templates\authentication\login.html:81
+msgid "Sign In"
+msgstr "Đăng nhập"
+
+#: .\frontend\templates\authentication\login.html:88
+msgid "Forgotten password?"
+msgstr "Quên mật khẩu?"
+
+#: .\frontend\templates\authentication\login.html:102
+msgid "Need help? Contact our support team at:"
+msgstr "Cần hỗ trợ? Vui lòng liên hệ đội ngũ hỗ trợ của chúng tôi tại:"
+
+#: .\frontend\templates\authentication\login.html:108
+msgid "Designed by Chau Vinh & Pham Tuong Duy"
+msgstr "Được thiết kế bởi Châu Vinh & Phạm Tường Duy"
+
+#: .\frontend\templates\default\dashboard.html:26
+msgid "Primary navigation"
+msgstr "Thanh điều hướng chính"
+
+#: .\frontend\templates\default\dashboard.html:34
+msgid "Study logo"
+msgstr "Logo nghiên cứu"
+
+#: .\frontend\templates\default\select_study.html:23
+msgid "Search by Study ID or Name…"
+msgstr "Tìm kiếm theo ID hoặc Tên Nghiên cứu..."
+
+#: .\frontend\templates\default\select_study.html:31
+msgid "List of Studies"
+msgstr "Danh sách Nghiên cứu"
+
+#: .\frontend\templates\default\select_study.html:38
+msgid "Study ID"
+msgstr "Mã số Nghiên cứu"
+
+#: .\frontend\templates\default\select_study.html:39
+msgid "Study Name"
+msgstr "Tên Nghiên cứu"
+
+#: .\frontend\templates\default\select_study.html:40
+msgid "Last Updated"
+msgstr "Cập nhật gần nhất"
+
+#: .\frontend\templates\default\select_study.html:41
+msgid "Action"
+msgstr "Hành động"
+
+#: .\frontend\templates\default\select_study.html:62
+msgid "Enter Study"
+msgstr "Vào Nghiên cứu"
+
+#: .\frontend\templates\default\select_study.html:69
+msgid "No studies found."
+msgstr "Không tìm thấy nghiên cứu nào."
+
+#: .\frontend\templates\errors\lockout.html:24
+msgid "Account Locked"
+msgstr "Tài khoản bị khóa"
+
+#: .\frontend\templates\errors\lockout.html:28
+msgid ""
+"We've locked your account becauuse of multiple unsuccessful login attempts. "
+"Please contact support for assistance."
+msgstr ""
+"Tài khoản của bạn đã bị khóa do có nhiều lần đăng nhập không thành công. Vui lòng liên hệ với bộ phận hỗ trợ để được trợ giúp."
+
+#: .\frontend\templates\errors\lockout.html:45
+msgid "Back to Home"
+msgstr "Quay lại trang chủ"
+
+#: .\frontend\templates\includes\features_list.html:4
+msgid "ResSync - Research Management Platform"
+msgstr "ResSync - Nền Tảng Quản Lý Nghiên Cứu "
+
+#: .\frontend\templates\includes\features_list.html:6
+msgid "Analyzing data, shaping the future."
+msgstr "Phân tích dữ liệu, định hình tương lai."
+
+#: .\frontend\templates\includes\features_list.html:19
+msgid "Efficient Data Management"
+msgstr "Quản lý dữ liệu hiệu quả"
+
+#: .\frontend\templates\includes\features_list.html:22
+msgid "Robust and scalable solutions for managing research data."
+msgstr "Các giải pháp mạnh mẽ và có khả năng mở rộng để quản lý dữ liệu nghiên cứu."
+
+#: .\frontend\templates\includes\features_list.html:35
+msgid "Streamlined Data Entry"
+msgstr "Nhập liệu hợp lý"
+
+#: .\frontend\templates\includes\features_list.html:38
+msgid "Intelligent CRF entry with built-in validation."
+msgstr "Nhập liệu CRF thông minh với tính năng xác thực tích hợp."
+
+#: .\frontend\templates\includes\features_list.html:51
+msgid "Dynamic Research Dashboards"
+msgstr "Bảng điều khiển nghiên cứu động"
+
+#: .\frontend\templates\includes\features_list.html:54
+msgid "Real-time visualization of project progress and data integrity."
+msgstr "Trực quan hóa theo thời gian thực về tiến độ dự án và tính toàn vẹn của dữ liệu."
+
+#: .\frontend\templates\includes\features_list.html:67
+msgid "Precise Scheduling and Tracking"
+msgstr "Lập kế hoạch và theo dõi chính xác"
+
+#: .\frontend\templates\includes\features_list.html:70
+msgid "Automated notifications and integrated appointment tracking."
+msgstr "Thông báo tự động và tính năng theo dõi lịch hẹn tích hợp."
+
+#: .\frontend\templates\includes\user_menu.html:4
+msgid "User menu"
+msgstr "Menu người dùng"
+
+#: .\frontend\templates\includes\user_menu.html:27
+msgid "My Profile"
+msgstr "Hồ sơ của tôi"
+
+#: .\frontend\templates\includes\user_menu.html:30
+#: .\frontend\templates\studies\study_43en\sidebar.html:84
+msgid "Notifications"
+msgstr "Thông báo"
+
+#: .\frontend\templates\includes\user_menu.html:36
+msgid "Logout"
+msgstr "Đăng xuất"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:9
+msgid "Dashboard"
+msgstr "Bảng điều khiển"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:15
+msgid "Management Report"
+msgstr "Báo cáo quản lý"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:20
+msgid "Analytics Report"
+msgstr "Báo cáo phân tích"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:30
+msgid "Data Entry Forms"
+msgstr "Các biểu mẫu nhập liệu"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:37
+msgid "Patient Information"
+msgstr "Thông tin bệnh nhân"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:39
+#: .\frontend\templates\studies\study_43en\sidebar.html:61
+msgid "CRF"
+msgstr "CRF"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:44
+#: .\frontend\templates\studies\study_43en\sidebar.html:66
+msgid "Screening List"
+msgstr "Danh sách sàng lọc"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:49
+#: .\frontend\templates\studies\study_43en\sidebar.html:71
+msgid "Enrollment List"
+msgstr "Danh sách đăng ký"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:59
+msgid "Contact Information"
+msgstr "Thông tin liên hệ"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:89
+msgid "Visit Schedule"
+msgstr "Lịch hẹn thăm khám"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:99
+msgid "Activity Log"
+msgstr "Nhật ký hoạt động"
+
+#: .\frontend\templates\studies\study_43en\sidebar.html:104
+msgid "Data Log"
+msgstr "Nhật ký dữ liệu"

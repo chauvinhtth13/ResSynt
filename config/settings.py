@@ -1,86 +1,116 @@
 # config/settings.py (OPTIMIZED)
-import threading
+"""
+Django settings module for the project.
+
+This file contains all configuration settings for the Django application,
+including database connections, security options, middleware, and custom
+application-specific settings. It uses environment variables for flexibility
+and security.
+
+Environment variables are loaded from a .env file if present, otherwise
+fallback to system environment variables.
+
+Note: This file is optimized for performance in production while maintaining
+debug capabilities in development. Always review and update settings based
+on deployment environment.
+"""
+
+import environ
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
-# Import django-environ with error handling
-try:
-    import environ
-except ImportError:
-    raise ImportError(
-        "django-environ is required. Install with: pip install django-environ"
-    )
 
-# Environment setup
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Environment variable management using django-environ.
 env = environ.Env(
     DEBUG=(bool, False),
-    ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1']),
-    CSRF_TRUSTED_ORIGINS=(list, []),
+    TENANCY_ENABLED=(bool, True),
+    FEATURE_PASSWORD_RESET=(bool, False),
 )
-
-# Build paths
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Read .env file
 env_file = BASE_DIR / ".env"
 if env_file.exists():
     environ.Env.read_env(env_file)
-else:
-    print(f"Warning: {env_file} not found. Using environment variables.")
 
-# Core Security Settings
+# ==========================================
+# CORE SETTINGS
+# ==========================================
+
 SECRET_KEY = env("SECRET_KEY")
-if not isinstance(SECRET_KEY, str) or len(SECRET_KEY) < 50:
-    raise ValueError(
-        "SECRET_KEY must be set and at least 50 characters long. "
-        "Generate with: python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\""
-    )
-
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS") 
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[]) # type: ignore
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
-# URL Configuration
+# URLs
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# Application definition
-INSTALLED_APPS = [
+# ==========================================
+# INSTALLED APPS (OPTIMIZED)
+# ==========================================
+
+DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "axes",
-    "chartjs",
-    "parler",
-    "apps.web",
-    "apps.tenancy.apps.TenancyConfig",
-    "apps.studies"
 ]
 
-# Middleware
+THIRD_PARTY_APPS = [
+    "rest_framework",
+    "corsheaders",
+    "axes", 
+    "chartjs",
+    "parler",
+]
+
+LOCAL_APPS = [
+    "backend.tenancy",
+    "backend.api",
+    "backend.studies",
+    "backend.studies.study_43en",
+    "backend.studies.study_44en",
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# ==========================================
+# MIDDLEWARE (SIMPLIFIED)
+# ==========================================
+
+# Middleware order is important - axes should be after AuthenticationMiddleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware", 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    'axes.middleware.AxesMiddleware',
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # Auth first
+    "axes.middleware.AxesMiddleware",  # Then axes to track attempts
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "apps.tenancy.middleware.NoCacheMiddleware",
-    "apps.tenancy.middleware.StudyRoutingMiddleware",
+    "backend.tenancy.middleware.StudyRoutingMiddleware",
+    "backend.tenancy.middleware.CacheControlMiddleware",
+    "backend.tenancy.middleware.SecurityHeadersMiddleware",
+    "backend.tenancy.middleware.PerformanceMonitoringMiddleware",
+    "backend.tenancy.middleware.DatabaseConnectionCleanupMiddleware",
 ]
 
-# Templates
+# ==========================================
+# TEMPLATES
+# ==========================================
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "apps" / "templates"],
+        "DIRS": [BASE_DIR / "frontend" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -94,253 +124,146 @@ TEMPLATES = [
     },
 ]
 
-# Database configuration with proper fallback
-def get_database_config():
-    """Get database configuration with validation."""
-    db_url = env("DATABASE_URL", default=None) # type: ignore
-    
-    if db_url:
-        db_config = env.db("DATABASE_URL")
-    else:
-        # Fallback to individual settings
-        db_config = {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": env("PGDATABASE", default="db_management"), # type: ignore
-            "USER": env("PGUSER", default="postgres"), # type: ignore
-            "PASSWORD": env("PGPASSWORD", default="" if DEBUG else None), # type: ignore
-            "HOST": env("PGHOST", default="localhost"), # type: ignore
-            "PORT": env("PGPORT", default="5432"), # type: ignore
-        }
-        
-        # Validate password in production
-        if not DEBUG and not db_config["PASSWORD"]:
-            raise ValueError("PGPASSWORD is required in production")
-    
-    # Add connection pool settings
-    db_config.update({
-        "CONN_MAX_AGE": 0 if DEBUG else env.int("PG_CONN_MAX_AGE", default=600), # type: ignore
-        "CONN_HEALTH_CHECKS": not DEBUG,
-        "ATOMIC_REQUESTS": False,
-        "AUTOCOMMIT": True,
-        "OPTIONS": {
-            "options": "-c search_path=metadata,public",
-            "sslmode": "disable" if DEBUG else "require",
-            "connect_timeout": 10,
-        },
-        "TIME_ZONE": env("DB_TIME_ZONE", default="Asia/Ho_Chi_Minh"), # type: ignore
-    })
-    
-    return db_config
+# Template caching in production
+if not DEBUG:
+    TEMPLATES[0]["OPTIONS"]["loaders"] = [
+        ("django.template.loaders.cached.Loader", [
+            "django.template.loaders.filesystem.Loader",
+            "django.template.loaders.app_directories.Loader",
+        ]),
+    ]
 
-DATABASES = {
-    "default": get_database_config()
-}
 
-# Study Database Settings
-STUDY_DB_AUTO_REFRESH_SECONDS = env.int("STUDY_DB_AUTO_REFRESH_SECONDS", default=300) # type: ignore
-STUDY_DB_PREFIX = env("STUDY_DB_PREFIX", default="db_study_") # type: ignore
-STUDY_DB_ENGINE = env("STUDY_DB_ENGINE", default="django.db.backends.postgresql") # type: ignore
 
-# Study DB connection settings (with fallback to management DB settings)
-STUDY_DB_HOST = env("STUDY_PGHOST", default=DATABASES["default"].get("HOST", "localhost"))
-STUDY_DB_PORT = env("STUDY_PGPORT", default=DATABASES["default"].get("PORT", "5432"))
-STUDY_DB_USER = env("STUDY_PGUSER", default=DATABASES["default"].get("USER", "postgres"))
-STUDY_DB_PASSWORD = env("STUDY_PGPASSWORD", default=DATABASES["default"].get("PASSWORD", ""))
-STUDY_DB_SEARCH_PATH = env("STUDY_SEARCH_PATH", default="data") # type: ignore
+# ==========================================
+# DATABASE (SIMPLIFIED)
+# ==========================================
 
-# Validate study DB password in production
-if not DEBUG and not STUDY_DB_PASSWORD:
-    raise ValueError("STUDY_PGPASSWORD is required in production")
+# Main database
+class DatabaseConfig:
+    """
+    Centralized database configuration class.
 
-# Database Routers
-DATABASE_ROUTERS = ["apps.tenancy.db_router.StudyDBRouter"]
+    Provides methods to configure management and study databases with
+    optimizations for connection pooling, timeouts, and security.
+    Validates and falls back to environment variables if needed.
+    """
 
-# Internationalization
-LANGUAGE_CODE = "vi"  # Default language
-LANGUAGES = [
-    ("vi", _("Tiếng Việt")),
-    ("en", _("English")),
-]
-LOCALE_PATHS = [BASE_DIR / "locale"]
-USE_I18N = True
-TIME_ZONE = "Asia/Ho_Chi_Minh"
-USE_TZ = True
+    @staticmethod
+    def get_management_db():
+        """
+        Get configuration for the management database.
 
-PARLER_LANGUAGES = {
-    None: (
-        {"code": "en"},
-        {"code": "vi"},
-    ),
-    "default": {
-        "fallbacks": ["vi"],
-        "hide_untranslated": False,
-    },
-}
+        Supports DATABASE_URL or individual PG* variables.
+        Optimizes for production with connection pooling and health checks.
+        """
+        db_url = env("DATABASE_URL")
 
-# Static files
-STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "apps" / "web" / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+        if db_url:
+            config = env.db("DATABASE_URL")
+        else:
+            config = {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": env("PGDATABASE"),
+                "USER": env("PGUSER"),
+                "PASSWORD": env("PGPASSWORD"),
+                "HOST": env("PGHOST"),
+                "PORT": env.int("PGPORT"),
+            }
 
-# Authentication
-LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/select-study/"
-LOGOUT_REDIRECT_URL = "/accounts/login/"
-FEATURE_PASSWORD_RESET = env.bool("FEATURE_PASSWORD_RESET", default=False) # type: ignore
-
-# Security Settings (environment-aware)
-SESSION_ENGINE = "django.contrib.sessions.backends.db" if DEBUG else "django.contrib.sessions.backends.cache"
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
-SECURE_SSL_REDIRECT = not DEBUG
-SECURE_HSTS_SECONDS = 0 if DEBUG else 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
-SECURE_HSTS_PRELOAD = not DEBUG
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https") if not DEBUG else None
-X_FRAME_OPTIONS = "DENY"
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-SECURE_BROWSER_XSS_FILTER = True
-
-# Default primary key field type
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# Logging configuration (optimized and reduced)
-LOGS_DIR = BASE_DIR / "logs"
-LOGS_DIR.mkdir(exist_ok=True)
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-            "level": "DEBUG" if DEBUG else "WARNING",
-        },
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "verbose",
-            "filename": str(LOGS_DIR / "django.log"),
-            "encoding": "utf-8",
-            "maxBytes": 5 * 1024 * 1024,
-            "backupCount": 3,  # Reduced backup count to save space
-            "level": "DEBUG" if DEBUG else "WARNING",  # Raised to WARNING in prod to reduce logs
-            "delay": True,
-        },
-    },
-    "root": {
-        "handlers": ["console", "file"] if DEBUG else ["file"],  # No console in prod
-        "level": "DEBUG" if DEBUG else "WARNING",
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "DEBUG" if DEBUG else "WARNING",
-            "propagate": False,
-        },
-        "django.utils.autoreload": {
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "apps.tenancy": {
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "DEBUG" if DEBUG else "WARNING",
-            "propagate": False,
-        },
-        "apps.web": {
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "DEBUG" if DEBUG else "WARNING",
-            "propagate": False,
-        },
-        "axes": {
-            "handlers": ["console", "file"] if DEBUG else ["file"],
-            "level": "DEBUG" if DEBUG else "WARNING",
-            "propagate": False,
-        },
-    },
-}
-
-# Cache Configuration (environment-aware)
-if DEBUG:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "unique-snowflake",
-        }
-    }
-else:
-    # Production uses Redis
-    CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": env("REDIS_URL", default="redis://localhost:6379/1"), # type: ignore
+        # Connection pooling and optimization settings.
+        config.update({
+            "CONN_MAX_AGE": 0 if DEBUG else 600,  # 10 min connection reuse in production.
+            "CONN_HEALTH_CHECKS": not DEBUG,
+            "ATOMIC_REQUESTS": False,  # Avoid wrapping every request in a transaction for performance.
+            "AUTOCOMMIT": True,
             "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                "CONNECTION_POOL_KWARGS": {"max_connections": 50},
-                "SOCKET_CONNECT_TIMEOUT": 5,
-                "SOCKET_TIMEOUT": 5,
+                "options": "-c search_path=management,public",
+                "sslmode": "disable" if DEBUG else "require",
+                "connect_timeout": 10,
+                "client_encoding": "UTF8",
+                # PostgreSQL keepalive settings to prevent connection drops.
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+            },
+            "TIME_ZONE": 'Asia/Ho_Chi_Minh',
+        })
+
+        # Add advanced connection pooling in production.
+        if not DEBUG:
+            config["OPTIONS"].update({
+                "pool": True,  # Enable connection pooling.
+                "pool_size": 10,  # Minimum number of connections to maintain.
+                "max_overflow": 20,  # Maximum additional connections on demand.
+                "pool_recycle": 3600,  # Recycle connections after 1 hour to prevent leaks.
+                "pool_pre_ping": True,  # Verify connections before use.
+            })
+
+        return config
+
+    @staticmethod
+    def get_study_db_config(db_name: str):
+        """
+        Get configuration for a study-specific database.
+
+        Uses environment variables for study DB credentials.
+        Optimized with shorter connection ages and timeouts for dynamic tenants.
+        """
+        return {
+            "ENGINE": env("STUDY_DB_ENGINE"),
+            "NAME": db_name,
+            "USER": env("STUDY_PGUSER"),
+            "PASSWORD": env("STUDY_PGPASSWORD"),
+            "HOST": env("STUDY_PGHOST"),
+            "PORT": env.int("STUDY_PGPORT"),
+            "CONN_MAX_AGE": 0 if DEBUG else 300,  # 5 min for study DBs in production.
+            "CONN_HEALTH_CHECKS": True,
+            "ATOMIC_REQUESTS": False,
+            "OPTIONS": {
+                "options": f"-c search_path={env('STUDY_DB_SEARCH_PATH')},public",
+                "sslmode": "disable" if DEBUG else "require",
+                "connect_timeout": 5,
+                "statement_timeout": "30000",  # 30 seconds timeout for queries.
+                "idle_in_transaction_session_timeout": "60000",  # 60 seconds for idle transactions.
             },
         }
-    }
 
-# Email Configuration
-if FEATURE_PASSWORD_RESET:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com") # type: ignore
-    EMAIL_PORT = env.int("EMAIL_PORT", default=587) # type: ignore
-    EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True) # type: ignore
-    EMAIL_HOST_USER = env("EMAIL_HOST_USER")
-    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
-    
-    # Validate email settings in production
-    if not DEBUG and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
-        raise ValueError("EMAIL_HOST_USER and EMAIL_HOST_PASSWORD are required when FEATURE_PASSWORD_RESET is True")
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Primary database configuration.
+DATABASES = {
+    "default": DatabaseConfig.get_management_db()
+}
 
-# Custom Settings
-TENANCY_ENABLED = env.bool("TENANCY_ENABLED", default=True) # type: ignore
-TENANCY_STUDY_CODE_PREFIX = env("TENANCY_STUDY_CODE_PREFIX", default="study_") # type: ignore
- 
-# Thread-local storage
-THREAD_LOCAL = threading.local()
+# Routers for multi-database (tenancy) setup.
+DATABASE_ROUTERS = ['backend.tenancy.db_router.TenantRouter']
 
-# Add AUTHENTICATION_BACKENDS
+
+# Prefix for study database names and engine.
+STUDY_DB_PREFIX = env("STUDY_DB_PREFIX")
+STUDY_DB_ENGINE = env("STUDY_DB_ENGINE")
+TENANCY_STUDY_CODE_PREFIX = env("TENANCY_STUDY_CODE_PREFIX")
+
+# ==========================================
+# AUTHENTICATION
+# ==========================================
+
+AUTH_USER_MODEL = "tenancy.User"
+
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",  # Put ModelBackend first
-    "axes.backends.AxesBackend",
+    "axes.backends.AxesStandaloneBackend",  # Axes first to track attempts
+    "backend.tenancy.backends.BlockedUserBackend",  # Our custom backend second
+    "django.contrib.auth.backends.ModelBackend",  # Default Django backend last
 ]
 
-# Axes settings (simplified)
-AXES_FAILURE_LIMIT = 5
-AXES_COOLOFF_TIME = 1  # hours
-AXES_LOCK_OUT_AT_FAILURE = True
-AXES_RESET_ON_SUCCESS = True
-AXES_LOCKOUT_PARAMETERS = [["username"]]  # Lock by username
-AXES_IPWARE_META_PRECEDENCE_ORDER = [
-    "HTTP_X_FORWARDED_FOR",
-    "X_FORWARDED_FOR", 
-    "HTTP_CLIENT_IP",
-    "HTTP_X_REAL_IP",
-    "HTTP_X_FORWARDED",
-    "HTTP_X_CLUSTER_CLIENT_IP",
-    "HTTP_FORWARDED_FOR",
-    "HTTP_FORWARDED",
-    "REMOTE_ADDR",
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
-AXES_VERBOSE = False
-AXES_CACHE = "default"
-AXES_NEVER_LOCKOUT_WHITELIST = env.bool("AXES_NEVER_LOCKOUT_WHITELIST", default=False) # type: ignore
-AXES_IP_WHITELIST = env.list("AXES_IP_WHITELIST", default=[]) # type: ignore
 
-# Password Hashers
+# Password hashers (only keep Argon2 and PBKDF2)
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -348,10 +271,278 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
 ]
 
-# Password Validation
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+# ==========================================
+# AXES (BRUTE FORCE PROTECTION)
+# ==========================================
+
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 7  # Lock after 5 failed attempts
+AXES_COOLOFF_TIME = None  # None = permanent lock
+AXES_RESET_ON_SUCCESS = True  # Reset counter on successful login
+AXES_LOCK_OUT_AT_FAILURE = True # Do not lock automatically
+
+# IMPORTANT: Only lock by username, not IP
+AXES_LOCKOUT_PARAMETERS = ['username']  # Only lock by username
+
+# Disable IP-based locking
+AXES_LOCK_OUT_BY_IP_AND_USERNAME = False
+AXES_LOCK_OUT_BY_IP_ONLY = False
+
+# Use database handler for better reliability
+AXES_HANDLER = 'axes.handlers.database.AxesDatabaseHandler'
+
+# No custom handler needed - using signals instead
+AXES_LOCKOUT_TEMPLATE = 'errors/lockout.html'
+
+# Logging
+AXES_VERBOSE = True
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
+# ==========================================
+# INTERNATIONALIZATION
+# ==========================================
+
+# Enable i18n
+USE_I18N = True
+USE_L10N = True  # Localization for dates, numbers
+USE_TZ = True
+
+# Default language
+LANGUAGE_CODE = 'vi'  # Vietnamese as default
+
+# Available languages
+LANGUAGES = [
+    ('vi', _('Vietnamese')),  # Tiếng Việt
+    ('en', _('English')),     # Tiếng Anh
 ]
+
+LANGUAGE_COOKIE_NAME = 'django_language'
+LANGUAGE_COOKIE_AGE = None  # Browser session
+LANGUAGE_COOKIE_DOMAIN = None
+LANGUAGE_COOKIE_PATH = '/'
+LANGUAGE_COOKIE_SECURE = False
+LANGUAGE_COOKIE_HTTPONLY = False
+LANGUAGE_COOKIE_SAMESITE = 'Lax'
+
+# Locale paths - where translation files are stored
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
+
+# Time zone
+TIME_ZONE = 'Asia/Ho_Chi_Minh'  # Vietnam timezone
+
+# Date and time formats for Vietnamese
+DATE_FORMAT = 'd/m/Y'
+TIME_FORMAT = 'H:i'
+DATETIME_FORMAT = 'd/m/Y H:i:s'
+YEAR_MONTH_FORMAT = 'F Y'
+MONTH_DAY_FORMAT = 'j F'
+SHORT_DATE_FORMAT = 'd/m/Y'
+SHORT_DATETIME_FORMAT = 'd/m/Y H:i'
+
+# Input formats for forms
+DATE_INPUT_FORMATS = [
+    '%d/%m/%Y',  # '25/10/2006'
+    '%d-%m-%Y',  # '25-10-2006'
+    '%Y-%m-%d',  # '2006-10-25'
+]
+
+TIME_INPUT_FORMATS = [
+    '%H:%M:%S',  # '14:30:59'
+    '%H:%M',     # '14:30'
+]
+
+DATETIME_INPUT_FORMATS = [
+    '%d/%m/%Y %H:%M:%S',
+    '%d/%m/%Y %H:%M',
+    '%d-%m-%Y %H:%M:%S',
+    '%d-%m-%Y %H:%M',
+    '%Y-%m-%d %H:%M:%S',
+    '%Y-%m-%d %H:%M',
+]
+
+# Number formats
+USE_THOUSAND_SEPARATOR = True
+THOUSAND_SEPARATOR = '.'
+DECIMAL_SEPARATOR = ','
+NUMBER_GROUPING = 3
+
+# First day of week (0=Monday, 6=Sunday)
+FIRST_DAY_OF_WEEK = 1  # Monday
+
+# Parler settings for multilingual models.
+PARLER_DEFAULT_LANGUAGE_CODE = 'en'
+PARLER_LANGUAGES = {
+    None: tuple({"code": code} for code, _ in LANGUAGES),
+    'default': {
+        'fallbacks': ['en'],
+        'hide_untranslated': False,
+    }
+}
+
+# ==========================================
+# STATIC & MEDIA FILES
+# ==========================================
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "frontend" / "static"] if (BASE_DIR / "frontend" / "static").exists() else []
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+if not DEBUG:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+
+
+# ==========================================
+# SECURITY
+# ==========================================
+
+# Session settings
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"  # Better than cache-only
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SAMESITE = "Lax" if DEBUG else "Strict"
+
+# CSRF settings
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SAMESITE = "Lax" if DEBUG else "Strict"
+
+# Security headers
+SECURE_SSL_REDIRECT = not DEBUG
+X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# HSTS (only in production)
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# ==========================================
+# CACHING (SIMPLIFIED)
+# ==========================================
+
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+else:
+    # Use Redis in production if available
+    redis_url = env("REDIS_URL")
+    if redis_url:
+        CACHES = {
+            "default": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": redis_url,
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                    "IGNORE_EXCEPTIONS": True,  # Fallback if Redis fails
+                }
+            }
+        }
+    else:
+        # Fallback to database cache
+        CACHES = {
+            "default": {
+                "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+                "LOCATION": "cache_table",
+            }
+        }
+
+# ==========================================
+# LOGGING (SIMPLIFIED)
+# ==========================================
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "django.log",
+            "maxBytes": 5242880,  # 5MB
+            "backupCount": 3,
+        },
+    },
+    "root": {
+        "handlers": ["console"] if DEBUG else ["console", "file"],
+        "level": "INFO" if DEBUG else "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"] if DEBUG else ["console", "file"],
+            "level": "INFO" if DEBUG else "WARNING",
+            "propagate": False,
+        },
+    },
+}
+
+# ==========================================
+# EMAIL (ONLY IF NEEDED)
+# ==========================================
+
+if env("FEATURE_PASSWORD_RESET"):
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = env("EMAIL_HOST")
+    EMAIL_PORT = env.int("EMAIL_PORT")
+    EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
+    EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# ==========================================
+# REST FRAMEWORK
+# ==========================================
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ] if not DEBUG else [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+}
+
+# ==========================================
+# CORS CONFIGURATION
+# ==========================================
+
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Authentication Redirects
+# ------------------------
+# URLs for login, logout, and redirects.
+LOGIN_URL = "/"
+LOGIN_REDIRECT_URL = "/select-study/"
+LOGOUT_REDIRECT_URL = "/"
+
+# ==========================================
+# OTHER SETTINGS
+# ==========================================
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'

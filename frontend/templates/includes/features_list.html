@@ -1,0 +1,75 @@
+{% load static i18n %}
+<!-- Features List Template -->
+<div class="mb-4">
+    <h1 class="display-5 display-lg-4 fw-bold">{% trans "ResSync - Research Operations Platform" %}</h1> <!-- Reduced default to display-5 for smaller screens, larger on lg+ -->
+    <p class="fs-4 fs-lg-title-1 mb-0"> <!-- Assumes .fs-lg-title-1 is custom; use fs-4 as base for responsiveness -->
+        {% trans "See Everything. Control Everything. Deliver Faster." %}
+    </p>
+</div>
+
+<!-- Features List -->
+<ul class="d-flex flex-column gap-4 list-unstyled">
+    <li class="border glass-effect p-4 rounded-4">
+        <div class="d-flex align-items-center gap-4">
+            <div>
+                <i class="bi bi-database fs-3 fs-lg-bullet-list"></i> <!-- Base fs-3, scale to custom on lg+ -->
+            </div>
+            <div>
+                <h3 class="fs-5 fs-lg-header-list mb-1"> <!-- Base fs-5 for readability on medium, larger on lg+ -->
+                    {% trans "Intelligent Data Orchestration" %}
+                </h3>
+                <p class="fs-6 fs-lg-text-list mb-0"> <!-- Base fs-6 for compact, scale up on larger screens -->
+                    {% trans "Enterprise-grade infrastructure for seamless research data governance at scale." %}
+                </p>
+            </div>
+        </div>
+    </li>
+
+    <li class="border glass-effect p-4 rounded-4">
+        <div class="d-flex align-items-center gap-4">
+            <div>
+                <i class="bi bi-pencil-square fs-3 fs-lg-bullet-list"></i>
+            </div>
+            <div>
+                <h3 class="fs-5 fs-lg-header-list mb-1">
+                    {% trans "Smart Data Capture" %}
+                </h3>
+                <p class="fs-6 fs-lg-text-list mb-0">
+                    {% trans "AI-powered CRF with real-time validation and automated quality checks." %}
+                </p>
+            </div>
+        </div>
+    </li>
+
+    <li class="border glass-effect p-4 rounded-4">
+        <div class="d-flex align-items-center gap-4">
+            <div>
+                <i class="bi bi-graph-up-arrow fs-3 fs-lg-bullet-list"></i>
+            </div>
+            <div>
+                <h3 class="fs-5 fs-lg-header-list mb-1">
+                    {% trans "Real-time Analytics Dashboard" %}
+                </h3>
+                <p class="fs-6 fs-lg-text-list mb-0">
+                    {% trans "Visualizations delivering instant insights on study metrics" %}
+                </p>
+            </div>
+        </div>
+    </li>
+
+    <li class="border glass-effect p-4 rounded-4">
+        <div class="d-flex align-items-center gap-4">
+            <div>
+                <i class="bi bi-calendar-check fs-3 fs-lg-bullet-list"></i>
+            </div>
+            <div>
+                <h3 class="fs-5 fs-lg-header-list mb-1">
+                    {% trans "Automated Workflow Engine" %}
+                </h3>
+                <p class="fs-6 fs-lg-text-list mb-0">
+                    {% trans "Intelligent scheduling with proactive alerts and comprehensive visit management." %}
+                </p>
+            </div>
+        </div>
+    </li>
+</ul>
