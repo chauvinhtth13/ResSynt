@@ -15,7 +15,7 @@ class Command(BaseCommand):
             perm_count = Permission.initialize_permissions()
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'✓ Created {perm_count} permissions'
+                    f'Created {perm_count} permissions'
                 )
             )
             
@@ -24,7 +24,7 @@ class Command(BaseCommand):
             role_count = Role.initialize_roles()
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'✓ Created {role_count} roles'
+                    f'Created {role_count} roles'
                 )
             )
             
@@ -40,7 +40,7 @@ class Command(BaseCommand):
                 if perms.exists():
                     self.stdout.write(f'\n{category_name}:')
                     for perm in perms:
-                        danger_mark = '⚠️ ' if perm.is_dangerous else ''
+                        danger_mark = ' ' if perm.is_dangerous else ''
                         self.stdout.write(f'  - {danger_mark}{perm.name} ({perm.code})')
             
             # List roles
@@ -61,7 +61,7 @@ class Command(BaseCommand):
                 if role_perms:
                     self.stdout.write('    Permissions:')
                     for rp in role_perms[:5]:  # Show first 5
-                        self.stdout.write(f'      • {rp.permission.name}')
+                        self.stdout.write(f'      {rp.permission.name}')
                     if role_perms.count() > 5:
                         self.stdout.write(f'      ... and {role_perms.count() - 5} more')
             
@@ -74,6 +74,6 @@ class Command(BaseCommand):
             
             self.stdout.write(
                 self.style.SUCCESS(
-                    '\n✓ Tenancy system initialized successfully!'
+                    '\nTenancy system initialized successfully!'
                 )
             )

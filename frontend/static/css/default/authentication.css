@@ -1,211 +1,95 @@
-/* authentication.css - Optimized CSS for Login Page (Flat & Minimal, Responsive) */
-
-/* Main Layout Fix (Auth-Specific if not in base.css) */
+/* ========================================================================== 
+   MAIN LAYOUT 
+   ========================================================================== */
 main {
-    flex-grow: 1;  /* Expand main to full height */
-    display: flex; /* Enable flex for inner content */
+    flex-grow: 1;
+    display: flex;
 }
 
-/* Responsive Padding */
-.p-responsive {
-    padding: 1.5rem;  /* Default for mobile */
-}
+/* ========================================================================== 
+   FALLBACK (Older Browsers) 
+   ========================================================================== */
+.p-responsive { padding: 1.5rem; } /* Mobile */
+@media (min-width: 768px)  { .p-responsive { padding: 2.5rem; } }
+@media (min-width: 1200px) { .p-responsive { padding: 3.5rem; } }
 
-@media (min-width: 576px) {
-    .p-responsive {
-        padding: 2rem;
-    }
-}
+/* Font size fallback */
+.fs-title-1     { font-size: 1.5rem; }
+.fs-title-2     { font-size: 1.25rem; }
+.fs-header-list { font-size: 1rem; }
+.fs-text-list   { font-size: 0.875rem; }
+.fs-bullet-list { font-size: 1.5rem; }
+.form-label.fs-5,
+.form-control.fs-5 { font-size: 1rem; }
+.small.text-muted  { font-size: 0.75rem; }
 
-@media (min-width: 768px) {
-    .p-responsive {
-        padding: 2.5rem;
-    }
-}
-
-@media (min-width: 992px) {
-    .p-responsive {
-        padding: 3rem;
-    }
-}
-
-@media (min-width: 1200px) {
-    .p-responsive {
-        padding: 3.5rem;
-    }
-}
-
-/* Custom Font Sizes (Responsive) */
-.fs-title-1 { font-size: 2rem; }
-.fs-title-2 { font-size: 1.5rem; }  /* Merged & optimized defaults */
-.fs-header-list { font-size: 1.25rem; }
-.fs-text-list { font-size: 1rem; }
-.fs-bullet-list { font-size: 2rem; }
-
-@media (min-width: 768px) {  /* md+ for tablet/desktop scaling */
-    .fs-title-2 { font-size: 1.75rem; }
-    .form-label.fs-5,
-    .form-control.fs-5 { font-size: 1.25rem; }  /* Merged input/label tweaks */
-}
-
-@media (min-width: 992px) {  /* lg+ */
-    .fs-title-1 { font-size: 2.5rem; }
-    .fs-title-2 { font-size: 2rem; }
+@media (min-width: 992px) { 
+    .fs-title-1     { font-size: 2.5rem; }
+    .fs-title-2     { font-size: 2rem; }
     .fs-header-list { font-size: 1.5rem; }
-    .fs-text-list { font-size: 1.125rem; }
+    .fs-text-list   { font-size: 1.125rem; }
     .fs-bullet-list { font-size: 2.5rem; }
-    .small.text-muted { font-size: 0.875rem; }  /* Footer text scaling */
+    .small.text-muted  { font-size: 0.875rem; }
 }
 
-@media (min-width: 1200px) {  /* xl+ */
-    .fs-title-2 { font-size: 2rem; }
-}
+/* ========================================================================== 
+   MODERN SCALING (clamp)
+   ========================================================================== */
+@supports (padding: clamp(1rem, 5vw, 3rem)) {
 
-@media (max-width: 576px) {  /* Mobile adjustments */
-    .fs-title-1 { font-size: 1.5rem; }
-    .fs-title-2 { font-size: 1.25rem; }
-    .fs-header-list { font-size: 1rem; }
-    .fs-text-list { font-size: 0.875rem; }
-    .fs-bullet-list { font-size: 1.5rem; }
+    .p-responsive {
+        padding: clamp(1.5rem, 1rem + 3vw, 3.5rem);
+    }
+
+    .fs-title-1 {
+        font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    }
+    .fs-title-2 {
+        font-size: clamp(1.25rem, 0.8rem + 1.8vw, 2rem);
+    }
+    .fs-header-list {
+        font-size: clamp(1rem, 0.8rem + 1vw, 1.5rem);
+    }
+    .fs-text-list {
+        font-size: clamp(0.875rem, 0.75rem + 0.5vw, 1.125rem);
+    }
+    .fs-bullet-list {
+        font-size: clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
+    }
     .form-label.fs-5,
-    .form-control.fs-5 { font-size: 1rem; }
-    .alert-danger { font-size: 0.875rem; }
-    .small.text-muted { font-size: 0.75rem; }
+    .form-control.fs-5 {
+        font-size: clamp(1rem, 0.85rem + 0.5vw, 1.25rem);
+    }
+    .small.text-muted {
+        font-size: clamp(0.75rem, 0.65rem + 0.3vw, 0.875rem);
+    }
+    .password-toggle-icon {
+        font-size: clamp(1rem, 0.85rem + 0.5vw, 1.25rem);
+    }
 }
 
-/* Glass Effect (Minimal Blur with Responsive Shadow) */
+/* ========================================================================== 
+   COMPONENTS
+   ========================================================================== */
 .glass-effect {
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(var(--blur-md));
+    border: 0.063rem solid rgba(255, 255, 255, 0.2); /* 1px → rem */
+    border-radius: var(--radius-lg);
+    box-shadow: var(--bs-box-shadow-lg);
 }
 
-@media (max-width: 576px) {
-    .glass-effect {
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);  /* Lighter shadow on mobile for performance */
-    }
+.password-input-container { 
+    position: relative; 
 }
-
-/* Logo Wrapper (Centered & Scaled) */
-.logo-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0 auto;
-    max-width: 200px;
-}
-
-.logo-wrapper img {
-    max-height: 50px;
-    width: auto;
-}
-
-@media (max-width: 576px) {
-    .logo-wrapper { max-width: 150px; }
-}
-
-/* Password Input & Toggle (Flat Design) */
-.password-input-container { position: relative; }
 
 .password-toggle-icon {
     background: none;
     border: none;
     color: var(--bs-gray-600);
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color var(--transition-fast);
 }
-
-.password-toggle-icon:hover { color: var(--bs-primary); }
-
-@media (max-width: 576px) {
-    .password-toggle-icon { font-size: 1rem; }
-}
-
-@media (max-width: 576px) {
-    .btn-hover {
-        padding: 0.75rem;
-        font-size: 1rem;
-    }
-}
-
-/* Link Hover (Merged: Minimal Underline) */
-.link-hover {
+.password-toggle-icon:hover {
     color: var(--app-royal-blue);
-    transition: color 0.2s ease, text-decoration 0.2s ease;
-}
-
-.link-hover:hover {
-    color: var(--app-navy-blue);
-    text-decoration: underline;
-}
-
-/* Alert (Error Message - Flat) */
-.alert-danger {
-    background-color: rgba(var(--bs-danger-rgb), 0.1);
-    border: 1px solid var(--bs-danger);
-    border-radius: 0.375rem;
-    transition: opacity 0.3s ease;
-}
-
-/* Language Selector (Flat & Minimal) */
-.dropdown-toggle.modern {
-    border-radius: 8px;
-    background-color: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
-    color: var(--bs-body-color);
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.dropdown-toggle.modern:hover,
-.dropdown-toggle.modern:focus {
-    background-color: var(--bs-light);
-    border-color: var(--bs-primary);
-}
-
-.dropdown-menu.language-menu {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border: none;
-    padding: 0.5rem;
-    background-color: var(--bs-body-bg);
-    min-width: 10rem;
-}
-
-.dropdown-menu.language-menu .dropdown-item {
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    transition: background-color 0.2s ease;
-}
-
-.dropdown-menu.language-menu .dropdown-item:hover,
-.dropdown-menu.language-menu .dropdown-item:focus {
-    background-color: var(--bs-gray-300);
-}
-
-.dropdown-menu.language-menu .dropdown-item.active {
-    background-color: var(--bs-primary);
-    color: var(--bs-white);
-}
-
-.dropdown-menu.language-menu li:not(:last-child) {
-    margin-bottom: 0.25rem;
-}
-
-@media (max-width: 576px) {
-    .dropdown-toggle.modern {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
-    }
-
-    .dropdown-menu.language-menu {
-        padding: 0.375rem;
-        min-width: 8rem;
-    }
-
-    .dropdown-menu.language-menu .dropdown-item {
-        padding: 0.375rem 0.75rem;
-    }
 }

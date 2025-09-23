@@ -12,38 +12,31 @@
 
 {% include 'includes/select_study_header.html' %}
 
-<main class="container-xl py-4 py-md-5"> <!-- Adjusted padding for responsive: smaller on mobile -->
-    <section role="search" aria-labelledby="study-search-title" class="mb-4">
-        <div class="position-relative">
-            <div class="input-group study-search input-group-lg rounded-pill border bg-light">
-                <span class="input-group-text bg-transparent border-0 ps-3 ps-sm-4 pe-0">
-                    <i class="bi bi-search text-secondary fs-4" aria-hidden="true"></i>
-                </span>
-                <input id="study-id-search" type="search" autocomplete="off" enterkeyhint="search"
-                    placeholder="{% trans 'Search by Study ID or Name…' %}"
-                    class="form-control rounded-pill study-search bg-transparent border-0 py-2 py-sm-3 text-muted"
-                    aria-label="{% trans 'Search by Study ID or Name' %}">
-                <!-- Added aria-label for a11y; responsive padding -->
-            </div>
-        </div>
+<main class="container py-5"> <!-- Adjusted padding for responsive: smaller on mobile -->
+    <section class="controls-bar">
+        <input type="text" id="searchInput" class="auto-search-bar"
+            placeholder="{% trans 'Search by Study ID or Name…' %}">
+        <i class="bi bi-search text-secondary" aria-hidden="true"></i>
     </section>
 
-    <section class="card overflow-hidden border rounded-xl">
-        <div class="card-header d-flex justify-content-between align-items-center px-3 py-3 px-sm-4">
-            <h2 class="card-title fs-5 fs-sm-4 mb-0">{% trans 'List of Studies' %}</h2>
+        <!-- Table Container -->
+    <section class="table-wrapper">
+        <!-- Table Title -->
+        <div class="table-title px-3 py-2 px-sm-4">
+            <h3 class="fw-bold mb-0">{% trans 'List of Studies'%}</h3>
         </div>
 
         <div class="table-responsive">
-            <table class="table table-sm table-hover"> <!-- Added table-hover for better UX on desktop -->
-                <thead class="table-light text-uppercase small text-muted">
-                    <tr>
-                        <th scope="col" class="w-12-5 px-3 py-3 px-sm-4 text-start text-nowrap position-sticky start-0 z-1" style="width: 12.5%;">{%trans 'Study ID' %}</th> <!-- Thêm text-nowrap cho header -->
-                        <th scope="col" class="w-62-5 px-3 py-3 px-sm-4 text-start text-nowrap" style="width: 60%;">{%trans 'Study Name' %}</th> <!-- text-nowrap cho header để không wrap -->
-                        <th scope="col" class="w-12-5 px-3 py-3 px-sm-4 text-start text-nowrap" style="width: 12.5%;">{%trans 'Last Updated' %}</th> <!-- text-nowrap cho header -->
-                        <th scope="col" class="w-12-5 px-3 py-3 px-sm-4 text-start text-nowrap position-sticky end-0 z-1" style="width: 15%;">{% trans 'Action' %}</th> <!-- text-nowrap cho header -->
-                    </tr>
-                </thead>
-                <tbody id="studies-body">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="w-12-5 px-3 py-3 px-sm-4 text-start text-nowrap position-sticky start-0 z-1" style="width: 12.5%;">{%trans 'Study ID' %}</th> <!-- Thêm text-nowrap cho header -->
+                            <th scope="col" class="w-62-5 px-3 py-3 px-sm-4 text-start text-nowrap" style="width: 60%;">{%trans 'Study Name' %}</th> <!-- text-nowrap cho header để không wrap -->
+                            <th scope="col" class="w-12-5 px-3 py-3 px-sm-4 text-start text-nowrap" style="width: 12.5%;">{%trans 'Last Updated' %}</th> <!-- text-nowrap cho header -->
+                            <th scope="col" class="w-12-5 px-3 py-3 px-sm-4 text-start text-nowrap position-sticky end-0 z-1" style="width: 15%;">{% trans 'Action' %}</th> <!-- text-nowrap cho header -->
+                        </tr>
+                    </thead>
+                <tbody>
                     {% for study in studies %}
                     <tr class="align-middle" data-row>
                         <td class="px-3 py-3 px-sm-4 fw-medium text-dark text-nowrap position-sticky start-0 z-1" style="height: 3.5rem;"
@@ -55,15 +48,6 @@
                         <td class="px-3 py-3 px-sm-4 text-muted text-nowrap" style="height: 3.5rem;" data-col="updated">
                             {{ study.updated_at|date:"d-m-Y H:i:s" }}</td>
                         <td class="px-3 py-3 px-sm-4 text-muted text-nowrap position-sticky end-0 z-1" style="height: 3.5rem;">
-                            <form method="post" action="{% url 'select_study' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="study_id" value="{{ study.id }}">
-                                <button type="submit"
-                                    class="btn btn-hover text-white w-100 w-md-auto d-inline-flex align-items-center justify-content-center gap-2 rounded-pill px-3 py-2 fw-semibold shadow-sm">
-                                    <i class="bi bi-arrow-right-circle"></i>
-                                    <span class="text-nowrap">{% trans 'Enter Study' %}</span>
-                                </button>
-                            </form>
                         </td>
                     </tr>
                     {% empty %}
@@ -73,8 +57,8 @@
                     </tr>
                     {% endfor %}
                 </tbody>
-            </table>
-        </div>
+                </table>
+            </div>
     </section>
 </main>
 {% endblock %}
