@@ -1,0 +1,638 @@
+:root {
+    /* Primary Colors - Royal Blue */
+    --color-royal-blue-50: #f0f5fe;
+    --color-royal-blue-100: #dee8fb;
+    --color-royal-blue-200: #c4d8f9;
+    --color-royal-blue-300: #9bbef5;
+    --color-royal-blue-400: #6c9cee;
+    --color-royal-blue-500: #3c70e6;
+    --color-royal-blue-600: #345ddc;
+    --color-royal-blue-700: #2b49ca;
+    --color-royal-blue-800: #293da4;
+    --color-royal-blue-900: #263782;
+    --color-royal-blue-950: #1c244f;
+    
+    /* Accent Colors - Cinnabar */
+    --color-cinnabar-50: #fef3f2;
+    --color-cinnabar-100: #fde5e3;
+    --color-cinnabar-200: #fcd1cc;
+    --color-cinnabar-300: #f8b0a9;
+    --color-cinnabar-400: #f28377;
+    --color-cinnabar-500: #e64c3c;
+    --color-cinnabar-600: #d43e2e;
+    --color-cinnabar-700: #b33022;
+    --color-cinnabar-800: #942b20;
+    --color-cinnabar-900: #7b2921;
+    --color-cinnabar-950: #43110c;
+    
+    /* Gradients */
+    --app-linear-gradient: linear-gradient(135deg, var(--color-cinnabar-600) 0%, var(--color-royal-blue-600) 100%);
+    --app-bg-body: #f5f5f7;
+    --app-text-dark: #1d1d1f;
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.2s ease;
+    --transition-slow: 0.3s ease;
+
+    /* Effects */
+    --blur-sm: 5px;
+    --blur-md: 10px;
+    --blur-lg: 20px;
+    
+    /* Touch target minimum */
+    --touch-target-min: 44px;
+}
+
+/* ==============================
+   2. BASE LAYOUT
+   ============================== */
+body {
+    font-size: var(--bs-body-font-size);
+    color: var(--app-text-color);
+    font-family: var(--bs-body-font-family);
+    line-height: var(--bs-body-line-height);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--app-bg-body);
+}
+
+/* ==============================
+   3. COLORS & BACKGROUNDS (Bootstrap-style)
+   ============================== */
+
+/* Gradient utility */
+.bg-linear-gradient {
+    background: var(--app-linear-gradient) !important;
+}
+
+/* Text Colors */
+.text-royal-blue { color: var(--color-royal-blue-500) !important; }
+.text-royal-blue-600 { color: var(--color-royal-blue-600) !important; }
+.text-royal-blue-700 { color: var(--color-royal-blue-700) !important; }
+
+/* Background Colors */
+.bg-royal-blue { background-color: var(--color-royal-blue-500) !important; }
+.bg-royal-blue-50 { background-color: var(--color-royal-blue-50) !important; }
+.bg-royal-blue-600 { background-color: var(--color-royal-blue-600) !important; }
+.bg-royal-blue-700 { background-color: var(--color-royal-blue-700) !important; }
+.bg-royal-blue-900 { background-color: var(--color-royal-blue-900) !important; }
+
+/* Border Colors */
+.border-royal-blue { border-color: var(--color-royal-blue-500) !important; }
+.border-royal-blue-200 { border-color: var(--color-royal-blue-200) !important; }
+
+/* ==============================
+   4. BUTTONS (Bootstrap-style)
+   ============================== */
+
+/* Primary button */
+/* Override Bootstrap btn khi có .btn-royal-blue */
+.btn.btn-royal-blue {
+    background-color: var(--color-royal-blue-500);
+    border-color: var(--color-royal-blue-500);
+    color: var(--bs-white);
+    border-radius: var(--bs-border-radius-lg);
+    min-height: var(--touch-target-min);
+    font-weight: 500; /* Default weight */
+}
+
+.btn.btn-royal-blue:hover:not(:disabled) {
+    background-color: var(--color-royal-blue-600);
+    border-color: var(--color-royal-blue-600);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.btn.btn-royal-blue:focus-visible {
+    background-color: var(--color-royal-blue-600);
+    border-color: var(--color-royal-blue-600);
+    outline: 2px solid var(--color-royal-blue-500);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+}
+
+.btn.btn-royal-blue:active:not(:disabled) {
+    background-color: var(--color-royal-blue-800);
+    border-color: var(--color-royal-blue-800);
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    transform: translateY(0);
+}
+
+.btn.btn-royal-blue:disabled {
+    opacity: 0.65;
+}
+
+/* ==============================
+   5. LINKS (Bootstrap-style)
+   ============================== */
+.link-royal-blue {
+    color: var(--color-royal-blue-500);
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s ease-in-out;
+}
+
+.link-royal-blue:hover,
+.link-royal-blue:focus {
+    color: var(--color-royal-blue-600);
+    transform: translateY(-1px) scale(1.02);
+    text-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+/* Active state - nhấn xuống */
+.link-royal-blue:active {
+    transform: translateY(0) scale(1);
+}
+
+/* ==============================
+   6. RESPONSIVE UTILITIES
+   ============================== */
+.p-responsive {
+    padding: clamp(1rem, 3vw, 3.5rem);
+}
+
+/* ==============================
+   7. DROPDOWN COMPONENTS
+   ============================== */
+
+/* ✅ IMPROVED: Single class name */
+.btn.app-dropdown-header {
+    white-space: nowrap;
+    min-height: var(--touch-target-min);
+    user-select: none;
+}
+
+.btn.app-dropdown-header:hover,
+.btn.app-dropdown-header:focus-visible {
+    border-color: var(--color-royal-blue-500);
+}
+
+/* Reset/Override Bootstrap dropdown */
+.app-dropdown-menu.dropdown-menu {
+    /* Giữ hầu hết Bootstrap styles */
+    padding: 0.5rem;
+    border-radius: var(--bs-border-radius-lg);
+    max-height: 20rem;
+    overflow-y: auto;
+}
+
+/* Custom dropdown items */
+.app-dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: var(--bs-border-radius-sm);
+    border: 1px solid transparent;
+    min-height: var(--touch-target-min);
+    user-select: none;
+    transition: all var(--transition-fast);
+}
+
+.app-dropdown-menu .dropdown-item:hover {
+    background: var(--bs-gray-100);
+    border-color: var(--color-royal-blue-500);
+}
+
+.app-dropdown-menu .dropdown-item:focus-visible {
+    background: var(--bs-gray-100);
+    border-color: var(--color-royal-blue-500);
+    outline: 2px solid var(--color-royal-blue-500);
+    outline-offset: -2px;
+    z-index: 1;
+}
+
+.app-dropdown-menu .dropdown-item:active {
+    background: var(--bs-gray-200);
+    transform: scale(0.98);
+}
+
+/* Active state */
+.app-dropdown-menu .dropdown-item.active {
+    background: var(--color-royal-blue-500);
+    color: var(--bs-white);
+    border-color: var(--color-royal-blue-500);
+}
+
+/* Danger variant */
+.app-dropdown-menu .dropdown-item.text-danger {
+    font-weight: 500;
+}
+
+.app-dropdown-menu .dropdown-item.text-danger:hover {
+    background: var(--bs-danger-bg-subtle, #f8d7da);
+    border-color: var(--bs-danger);
+}
+
+.app-dropdown-menu .dropdown-item.text-danger:focus-visible {
+    background: var(--bs-danger-bg-subtle, #f8d7da);
+    border-color: var(--bs-danger);
+    outline-color: var(--bs-danger);
+}
+
+/* Spacing */
+.app-dropdown-menu > li:not(:last-child) {
+    margin-bottom: 0.25rem;
+}
+
+/* Divider spacing */
+.app-dropdown-menu .dropdown-divider {
+    margin: 0.5rem 0;
+}
+
+/* ==============================
+   8. LOGO COMPONENTS
+   ============================== */
+.app-logo-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    padding: var(--spacer-1);
+    max-width: 200px;
+}
+
+.app-logo-wrapper img {
+    max-height: 50px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+/* ==============================
+   9. FORM ELEMENTS
+   ============================== */
+
+.form-control:focus {
+    border-color: var(--color-royal-blue-500);
+    box-shadow: none; /* Bỏ shadow */
+}
+
+/* ==============================
+   10. TABLE COMPONENTS
+   ============================== */
+.app-table {
+    margin-bottom: 0;
+}
+
+/* Table header */
+.app-table thead th {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    background-color: transparent;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Table body */
+.app-table tbody td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+}
+
+.app-table tbody tr {
+    transition: background-color var(--transition-base), opacity var(--transition-base);
+}
+
+/* Hover effect */
+.app-table tbody tr:hover,
+.app-table tbody tr:hover > td {
+    background-color: var(--color-royal-blue-100) !important;
+}
+
+/* No results row */
+.app-table tbody tr td[colspan] {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    font-style: italic;
+    color: #6c757d;
+    background-color: #f8f9fa;
+}
+
+/* ==============================
+   11. CARD & FOOTER
+   ============================== */
+.app-card {
+    margin: 0 auto;
+    max-width: 100%;
+    width: 100%;
+    border: 0;
+    border-radius: var(--bs-border-radius-lg);
+    box-shadow: var(--bs-box-shadow-lg);
+    background-color: var(--bs-white);
+}
+ 
+.app-card-footer {
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa !important;
+    border-top: 1px solid #dee2e6 !important;
+}
+
+/* ==============================
+   12. PAGINATION COMPONENTS
+   ============================== */
+
+/* Pagination info */
+.app-pagination-info {
+    font-size: 0.875rem;
+    color: #6c757d;
+    transition: all var(--transition-base);
+}
+
+.app-pagination-info .fw-semibold {
+    color: #212529;
+    font-size: 0.9375rem;
+}
+
+/* Animated numbers */
+.app-pagination-info__number {
+    display: inline-block;
+    min-width: 20px;
+    text-align: center;
+    transition: opacity var(--transition-base);
+}
+
+/* Pagination controls */
+.app-pagination {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Base pagination link */
+.app-pagination__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25;
+    color: #495057;
+    text-decoration: none;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+/* Hover state */
+.app-pagination__link:hover:not([aria-disabled="true"]) {
+    color: #212529;
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Active page */
+.app-pagination__link.is-active {
+    color: #fff;
+    background-color: var(--color-royal-blue-500);
+    border-color: var(--color-royal-blue-500);
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Disabled state */
+.app-pagination__link.is-disabled {
+    color: #adb5bd;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Previous/Next buttons */
+.app-pagination__link--prev,
+.app-pagination__link--next {
+    min-width: 50px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+
+/* Ellipsis */
+.app-pagination__ellipsis {
+    background-color: transparent;
+    border: none;
+    color: #6c757d;
+    cursor: default;
+}
+
+/* ==============================
+   13. STATE CLASSES
+   ============================== */
+
+/* Active state */
+.is-active {
+    /* Applied to various components via compound selector */
+}
+
+/* Disabled state */
+.is-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* Loading state */
+.is-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.is-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--color-royal-blue-500);
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Hidden state */
+.is-hidden {
+    display: none !important;
+}
+
+/* Error state */
+.has-error {
+    border-color: var(--bs-danger) !important;
+}
+
+/* ==============================
+   14. ACCESSIBILITY
+   ============================== */
+
+/* Focus state for keyboard navigation */
+.app-pagination__link:focus {
+    outline: 2px solid var(--color-royal-blue-500);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    z-index: 2;
+}
+
+.app-pagination__link.is-active:focus {
+    outline: none;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+}
+
+/* Screen reader only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ===============================================
+   15. MEDIA QUERIES
+   =============================================== */
+
+/* Small devices (max-width: 576px) */
+@media (max-width: 576px) {
+    body { 
+        font-size: 0.9375rem; 
+    }
+    
+    .app-pagination__link {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem 0.625rem;
+        font-size: 0.875rem;
+    }
+    
+    .app-pagination__link--prev,
+    .app-pagination__link--next {
+        min-width: 50px;
+        min-height: 44px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .app-card-footer {
+        padding: 0.75rem 1rem !important;
+    }
+    
+    .app-table thead th,
+    .app-table tbody td {
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* Tablets and below (max-width: 768px) */
+@media (max-width: 768px) {
+    .app-card-footer .d-flex {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1rem !important;
+    }
+    
+    .app-pagination-info {
+        order: 2;
+        font-size: 0.875rem;
+    }
+    
+    .app-pagination {
+        order: 1;
+        justify-content: center;
+    }
+    
+    .app-pagination__link {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem 0.625rem;
+        font-size: 0.875rem;
+    }
+    
+    .app-pagination__link--prev,
+    .app-pagination__link--next {
+        min-width: 50px;
+        min-height: 44px;
+        padding: 0.5rem 0.875rem;
+    }
+    
+    /* Hide Study Name column */
+    .app-table th:nth-child(2),
+    .app-table td:nth-child(2) {
+        display: none;
+    }
+}
+
+/* Mobile Landscape */
+@media (max-width: 768px) and (orientation: landscape) {
+    .app-table thead th,
+    .app-table tbody td {
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .app-pagination__link {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem 0.625rem;
+    }
+}
+
+/* Large screens (min-width: 1400px) */
+@media (min-width: 1400px) {
+    body { 
+        font-size: 1.0625rem; 
+    }
+    
+    .app-pagination__link {
+        min-width: 45px;
+        min-height: 44px;
+        padding: 0.625rem 0.875rem;
+    }
+    
+    .app-pagination__link--prev,
+    .app-pagination__link--next {
+        min-width: 60px;
+        min-height: 44px;
+        padding: 0.625rem 1.25rem;
+    }
+}
+
+/* ===============================================
+   16. PRINT STYLES
+   =============================================== */
+@media print {
+    .app-card-footer,
+    .app-pagination {
+        display: none !important;
+    }
+    
+    .app-table tbody tr:hover {
+        background-color: transparent !important;
+    }
+    
+    .app-card {
+        box-shadow: none !important;
+        border: 1px solid #dee2e6 !important;
+    }
+}

@@ -1,0 +1,69 @@
+{% extends 'default/dashboard.html' %}
+{% load static i18n %}
+{% block title%}{% trans "Screening List - Study 43EN" %}{% endblock %}
+
+{% block extra_head_dashboard %}
+<link rel="stylesheet" href="{% static 'css/studies/study_43en/screening.css' %}">
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-center">
+  <article class="card border-0 shadow-sm justify-content-center">
+
+    <!-- HEADER -->
+    <header class="card-header bg-royal-blue text-white p-4 border-0">
+      <div class="row g-3 align-items-center">
+        <div class="col-8">
+          <h5 class="mb-0 fw-bold flex-shrink-0">
+            {% trans 'List of Screened Patients' %}
+          </h5>
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY - TABLE -->
+    <section class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-modern table-hover mb-0">
+          <thead>
+            <tr>
+              <th scope="col" class="text-start fw-bold text-nowrap">{% trans 'Study Site' %}</th>
+              <th scope="col" class="text-start fw-bold text-nowrap">{% trans 'Screenning Code' %}</th>
+              <th scope="col" class="text-start fw-bold text-nowrap d-none d-lg-table-cell">{% trans "Patient's Initials" %}</th>
+              <th scope="col" class="text-start fw-bold text-nowrap d-none d-lg-table-cell">{% trans 'Screening Date' %}</th>
+              <th scope="col" class="text-start fw-bold text-nowrap">{% trans 'Status' %}</th>
+              <th scope="col" class="text-start fw-bold text-nowrap">{% trans 'Study ID' %}</th>
+              <th scope="col" class="text-start fw-bold text-nowrap">{% trans 'Action' %}</th>
+            </tr>
+          </thead>
+          <tbody id="screeningTableBody">
+            <!-- JavaScript sẽ chèn các hàng ở đây -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FOOTER - PAGINATION -->
+    <footer class="card-footer bg-light border-top p-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <!-- Info bên trái -->
+        <div class="pagination-info text-muted small">
+          <span class="fw-medium">{% trans 'Showing' %}</span>
+          <span id="showingStart" class="fw-semibold text-dark">1</span>-<span id="showingEnd"
+            class="fw-semibold text-dark">5</span>
+          <span class="fw-medium">{% trans 'of' %}</span>
+          <span id="totalStudies" class="fw-semibold text-dark">0</span>
+          <span class="fw-medium">{% trans 'patients' %}</span>
+        </div>
+
+        <!-- Pagination Controls bên phải -->
+        <nav aria-label="Study pagination">
+          <ul class="pagination pagination-sm mb-0" id="paginationControls">
+            <!-- JavaScript sẽ tạo các nút ở đây -->
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </article>
+</div>
+{% endblock %}

@@ -1,0 +1,118 @@
+<!-- frontends\templates\default\select_study.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Select Study - ResSync Platform{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/default/select_study.css' %}">
+{% endblock %}
+
+{% block main %}
+
+{% include 'includes/header/select_study_header.html' %}
+
+<main class="container-fluid p-5">
+    <!-- Wrapper để căn giữa card -->
+    <div class="d-flex justify-content-center">
+        <article class="card border-0 shadow-sm" style="max-width: 1400px; width: 100%;">
+            
+            <!-- HEADER -->
+            <header class="card-header bg-royal-blue text-white p-4 border-0">
+                <div class="row g-3 align-items-center">
+                    <div class="col-5">
+                        <p class="mb-0 fw-bold flex-shrink-0 h4">
+                            {% trans 'List of Studies' %}
+                        </p>
+                    </div>
+
+                    <div class="col-7">
+                        <div class="controls-bar">
+                            <input type="text" id="searchInput" class="search-input text-white"
+                                placeholder="{% trans 'Search by Study Code or Name…' %}">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- BODY - TABLE -->
+            <section class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-modern table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="text-start fw-bold text-nowrap">{% trans 'Study Code' %}</th>
+                                <th scope="col" class="text-start fw-bold text-nowrap d-none d-md-table-cell">{% trans 'Study Name' %}</th>
+                                <th scope="col" class="text-start fw-bold text-nowrap d-none d-md-table-cell">{% trans 'Status' %}</th>
+                                <th scope="col" class="text-start fw-bold text-nowrap">{% trans 'Last Updated' %}</th>
+                                <th scope="col" class="text-start fw-bold text-nowrap">{% trans 'Action' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studyTableBody">
+                            {% for study in studies %}
+                            <tr class="align-middle">
+                                <td class="fw-bold text-dark text-nowrap" data-col="code">{{ study.code }}</td>
+                                <td class="text-dark d-none d-md-table-cell" data-col="name">{{ study.name|default:"No study name available" }}</td>
+                                <td class="text-dark d-none d-md-table-cell" data-col="status">
+                                    {% if study.status == 'active' %}
+                                        <span class="badge d-inline-flex align-items-center rounded-pill px-3 py-2 bg-success-subtle text-success-emphasis">
+                                            {{ study.status|title }}
+                                        </span>
+                                    {% elif study.status == 'archived' %}
+                                        <span class="badge d-inline-flex align-items-center rounded-pill px-3 py-2 bg-info-subtle text-info-emphasis">
+                                            {{ study.status|title }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-dark text-nowrap" data-col="updated_at">{{ study.updated_at|date:"d-m-Y H:i:s" }}</td>
+                                <td class="text-dark text-nowrap" data-col="action">
+                                    <form method="post" action="{% url 'select_study' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="study_id" value="{{ study.pk }}">
+                                        <button type="submit" class="btn btn-royal-blue" style="width: 100%; font-weight: 900;">
+                                            <i class="bi bi-arrow-right h3 mb-0"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr class="align-middle">
+                                <td colspan="5" class="text-center text-nowrap">{% trans 'No studies available' %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- FOOTER - PAGINATION -->
+            <footer class="card-footer bg-light border-top p-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <!-- Info bên trái -->
+                    <div class="pagination-info text-muted small">
+                        <span class="fw-medium">{% trans 'Showing' %}</span> 
+                        <span id="showingStart" class="fw-semibold text-dark">1</span>-<span id="showingEnd" class="fw-semibold text-dark">5</span> 
+                        <span class="fw-medium">{% trans 'of' %}</span> 
+                        <span id="totalStudies" class="fw-semibold text-dark">0</span> 
+                        <span class="fw-medium">{% trans 'studies' %}</span>
+                    </div>
+
+                    <!-- Pagination Controls bên phải -->
+                    <nav aria-label="Study pagination">
+                        <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                            <!-- JavaScript sẽ tạo các nút ở đây -->
+                        </ul>
+                    </nav>
+                </div>
+            </footer>
+
+        </article>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/default/select_study.js' %}"></script>
+{% endblock %}

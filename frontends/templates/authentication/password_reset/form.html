@@ -1,0 +1,22 @@
+<!-- frontends\templates\authentication\password_reset\form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Select Study - ResSync Platform{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/default/authentication.css' %}">
+{% endblock %}
+
+{% block main %}
+
+{% include 'includes/header/simple_header.html' %}
+
+<main class="container py-5">
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/default/authentication.js' %}"></script>
+{% endblock %}

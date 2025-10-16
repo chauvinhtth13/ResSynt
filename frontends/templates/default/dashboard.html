@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Home{% endblock %}
+
+{% block extra_head %}
+
+<link rel="stylesheet" href="{% static 'css/default/dashboard.css' %}">
+
+{% block extra_head_dashboard %}
+{% endblock %}
+
+{% endblock %}
+
+
+
+{% block main %}
+<!-- Sidebar Overlay -->
+{% with sidebar_template=study_folder|add:"/sidebar.html" %}
+{% include sidebar_template %}
+{% endwith %}
+
+<!-- Main Content -->
+<div class="main-content p-0" id="mainContent">
+  <!-- Navbar -->
+  {% include 'includes/header/dashboard_header.html' %}
+
+  <!-- Content -->
+  <main class="container-fluid p-5 m-0">
+    {% block dashboard_content %}
+    {% endblock %}
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script src="{% static 'js/default/dashboard.js' %}" defer></script>
+
+
+{% block extra_js_dashboard %}
+{% endblock %}
+
+{% endblock %}

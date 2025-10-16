@@ -1,0 +1,866 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+  {% if is_view_only %}
+    {% trans "Xem Thông Tin Người Tiếp Xúc 43EN" %}
+  {% else %}
+    {% trans "Form Đăng Ký Người Tiếp Xúc 43EN" %}
+  {% endif %}
+{% endblock %}
+
+{% block page_title %}
+  {% if is_view_only %}
+    {% trans "Xem Thông Tin Người Tiếp Xúc 43EN" %}
+  {% else %}
+    {% trans "Form Đăng Ký Người Tiếp Xúc 43EN" %}
+  {% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'screening_contact_list' %}">{% trans "Danh sách Người tiếp xúc 43EN" %}</a></li>
+<li class="breadcrumb-item active">{% trans "Đăng ký người tiếp xúc" %}</li>
+{% endblock %}
+
+{% block extra_head_dashboard %}
+<style>
+  body {
+    font-family: 'Roboto', sans-serif;
+    color: #495057;
+  }
+  .card {
+    border: none;
+    margin-bottom: 25px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    transition: box-shadow 0.3s ease;
+  }
+  .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+    padding: 15px 20px;
+  }
+  .card-primary .card-header {
+    background-color: #3b7ddd;
+    color: white;
+  }
+  .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #495057;
+    font-size: 1rem;
+  }
+  .form-control {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .form-row {
+    margin-right: -5px;
+    margin-left: -5px;
+  }
+  .form-row > .col, .form-row > [class^="col-"] {
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+  .table th, .table td {
+    vertical-align: middle !important;
+    text-align: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+  }
+  .btn {
+    font-weight: 600;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+  .btn-primary {
+    background-color: #3b7ddd;
+    border-color: #3b7ddd;
+  }
+  .btn-primary:hover {
+    background-color: #326abc;
+    border-color: #2f62b2;
+  }
+  .form-section-header {
+    background-color: #dce4f1;
+    color: #333;
+    font-weight: 600;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #3b7ddd;
+    border-radius: 3px;
+    font-size: 1.1rem;
+  }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          {% if is_view_only %}
+            <i class="fas fa-user mr-2"></i>{% trans "Thông Tin Người Tiếp Xúc 43EN" %} {{ contact.USUBJID }}
+          {% else %}
+            <i class="fas fa-user-plus mr-2"></i>{% trans "Form Đăng Ký Người Tiếp Xúc 43EN" %} {{ contact.USUBJID }}
+          {% endif %}
+        </h3>
+        
+        {% if is_view_only %}
+        <div class="card-tools">
+          <a href="{% url 'study_43en:enrollment_contact_update' usubjid=contact.USUBJID%}" class="btn btn-primary btn-sm btn-edit">
+            <i class="fas fa-edit"></i> {% trans "Chỉnh sửa" %}
+          </a>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        {% if form.errors and not is_view_only %}
+        <div class="alert alert-danger">
+          <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        <form method="post" id="enrollmentContactForm" data-contact-id="{{ contact.USUBJID }}" {% if is_view_only %}class="view-only-form"{% endif %}>
+          {% csrf_token %}
+          
+          <input type="hidden" name="USUBJID" value="{{ contact.USUBJID }}" id="id_USUBJID" />
+          <input type="hidden" name="LISTUNDERLYING" id="id_LISTUNDERLYING" value="{{ form.LISTUNDERLYING.value|default:'[]' }}">
+          
+          <!-- Hidden fields for audit logging -->
+          <input type="hidden" id="oldDataJson" name="oldDataJson" value="">
+          <input type="hidden" id="newDataJson" name="newDataJson" value="">
+          <input type="hidden" id="change_reason" name="change_reason" value="">
+          <input type="hidden" id="reasons_json" name="reasons_json" value="">
+          
+          <div class="enr-case-container">
+            <div class="enr-case-header">
+              <div class="row">
+                <div class="col">
+                  <h4 class="m-0">ENROLLMENT - CONTACT</h4>
+                </div>
+              </div>
+            </div>
+            
+            <div class="enr-case-content p-3">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="font-weight-bold">{% trans "Mã số nghiên cứu [43EN]" %}</label>
+                    <input type="text" class="form-control" value="43EN" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="font-weight-bold">{% trans "Địa điểm NC" %}</label>
+                    <input type="text" class="form-control" value="{{ contact.SITEID }}" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="font-weight-bold">{% trans "Mã đối tượng [B]" %}</label>
+                    <input type="text" class="form-control" value="B" readonly>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="font-weight-bold">{% trans "Mã số người tiếp xúc" %}</label>
+                    <input type="text" class="form-control" value="{{ contact.SUBJID }}" readonly>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-section-header mt-3">
+                {% trans "Thông tin của người tiếp xúc" %}
+              </div>
+              
+              <!-- Thêm trường liên kết với bệnh nhân chính -->
+              <div class="numbered-item" data-number="1">
+                <div class="form-group">
+                  <label for="{{ form.SUBJIDENROLLSTUDY.id_for_label }}">{% trans "Bệnh nhân chính liên quan" %}</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-link"></i></span>
+                    </div>
+                    {{ form.SUBJIDENROLLSTUDY }}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="numbered-item" data-number="2">
+                <div class="form-group">
+                  <label for="{{ form.ENRDATE.id_for_label }}">{% trans "Ngày tham gia nghiên cứu (ngày/tháng/năm)" %}</label>
+                  <div class="input-group date">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                    </div>
+                    <input type="text" class="form-control datepicker" id="id_ENRDATE" name="ENRDATE" 
+                           value="{{ form.ENRDATE.value|date:'Y-m-d'|default:'' }}" placeholder="YYYY-MM-DD">
+                  </div>
+                </div>
+              </div>
+
+              <div class="numbered-item" data-number="3">
+                <div class="form-group">
+                  <label for="{{ form.RELATIONSHIP.id_for_label }}">{% trans "Mối quan hệ với bệnh nhân" %}</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"></span>
+                    </div>
+                    {{ form.RELATIONSHIP }}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="numbered-item" data-number="4">
+                <div class="form-group">
+                  <label>Ngày tháng năm sinh</label>
+                  <div class="form-row">
+                    <div class="col">
+                      {{ form.DAYOFBIRTH }}
+                    </div>
+                    <div class="col">
+                      {{ form.MONTHOFBIRTH }}
+                    </div>
+                    <div class="col">
+                      {{ form.YEAROFBIRTH }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+                            
+              <div class="numbered-item" data-number="5">
+                <div class="form-group">
+                  <label for="{{ form.AGEIFDOBUNKNOWN.id_for_label }}">{% trans "Tuổi (nếu không biết ngày sinh)" %}</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-birthday-cake"></i></span>
+                    </div>
+                    {{ form.AGEIFDOBUNKNOWN }}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="numbered-item" data-number="6">
+                <label>{% trans "Giới tính" %}</label>
+                <div class="mt-2">
+                  <select class="form-control" id="id_SEX" name="SEX" {% if is_view_only %}disabled{% endif %}>
+                    <option value="" {% if not form.SEX.value %}selected{% endif %}>-- {% trans "Chọn giới tính" %} --</option>
+                    <option value="Male" {% if form.SEX.value == 'Male' %}selected{% endif %}>{% trans "Nam" %}</option>
+                    <option value="Female" {% if form.SEX.value == 'Female' %}selected{% endif %}>{% trans "Nữ" %}</option>
+                    <option value="Other" {% if form.SEX.value == 'Other' %}selected{% endif %}>{% trans "Khác" %}</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="numbered-item" data-number="7">
+                <label>{% trans "Dân tộc" %}</label>
+                <div class="mt-2">
+                  <select class="form-control" id="id_ETHNICITY" name="ETHNICITY">
+                    <option value="" {% if not form.ETHNICITY.value %}selected{% endif %}>-- {% trans "Chọn dân tộc" %} --</option>
+                    <option value="Kinh" {% if form.ETHNICITY.value == 'Kinh' %}selected{% endif %}>{% trans "Kinh" %}</option>
+                    <option value="Other" {% if form.ETHNICITY.value == 'Other' %}selected{% endif %}>{% trans "Khác" %}</option>
+                  </select>
+                  
+                  <div id="ethnic_other_specify" style="display:{% if form.ETHNICITY.value == 'Other' %}block{% else %}none{% endif %};" class="specification-input mt-2">
+                    <label>{% trans "Chi tiết dân tộc khác" %}</label>
+                    <input type="text" class="form-control" name="SPECIFYIFOTHERETHNI" id="id_SPECIFYIFOTHERETHNI" value="{{ form.SPECIFYIFOTHERETHNI.value|default:'' }}" placeholder="{% trans 'Nhập dân tộc cụ thể' %}">
+                  </div>
+                </div>
+              </div>
+                            
+              <div class="numbered-item" data-number="8">
+                <div class="form-group">
+                  <label for="{{ form.OCCUPATION.id_for_label }}">{% trans "Nghề nghiệp" %}</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                    </div>
+                    {{ form.OCCUPATION }}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-section-header mt-4">
+                {% trans "Tiền sử - Yếu tố nguy cơ" %}
+              </div>
+
+              <div class="risk-factors field-group">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="checkbox" name="HOSP2D6M" id="id_HOSP2D6M" value="1" {% if form.HOSP2D6M.value %}checked{% endif %}>
+                      <label class="form-check-label" for="id_HOSP2D6M">
+                        {% trans "Nhập viện ≥2 ngày trong 6 tháng qua" %}
+                      </label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="checkbox" name="DIAL3M" id="id_DIAL3M" value="1" {% if form.DIAL3M.value %}checked{% endif %}>
+                      <label class="form-check-label" for="id_DIAL3M">
+                        {% trans "Lọc máu trong 3 tháng qua" %}
+                      </label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="checkbox" name="CATHETER3M" id="id_CATHETER3M" value="1" {% if form.CATHETER3M.value %}checked{% endif %}>
+                      <label class="form-check-label" for="id_CATHETER3M">
+                        {% trans "Đặt catheter trong 3 tháng qua" %}
+                      </label>
+                    </div>
+                    
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="SONDE3M" id="id_SONDE3M" value="1" {% if form.SONDE3M.value %}checked{% endif %}>
+                      <label class="form-check-label" for="id_SONDE3M">
+                        {% trans "Đặt sonde trong 3 tháng qua" %}
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="checkbox" name="HOMEWOUNDCARE" id="id_HOMEWOUNDCARE" value="1" {% if form.HOMEWOUNDCARE.value %}checked{% endif %}>
+                      <label class="form-check-label" for="id_HOMEWOUNDCARE">
+                        {% trans "Chăm sóc vết thương tại nhà" %}
+                      </label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="checkbox" name="LONGTERMCAREFACILITY" id="id_LONGTERMCAREFACILITY" value="1" {% if form.LONGTERMCAREFACILITY.value %}checked{% endif %}>
+                      <label class="form-check-label" for="id_LONGTERMCAREFACILITY">
+                        {% trans "Ở cơ sở chăm sóc dài hạn" %}
+                      </label>
+                    </div>
+                    
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="CORTICOIDPPI" id="id_CORTICOIDPPI" value="1" {% if form.CORTICOIDPPI.value %}checked{% endif %}>
+                      <label class="form-check-label" for="id_CORTICOIDPPI">
+                        {% trans "Dùng corticoid hoặc PPI" %}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-section-header mt-4">
+                {% trans "Tiền sử sử dụng thuốc" %}
+              </div>
+              
+              <div id="medication_history_container" class="mt-4" style="display:{% if form.CORTICOIDPPI.value %}block{% else %}none{% endif %};">
+                <h5 class="mb-3">{% trans "Lịch sử sử dụng thuốc" %}</h5>
+                
+                <div class="table-responsive">
+                  <table id="medication_history_table" class="table table-bordered table-sm">
+                    <thead class="thead-light">
+                      <tr>
+                        <th width="25%">{% trans "Tên thuốc" %}</th>
+                        <th width="20%">{% trans "Liều dùng" %}</th>
+                        <th width="25%">{% trans "Thời gian sử dụng" %}</th>
+                        <th width="30%">{% trans "Lý do" %}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% if medication_data %}
+                        {% for med in medication_data %}
+                          <tr data-row-index="{{ forloop.counter0 }}">
+                            <td>
+                              <input type="text" name="MEDICATION_NAME_{{ forloop.counter0 }}" class="form-control form-control-sm" value="{{ med.DRUGNAME }}" placeholder="{% trans "Tên thuốc" %}">
+                            </td>
+                            <td>
+                              <input type="text" name="MEDICATION_DOSAGE_{{ forloop.counter0 }}" class="form-control form-control-sm" value="{{ med.DOSAGE }}" placeholder="{% trans "Liều dùng" %}">
+                            </td>
+                            <td>
+                              <input type="text" name="MEDICATION_DURATION_{{ forloop.counter0 }}" class="form-control form-control-sm" value="{{ med.USAGETIME }}" placeholder="{% trans "Thời gian" %}">
+                            </td>
+                            <td>
+                              <div class="d-flex">
+                                <input type="text" name="MEDICATION_REASON_{{ forloop.counter0 }}" class="form-control form-control-sm mr-2" value="{{ med.USAGEREASON }}" placeholder="{% trans "Lý do" %}">
+                                <button type="button" class="btn btn-sm btn-danger remove-medication-row">
+                                  <i class="fas fa-trash"></i>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      {% endif %}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="4">
+                          <button type="button" class="btn btn-sm btn-success add-row-btn" id="add_medication_row">
+                            <i class="fas fa-plus"></i> {% trans "Thêm thuốc" %}
+                          </button>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <!-- Đảm bảo có input ẩn để lưu dữ liệu thuốc -->
+                <input type="hidden" name="MEDICATION_DATA" id="id_MEDICATION_DATA" value="{{ medication_data_json|default:'' }}">
+                <input type="hidden" name="MEDICATION_COUNT" id="id_MEDICATION_COUNT" value="{{ medication_data|length|default:0 }}">
+              </div>
+
+              <div class="form-section-header mt-4">
+                {% trans "Bệnh nền" %}
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="UNDERLYINGCONDS" id="id_UNDERLYINGCONDS" value="1"
+                  {% if enrollment_contact and enrollment_contact.UNDERLYINGCONDS %}checked{% elif form.UNDERLYINGCONDS.value %}checked{% endif %}>
+                <label class="form-check-label" for="id_UNDERLYINGCONDS">
+                  <strong>{% trans "Có bệnh nền" %}</strong>
+                </label>
+              </div>
+
+              <div class="conditions-container field-group" id="conditions_container"
+                  style="display:{% if enrollment_contact and enrollment_contact.UNDERLYINGCONDS or form.UNDERLYINGCONDS.value %}block{% else %}none{% endif %};">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="HEARTFAILURE" id="id_HEARTFAILURE" value="1"
+                        {% if enrollment_contact and enrollment_contact.HEARTFAILURE %}checked{% endif %}>
+                      <label class="form-check-label" for="id_HEARTFAILURE">{% trans "Suy tim" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="DIABETES" id="id_DIABETES" value="1"
+                        {% if enrollment_contact and enrollment_contact.DIABETES %}checked{% endif %}>
+                      <label class="form-check-label" for="id_DIABETES">{% trans "Đái tháo đường" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="COPD" id="id_COPD" value="1"
+                        {% if enrollment_contact and enrollment_contact.COPD %}checked{% endif %}>
+                      <label class="form-check-label" for="id_COPD">{% trans "COPD" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="HEPATITIS" id="id_HEPATITIS" value="1"
+                        {% if enrollment_contact and enrollment_contact.HEPATITIS %}checked{% endif %}>
+                      <label class="form-check-label" for="id_HEPATITIS">{% trans "Viêm gan" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="CAD" id="id_CAD" value="1"
+                        {% if enrollment_contact and enrollment_contact.CAD %}checked{% endif %}>
+                      <label class="form-check-label" for="id_CAD">{% trans "Bệnh động mạch vành" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="KIDNEYDISEASE" id="id_KIDNEYDISEASE" value="1"
+                        {% if enrollment_contact and enrollment_contact.KIDNEYDISEASE %}checked{% endif %}>
+                      <label class="form-check-label" for="id_KIDNEYDISEASE">{% trans "Bệnh thận" %}</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="ASTHMA" id="id_ASTHMA" value="1"
+                        {% if enrollment_contact and enrollment_contact.ASTHMA %}checked{% endif %}>
+                      <label class="form-check-label" for="id_ASTHMA">{% trans "Hen suyễn" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="CIRRHOSIS" id="id_CIRRHOSIS" value="1"
+                        {% if enrollment_contact and enrollment_contact.CIRRHOSIS %}checked{% endif %}>
+                      <label class="form-check-label" for="id_CIRRHOSIS">{% trans "Xơ gan" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="HYPERTENSION" id="id_HYPERTENSION" value="1"
+                        {% if enrollment_contact and enrollment_contact.HYPERTENSION %}checked{% endif %}>
+                      <label class="form-check-label" for="id_HYPERTENSION">{% trans "Tăng huyết áp" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="AUTOIMMUNE" id="id_AUTOIMMUNE" value="1"
+                        {% if enrollment_contact and enrollment_contact.AUTOIMMUNE %}checked{% endif %}>
+                      <label class="form-check-label" for="id_AUTOIMMUNE">{% trans "Bệnh tự miễn" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="CANCER" id="id_CANCER" value="1"
+                        {% if enrollment_contact and enrollment_contact.CANCER %}checked{% endif %}>
+                      <label class="form-check-label" for="id_CANCER">{% trans "Ung thư" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="ALCOHOLISM" id="id_ALCOHOLISM" value="1"
+                        {% if enrollment_contact and enrollment_contact.ALCOHOLISM %}checked{% endif %}>
+                      <label class="form-check-label" for="id_ALCOHOLISM">{% trans "Nghiện rượu" %}</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="HIV" id="id_HIV" value="1"
+                        {% if enrollment_contact and enrollment_contact.HIV %}checked{% endif %}>
+                      <label class="form-check-label" for="id_HIV">{% trans "HIV" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="ADRENALINSUFFICIENCY" id="id_ADRENALINSUFFICIENCY" value="1"
+                        {% if enrollment_contact and enrollment_contact.ADRENALINSUFFICIENCY %}checked{% endif %}>
+                      <label class="form-check-label" for="id_ADRENALINSUFFICIENCY">{% trans "Suy thượng thận" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="BEDRIDDEN" id="id_BEDRIDDEN" value="1"
+                        {% if enrollment_contact and enrollment_contact.BEDRIDDEN %}checked{% endif %}>
+                      <label class="form-check-label" for="id_BEDRIDDEN">{% trans "Nằm một chỗ" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="PEPTICULCER" id="id_PEPTICULCER" value="1"
+                        {% if enrollment_contact and enrollment_contact.PEPTICULCER %}checked{% endif %}>
+                      <label class="form-check-label" for="id_PEPTICULCER">{% trans "Loét dạ dày" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="COLITIS_IBS" id="id_COLITIS_IBS" value="1"
+                        {% if enrollment_contact and enrollment_contact.COLITIS_IBS %}checked{% endif %}>
+                      <label class="form-check-label" for="id_COLITIS_IBS">{% trans "Viêm đại tràng/IBS" %}</label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="SENILITY" id="id_SENILITY" value="1"
+                        {% if enrollment_contact and enrollment_contact.SENILITY %}checked{% endif %}>
+                      <label class="form-check-label" for="id_SENILITY">{% trans "Lão suy" %}</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="MALNUTRITION_WASTING" id="id_MALNUTRITION_WASTING" value="1"
+                        {% if enrollment_contact and enrollment_contact.MALNUTRITION_WASTING %}checked{% endif %}>
+                      <label class="form-check-label" for="id_MALNUTRITION_WASTING">{% trans "Suy dinh dưỡng" %}</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check mb-3">
+                      <input class="form-check-input underlying-disease" type="checkbox" name="OTHERDISEASE" id="id_OTHERDISEASE" value="1"
+                        {% if enrollment_contact and enrollment_contact.OTHERDISEASE %}checked{% endif %}>
+                      <label class="form-check-label" for="id_OTHERDISEASE">{% trans "Bệnh khác" %}</label>
+                    </div>
+                  </div>
+                </div>
+                <div id="other_disease_detail"
+                    style="display:{% if enrollment_contact and enrollment_contact.OTHERDISEASE %}block{% else %}none{% endif %};"
+                    class="mt-3">
+                  <div class="form-group">
+                    <label for="{{ form.OTHERDISEASESPECIFY.id_for_label }}">{% trans "Chi tiết bệnh khác" %}</label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-info-circle"></i></span>
+                      </div>
+                      {{ form.OTHERDISEASESPECIFY }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-section-header mt-4">
+                {% trans "Chuyên viên" %}
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="{{ form.COMPLETEDBY.id_for_label }}">{% trans "Người hoàn thành" %}</label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-user-edit"></i></span>
+                      </div>
+                      {{ form.COMPLETEDBY }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="{{ form.COMPLETEDDATE.id_for_label }}">{% trans "Ngày hoàn thành" %}</label>
+                    <div class="input-group date">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="far fa-calendar-check"></i></span>
+                      </div>
+                      <input type="text" class="form-control" id="id_COMPLETEDDATE" name="COMPLETEDDATE" value="{{ form.COMPLETEDDATE.value|date:'d/m/Y'|default:'' }}">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Template cho hàng thuốc -->
+            <div id="template-container" style="display:none;">
+              <template id="medication_row_template">
+                <tr data-row-index="${rowIndex}">
+                  <td>
+                    <input type="text" name="MEDICATION_NAME_${rowIndex}" class="form-control form-control-sm" placeholder="{% trans "Tên thuốc" %}">
+                  </td>
+                  <td>
+                    <input type="text" name="MEDICATION_DOSAGE_${rowIndex}" class="form-control form-control-sm" placeholder="{% trans "Liều dùng" %}">
+                  </td>
+                  <td>
+                    <input type="text" name="MEDICATION_DURATION_${rowIndex}" class="form-control form-control-sm" placeholder="{% trans "Thời gian" %}">
+                  </td>
+                  <td>
+                    <div class="d-flex">
+                      <input type="text" name="MEDICATION_REASON_${rowIndex}" class="form-control form-control-sm mr-2" placeholder="{% trans "Lý do" %}">
+                      <button type="button" class="btn btn-sm btn-danger remove-medication-row">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </div>
+            
+            <div class="text-right mt-4 d-flex justify-content-between">
+              <div>
+                <a href="{% url 'screening_contact_list' %}" class="btn btn-secondary btn-back">
+                  <i class="fas fa-arrow-left mr-1"></i> {% trans "Quay lại" %}
+                </a>
+                {% if not is_view_only %}
+                <button type="reset" class="btn btn-warning ml-2">
+                  <i class="fas fa-undo mr-1"></i> {% trans "Làm lại" %}
+                </button>
+                {% endif %}
+              </div>
+              {% if not is_view_only %}
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save mr-1"></i> {% trans "Lưu thông tin" %}
+              </button>
+              {% endif %}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js_dashboard %}
+{% include 'studies/study_43en/CRF/includes/datepicker_scripts.html' %}
+<script src="{% static 'js/audit-log/base.js' %}"></script>
+<script src="{% static 'js/audit-log/enrollment-contact.js' %}"></script>
+<script>
+  $(document).ready(function() {
+  // Check form và các phần tử liên quan
+  console.log("Form loaded: ", $('#enrollmentContactForm').length > 0);
+  console.log("Medication table exists: ", $('#medication_history_table').length > 0);
+  console.log("Medication data field exists: ", $('#id_MEDICATION_DATA').length > 0);
+  
+  // Kiểm tra dữ liệu thuốc có sẵn nếu có
+  var medicationDataJson = '{{ medication_data_json|escapejs }}';
+  if (medicationDataJson && medicationDataJson !== '[]') {
+    console.log("Medication data provided: ", medicationDataJson);
+  } else {
+    console.log("No medication data available");
+  }
+
+    // Kiểm tra nếu đang ở chế độ xem
+    const isViewOnly = {% if is_view_only %}true{% else %}false{% endif %};
+    if (isViewOnly) {
+      $('#enrollmentContactForm input, #enrollmentContactForm select, #enrollmentContactForm textarea').attr('disabled', true);
+      $('#enrollmentContactForm input[type="checkbox"], #enrollmentContactForm input[type="radio"]').attr('disabled', true);
+    }
+    
+    // Xử lý hiển thị chi tiết dân tộc khác
+    $('#id_ETHNICITY').on('change', function() {
+      if ($(this).val() === 'Other') {
+        $('#ethnic_other_specify').slideDown();
+      } else {
+        $('#ethnic_other_specify').slideUp();
+        $('#id_SPECIFYIFOTHERETHNI').val('');
+      }
+    });
+    
+    // Xử lý hiện/ẩn bệnh nền
+    $('#id_UNDERLYINGCONDS').on('change', function() {
+      if ($(this).is(':checked')) {
+        $('#conditions_container').slideDown();
+      } else {
+        $('#conditions_container').slideUp();
+        // Bỏ chọn tất cả các bệnh nền khi không chọn "Có bệnh nền"
+        $('#conditions_container input[type="checkbox"]').prop('checked', false);
+        $('#other_disease_detail').slideUp();
+        // Xóa LISTUNDERLYING
+        $('#id_LISTUNDERLYING').val('[]');
+      }
+    });
+    
+    // Xử lý chi tiết bệnh khác
+    $('#id_OTHERDISEASE').on('change', function() {
+      if ($(this).is(':checked')) {
+        $('#other_disease_detail').slideDown();
+      } else {
+        $('#other_disease_detail').slideUp();
+        $('#id_OTHERDISEASESPECIFY').val('');
+      }
+      updateListUnderlying();
+    });
+    
+    // Xử lý hiện/ẩn lịch sử sử dụng thuốc
+    $('#id_CORTICOIDPPI').on('change', function() {
+      if ($(this).is(':checked')) {
+        $('#medication_history_container').slideDown();
+        // Tạo một hàng trống nếu chưa có
+        if ($('#medication_history_table tbody tr').length === 0) {
+          $('#add_medication_row').click();
+        }
+      } else {
+        $('#medication_history_container').slideUp();
+        // Xóa dữ liệu thuốc khi bỏ chọn
+        $('#medication_history_table tbody').empty();
+        $('#id_MEDICATION_COUNT').val('0');
+        $('#id_MEDICATION_DATA').val('');
+      }
+    });
+    
+    // Xử lý thêm hàng thuốc
+    $('#add_medication_row').on('click', function() {
+      var rowCount = parseInt($('#id_MEDICATION_COUNT').val()) || 0;
+      var template = $('#medication_row_template').html();
+      
+      // Sử dụng timestamp làm index để tránh trùng lặp
+      var uniqueIndex = rowCount + '_' + new Date().getTime();
+      var newRow = template.replace(/\$\{rowIndex\}/g, uniqueIndex);
+      
+      $('#medication_history_table tbody').append(newRow);
+      $('#id_MEDICATION_COUNT').val(rowCount + 1);
+      
+      // Tự động focus vào ô input đầu tiên của hàng mới
+      $('#medication_history_table tbody tr:last-child input:first').focus();
+      console.log("Added new medication row with index:", uniqueIndex);
+    });
+    
+    // Xử lý xóa hàng thuốc
+    $(document).on('click', '.remove-medication-row', function() {
+      $(this).closest('tr').remove();
+      // Cập nhật lại giá trị MEDICATION_COUNT
+      $('#id_MEDICATION_COUNT').val($('#medication_history_table tbody tr').length);
+    });
+
+    // Xử lý LISTUNDERLYING - JSONField
+    function updateListUnderlying() {
+      let selectedConditions = [];
+      $('.underlying-disease:checked').each(function() {
+        selectedConditions.push($(this).attr('name'));
+      });
+      $('#id_LISTUNDERLYING').val(JSON.stringify(selectedConditions));
+    }
+
+    // Khi thay đổi bất kỳ checkbox bệnh nền nào
+    $('.underlying-disease').on('change', function() {
+      updateListUnderlying();
+    });
+
+    // FIX: Khởi tạo LISTUNDERLYING từ JSON đã lưu, không tick tất cả
+    try {
+      if ($('#id_LISTUNDERLYING').val() && $('#id_LISTUNDERLYING').val() !== '[]') {
+        const listUnderlying = JSON.parse($('#id_LISTUNDERLYING').val());
+        
+        // Reset tất cả checkbox về unchecked
+        $('.underlying-disease').prop('checked', false);
+        
+        // Chỉ check những bệnh có trong LISTUNDERLYING
+        listUnderlying.forEach(disease => {
+          $(`#id_${disease}`).prop('checked', true);
+        });
+        
+        // Hiển thị ô chi tiết bệnh khác nếu cần
+        if (listUnderlying.includes('OTHERDISEASE')) {
+          $('#other_disease_detail').show();
+        } else {
+          $('#other_disease_detail').hide();
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing LISTUNDERLYING:', e);
+    }
+    
+    // Thu thập dữ liệu thuốc khi submit
+    function collectMedicationData() {
+      var medicationData = [];
+      
+      $('#medication_history_table tbody tr').each(function() {
+        var rowIndex = $(this).data('row-index');
+        var name = $('input[name="MEDICATION_NAME_' + rowIndex + '"]').val();
+        var dosage = $('input[name="MEDICATION_DOSAGE_' + rowIndex + '"]').val();
+        var duration = $('input[name="MEDICATION_DURATION_' + rowIndex + '"]').val();
+        var reason = $('input[name="MEDICATION_REASON_' + rowIndex + '"]').val();
+        
+        // Chỉ thu thập hàng có dữ liệu
+        if (name || dosage || duration || reason) {
+          medicationData.push({
+            DRUGNAME: name || '',
+            DOSAGE: dosage || '',
+            USAGETIME: duration || '',
+            USAGEREASON: reason || ''
+          });
+        }
+      });
+      
+      // Log cho debug
+      console.log("Collected medication data:", medicationData);
+      
+      // Ghi vào input ẩn để gửi lên server
+      $('#id_MEDICATION_DATA').val(JSON.stringify(medicationData));
+    }
+
+    // Thêm sự kiện pre-submit để thu thập dữ liệu thuốc
+    // Lưu ý: Không sử dụng lại sự kiện submit vì đã được xử lý bởi enrollment-contact.js
+    form.on('pre-submit', function() {
+      collectMedicationData();
+      updateListUnderlying();
+    });
+    
+    // Override form submit để thu thập dữ liệu trước khi gửi đến enrollment-contact.js
+    const originalSubmit = form[0].submit;
+    form[0].submit = function() {
+      collectMedicationData();
+      updateListUnderlying();
+      originalSubmit.apply(this, arguments);
+    };
+
+    // Khởi tạo dữ liệu thuốc từ JSON nếu có
+    try {
+      var medicationDataJson = '{{ medication_data_json|escapejs }}';
+      console.log("Raw medication data JSON:", medicationDataJson);
+      
+      if (medicationDataJson && medicationDataJson !== '[]') {
+        try {
+          const medicationData = JSON.parse(medicationDataJson);
+          console.log("Parsed medication data:", medicationData);
+          
+          // Xóa hết dữ liệu cũ
+          $('#medication_history_table tbody').empty();
+          
+          // Thêm lại từng hàng
+          medicationData.forEach(function(med, index) {
+            var template = $('#medication_row_template').html();
+            var newRow = template.replace(/\$\{rowIndex\}/g, index);
+            $('#medication_history_table tbody').append(newRow);
+            
+            // Điền lại giá trị
+            $('input[name="MEDICATION_NAME_' + index + '"]').val(med.DRUGNAME || '');
+            $('input[name="MEDICATION_DOSAGE_' + index + '"]').val(med.DOSAGE || '');
+            $('input[name="MEDICATION_DURATION_' + index + '"]').val(med.USAGETIME || '');
+            $('input[name="MEDICATION_REASON_' + index + '"]').val(med.USAGEREASON || '');
+            console.log(`Populated row ${index} with medication: ${med.DRUGNAME}`);
+          });
+          
+          // Hiển thị container thuốc nếu có dữ liệu
+          if (medicationData.length > 0) {
+            $('#id_CORTICOIDPPI').prop('checked', true);
+            $('#medication_history_container').show();
+          }
+          
+          // Cập nhật số lượng hàng
+          $('#id_MEDICATION_COUNT').val(medicationData.length);
+        } catch (e) {
+          console.error('Error parsing medication data JSON:', e);
+        }
+      } else {
+        console.log("No medication data available");
+      }
+    } catch (e) {
+      console.error('Error in medication data initialization:', e);
+    }
+  });
+</script>
+{% endblock %}

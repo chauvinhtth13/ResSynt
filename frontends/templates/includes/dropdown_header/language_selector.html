@@ -1,0 +1,33 @@
+<!-- frontends\templates\includes\language_selector.html -->
+{% load static i18n %}
+<div class="dropdown">
+    <button class="btn dropdown-toggle app-dropdown-header" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'Select language' %}"> <!-- Added aria-label for a11y; btn-sm for compact on mobile -->
+        {% get_language_info for LANGUAGE_CODE as lang_info %}
+        {% if request.resolver_match.url_name in 'select_study,dashboard' %}
+            {{ LANGUAGE_CODE|upper }}
+        {% else %}
+            {{ lang_info.name_local }}
+        {% endif %}
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end app-dropdown-menu" aria-labelledby="languageDropdown">
+        {% get_language_info_list for LANGUAGES as languages %}
+        {% for lang in languages %}
+        <li>
+            <form action="{% url 'set_language' %}" method="post" class="language-form">
+                {% csrf_token %}
+                {% with request_path=request.path %}
+                {% if request.resolver_match.url_name %}
+                <input name="next" type="hidden" value="{{ request_path }}">
+                {% else %}
+                <input name="next" type="hidden" value="/{{ lang.code }}/">
+                {% endif %}
+                {% endwith %}
+                <input name="language" type="hidden" value="{{ lang.code }}">
+                <button class="dropdown-item {% if lang.code == LANGUAGE_CODE %}active{% endif %}" type="submit"> <!-- Removed rounded if not needed; Bootstrap default ok -->
+                    {{ lang.name_local }}
+                </button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+</div>

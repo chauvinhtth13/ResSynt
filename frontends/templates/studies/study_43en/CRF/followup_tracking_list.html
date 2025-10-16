@@ -1,0 +1,450 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block title %}Theo dõi lịch hẹn{% endblock %}
+
+{% block page_title %}Theo dõi lịch hẹn{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+
+    <!-- Bộ lọc -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Bộ lọc tìm kiếm</h6>
+            <div>
+                <button class="btn btn-sm btn-primary" type="button" data-toggle="collapse" data-target="#filterCollapse">
+                    <i class="fas fa-filter mr-1"></i> Hiển thị/Ẩn bộ lọc
+                </button>
+            </div>
+        </div>
+        <div class="collapse show" id="filterCollapse">
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="row">
+                        <!-- Khoảng thời gian -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Khoảng thời gian</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                    </div>
+                                    <input type="date" class="form-control datepicker" name="date_from" id="date_from" 
+                                        value="{{ date_from|date:'Y-m-d' }}">
+                                    <div class="input-group-prepend input-group-append">
+                                        <span class="input-group-text">đến</span>
+                                    </div>
+                                    <input type="date" class="form-control datepicker" name="date_to" id="date_to" 
+                                        value="{{ date_to|date:'Y-m-d' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bộ lọc nhanh -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Bộ lọc nhanh</label>
+                                <div class="btn-group btn-block">
+                                    <button type="button" class="btn btn-outline-primary" id="thisWeek">Tuần này</button>
+                                    <button type="button" class="btn btn-outline-primary" id="nextWeek">Tuần sau</button>
+                                    <button type="button" class="btn btn-outline-primary" id="thisMonth">Tháng này</button>
+                                    <button type="button" class="btn btn-outline-primary" id="all">Tất cả</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="subject_type">Loại đối tượng</label>
+                                <select name="subject_type" id="subject_type" class="form-control">
+                                    <option value="">-- Tất cả đối tượng --</option>
+                                    {% for value, text in subject_type_choices %}
+                                        <option value="{{ value }}" {% if current_subject_type == value %}selected{% endif %}>
+                                            {{ text }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="visit">Lần thăm</label>
+                                <select name="visit" id="visit" class="form-control">
+                                    <option value="">-- Tất cả lần thăm --</option>
+                                    {% for value, text in visit_choices %}
+                                        <option value="{{ value }}" {% if current_visit == value %}selected{% endif %}>
+                                            {{ text }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="status">Trạng thái</label>
+                                <select name="status" id="status" class="form-control">
+                                    <option value="">-- Tất cả trạng thái --</option>
+                                    {% for value, text in status_choices %}
+                                        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+                                            {{ text }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="search">Tìm kiếm</label>
+                                <input type="text" class="form-control" id="search" name="search" 
+                                    placeholder="Mã bệnh nhân, tên viết tắt..." value="{{ search_query|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 text-right">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search mr-1"></i> Tìm kiếm
+                            </button>
+                            <a href="{% url 'study_43en:followup_tracking_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-sync-alt mr-1"></i> Đặt lại
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách theo dõi -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Danh sách lịch hẹn</h6>
+            <div>
+                <button class="btn btn-sm btn-success" id="exportExcel">
+                    <i class="fas fa-file-excel mr-1"></i> Xuất Excel
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th width="5%">STT</th>
+                            <th width="10%">Mã BN</th>
+                            <th width="10%">Tên viết tắt</th>
+                            <th width="10%">Loại</th>
+                            <th width="10%">Lần khám</th>
+                            <th width="12%">Ngày dự kiến</th>
+                            <th width="12%">Ngày thực tế</th>
+                            <th width="10%">Trạng thái</th>
+                            <th width="10%">Liên hệ</th>
+                            <th width="10%">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for followup in followups %}
+                        <tr class="
+                            {% if followup.STATUS == 'LATE' %}table-warning{% endif %}
+                            {% if followup.STATUS == 'COMPLETED' %}table-success{% endif %}
+                            {% if followup.STATUS == 'MISSED' %}table-danger{% endif %}
+                            ">
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ followup.USUBJID }}</td>
+                            <td>{{ followup.INITIAL }}</td>
+                            <td>
+                                {% if followup.SUBJECT_TYPE == 'PATIENT' %}
+                                <span class="badge badge-primary">Bệnh nhân</span>
+                                {% else %}
+                                <span class="badge badge-info">Người tiếp xúc</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ followup.get_VISIT_display }}</td>
+                            <td>
+                                <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
+                                <small class="d-block text-muted" title="Khoảng thời gian dự kiến">
+                                    {% if followup.EXPECTED_FROM and followup.EXPECTED_TO %}
+                                        {{ followup.EXPECTED_FROM|date:"d/m" }} - {{ followup.EXPECTED_TO|date:"d/m/Y" }}
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if followup.ACTUAL_DATE %}
+                                    <span class="text-nowrap">{{ followup.ACTUAL_DATE|date:"d/m/Y" }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if followup.STATUS == 'COMPLETED' %}
+                                    <span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i>Hoàn thành</span>
+                                {% elif followup.STATUS == 'LATE' %}
+                                    <span class="badge badge-warning"><i class="fas fa-exclamation-circle mr-1"></i>Trễ hẹn</span>
+                                {% elif followup.STATUS == 'MISSED' %}
+                                    <span class="badge badge-danger"><i class="fas fa-times-circle mr-1"></i>Bỏ lỡ</span>
+                                {% elif followup.STATUS == 'UPCOMING' %}
+                                    <span class="badge badge-primary"><i class="fas fa-calendar mr-1"></i>Sắp tới</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if followup.PHONE %}
+                                    <a href="tel:{{ followup.PHONE }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-phone-alt"></i> {{ followup.PHONE }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary update-status" 
+                                    data-id="{{ followup.id }}" 
+                                    data-toggle="modal" 
+                                    data-target="#updateStatusModal">
+                                    <i class="fas fa-edit mr-1"></i> Cập nhật
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center">Không có dữ liệu</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang -->
+            {% if followups.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if followups.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if current_visit %}&visit={{ current_visit }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_subject_type %}&subject_type={{ current_subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ followups.previous_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if current_visit %}&visit={{ current_visit }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_subject_type %}&subject_type={{ current_subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for i in followups.paginator.page_range %}
+                        {% if followups.number == i %}
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ i }}
+                                <span class="sr-only">(current)</span>
+                            </span>
+                        </li>
+                        {% elif i > followups.number|add:'-3' and i < followups.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if current_visit %}&visit={{ current_visit }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_subject_type %}&subject_type={{ current_subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ i }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if followups.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ followups.next_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if current_visit %}&visit={{ current_visit }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_subject_type %}&subject_type={{ current_subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ followups.paginator.num_pages }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if current_visit %}&visit={{ current_visit }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_subject_type %}&subject_type={{ current_subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal cập nhật trạng thái -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" role="dialog" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel">Cập nhật trạng thái theo dõi</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="updateStatusForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="followup_id" id="followup_id">
+                    
+                    <div class="form-group">
+                        <label for="actual_date">Ngày thực tế</label>
+                        <input type="date" class="form-control datepicker" id="actual_date" name="actual_date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status">Trạng thái</label>
+                        <select class="form-control" id="status_update" name="status">
+                            {% for value, text in status_choices %}
+                                <option value="{{ value }}">{{ text }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Ghi chú</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" id="saveStatus">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js_dashboard %}
+<script>
+    $(document).ready(function() {
+        // Bộ lọc nhanh
+        $('#thisWeek').click(function() {
+            setDateRange('thisWeek');
+        });
+        
+        $('#nextWeek').click(function() {
+            setDateRange('nextWeek');
+        });
+        
+        $('#thisMonth').click(function() {
+            setDateRange('thisMonth');
+        });
+        
+        $('#all').click(function() {
+            $('#date_from').val('');
+            $('#date_to').val('');
+            $('#filterForm').submit();
+        });
+        
+        // Xử lý khi nhấn nút cập nhật
+        $('.update-status').click(function() {
+            var followupId = $(this).data('id');
+            $('#followup_id').val(followupId);
+            
+            // Có thể thêm AJAX để lấy thông tin hiện tại của followup
+        });
+        
+        // Xử lý khi nhấn nút lưu
+        $('#saveStatus').click(function() {
+            var form = $('#updateStatusForm');
+            var followupId = $('#followup_id').val();
+            
+            $.ajax({
+                url: '/43en/followup-tracking/' + followupId + '/update/',
+                type: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        $('#updateStatusModal').modal('hide');
+                        // Tải lại trang để cập nhật dữ liệu
+                        location.reload();
+                    } else {
+                        toastr.error('Lỗi: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error('Đã xảy ra lỗi: ' + xhr.statusText);
+                }
+            });
+        });
+
+        // Xuất Excel
+        $('#exportExcel').click(function() {
+            var queryString = window.location.search;
+            window.location.href = '/43en/followup-tracking/export/' + queryString;
+        });
+        
+        // Function để thiết lập khoảng ngày
+        function setDateRange(period) {
+            var today = new Date();
+            var from = new Date();
+            var to = new Date();
+            
+            if (period === 'thisWeek') {
+                // Tìm ngày đầu tuần (thứ 2)
+                var day = today.getDay();
+                var diff = today.getDate() - day + (day === 0 ? -6 : 1); // điều chỉnh khi hôm nay là chủ nhật
+                from = new Date(today.setDate(diff));
+                
+                // Ngày cuối tuần (chủ nhật)
+                to = new Date(from);
+                to.setDate(from.getDate() + 6);
+            } else if (period === 'nextWeek') {
+                // Tìm ngày đầu tuần tiếp theo
+                var day = today.getDay();
+                var diff = today.getDate() - day + (day === 0 ? -6 : 1) + 7; // thứ 2 tuần sau
+                from = new Date(today.setDate(diff));
+                
+                // Ngày cuối tuần sau (chủ nhật)
+                to = new Date(from);
+                to.setDate(from.getDate() + 6);
+            } else if (period === 'thisMonth') {
+                // Ngày đầu tháng
+                from = new Date(today.getFullYear(), today.getMonth(), 1);
+                
+                // Ngày cuối tháng
+                to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            }
+            
+            // Format date to YYYY-MM-DD
+            var formatDate = function(date) {
+                var month = '' + (date.getMonth() + 1);
+                var day = '' + date.getDate();
+                var year = date.getFullYear();
+                
+                if (month.length < 2) month = '0' + month;
+                if (day.length < 2) day = '0' + day;
+                
+                return [year, month, day].join('-');
+            };
+            
+            $('#date_from').val(formatDate(from));
+            $('#date_to').val(formatDate(to));
+            $('#filterForm').submit();
+        }
+    });
+</script>
+{% include 'studies/study_43en/CRF/includes/datepicker_scripts.html' %}
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Home - User Profile{% endblock %}
+
+
+{% block dashboard_content %}
+
+<h1 class="h3 mb-4 fw-bold">{% trans "Account Settings" %}</h1>
+<div class="row">
+    <div class="col-12">
+        <!-- Profile Information Card -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-bottom-0 py-3 px-4">
+                <h5 class="mb-0 fw-semibold">{% trans "Profile Information" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form id="profileForm">
+                    <div class="row mb-3 align-items-center">
+                        <label for="fullName" class="col-md-3 col-form-label">{% trans "Full Name" %}</label>
+                        <div class="col-md-9">
+                            <input type="text" class="form-control" id="fullName" value="Jessica Miller">
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <label for="email" class="col-md-3 col-form-label">{% trans "Email Address" %}</label>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-at"></i></span>
+                                <input type="email" class="form-control bg-body-secondary" id="email"
+                                    value="jessica.miller@example.com" disabled readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <label for="location" class="col-md-3 col-form-label">{% trans "Role" %}</label>
+                        <div class="col-md-9">
+                            <input type="text" class="form-control" id="location" value="New York, USA">
+                        </div>
+                    </div>
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4">
+                            <span class="spinner-border spinner-border-sm d-none me-1" role="status"
+                                aria-hidden="true"></span>
+                            {% trans "Save Changes" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security Card -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-bottom-0 py-3 px-4">
+                <h5 class="mb-0 fw-semibold">{% trans "Security Information" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form id="passwordForm">
+                    <div class="row mb-3 align-items-center">
+                        <label for="currentPassword" class="col-md-3 col-form-label">{% trans "Current Password" %}</label>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="currentPassword" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <label for="newPassword" class="col-md-3 col-form-label">{% trans "New Password" %}</label>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-key"></i></span>
+                                <input type="password" class="form-control" id="newPassword" required>
+                            </div>
+                            <div class="form-text">{% trans "Password must be at least 8 characters long." %}</div>
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <label for="confirmPassword" class="col-md-3 col-form-label">{% trans "Confirm Password" %}</label>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-key"></i></span>
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn btn-primary rounded-3 px-4">
+                            <span class="spinner-border spinner-border-sm d-none me-1" role="status"
+                                aria-hidden="true"></span>
+                            {% trans "Update Password" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

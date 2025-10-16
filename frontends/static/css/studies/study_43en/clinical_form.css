@@ -1,0 +1,279 @@
+/* Reset và cơ bản */
+body {
+  font-family: 'Roboto', sans-serif;
+  color: #495057;
+}
+
+/* Card styling */
+.card {
+  border: none;
+  margin-bottom: 25px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: box-shadow 0.3s ease;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0,0,0,.125);
+  padding: 15px 20px;
+}
+
+.card-primary .card-header {
+  background-color: #3b7ddd;
+  color: white;
+}
+
+/* Section headers - giống phần trong mẫu giấy */
+.form-section-header {
+  background-color: #dce4f1;
+  color: #333;
+  font-weight: 600;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  border-left: 4px solid #3b7ddd;
+  border-radius: 3px;
+  font-size: 1.1rem;
+}
+
+/* Styling cho container chính */
+.clinical-case-container {
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.clinical-case-header {
+  background-color: #dce4f1;
+  padding: 10px 15px;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Fields styling */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.form-control:focus {
+  border-color: #3b7ddd;
+  box-shadow: 0 0 0 0.2rem rgba(59, 125, 221, 0.25);
+}
+
+/* Field group styling */
+.field-group {
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-left: 3px solid #dee2e6;
+}
+
+/* Radio/checkbox styling */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.checkbox-item {
+  min-width: 200px;
+  margin-bottom: 8px;
+}
+
+.form-check {
+  position: relative;
+  padding-left: 1.8rem;
+}
+
+.form-check-input {
+  position: absolute;
+  margin-top: .3rem;
+  margin-left: -1.8rem;
+}
+
+.form-check-label {
+  cursor: pointer;
+}
+
+/* Đánh số thứ tự */
+.numbered-item {
+  position: relative;
+  padding-left: 25px;
+  margin-bottom: 10px;
+}
+
+.numbered-item::before {
+  content: attr(data-number) '.';
+  position: absolute;
+  left: 0;
+  font-weight: 600;
+}
+
+/* Fix for required fields */
+.required-field label::after {
+  content: " *";
+  color: #dc3545;
+}
+
+/* Button styling */
+.btn {
+  border-radius: 4px;
+  padding: 8px 16px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #3b7ddd;
+  border-color: #3b7ddd;
+}
+
+/* Pagination styling */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.page-link {
+  position: relative;
+  padding: 0.5rem 0.75rem;
+  color: #3b7ddd;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+}
+
+.page-item.active .page-link {
+  background-color: #3b7ddd;
+  border-color: #3b7ddd;
+}
+
+/* Custom styling for checkbox groups to look like paper form */
+.checkbox-section {
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #fff;
+}
+
+.checkbox-section h5 {
+  font-weight: 600;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+/* GCS input group styling */
+.gcs-inputs {
+  display: flex;
+  gap: 15px;
+}
+
+.gcs-input {
+  width: 80px;
+}
+
+/* Special style for paper-like forms */
+.paper-form {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.paper-form h4 {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Header for form pages like the paper form */
+.form-paper-header {
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Tab styling */
+.custom-tabs {
+  margin-bottom: 20px;
+}
+
+.custom-tabs .nav-link {
+  color: #495057;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  margin-right: 5px;
+  border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.custom-tabs .nav-link.active {
+  color: #fff;
+  background-color: #3b7ddd;
+  border-color: #3b7ddd;
+}
+
+/* Visual indicator for page and other elements */
+.page-indicator {
+  background-color: #e9ecef;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Multicolumn checkbox layout */
+.checkbox-columns {
+  column-count: 3;
+  column-gap: 30px;
+}
+
+/* Responsive adjustment */
+@media (max-width: 992px) {
+  .checkbox-columns {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 576px) {
+  .checkbox-columns {
+    column-count: 1;
+  }
+}
+
+/* Styling for read-only mode */
+form[data-read-only="true"] input,
+form[data-read-only="true"] select,
+form[data-read-only="true"] textarea {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+form[data-read-only="true"] .form-check input[type="checkbox"],
+form[data-read-only="true"] .form-check input[type="radio"] {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+form[data-read-only="true"] .datepicker {
+  pointer-events: none;
+}

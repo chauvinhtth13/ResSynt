@@ -1,0 +1,60 @@
+/* ========================================================================== 
+   MAIN LAYOUT 
+   ========================================================================== */
+main {
+    flex-grow: 1;
+    display: flex;
+}
+
+
+/* ========================================================================== 
+   EFFECTS
+   ========================================================================== */
+.left-side {
+    background: var(--app-linear-gradient) !important;
+    color: white;
+    padding: clamp(1rem, 3vw, 3.5rem);
+    justify-content: center;
+}
+
+.right-side {
+    display: flex;
+    padding: auto;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100vh !important;
+    background-color: var(--app-bg-body);
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(var(--blur-lg));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================================================== 
+   PASSWORD INPUT
+   ========================================================================== */
+.password-input-container {
+    position: relative;
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: clamp(1rem, 0.5vw + 0.85rem, 1.25rem);
+    transition: color var(--transition-fast);
+}
+
+.password-toggle-icon:hover,
+.password-toggle-icon:focus {
+    color: var(--color-royal-blue-500);
+    outline: none;
+}

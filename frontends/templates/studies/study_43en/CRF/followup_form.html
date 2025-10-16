@@ -1,0 +1,690 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+{% if is_readonly %}
+    {% trans "Xem Thông Tin Theo Dõi 28 Ngày" %}
+{% else %}
+    {% trans "Form Theo Dõi 28 Ngày 43EN" %}
+{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if is_readonly %}
+    {% trans "Xem Thông Tin Theo Dõi 28 Ngày" %}
+{% else %}
+    {% trans "Form Theo Dõi 28 Ngày 43EN" %}
+{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb float-sm-right">
+    <li class="breadcrumb-item"><a href="{% url 'study_43en:patient_list' %}">{% trans "Danh sách bệnh nhân" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID %}">{{ enrollment_case.USUBJID }}</a></li>
+    <li class="breadcrumb-item active">
+        {% if is_readonly %}
+            {% trans "Xem theo dõi" %}
+        {% else %}
+            {% trans "Theo dõi 28 ngày" %}
+        {% endif %}
+    </li>
+</ol>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <!-- Thông tin bệnh nhân -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Thông tin bệnh nhân" %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>{% trans "Mã bệnh nhân" %}:</strong><br>
+                            <span class="text-primary">{{ enrollment_case.USUBJID }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>{% trans "Ngày sàng lọc" %}:</strong><br>
+                            {{ screening_case.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>{% trans "Trạng thái follow-up" %}:</strong><br>
+                            {% if has_followup %}
+                                <span class="badge badge-success">{% trans "Đã có dữ liệu" %}</span>
+                            {% else %}
+                                <span class="badge badge-warning">{% trans "Chưa có dữ liệu" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form chính -->
+    <form id="followUpForm" method="post" action="{% if is_readonly %}{% else %}{% url 'study_43en:followup_case_update' usubjid=enrollment_case.USUBJID %}{% endif %}" novalidate data-is-create="{% if not has_followup %}true{% else %}false{% endif %}" {% if is_readonly %}class="readonly-form"{% endif %}>
+        {% csrf_token %}
+        <input type="hidden" id="oldDataJson" name="oldDataJson" value="">
+        <input type="hidden" id="newDataJson" name="newDataJson" value="">
+        <input type="hidden" id="reasonsJson" name="reasonsJson" value="">
+        <input type="hidden" id="change_reason" name="change_reason" value="">
+        <div id="saveIndicator" class="alert alert-success" style="display: none;">
+            <span class="message"></span>
+        </div>
+        
+        <!-- Phần 1: Đánh giá tình trạng tại ngày 28 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">{% trans "1. Đánh giá tình trạng tại ngày 28" %}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {% bootstrap_field form.ASSESSED %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    {% bootstrap_field form.ASSESSDATE %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    {% bootstrap_field form.PATSTATUS %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần 2: Tái nhập viện -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-warning">
+                    <div class="card-header">
+                        <h3 class="card-title">{% trans "2. Tái nhập viện" %}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {% bootstrap_field form.REHOSP %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    {% bootstrap_field form.REHOSPCOUNT %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chi tiết tái nhập viện -->
+                        <div id="rehospitalization-section" class="mt-3" style="display: none;">
+                            <h5>{% trans "Chi tiết tái nhập viện" %}</h5>
+                            <div id="rehospitalization-formset">
+                                {{ rehospitalization_formset.management_form }}
+                                {% for form_instance in rehospitalization_formset %}
+                                    {% if form_instance.instance.pk %}
+                                        <div class="rehospitalization-form border p-3 mb-2" style="background-color: #f8f9fa;">
+                                            {% if form_instance.non_field_errors %}
+                                                <div class="alert alert-danger">{{ form_instance.non_field_errors }}</div>
+                                            {% endif %}
+                                            
+                                            <div class="row">
+                                                <div class="col-md-2">
+                                                    {% bootstrap_field form_instance.EPISODE %}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    {% bootstrap_field form_instance.REHOSPDATE %}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    {% bootstrap_field form_instance.REHOSPLOCATION %}
+                                                </div>
+                                                <div class="col-md-2">
+                                                    {% bootstrap_field form_instance.REHOSPSTAYDUR %}
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    {% bootstrap_field form_instance.REHOSPREASONFOR %}
+                                                </div>
+                                            </div>
+                                            
+                                            {% for hidden in form_instance.hidden_fields %}
+                                                {{ hidden }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            
+                            {% if not is_readonly %}
+                            <button type="button" id="add-rehospitalization" class="btn btn-success btn-sm">
+                                <i class="fas fa-plus"></i> {% trans "Thêm lần tái nhập viện" %}
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần 3: Tử vong -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-danger">
+                    <div class="card-header">
+                        <h3 class="card-title">{% trans "3. Tử vong" %}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {% bootstrap_field form.DECEASED %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {% bootstrap_field form.DEATHDATE %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {% bootstrap_field form.DEATHCAUSE %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần 4: Sử dụng kháng sinh -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-success">
+                    <div class="card-header">
+                        <h3 class="card-title">{% trans "4. Sử dụng kháng sinh" %}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {% bootstrap_field form.USEDANTIBIO %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    {% bootstrap_field form.ANTIBIOCOUNT %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chi tiết kháng sinh -->
+                        <div id="antibiotic-section" class="mt-3" style="display: none;">
+                            <h5>{% trans "Chi tiết kháng sinh" %}</h5>
+                            <div id="antibiotic-formset">
+                                {{ antibiotic_formset.management_form }}
+                                {% for form_instance in antibiotic_formset %}
+                                    {% if form_instance.instance.pk %}
+                                        <div class="antibiotic-form border p-3 mb-2" style="background-color: #f8f9fa;">
+                                            {% if form_instance.non_field_errors %}
+                                                <div class="alert alert-danger">{{ form_instance.non_field_errors }}</div>
+                                            {% endif %}
+                                            
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    {% bootstrap_field form_instance.EPISODE %}
+                                                </div>
+                                                <div class="col-md-5">
+                                                    {% bootstrap_field form_instance.ANTIBIONAME %}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    {% bootstrap_field form_instance.ANTIBIODUR %}
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    {% bootstrap_field form_instance.ANTIBIOREASONFOR %}
+                                                </div>
+                                            </div>
+                                            
+                                            {% for hidden in form_instance.hidden_fields %}
+                                                {{ hidden }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            
+                            {% if not is_readonly %}
+                            <button type="button" id="add-antibiotic" class="btn btn-success btn-sm">
+                                <i class="fas fa-plus"></i> {% trans "Thêm đợt kháng sinh" %}
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần 5: Đánh giá tình trạng chức năng -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-purple">
+                    <div class="card-header">
+                        <h3 class="card-title">{% trans "5. Đánh giá tình trạng chức năng" %}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    {% bootstrap_field form.FUNCASSESS %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chi tiết đánh giá chức năng -->
+                        <div id="functional-assessment-section" class="mt-3" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {% bootstrap_field form.MOBILITY %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {% bootstrap_field form.PERHYGIENE %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {% bootstrap_field form.DAILYACTIV %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {% bootstrap_field form.PAINDISCOMF %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {% bootstrap_field form.ANXIETY_DEPRESSION %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {% bootstrap_field form.FBSISCORE %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần thông tin hoàn thành -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-secondary">
+                    <div class="card-header">
+                        <h3 class="card-title">{% trans "Thông tin hoàn thành" %}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {% bootstrap_field form.COMPLETEDBY %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {% bootstrap_field form.COMPLETEDDATE %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        {% if not is_readonly %}
+                            <button type="button" id="btnSaveFollowUp" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> {% trans "Lưu thông tin" %}
+                            </button>
+                            <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> {% trans "Quay lại" %}
+                            </a>
+                        {% else %}
+                            <a href="{% url 'study_43en:followup_form' usubjid=enrollment_case.USUBJID %}" class="btn btn-warning btn-lg">
+                                <i class="fas fa-edit"></i> {% trans "Chỉnh sửa" %}
+                            </a>
+                            <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> {% trans "Quay lại" %}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+<!-- SỬ DỤNG DATEPICKER CÓ SẴN -->
+{% include 'studies/study_43en/CRF/includes/datepicker_scripts.html' %}
+<script src="{% static 'js/audit-log/base.js' %}"></script>
+<script src="{% static 'js/audit-log/follow28-form.js' %}"></script>
+<script>
+$(document).ready(function() {
+    console.log("Initializing followup form...");
+
+    // Kiểm tra management form
+    console.log("Management form rehospitalization:", {
+        total: $('#id_rehospitalization_set-TOTAL_FORMS').val(),
+        initial: $('#id_rehospitalization_set-INITIAL_FORMS').val()
+    });
+    console.log("Management form antibiotic:", {
+        total: $('#id_antibiotic_set-TOTAL_FORMS').val(),
+        initial: $('#id_antibiotic_set-INITIAL_FORMS').val()
+    });
+
+    // Toggle section theo radio
+    function toggleSection(triggerName, sectionId, showValue = 'Yes') {
+        var selectedValue = $('input[name="' + triggerName + '"]:checked').val();
+        console.log(`Toggle section ${sectionId} based on ${triggerName}=${selectedValue}`);
+        if (selectedValue === showValue) {
+            $(sectionId).slideDown(400);
+        } else {
+            $(sectionId).slideUp(400);
+        }
+    }
+
+    // Event handlers cho radio buttons
+    $(document).on('change', 'input[name="REHOSP"]', function() {
+        toggleSection('REHOSP', '#rehospitalization-section');
+    });
+    $(document).on('change', 'input[name="USEDANTIBIO"]', function() {
+        toggleSection('USEDANTIBIO', '#antibiotic-section');
+    });
+    $(document).on('change', 'input[name="FUNCASSESS"]', function() {
+        toggleSection('FUNCASSESS', '#functional-assessment-section');
+    });
+    $(document).on('change', 'input[name="ASSESSED"]', function() {
+        if ($(this).val() === 'Yes') {
+            $('input[name="ASSESSDATE"]').closest('.form-group').parent().show();
+            $('select[name="PATSTATUS"]').closest('.form-group').parent().show();
+        } else {
+            $('input[name="ASSESSDATE"]').closest('.form-group').parent().hide();
+            $('select[name="PATSTATUS"]').closest('.form-group').parent().hide();
+        }
+    });
+    $(document).on('change', 'input[name="DECEASED"]', function() {
+        if ($(this).val() === 'Yes') {
+            $('input[name="DEATHDATE"]').closest('.form-group').parent().show();
+            $('textarea[name="DEATHCAUSE"]').closest('.form-group').parent().show();
+        } else {
+            $('input[name="DEATHDATE"]').closest('.form-group').parent().hide();
+            $('textarea[name="DEATHCAUSE"]').closest('.form-group').parent().hide();
+        }
+    });
+
+    // Khởi tạo sections khi load trang
+    setTimeout(function() {
+        toggleSection('REHOSP', '#rehospitalization-section');
+        toggleSection('USEDANTIBIO', '#antibiotic-section');
+        toggleSection('FUNCASSESS', '#functional-assessment-section');
+        if ($('input[name="ASSESSED"]:checked').val() !== 'Yes') {
+            $('input[name="ASSESSDATE"]').closest('.form-group').parent().hide();
+            $('select[name="PATSTATUS"]').closest('.form-group').parent().hide();
+        }
+        if ($('input[name="DECEASED"]:checked').val() !== 'Yes') {
+            $('input[name="DEATHDATE"]').closest('.form-group').parent().hide();
+            $('textarea[name="DEATHCAUSE"]').closest('.form-group').parent().hide();
+        }
+    }, 200);
+
+    // Thêm form tái nhập viện
+    $('#add-rehospitalization').click(function() {
+        var container = $('#rehospitalization-formset');
+        var totalForms = parseInt($('#id_rehospitalization_set-TOTAL_FORMS').val());
+        var existingEpisodes = [];
+        $('.rehospitalization-form').each(function() {
+            var episodeInput = $(this).find('input[id$="-EPISODE"]');
+            if (episodeInput.length) {
+                existingEpisodes.push(parseInt(episodeInput.val()));
+            }
+        });
+        var newEpisode = existingEpisodes.length > 0 ? Math.max(...existingEpisodes) + 1 : 1;
+        var newIndex = totalForms;
+        var newFormHtml = `
+            <div class="rehospitalization-form border p-3 mb-2" style="background-color: #f8f9fa; animation: fadeIn 0.3s ease-in;">
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="id_rehospitalization_set-${newIndex}-EPISODE" class="form-label">Đợt</label>
+                            <input type="number" name="rehospitalization_set-${newIndex}-EPISODE" 
+                                   value="${newEpisode}" readonly class="form-control" 
+                                   id="id_rehospitalization_set-${newIndex}-EPISODE">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_rehospitalization_set-${newIndex}-REHOSPDATE" class="form-label">Ngày tái nhập viện</label>
+                            <input type="text" name="rehospitalization_set-${newIndex}-REHOSPDATE" 
+                                   class="datepicker form-control" autocomplete="off" placeholder="YYYY-MM-DD"
+                                   id="id_rehospitalization_set-${newIndex}-REHOSPDATE">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_rehospitalization_set-${newIndex}-REHOSPLOCATION" class="form-label">Nơi tái nhập viện</label>
+                            <input type="text" name="rehospitalization_set-${newIndex}-REHOSPLOCATION" 
+                                   class="form-control" placeholder="Nơi tái nhập viện..."
+                                   id="id_rehospitalization_set-${newIndex}-REHOSPLOCATION">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="id_rehospitalization_set-${newIndex}-REHOSPSTAYDUR" class="form-label">Thời gian nằm viện</label>
+                            <input type="text" name="rehospitalization_set-${newIndex}-REHOSPSTAYDUR" 
+                                   class="form-control" placeholder="Thời gian nằm viện (ví dụ: 5 ngày)"
+                                   id="id_rehospitalization_set-${newIndex}-REHOSPSTAYDUR">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="id_rehospitalization_set-${newIndex}-REHOSPREASONFOR" class="form-label">Lý do tái nhập viện</label>
+                            <textarea name="rehospitalization_set-${newIndex}-REHOSPREASONFOR" 
+                                      class="form-control" rows="2" placeholder="Lý do tái nhập viện..."
+                                      id="id_rehospitalization_set-${newIndex}-REHOSPREASONFOR"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="rehospitalization_set-${newIndex}-id" id="id_rehospitalization_set-${newIndex}-id">
+                <input type="hidden" name="rehospitalization_set-${newIndex}-follow_up" id="id_rehospitalization_set-${newIndex}-follow_up">
+            </div>
+        `;
+        container.append(newFormHtml);
+        $('#id_rehospitalization_set-TOTAL_FORMS').val(totalForms + 1);
+        if (typeof initializeDatepickers === 'function') {
+            initializeDatepickers(container.find('.rehospitalization-form:last'));
+        } else {
+            container.find('.rehospitalization-form:last .datepicker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true,
+                language: 'vi',
+                orientation: 'bottom auto'
+            });
+        }
+        var currentCount = parseInt($('input[name="REHOSPCOUNT"]').val()) || 0;
+        $('input[name="REHOSPCOUNT"]').val(currentCount + 1);
+    });
+
+    // Thêm form kháng sinh
+    $('#add-antibiotic').click(function() {
+        var container = $('#antibiotic-formset');
+        var totalForms = parseInt($('#id_antibiotic_set-TOTAL_FORMS').val());
+        var existingEpisodes = [];
+        $('.antibiotic-form').each(function() {
+            var episodeInput = $(this).find('input[id$="-EPISODE"]');
+            if (episodeInput.length) {
+                existingEpisodes.push(parseInt(episodeInput.val()));
+            }
+        });
+        var newEpisode = existingEpisodes.length > 0 ? Math.max(...existingEpisodes) + 1 : 1;
+        var newIndex = totalForms;
+        var newFormHtml = `
+            <div class="antibiotic-form border p-3 mb-2" style="background-color: #f8f9fa; animation: fadeIn 0.3s ease-in;">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_antibiotic_set-${newIndex}-EPISODE" class="form-label">Đợt</label>
+                            <input type="number" name="antibiotic_set-${newIndex}-EPISODE" 
+                                   value="${newEpisode}" readonly class="form-control" 
+                                   id="id_antibiotic_set-${newIndex}-EPISODE">
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label for="id_antibiotic_set-${newIndex}-ANTIBIONAME" class="form-label">Tên kháng sinh</label>
+                            <input type="text" name="antibiotic_set-${newIndex}-ANTIBIONAME" 
+                                   class="form-control" placeholder="Tên thuốc kháng sinh..."
+                                   id="id_antibiotic_set-${newIndex}-ANTIBIONAME">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_antibiotic_set-${newIndex}-ANTIBIODUR" class="form-label">Thời gian sử dụng</label>
+                            <input type="text" name="antibiotic_set-${newIndex}-ANTIBIODUR" 
+                                   class="form-control" placeholder="Thời gian sử dụng (ví dụ: 7 ngày)"
+                                   id="id_antibiotic_set-${newIndex}-ANTIBIODUR">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="id_antibiotic_set-${newIndex}-ANTIBIOREASONFOR" class="form-label">Lý do sử dụng</label>
+                            <textarea name="antibiotic_set-${newIndex}-ANTIBIOREASONFOR" 
+                                      class="form-control" rows="2" placeholder="Lý do sử dụng..."
+                                      id="id_antibiotic_set-${newIndex}-ANTIBIOREASONFOR"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="antibiotic_set-${newIndex}-id" id="id_antibiotic_set-${newIndex}-id">
+                <input type="hidden" name="antibiotic_set-${newIndex}-follow_up" id="id_antibiotic_set-${newIndex}-follow_up">
+            </div>
+        `;
+        container.append(newFormHtml);
+        $('#id_antibiotic_set-TOTAL_FORMS').val(totalForms + 1);
+        var currentCount = parseInt($('input[name="ANTIBIOCOUNT"]').val()) || 0;
+        $('input[name="ANTIBIOCOUNT"]').val(currentCount + 1);
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_head_dashboard %}
+<style>
+.card-purple {
+    border-top: 3px solid #6f42c1;
+}
+
+.card-purple .card-header {
+    background-color: rgba(111, 66, 193, 0.1);
+    border-bottom: 1px solid rgba(111, 66, 193, 0.2);
+}
+
+.rehospitalization-form,
+.antibiotic-form {
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+}
+
+.rehospitalization-form:hover,
+.antibiotic-form:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Animation cho việc thêm form */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Radio button styling */
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* Form group spacing */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+/* Card spacing */
+.card {
+    margin-bottom: 1.5rem;
+}
+
+/* Button styling */
+.btn {
+    margin-right: 0.5rem;
+}
+
+.btn:last-child {
+    margin-right: 0;
+}
+
+/* Form label styling */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+/* Border styling for dynamic forms */
+.rehospitalization-form,
+.antibiotic-form {
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem;
+}
+
+/* saveIndicator positioning */
+#saveIndicator {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1050;
+    display: none;
+}
+</style>
+{% endblock %}

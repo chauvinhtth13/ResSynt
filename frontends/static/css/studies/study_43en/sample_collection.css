@@ -1,0 +1,38 @@
+/* static/css/sample_collection.css */
+.sensitivity-result {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.sensitivity-result.sensitive {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.sensitivity-result.resistant {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.sensitivity-result.intermediate {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* Hiệu ứng hover cho các dòng trong bảng */
+.table-striped tbody tr:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+/* Định dạng bộ công cụ */
+.input-group-text {
+    min-width: 100px;
+}
+
+/* Định dạng tooltip */
+.tooltip-inner {
+    max-width: 300px;
+    padding: 10px;
+}

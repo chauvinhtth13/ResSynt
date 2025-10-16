@@ -1,0 +1,177 @@
+{% extends 'default/dashboard.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Patient List - Study 43EN" %}{% endblock %}
+
+{% block extra_head_dashboard %}
+<style>
+  .card-header.bg-success {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+  }
+  
+  .card-header.bg-success .card-title {
+    color: #ffffff !important;
+  }
+  
+  .card-header.bg-success .btn-tool {
+    color: #ffffff !important;
+  }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card">
+  <div class="card-header bg-success">
+    <h3 class="card-title text-white">
+      <i class="bi bi-people"></i>
+      {% trans "Danh sách bệnh nhân tham gia nghiên cứu" %}
+      {% if total_patients %}
+        <span class="badge badge-light ms-2">{{ total_patients }}</span>
+      {% endif %}
+    </h3>
+  </div>
+  
+  <div class="card-body">
+    {% if total_patients == 0 %}
+      <div class="alert alert-info text-center">
+        <h4><i class="bi bi-info-circle"></i> {% trans "Chưa có bệnh nhân nào!" %}</h4>
+        <p>{% trans "Hiện tại chưa có bệnh nhân nào đủ điều kiện và đồng ý tham gia nghiên cứu." %}</p>
+        <a href="{% url 'study_43en:screening_case_list' %}" class="btn btn-primary">
+          <i class="bi bi-search"></i> {% trans "Đi đến sàng lọc" %}
+        </a>
+      </div>
+    {% else %}
+      <!-- Search -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <form method="get" class="d-flex">
+            <input type="text" name="q" class="form-control" placeholder="{% trans 'Tìm kiếm USUBJID, INITIAL...' %}" value="{{ query }}">
+            <button type="submit" class="btn btn-primary ms-2">
+              <i class="bi bi-search"></i> {% trans "Tìm" %}
+            </button>
+          </form>
+        </div>
+        <div class="col-md-6 text-end">
+          <span class="badge bg-success">
+            {% trans "Tổng số bệnh nhân:" %} {{ total_patients }}
+          </span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>{% trans "Mã bệnh nhân" %}</th>
+              <th>{% trans "Mã sàng lọc" %}</th>
+              <th>{% trans "Ngày sàng lọc" %}</th>
+              <th>{% trans "Enrollment" %}</th>
+              <th>{% trans "Clinical" %}</th>
+              <th width="150">{% trans "Thao tác" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for patient in page_obj %}
+            <tr>
+              <td>
+                <strong>{{ patient.USUBJID }}</strong>
+              </td>
+              <td>
+                <span>{{ patient.SCRID }}</span>
+              </td>
+              <td>
+                {{ patient.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}
+              </td>
+              <td>
+                {% if patient.has_enrollment %}
+                  <span class="badge bg-success">
+                    <i class="bi bi-check-circle"></i> {% trans "Đã có" %}
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary">
+                    <i class="bi bi-dash-circle"></i> {% trans "Chưa có" %}
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if patient.has_clinical %}
+                  <span class="badge bg-success">
+                    <i class="bi bi-check-circle"></i> {% trans "Đã có" %}
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary">
+                    <i class="bi bi-dash-circle"></i> {% trans "Chưa có" %}
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="{% url 'study_43en:patient_detail' patient.USUBJID %}" 
+                     class="btn btn-primary" title="{% trans 'Xem chi tiết' %}">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{% url 'study_43en:screening_case_delete' patient.USUBJID %}" 
+                     class="btn btn-danger" 
+                     title="{% trans 'Xóa bệnh nhân' %}"
+                     onclick="return confirm('{% trans "Bạn có chắc chắn muốn xóa bệnh nhân này?" %}')">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">{% trans "Đầu" %}</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">{% trans "Đầu" %}</span></li>
+              <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
+                  {% trans "Cuối" %}
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+              <li class="page-item disabled"><span class="page-link">{% trans "Cuối" %}</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

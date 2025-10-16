@@ -1,0 +1,26 @@
+<!-- frontends\templates\includes\select_study_header.html -->
+{% load static %}
+{% load i18n %}
+<!-- Header with Logo and Language Switch -->
+<nav class="navbar navbar-expand bg-white border-bottom shadow-sm sticky-top">
+    <!-- Logo Section -->
+    <div class="container-fluid">
+        <div class="align-content-center">
+            <img src="{% static 'images/default/logo.svg' %}" 
+                alt="ResSync Logo" 
+                height="30"
+                class="d-block">
+        </div>
+
+
+        <!-- Language Switcher -->
+            <div class="d-flex align-items-center">
+            {% include 'includes/dropdown_header/language_selector.html' %}
+
+            <div class="vr m-2"></div>
+
+            {% include 'includes/dropdown_header/user_menu.html' %}
+        </div>
+    </div>
+    
+</nav>
