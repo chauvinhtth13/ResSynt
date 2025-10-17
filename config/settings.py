@@ -69,42 +69,94 @@ BASE_LOCAL_APPS = [
 ]
 
 # ==========================================
+# DATEBASE CONFIGURATION CLASS 
+# ==========================================
+
+STUDY_DB_SCHEMA = env("STUDY_DB_SCHEMA")
+STUDY_DB_PREFIX = env("STUDY_DB_PREFIX")
+
+# ==========================================
 # LOAD STUDY APPS SAFELY
 # ==========================================
 
 
 def load_study_apps() -> tuple:
-    """Load both database and API study apps"""
+    """
+    Load study apps with comprehensive error handling
+    
+    Returns:
+        Tuple of (study_apps: List[str], has_errors: bool)
+    """
+    import sys
+    
+    # Check if we're in a management command
+    is_management_command = 'manage.py' in sys.argv[0] if sys.argv else False
+    
     try:
         from backends.studies.study_loader import get_loadable_apps
-
-        # This returns both database and API apps
+        
+        logger.info("=" * 70)
+        logger.info("DJANGO STARTUP: Loading study apps")
+        logger.info("=" * 70)
+        
+        # Get study apps
         study_apps = get_loadable_apps()
-
+        
         if study_apps:
-            logger.debug(f"Loading {len(study_apps)} study app(s):")
+            logger.info(f"SUCCESS: Loaded {len(study_apps)} study app(s)")
             for app in study_apps:
-                logger.debug(f"  - {app}")
+                logger.info(f"{app}")
+            logger.info("=" * 70)
             return study_apps, False
         else:
-            logger.debug("No study apps to load")
+            logger.info("No study apps to load at this time")
+            logger.info("=" * 70)
+            
+            # Only show instructions if not a migrate command
+            if is_management_command and 'migrate' not in sys.argv:
+                logger.info("")
+                logger.info("To add studies:")
+                logger.info("  1. Run: python manage.py migrate")
+                logger.info("  2. Create study in Django admin")
+                logger.info("  3. Run: python manage.py create_study_structure <CODE>")
+                logger.info("  4. Restart server")
+                logger.info("")
+            
             return [], False
 
     except Exception as e:
-        logger.error(f"Error loading study apps: {e}")
+        logger.error("=" * 70)
+        logger.error("ERROR: Failed to load study apps")
+        logger.error("=" * 70)
+        logger.error(f"Error: {e}")
+        logger.error("=" * 70)
+        
+        import traceback
+        logger.debug(traceback.format_exc())
+        
         return [], True
 
 
 # Load study apps
+logger.info("")
+logger.info("=" * 70)
+logger.info("INITIALIZING DJANGO SETTINGS")
+logger.info("=" * 70)
+
 STUDY_APPS, HAS_STUDY_ERRORS = load_study_apps()
 
 # Combine all apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + BASE_LOCAL_APPS + STUDY_APPS
 
+logger.info(f"Total installed apps: {len(INSTALLED_APPS)}")
+logger.info(f"List installed: {INSTALLED_APPS}")
+logger.info("=" * 70)
+logger.info("")
+
+
 # ==========================================
 # DATABASE CONFIGURATION
 # ==========================================
-
 
 class DatabaseConfig:
     """Database configuration"""
@@ -240,7 +292,7 @@ try:
 
     if study_databases:
         DATABASES.update(study_databases)
-        logger.info(f"Configured {len(study_databases)} study database(s)")
+        logger.debug(f"Configured {len(study_databases)} study database(s)")
 except Exception as e:
     logger.error(f"Error configuring databases: {e}")
 

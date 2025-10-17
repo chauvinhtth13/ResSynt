@@ -5,8 +5,9 @@ User model with complete role integration
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as BaseUserManager
 from django.db import models
+from django.db.models import Prefetch
 from django.utils import timezone
-from django.utils import cache
+from django.core.cache import cache
 from typing import Optional, Tuple, Set, Dict, List, TYPE_CHECKING
 import logging
 
@@ -64,7 +65,7 @@ class User(AbstractUser):
     
     # Security fields
     must_change_password = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name="Must Change Password"
     )
     
@@ -236,7 +237,7 @@ class User(AbstractUser):
         
         result = {}
         for membership in memberships:
-            result[membership.study_id] = {
+            result[membership.study.id] = {
                 'study_code': membership.study.code,
                 'study_name': membership.study.safe_translation_getter('name', any_language=True),
                 'role_key': membership.get_role_key(),
@@ -474,28 +475,39 @@ class User(AbstractUser):
         ).exists()
     
     def get_accessible_studies(self):
-        """Get all accessible studies"""
-        from backends.tenancy.models import Study
+        """OPTIMIZED: Better query with proper prefetching"""
+        from backends.tenancy.models import Study, StudyMembership
+        
+        # Option 1: More explicit (better for debugging)
+        study_ids = StudyMembership.objects.filter(
+            user=self,
+            is_active=True
+        ).values_list('study_id', flat=True)
         
         return Study.objects.filter(
-            memberships__user=self,
-            memberships__is_active=True,
+            id__in=study_ids,
             status__in=[Study.Status.ACTIVE, Study.Status.PLANNING]
-        ).distinct()
-    
+        ).select_related('created_by').prefetch_related(
+            'translations',
+            'study_sites__site',  # ✅ Prefetch sites if needed
+            Prefetch(
+                'memberships',
+                queryset=StudyMembership.objects.filter(user=self).select_related('group')
+            )
+        ).order_by('code')
+        
     def save(self, *args, **kwargs):
-        """Override save to handle axes synchronization"""
+        """OPTIMIZED: Check status change efficiently"""
         if self.pk:
             try:
-                original = User.objects.get(pk=self.pk)
+                # ✅ Only fetch is_active field
+                original = User.objects.only('is_active').get(pk=self.pk)
                 
                 if not original.is_active and self.is_active:
                     self.reset_axes_locks()
-                    logger.debug(f"User {self.username} activated - axes locks reset")
-                    
+                    logger.info(f"User {self.username} reactivated")
                 elif original.is_active and not self.is_active:
-                    logger.debug(f"User {self.username} deactivated")
-                    
+                    logger.warning(f"User {self.username} deactivated")
             except User.DoesNotExist:
                 pass
         

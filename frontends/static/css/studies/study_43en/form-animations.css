@@ -33,7 +33,6 @@
 }
 
 .field-validated::after {
-  content: '✓';
   position: absolute;
   right: 10px;
   top: 40px;

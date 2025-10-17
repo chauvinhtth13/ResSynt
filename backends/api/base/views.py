@@ -23,12 +23,12 @@ from backends.tenancy.models import StudyMembership
 from .constants import AppConstants, LoginMessages, SessionKeys
 from .decorators import ensure_language, set_language_on_response
 from .services import LoginService, StudyService
-from .helpers import (
-    build_dashboard_context,
-    add_sites_to_context,
-    get_user_studies_list,
-    get_study_folder_path,
-)
+# from .helpers import (
+#     build_dashboard_context,
+#     add_sites_to_context,
+#     get_user_studies_list,
+#     get_study_folder_path,
+# )
 from .login import UsernameOrEmailAuthenticationForm
 
 logger = logging.getLogger(__name__)
@@ -245,20 +245,22 @@ def dashboard(request):
     current_lang = translation.get_language() or AppConstants.DEFAULT_LANGUAGE
     study.set_current_language(current_lang)
     
-    # Build base context
-    context = build_dashboard_context(
-        request, study, user_membership, user_permissions, user_site_codes
-    )
+    # # Build base context
+    # context = build_dashboard_context(
+    #     request, study, user_membership, user_permissions, user_site_codes
+    # )
     
-    # Add sites information
-    add_sites_to_context(context, study, user_membership, current_lang, request)
+    # # Add sites information
+    # add_sites_to_context(context, study, user_membership, current_lang, request)
     
-    # Add user studies for study switcher
-    context['user_studies'] = get_user_studies_list(request.user, current_lang)
+    # # Add user studies for study switcher
+    # context['user_studies'] = get_user_studies_list(request.user, current_lang)
     
-    # Add study folder path
-    context['study_folder'] = get_study_folder_path(study.code)
+    # # Add study folder path
+    # context['study_folder'] = get_study_folder_path(study.code)
+    
+    
     
     logger.debug(f"Dashboard loaded successfully for user {request.user.pk}")
     
-    return render(request, 'default/dashboard.html', context)
+    return render(request, 'default/dashboard.html',)
