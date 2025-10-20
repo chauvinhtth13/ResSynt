@@ -95,64 +95,29 @@ def load_study_apps() -> tuple:
     try:
         from backends.studies.study_loader import get_loadable_apps
         
-        logger.info("=" * 70)
-        logger.info("DJANGO STARTUP: Loading study apps")
-        logger.info("=" * 70)
-        
         # Get study apps
         study_apps = get_loadable_apps()
         
         if study_apps:
-            logger.info(f"SUCCESS: Loaded {len(study_apps)} study app(s)")
-            for app in study_apps:
-                logger.info(f"{app}")
-            logger.info("=" * 70)
             return study_apps, False
         else:
-            logger.info("No study apps to load at this time")
-            logger.info("=" * 70)
-            
-            # Only show instructions if not a migrate command
-            if is_management_command and 'migrate' not in sys.argv:
-                logger.info("")
-                logger.info("To add studies:")
-                logger.info("  1. Run: python manage.py migrate")
-                logger.info("  2. Create study in Django admin")
-                logger.info("  3. Run: python manage.py create_study_structure <CODE>")
-                logger.info("  4. Restart server")
-                logger.info("")
-            
             return [], False
 
     except Exception as e:
-        logger.error("=" * 70)
         logger.error("ERROR: Failed to load study apps")
-        logger.error("=" * 70)
         logger.error(f"Error: {e}")
-        logger.error("=" * 70)
         
         import traceback
         logger.debug(traceback.format_exc())
         
         return [], True
 
-
-# Load study apps
-logger.info("")
-logger.info("=" * 70)
-logger.info("INITIALIZING DJANGO SETTINGS")
-logger.info("=" * 70)
-
 STUDY_APPS, HAS_STUDY_ERRORS = load_study_apps()
 
 # Combine all apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + BASE_LOCAL_APPS + STUDY_APPS
 
-logger.info(f"Total installed apps: {len(INSTALLED_APPS)}")
 logger.info(f"List installed: {INSTALLED_APPS}")
-logger.info("=" * 70)
-logger.info("")
-
 
 # ==========================================
 # DATABASE CONFIGURATION
@@ -310,8 +275,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "backends.tenancy.middleware.UnifiedTenancyMiddleware",  # Unified middleware
+    "backends.tenancy.middleware.UnifiedTenancyMiddleware",
+    #'backends.tenancy.signals.StudyDatabaseTrackingMiddleware',
     "axes.middleware.AxesMiddleware",
+    "backends.tenancy.middleware.AxesNoRedirectMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -409,21 +376,26 @@ SESSION_SAVE_EVERY_REQUEST = False
 AUTH_USER_MODEL = "tenancy.User"
 
 AUTHENTICATION_BACKENDS = [
-    "axes.backends.AxesStandaloneBackend",
+    "axes.backends.AxesStandaloneBackend",  # ← Thêm dòng này
     "backends.tenancy.contrib.auth.BlockedUserBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
 # Axes configuration for brute-force protection
 AXES_ENABLED = True
-AXES_FAILURE_LIMIT = 7
-AXES_COOLOFF_TIME = None  # Disable Auto-unlock
+AXES_FAILURE_LIMIT = 3
+AXES_COOLOFF_TIME = None  # No auto-unlock
+AXES_LOCKOUT_PARAMETERS = ["username"]  # Username only, NOT IP
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCK_OUT_AT_FAILURE = True
-AXES_LOCKOUT_PARAMETERS = ["username"]
+AXES_LOCKOUT_TEMPLATE = None  # No redirect
+AXES_LOCKOUT_CALLABLE = "backends.api.base.lockout.custom_lockout_handler"
 AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
-AXES_LOCKOUT_TEMPLATE = "errors/lockout.html"
 AXES_CACHE_BACKEND = "default"
+
+AXES_VERBOSE = not DEBUG
+AXES_ENABLE_ACCESS_FAILURE_LOG = True  # Log tất cả failures
+AXES_DISABLE_ACCESS_LOG = False  # Giữ access log
 
 # ==========================================
 # INTERNATIONALIZATION
@@ -436,7 +408,7 @@ LANGUAGE_CODE = "vi"
 
 # Available languages
 LANGUAGES = [
-    ("vi", _("Tiếng Việt")),  # Vietnamese first
+    ("vi", _("Vietnamese")),  # Vietnamese first
     ("en", _("English")),  # English second
 ]
 
@@ -643,7 +615,7 @@ LOGGING = {
         # Database queries - handler riêng
         "django.db.backends": {
             "handlers": ["file_db"],
-            "level": "DEBUG" if DEBUG else "WARNING",
+            "level": "DEBUG",
             "propagate": False,
         },
         # Django request/response - chỉ log ERROR

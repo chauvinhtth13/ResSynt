@@ -3,6 +3,7 @@
 Database creation utilities for study databases
 """
 import psycopg
+from psycopg import sql
 from django.conf import settings
 import logging
 
@@ -91,12 +92,12 @@ class DatabaseStudyCreator:
             # Create database
             with psycopg.connect(conninfo, autocommit=True) as conn:
                 with conn.cursor() as cursor:
-                    # Create database
                     cursor.execute(
-                        psycopg.sql.SQL("CREATE DATABASE {}").format(
-                            psycopg.sql.Identifier(db_name)
+                        sql.SQL("CREATE DATABASE {}").format(
+                            sql.Identifier(db_name)
                         )
                     )
+                    logger.debug(f"Created database: {db_name}")
                     logger.debug(f"Created database: {db_name}")
             
             # Connect to new database and create 'data' schema
@@ -104,10 +105,14 @@ class DatabaseStudyCreator:
             
             with psycopg.connect(conninfo_new, autocommit=True) as conn:
                 with conn.cursor() as cursor:
-                    # Create 'data' schema
-                    cursor.execute("CREATE SCHEMA IF NOT EXISTS data")
-                    cursor.execute("GRANT ALL ON SCHEMA data TO CURRENT_USER")
-                    logger.debug(f"Created 'data' schema in {db_name}")
+                    # Create 'data', 'audit_log', and 'management' schemas if they don't exist (creator automatically has all privileges)
+                    cursor.execute("""
+                        CREATE SCHEMA IF NOT EXISTS data;
+                        CREATE SCHEMA IF NOT EXISTS audit_log;
+                    """)
+                    # Explicitly grant all privileges (redundant but harmless)
+                    cursor.execute("GRANT ALL ON SCHEMA data, audit_log TO CURRENT_USER")
+                    logger.debug(f"Ensured 'data', 'audit_log' schemas exist in {db_name}")
             
             return True, f"Database '{db_name}' created successfully"
             
@@ -166,12 +171,12 @@ class DatabaseStudyCreator:
                             (db_name,)
                         )
                     
-                    # Drop database
                     cursor.execute(
-                        psycopg.sql.SQL("DROP DATABASE {}").format(
-                            psycopg.sql.Identifier(db_name)
+                        sql.SQL("DROP DATABASE {}").format(
+                            sql.Identifier(db_name)
                         )
                     )
+                    logger.warning(f"Dropped database: {db_name}")
                     logger.warning(f"Dropped database: {db_name}")
             
             return True, f"Database '{db_name}' dropped successfully"

@@ -390,12 +390,6 @@ class StudyAppLoader:
                     f"Study {study_code.upper()}: Database '{db_name}' not found. "
                     f"Create it via Django admin or run migrations."
                 )
-        
-        if valid_studies:
-            logger.info(f"Found {len(valid_studies)} valid study/studies to load")
-        else:
-            logger.debug("No valid studies to load")
-        
         return valid_studies
     
     # ==========================================
@@ -438,10 +432,6 @@ class StudyAppLoader:
                     f"Study {study_code.upper()}: Database app folder missing. "
                     f"Run: python manage.py create_study_structure {study_code.upper()}"
                 )
-        
-        if database_apps:
-            logger.info(f"Returning {len(database_apps)} database app(s) for INSTALLED_APPS")
-        
         return database_apps
     
     @classmethod
@@ -513,12 +503,6 @@ class StudyAppLoader:
             
             # Get configuration
             databases[db_name] = DatabaseConfig.get_study_db_config(db_name)
-            
-            logger.debug(f"Database config: {db_name}")
-        
-        if databases:
-            logger.info(f"Configured {len(databases)} study database(s)")
-        
         return databases
 
 

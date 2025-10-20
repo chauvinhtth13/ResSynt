@@ -5,9 +5,9 @@ class LoginMessages:
     """Centralized messages for authentication system"""
     
     # Login error messages
-    INVALID_CREDENTIALS = _("Invalid username or password. Please try again.")
+    INVALID_CREDENTIALS = _("Invalid login. Try again.")
     ACCOUNT_LOCKED = _("Account locked. Please contact support.")
-    ACCOUNT_WILL_BE_LOCKED = _("Incorrect login. Account will be locked in {} attempts.")
+    ACCOUNT_WILL_BE_LOCKED = _("Login failed. Lock in {} attempts.")
     
     # Account status messages
     ACCOUNT_INACTIVE = _("This account is inactive.")

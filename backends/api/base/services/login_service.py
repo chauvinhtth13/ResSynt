@@ -1,4 +1,4 @@
-# backend/api/base/services/login_service.py
+# backend/api/base/services/login_service.py - OPTIMIZED
 """
 Service layer for login and authentication logic
 """
@@ -7,39 +7,33 @@ from typing import Optional, Dict, Any, Tuple
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from axes.models import AccessAttempt
-from axes.conf import settings as axes_settings
-from axes.handlers.proxy import AxesProxyHandler
+from django.conf import settings
 
-from ..constants import LoginMessages, CacheKeys, AppConstants
+from backends.api.base.constants import LoginMessages, CacheKeys, AppConstants
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-axes_handler = AxesProxyHandler()
 
 
 class LoginService:
-    """Service class to handle login logic"""
+    """Service class to handle login logic with lockout checking"""
     
     @staticmethod
     def get_actual_username(username_input: str) -> Optional[str]:
         """
-        Convert email to username if needed.
-        Returns None if user doesn't exist.
-        
-        Args:
-            username_input: Username or email input from user
-            
-        Returns:
-            Actual username or None if not found
+        Get actual username from input (email or username).
+        Uses cache for performance.
         """
         if not username_input:
             return None
         
+        username_input = username_input.strip()
+        
         # Check cache first
         cache_key = CacheKeys.get_username_lookup(username_input)
-        cached_username = cache.get(cache_key)
-        if cached_username:
-            return cached_username
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
         
         # Check if input is email
         if "@" in username_input:
@@ -51,115 +45,130 @@ class LoginService:
                 return None
         
         # Check if username exists
-        exists = User.objects.filter(username__iexact=username_input).exists()
-        if exists:
-            cache.set(cache_key, username_input, AppConstants.CACHE_TIMEOUT)
-            return username_input
+        try:
+            user = User.objects.only('username').get(username__iexact=username_input)
+            cache.set(cache_key, user.username, AppConstants.CACHE_TIMEOUT)
+            return user.username
+        except User.DoesNotExist:
+            return None
+    
+    @staticmethod
+    def check_lockout_status(username: str, request=None) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Check if user is locked out.
+        Returns (is_locked, context_dict)
         
-        return None
+        Context dict contains:
+        - is_locked: bool
+        - error_message: str
+        - form_disabled: bool
+        - remaining_attempts: int (if not locked)
+        """
+        if not username:
+            return False, {}
+        
+        # Check cache first
+        cache_key = CacheKeys.get_account_status(username)
+        cached_status = cache.get(cache_key)
+        
+        if cached_status and cached_status.get('is_locked'):
+            return True, {
+                'is_locked': True,
+                'error_message': LoginMessages.ACCOUNT_LOCKED,
+                'form_disabled': True,
+            }
+        
+        # Check database - user active status
+        try:
+            user = User.objects.only('is_active', 'username').get(username=username)
+            if not user.is_active:
+                return True, {
+                    'is_locked': True,
+                    'error_message': LoginMessages.ACCOUNT_LOCKED,
+                    'form_disabled': True,
+                }
+        except User.DoesNotExist:
+            return False, {}
+        
+        # Check Axes attempts
+        failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 5)
+        
+        attempt_count = AccessAttempt.objects.filter(
+            username=username,
+        ).count()
+        
+        if attempt_count >= failure_limit:
+            # User is locked
+            lock_info = {
+                'is_locked': True,
+                'attempt_count': attempt_count,
+            }
+            
+            # Cache the lock status
+            cache.set(cache_key, lock_info, timeout=3600)
+            
+            return True, {
+                'is_locked': True,
+                'error_message': LoginMessages.ACCOUNT_LOCKED,
+                'form_disabled': True,
+            }
+        
+        # Not locked - return remaining attempts
+        remaining = failure_limit - attempt_count
+        
+        return False, {
+            'is_locked': False,
+            'remaining_attempts': remaining,
+        }
     
     @staticmethod
     def check_account_status(request, actual_username: Optional[str]) -> Tuple[bool, Dict[str, Any]]:
         """
-        Check if account is locked or inactive.
-        
-        Args:
-            request: HTTP request object
-            actual_username: The actual username to check
-            
-        Returns:
-            Tuple of (is_locked: bool, error_context: dict)
+        Legacy method - calls check_lockout_status
         """
-        if not actual_username:
+        if actual_username is None:
             return False, {}
-        
-        # Check cache first
-        cache_key = CacheKeys.get_account_status(actual_username)
-        cached_status = cache.get(cache_key)
-        if cached_status:
-            return cached_status
-        
-        # Check if user is active
-        try:
-            user = User.objects.only('is_active').get(username=actual_username)
-            if not user.is_active:
-                result = (True, {
-                    'error_message': LoginMessages.ACCOUNT_LOCKED,
-                    'is_permanently_blocked': True
-                })
-                cache.set(cache_key, result, AppConstants.CACHE_TIMEOUT_SHORT)
-                return result
-        except User.DoesNotExist:
-            pass
-        
-        # Check Axes lock status
-        if axes_handler.is_locked(request, {'username': actual_username}):
-            result = (True, {
-                'error_message': LoginMessages.ACCOUNT_LOCKED,
-                'is_axes_blocked': True
-            })
-            cache.set(cache_key, result, AppConstants.CACHE_TIMEOUT_SHORT)
-            return result
-        
-        # Account is not locked
-        result = (False, {})
-        cache.set(cache_key, result, AppConstants.CACHE_TIMEOUT_SHORT)
-        return result
+        return LoginService.check_lockout_status(actual_username, request)
     
     @staticmethod
-    def get_login_error_context(actual_username: Optional[str]) -> Dict[str, Any]:
-        """
-        Get appropriate error context based on login attempts.
+    def get_remaining_attempts(username: str) -> int:
+        """Get number of remaining login attempts"""
+        if not username:
+            return 0
         
-        Args:
-            actual_username: The actual username
-            
-        Returns:
-            Dictionary with error_message
-        """
-        if not actual_username:
-            return {'error_message': LoginMessages.INVALID_CREDENTIALS}
+        failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 5)
         
-        try:
-            # Get failure attempts from Axes
-            attempt = AccessAttempt.objects.filter(
-                username=actual_username
-            ).only('failures_since_start').first()
-            
-            if attempt:
-                failures = attempt.failures_since_start
-                limit = axes_settings.AXES_FAILURE_LIMIT
-                remaining = max(0, limit - failures)
-                
-                # Account will be locked
-                if remaining <= 0:
-                    return {'error_message': LoginMessages.ACCOUNT_LOCKED}
-                
-                # Warn about remaining attempts
-                if failures > 1 and remaining > 0:
-                    return {
-                        'error_message': LoginMessages.ACCOUNT_WILL_BE_LOCKED.format(remaining)
-                    }
-        except Exception as e:
-            logger.error(f"Error checking attempts for {actual_username}: {e}")
+        attempt_count = AccessAttempt.objects.filter(
+            username=username,
+        ).count()
         
-        return {'error_message': LoginMessages.INVALID_CREDENTIALS}
+        return max(0, failure_limit - attempt_count)
     
     @staticmethod
-    def clear_user_cache(username: str) -> None:
-        """
-        Clear all cached data for a user.
-        
-        Args:
-            username: Username to clear cache for
-        """
+    def clear_user_cache(username: str):
+        """Clear all cache entries for user"""
         if not username:
             return
         
-        cache_keys = [
+        cache.delete_many([
             CacheKeys.get_username_lookup(username),
             CacheKeys.get_account_status(username),
-        ]
-        cache.delete_many(cache_keys)
+        ])
         
         logger.debug(f"Cleared cache for user: {username}")
+    
+    @staticmethod
+    def record_failed_attempt(request, username: str):
+        """
+        Record a failed login attempt.
+        This is handled by Axes middleware, but can be called manually if needed.
+        """
+        from axes.handlers.proxy import AxesProxyHandler
+        
+        handler = AxesProxyHandler()
+        handler.user_login_failed(
+            request=request,
+            credentials={'username': username}
+        )
+        
+        logger.info(f"Recorded failed attempt for: {username}")

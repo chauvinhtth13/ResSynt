@@ -16,6 +16,7 @@ from django.utils import translation
 from django.urls import reverse
 
 from axes.exceptions import AxesBackendPermissionDenied
+from axes.handlers.proxy import AxesProxyHandler
 
 from backends.tenancy.models import StudyMembership
 
@@ -23,15 +24,11 @@ from backends.tenancy.models import StudyMembership
 from .constants import AppConstants, LoginMessages, SessionKeys
 from .decorators import ensure_language, set_language_on_response
 from .services import LoginService, StudyService
-# from .helpers import (
-#     build_dashboard_context,
-#     add_sites_to_context,
-#     get_user_studies_list,
-#     get_study_folder_path,
-# )
+
 from .login import UsernameOrEmailAuthenticationForm
 
 logger = logging.getLogger(__name__)
+axes_handler = AxesProxyHandler()
 
 
 # ============================================
@@ -40,92 +37,142 @@ logger = logging.getLogger(__name__)
 @never_cache
 @csrf_protect
 @require_http_methods(["GET", "POST"])
-@ensure_language
-@set_language_on_response
-def custom_login(request: HttpRequest) -> HttpResponse:
+def custom_login(request):
     """
-    Login view with username or email support.
-    Handles account locking via Django-Axes.
+    FIXED VERSION - Guaranteed to return response
     """
-    # Redirect if already authenticated
-    if request.user.is_authenticated:
-        return redirect('admin:index' if request.user.is_superuser else 'select_study')
-
-    context: Dict[str, Any] = {
-        'LANGUAGE_CODE': translation.get_language() or AppConstants.DEFAULT_LANGUAGE
-    }
+    import logging
+    logger = logging.getLogger(__name__)
     
-    if request.method == 'POST':
-        username_input = request.POST.get('username', '').strip()
-        actual_username = LoginService.get_actual_username(username_input) if username_input else None
-        
-        # Check locks before authentication
-        if actual_username:
-            is_locked, lock_context = LoginService.check_account_status(request, actual_username)
-            if is_locked:
-                form = UsernameOrEmailAuthenticationForm(request)
-                form.initial['username'] = username_input
-                context['form'] = form
-                context.update(lock_context)
-                logger.warning(f"Blocked access attempt for {actual_username}")
-                return render(request, 'authentication/login.html', context)
-        
-        # Process authentication
-        try:
-            form = UsernameOrEmailAuthenticationForm(request, data=request.POST)
-            
-            if form.is_valid():
-                user = form.get_user()
-                
-                if not user.is_active:
-                    context['form'] = form
-                    context['error_message'] = LoginMessages.ACCOUNT_LOCKED
-                    return render(request, 'authentication/login.html', context)
-                
-                # Clear session and cache
-                request.session.pop(SessionKeys.LAST_FAILED_USERNAME, None)
-                LoginService.clear_user_cache(user.username)
-
-                # Login user
-                login(request, user)
-                logger.debug(f"User {user.username} logged in successfully")
-                
-                # Redirect to next URL or default
-                next_url = request.GET.get('next', '')
-                if next_url and next_url.startswith('/'):
-                    return redirect(next_url)
-                return redirect('admin:index' if user.is_superuser else 'select_study')
-            else:
-                # Handle invalid form
-                if username_input:
-                    request.session[SessionKeys.LAST_FAILED_USERNAME] = username_input
-                    context.update(LoginService.get_login_error_context(actual_username))
-                context['form'] = form
-                
-        except AxesBackendPermissionDenied:
-            logger.warning(f"AxesBackendPermissionDenied for {username_input}")
-            form = UsernameOrEmailAuthenticationForm(request)
-            form.initial['username'] = username_input
-            context['form'] = form
-            context['error_message'] = LoginMessages.ACCOUNT_LOCKED
-            
-    else:
-        # GET request
+    logger.error("=" * 50)
+    logger.error(f"LOGIN VIEW CALLED")
+    logger.error(f"Path: {request.path}")
+    logger.error(f"Method: {request.method}")
+    logger.error(f"User authenticated: {request.user.is_authenticated}")
+    logger.error("=" * 50)
+    
+    # Redirect if authenticated
+    if request.user.is_authenticated:
+        logger.error("User authenticated - redirecting")
+        return redirect('select_study')
+    
+    # GET request - show form
+    if request.method == 'GET':
+        logger.error("GET request - rendering form")
+        from .login import UsernameOrEmailAuthenticationForm
         form = UsernameOrEmailAuthenticationForm(request)
         
-        # Check if returning from failed attempt
-        last_username = request.session.get(SessionKeys.LAST_FAILED_USERNAME)
-        if last_username:
-            form.initial['username'] = last_username
-            actual_username = LoginService.get_actual_username(last_username)
-            is_locked, lock_context = LoginService.check_account_status(request, actual_username)
-            if is_locked:
-                context.update(lock_context)
+        response = render(request, 'authentication/login.html', {
+            'form': form,
+            'LANGUAGE_CODE': 'vi'
+        })
         
-        context['form'] = form
-
-    return render(request, 'authentication/login.html', context)
-
+        logger.error(f"GET response created: {type(response)}")
+        logger.error(f"GET response status: {response.status_code}")
+        
+        return response  # ← EXPLICIT RETURN
+    
+    # POST request - process login
+    logger.error("POST request - processing login")
+    username = request.POST.get('username', '').strip()
+    
+    logger.error(f"Username input: {username}")
+    
+    # Empty username
+    if not username:
+        logger.error("Empty username - returning error")
+        from .login import UsernameOrEmailAuthenticationForm
+        form = UsernameOrEmailAuthenticationForm(request)
+        
+        response = render(request, 'authentication/login.html', {
+            'form': form,
+            'error_message': 'Please enter username',
+            'LANGUAGE_CODE': 'vi'
+        })
+        
+        logger.error(f"Empty username response: {type(response)}")
+        return response  # ← EXPLICIT RETURN
+    
+    # Check if account is locked BEFORE authentication
+    from .services import LoginService
+    actual_username = LoginService.get_actual_username(username)
+    
+    if actual_username:
+        is_locked, lock_context = LoginService.check_lockout_status(actual_username, request)
+        
+        if is_locked:
+            logger.error(f"Account locked: {actual_username}")
+            from .login import UsernameOrEmailAuthenticationForm
+            form = UsernameOrEmailAuthenticationForm(request)
+            form.initial['username'] = username
+            
+            context = {
+                'form': form,
+                'LANGUAGE_CODE': 'vi'
+            }
+            context.update(lock_context)
+            
+            response = render(request, 'authentication/login.html', context)
+            response.status_code = 403
+            
+            logger.error(f"Locked response: {type(response)}, status: {response.status_code}")
+            return response  # ← EXPLICIT RETURN
+    
+    # Try authentication
+    from .login import UsernameOrEmailAuthenticationForm
+    form = UsernameOrEmailAuthenticationForm(request, data=request.POST)
+    
+    logger.error(f"Form valid: {form.is_valid()}")
+    
+    # Valid - login user
+    if form.is_valid():
+        logger.error("Form valid - logging in")
+        from django.contrib.auth import login
+        user = form.get_user()
+        login(request, user)
+        
+        logger.error(f"User logged in: {user.username}")
+        return redirect('select_study')  # ← EXPLICIT RETURN
+    
+    # Invalid - show errors
+    logger.error("Form invalid - showing errors")
+    logger.error(f"Form errors: {form.errors}")
+    
+    # Get remaining attempts
+    if actual_username:
+        remaining = LoginService.get_remaining_attempts(actual_username)
+        logger.error(f"Remaining attempts: {remaining}")
+        
+        context = {
+            'form': form,
+            'error_message': 'Invalid credentials',
+            'LANGUAGE_CODE': 'vi'
+        }
+        
+        if remaining > 0:
+            context['remaining_attempts'] = remaining
+            if remaining <= 2:
+                context['warning_message'] = f"Warning: {remaining} attempts remaining"
+        else:
+            # Just got locked
+            context['error_message'] = 'Account locked due to too many failed attempts'
+            context['form_disabled'] = True
+            context['is_locked'] = True
+    else:
+        context = {
+            'form': form,
+            'error_message': 'Invalid credentials',
+            'LANGUAGE_CODE': 'vi'
+        }
+    
+    response = render(request, 'authentication/login.html', context)
+    
+    logger.error(f"Invalid form response: {type(response)}")
+    logger.error(f"Invalid form status: {response.status_code}")
+    logger.error("RETURNING response now")  # ← NEW LOG
+    
+    return response 
+    
 
 @login_required
 @never_cache

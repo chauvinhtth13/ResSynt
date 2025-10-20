@@ -248,20 +248,17 @@ class TenantRouter:
         # ==========================================
         if app_label in self.MANAGEMENT_APPS:
             allowed = (db == 'default')
-            
             if not allowed:
                 logger.debug(
                     f"Blocked migration: Management app '{app_label}' "
                     f"cannot migrate to non-default database '{db}'"
                 )
-            
             return allowed
         
         # ==========================================
         # RULE 2: Study apps ONLY on study databases
         # ==========================================
         if app_label in self.STUDY_APPS or app_label.startswith('study_'):
-            # Cannot migrate to default database
             if db == 'default':
                 logger.debug(
                     f"Blocked migration: Study app '{app_label}' "
@@ -269,34 +266,20 @@ class TenantRouter:
                 )
                 return False
             
-            # Must be a study database
             if not db.startswith(study_db_prefix):
                 logger.debug(
                     f"Blocked migration: Study app '{app_label}' "
-                    f"can only migrate to study databases (prefix: {study_db_prefix})"
+                    f"can only migrate to study databases"
                 )
                 return False
             
-            # Check if database is configured
-            from django.db import connections
-            
-            if db not in connections.databases:
-                logger.debug(
-                    f"Database '{db}' not configured yet, "
-                    f"skipping migration check for '{app_label}'"
-                )
-                return False
-            
-            # Check if database actually exists (graceful handling)
-            if not self._database_exists(db):
-                logger.debug(
-                    f"Database '{db}' does not exist yet, "
-                    f"skipping migration for '{app_label}'"
-                )
-                return False
-            
-            # All checks passed - allow migration
+            # Allow study apps to migrate to study DB
             return True
+        
+        # Default behavior
+        if db == 'default':
+            return app_label not in self.STUDY_APPS and not app_label.startswith('study_')
+        return False
         
         # ==========================================
         # RULE 3: Unknown apps - default rules
@@ -335,15 +318,15 @@ class TenantRouter:
         """
         try:
             # Try to import DatabaseCreator
-            from backends.tenancy.utils import DatabaseCreator
+            from backends.tenancy.utils import DatabaseStudyCreator
             
-            return DatabaseCreator.database_exists(db_name)
+            return DatabaseStudyCreator.database_exists(db_name)
             
         except ImportError:
             # DatabaseCreator not available yet (during initial setup)
             logger.debug(
                 f"Cannot check database existence for '{db_name}' "
-                f"(DatabaseCreator not available yet)"
+                f"(DatabaseStudyCreator not available yet)"
             )
             # Assume it exists and let Django handle any errors
             return True
@@ -499,3 +482,4 @@ def print_router_stats():
 def clear_router_cache():
     """Clear router cache (convenience function)"""
     TenantRouter.clear_cache()
+    

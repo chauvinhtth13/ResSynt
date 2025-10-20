@@ -13,7 +13,7 @@ NAMING CONVENTION:
 - role_key: Internal identifier (e.g., 'data_manager') - lowercase with underscores
 - display_name: Human-readable name (e.g., 'Data Manager') - Title Case with spaces
 """
-from typing import Dict, List, Set, Optional, Tuple
+from typing import Dict, List, Set, Optional, Tuple, Any
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction, connection
@@ -56,7 +56,11 @@ class DatabaseReadinessChecker:
                     )
                 """, [schema, table_name])
                 
-                return cursor.fetchone()[0]
+                row = cursor.fetchone()
+                # cursor.fetchone() can return None in some DB states; handle safely
+                if not row:
+                    return False
+                return bool(row[0])
                 
         except Exception as e:
             logger.debug(f"Cannot check table {schema}.{table_name}: {e}")
@@ -308,30 +312,23 @@ class StudyRoleManager:
     
     @classmethod
     def get_study_models(cls, app_label: str) -> List[str]:
-        """
-        Get all model names for a study app
+        """Get all model names for a study app"""
         
-        IMPROVED: Graceful handling when ContentType not ready
-        """
-        # Check if ContentType is ready
         if not DatabaseReadinessChecker.are_contenttypes_ready():
-            logger.debug(
-                f"ContentType not ready for {app_label}. "
-                f"Run migrations first."
-            )
+            logger.debug(f"ContentType not ready for {app_label}")
             return []
         
         try:
-            content_types = ContentType.objects.filter(app_label=app_label)
+            # ✅ Query từ DEFAULT database
+            content_types = ContentType.objects.filter(  # ← Không dùng .using()
+                app_label=app_label
+            )
             model_names = [ct.model for ct in content_types]
             
             if model_names:
                 logger.debug(f"Found {len(model_names)} models in {app_label}")
             else:
-                logger.debug(
-                    f"No models found for {app_label}. "
-                    f"May need to run: python manage.py migrate --database db_study_{app_label.replace('study_', '')}"
-                )
+                logger.debug(f"No models found for {app_label} in default database")
             
             return model_names
             
@@ -341,15 +338,12 @@ class StudyRoleManager:
     
     @classmethod
     def _build_permission_map(cls, app_label: str) -> Dict[str, Dict[str, Permission]]:
-        """
-        Build a map of permissions organized by model and action
-        
-        IMPROVED: Safe handling when permissions don't exist
-        """
+        """Build a map of permissions"""
         try:
+            # ✅ Query từ DEFAULT database
             all_permissions = Permission.objects.filter(
                 content_type__app_label=app_label
-            ).select_related('content_type')
+            ).select_related('content_type')  # ← ContentType cũng từ default DB
             
             permission_map = {}
             for perm in all_permissions:
@@ -468,7 +462,7 @@ class StudyRoleManager:
     
     @classmethod
     @transaction.atomic
-    def initialize_study(cls, study_code: str, force: bool = False) -> Dict[str, any]:
+    def initialize_study(cls, study_code: str, force: bool = False) -> Dict[str, Any]:
         """
         Complete initialization of study groups and permissions
         
@@ -574,7 +568,13 @@ class StudyRoleManager:
         if not group:
             return set()
         
-        cache_key = f'group_perms_{group.id}'
+        # Safely obtain an identifier for the group for cache keys in a way
+        # that static type checkers won't complain about a missing 'id' attribute.
+        gid = getattr(group, "pk", getattr(group, "id", None))
+        if gid is None:
+            # Fall back to the group name (or a generic string) if no numeric id is available
+            gid = getattr(group, "name", "unknown")
+        cache_key = f'group_perms_{gid}'
         
         if use_cache:
             perms = cache.get(cache_key)
@@ -590,7 +590,7 @@ class StudyRoleManager:
             return perms
             
         except Exception as e:
-            logger.debug(f"Error getting permissions for group {group.name}: {e}")
+            logger.debug(f"Error getting permissions for group {getattr(group, 'name', str(group))}: {e}")
             return set()
     
     @classmethod
@@ -688,7 +688,11 @@ class StudyRoleManager:
         try:
             groups = Group.objects.filter(name__startswith=prefix)
             for group in groups:
-                cache.delete(f'group_perms_{group.id}')
+                # Safely obtain an identifier for the group (prefer pk, then id, then name)
+                gid = getattr(group, "pk", getattr(group, "id", None))
+                if gid is None:
+                    gid = getattr(group, "name", str(group))
+                cache.delete(f'group_perms_{gid}')
         except Exception:
             pass
         
@@ -720,7 +724,7 @@ class StudyRoleManager:
             return 0
     
     @classmethod
-    def get_statistics(cls) -> Dict[str, any]:
+    def get_statistics(cls) -> Dict[str, Any]:
         """Get overall statistics about study groups"""
         if not DatabaseReadinessChecker.is_tenancy_ready():
             return {
