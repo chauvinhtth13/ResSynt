@@ -27,123 +27,72 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
-@receiver(user_locked_out)
-def handle_axes_lockout(sender, request, username, ip_address, **kwargs):
-    """
-    Handle Axes lockout event - ONLY handler that should block users
-    
-    This is called by Axes when user reaches AXES_FAILURE_LIMIT.
-    """
-    from backends.tenancy.models.user import User
-
-    try:
-        now = timezone.now()
-        note_text = f"\n[{now.strftime('%Y-%m-%d %H:%M:%S')}] Auto-blocked by Axes from IP {ip_address}"
-
-        with transaction.atomic():
-            updated = User.objects.filter(username=username, is_active=True).update(
-                is_active=False,
-                notes=Concat(F("notes"), Value(note_text), output_field=models.TextField()),
-            )
-
-            if updated:
-                logger.warning(
-                    f"SECURITY: User '{username}' deactivated due to axes lockout from IP {ip_address}"
-                )
-
-                # Clear cache
-                cache_keys = [
-                    f"user_{username}",
-                    f"user_blocked_{username}",
-                    f"user_obj_{username}",
-                    f"user_login_{username}",
-                ]
-                cache.delete_many(cache_keys)
-
-    except Exception as e:
-        logger.error(
-            f"Error handling axes lockout for '{username}': {e}", exc_info=True
-        )
-
+# ==========================================
+# AUTHENTICATION SIGNAL HANDLERS
+# ==========================================
 
 @receiver(user_logged_in)
 def handle_successful_login(sender, request, user, **kwargs):
-    """Handle successful login - Reset counters"""
-    from backends.tenancy.models.user import User
-
+    """
+    Handle successful login - Reset counters and cache user info.
+    
+    OPTIMIZED: Single update query, efficient caching
+    """
+    if not user:
+        return
+    
     try:
-        if not user.is_active:
-            logger.error(
-                f"WARNING: Inactive user '{user.username}' logged in - shouldn't happen!"
-            )
-            return
-
         now = timezone.now()
         
-        # Reset failed login counters
-        User.objects.filter(pk=user.pk).update(
-            failed_login_attempts=0, 
-            last_failed_login=None, 
-            last_login=now
-        )
-
-        # Cache login info
-        cache.set(
-            f"user_login_{user.pk}",
-            {
-                "username": user.username,
-                "last_login": now.isoformat(),
-            },
-            timeout=300,
-        )
-
-        logger.debug(f"User '{user.username}' logged in successfully")
-
+        # Single atomic update
+        with transaction.atomic():
+            User.objects.filter(pk=user.pk).update(
+                failed_login_attempts=0,
+                last_failed_login=None,
+                last_login=now
+            )
+        
+        # Cache user login info
+        cache_key = f"user_login_{user.pk}"
+        cache_data = {
+            "username": user.username,
+            "last_login": now.isoformat(),
+            "is_superuser": user.is_superuser,
+        }
+        cache.set(cache_key, cache_data, timeout=300)  # 5 minutes
+        
+        logger.info(f"User '{user.username}' logged in successfully from {request.META.get('REMOTE_ADDR', 'unknown')}")
+        
     except Exception as e:
-        logger.error(
-            f"Error handling successful login for '{user.username}': {e}", exc_info=True
-        )
+        logger.error(f"Error handling successful login for user {user.pk}: {e}", exc_info=True)
 
 
 @receiver(user_login_failed)
 def handle_failed_login(sender, credentials, request, **kwargs):
     """
-    Handle failed login attempts - ONLY track, DON'T block
+    Track failed login attempts for audit purposes.
     
-    FIXED: Removed duplicate blocking logic.
-    Blocking is handled by:
-    1. Axes via user_locked_out signal → handle_axes_lockout()
-    2. custom_lockout_handler in lockout.py
-    
-    This handler ONLY increments counter for tracking purposes.
+    SIMPLIFIED: Chỉ track, không block. Axes sẽ handle blocking.
     """
-    from backends.tenancy.models.user import User
-
     username = credentials.get("username")
     if not username:
         return
-
+    
     try:
-        # ONLY increment counter for tracking
-        # DO NOT check threshold or block user here
+        # Update failed login counter for tracking/audit
         with transaction.atomic():
-            User.objects.filter(username=username).update(
+            updated = User.objects.filter(username=username).update(
                 failed_login_attempts=F("failed_login_attempts") + 1,
-                last_failed_login=timezone.now(),
+                last_failed_login=timezone.now()
             )
-
-        logger.debug(f"Failed login attempt for user '{username}'")
-
-        # ✅ REMOVED duplicate blocking logic - Let Axes handle it
-        # The old code here was blocking users prematurely
-        # Axes will handle blocking via:
-        #   1. user_locked_out signal (above)
-        #   2. custom_lockout_handler (lockout.py)
-
+        
+        if updated:
+            logger.warning(
+                f"Failed login attempt for '{username}' from {request.META.get('REMOTE_ADDR', 'unknown')}"
+            )
+        
     except Exception as e:
-        logger.error(
-            f"Error handling failed login for '{username}': {e}", exc_info=True
-        )
+        logger.error(f"Error tracking failed login for '{username}': {e}")
 
 
 # ==========================================
@@ -156,48 +105,48 @@ _request_local = threading.local()
 
 @receiver(request_started)
 def handle_request_start(sender, environ, **kwargs):
-    """Handle request start"""
+    """Initialize request context and clear stale database connections."""
     try:
+        # Clear database routing context
         from backends.tenancy.db_router import clear_current_db
         clear_current_db()
         
-        # Initialize tracking for this request
+        # Initialize request tracking
         _request_local.study_dbs_used = set()
-
+        _request_local.request_start = timezone.now()
+        
         if settings.DEBUG:
-            path = environ.get("PATH_INFO", "")
-            method = environ.get("REQUEST_METHOD", "")
+            path = environ.get('PATH_INFO', 'unknown')
+            method = environ.get('REQUEST_METHOD', 'unknown')
             logger.debug(f"Request started: {method} {path}")
-
+            
     except Exception as e:
-        logger.error(f"Error in request start handler: {e}")
+        logger.error(f"Error in request_started handler: {e}")
 
 
 @receiver(request_finished)
-def handle_request_finish(sender, **kwargs):
-    """Handle request finish - Close study DB connections"""
+def handle_request_finished(sender, **kwargs):
+    """Clean up request context and log performance metrics."""
     try:
+        # Clear database context
         from backends.tenancy.db_router import clear_current_db
-        
-        # Close connections to study databases
-        if hasattr(_request_local, 'study_dbs_used'):
-            for db_alias in _request_local.study_dbs_used:
-                try:
-                    if db_alias in connections:
-                        connections[db_alias].close()
-                except Exception as e:
-                    logger.error(f"Error closing connection to {db_alias}: {e}")
-            
-            # Clear tracking
-            _request_local.study_dbs_used = set()
-        
         clear_current_db()
         
-        if settings.DEBUG:
-            logger.debug("Request finished - study DB connections closed")
-
+        # Log performance metrics in DEBUG mode
+        if settings.DEBUG and hasattr(_request_local, 'request_start'):
+            duration = (timezone.now() - _request_local.request_start).total_seconds()
+            
+            if duration > 1.0:  # Log slow requests
+                logger.warning(f"Slow request detected: {duration:.2f}s")
+        
+        # Clean up request-local storage
+        if hasattr(_request_local, 'study_dbs_used'):
+            del _request_local.study_dbs_used
+        if hasattr(_request_local, 'request_start'):
+            del _request_local.request_start
+            
     except Exception as e:
-        logger.error(f"Error in request finish handler: {e}")
+        logger.error(f"Error in request_finished handler: {e}")
 
 
 # ==========================================
@@ -215,7 +164,7 @@ def track_study_access_signal(user, study):
 
         now = timezone.now()
 
-        # FIX: Debounce - chỉ update DB mỗi 5 phút
+        # FIX: Debounce - chá»‰ update DB má»—i 5 phÃºt
         if not last_tracked or (now - last_tracked).seconds > 300:
             User.objects.filter(pk=user.pk).update(
                 last_study_accessed=study, last_study_accessed_at=now
@@ -344,13 +293,12 @@ def auto_create_study_database(
 # STUDY - ROLE & PERMISSION MANAGEMENT
 # ==========================================
 
-
 @receiver(post_migrate)
 def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> None:
     """
     Auto-sync permissions after migrations for study apps
     
-    FIX: Simplified logic, better error handling
+    FIX: Query ContentType từ default database, không phải study database
     """
     # Get which database is being migrated
     using = kwargs.get("using", "default")
@@ -401,7 +349,7 @@ def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> No
         logger.info("=" * 70)
         logger.info(f"Database: {using}")
 
-        # Get study instance
+        # Get study instance from DEFAULT database
         try:
             study = Study.objects.get(code=study_code)
         except Study.DoesNotExist:
@@ -410,9 +358,9 @@ def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> No
             )
             return
 
-        # Check if models exist
+        # ✅ FIX: Query ContentType từ DEFAULT database, không dùng .using(using)
         app_label = f"study_{study_code.lower()}"
-        content_type_count = ContentType.objects.using(using).filter(
+        content_type_count = ContentType.objects.filter(  # Bỏ .using(using)
             app_label=app_label
         ).count()
 
@@ -464,7 +412,6 @@ def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> No
             exc_info=True
         )
         logger.error("=" * 70)
-
 
 # ==========================================
 # USER - PASSWORD CHANGE TRACKING
@@ -524,9 +471,9 @@ def sync_user_to_group_on_membership_change(
         created: True if new membership
         **kwargs: Additional signal arguments
     """
-    # FIX: Add select_related để tránh N+1 queries
+    # FIX: Add select_related Ä‘á»ƒ trÃ¡nh N+1 queries
     try:
-        # Refresh instance with related objects nếu chưa có
+        # Refresh instance with related objects náº¿u chÆ°a cÃ³
         if not hasattr(instance, '_user_cached'):
             from backends.tenancy.models.permission import StudyMembership
             instance = StudyMembership.objects.select_related(

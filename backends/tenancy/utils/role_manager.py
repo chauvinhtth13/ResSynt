@@ -319,31 +319,26 @@ class StudyRoleManager:
             return []
         
         try:
-            # ✅ Query từ DEFAULT database
-            content_types = ContentType.objects.filter(  # ← Không dùng .using()
+            # ✅ Query từ DEFAULT database - KHÔNG dùng .using()
+            content_types = ContentType.objects.filter(
                 app_label=app_label
             )
             model_names = [ct.model for ct in content_types]
-            
-            if model_names:
-                logger.debug(f"Found {len(model_names)} models in {app_label}")
-            else:
-                logger.debug(f"No models found for {app_label} in default database")
             
             return model_names
             
         except Exception as e:
             logger.debug(f"Error getting models for {app_label}: {e}")
             return []
-    
+
     @classmethod
     def _build_permission_map(cls, app_label: str) -> Dict[str, Dict[str, Permission]]:
         """Build a map of permissions"""
         try:
-            # ✅ Query từ DEFAULT database
+            # ✅ Query từ DEFAULT database - KHÔNG dùng .using()
             all_permissions = Permission.objects.filter(
                 content_type__app_label=app_label
-            ).select_related('content_type')  # ← ContentType cũng từ default DB
+            ).select_related('content_type')
             
             permission_map = {}
             for perm in all_permissions:

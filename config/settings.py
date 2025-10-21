@@ -270,15 +270,15 @@ DATABASE_ROUTERS = ["backends.tenancy.db_router.TenantRouter"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "backends.tenancy.middleware.UnifiedTenancyMiddleware",
-    #'backends.tenancy.signals.StudyDatabaseTrackingMiddleware',
     "axes.middleware.AxesMiddleware",
-    "backends.tenancy.middleware.AxesNoRedirectMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -376,26 +376,35 @@ SESSION_SAVE_EVERY_REQUEST = False
 AUTH_USER_MODEL = "tenancy.User"
 
 AUTHENTICATION_BACKENDS = [
-    "axes.backends.AxesStandaloneBackend",  # ← Thêm dòng này
-    "backends.tenancy.contrib.auth.BlockedUserBackend",
+    "axes.backends.AxesStandaloneBackend",  # ✅ First - handles lockout
+    "django.contrib.auth.backends.ModelBackend",  # Third - standard auth
+]
+
+# ==========================================
+# AXES CONFIGURATION
+# ==========================================
+
+AUTH_USER_MODEL = "tenancy.User"
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesBackend",  
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-# Axes configuration for brute-force protection
+# Axes configuration - Manual Check Mode
 AXES_ENABLED = True
-AXES_FAILURE_LIMIT = 3
-AXES_COOLOFF_TIME = None  # No auto-unlock
-AXES_LOCKOUT_PARAMETERS = ["username"]  # Username only, NOT IP
+AXES_FAILURE_LIMIT = 7
+AXES_COOLOFF_TIME = None  
+AXES_LOCKOUT_PARAMETERS = ["username"]
 AXES_RESET_ON_SUCCESS = True
-AXES_LOCK_OUT_AT_FAILURE = True
-AXES_LOCKOUT_TEMPLATE = None  # No redirect
-AXES_LOCKOUT_CALLABLE = "backends.api.base.lockout.custom_lockout_handler"
-AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
-AXES_CACHE_BACKEND = "default"
 
-AXES_VERBOSE = not DEBUG
-AXES_ENABLE_ACCESS_FAILURE_LOG = True  # Log tất cả failures
-AXES_DISABLE_ACCESS_LOG = False  # Giữ access log
+# KEY SETTING: Disable auto-lock to prevent redirect
+AXES_LOCK_OUT_AT_FAILURE = False  
+
+# Database handler
+AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
+AXES_VERBOSE = True
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
 
 # ==========================================
 # INTERNATIONALIZATION
