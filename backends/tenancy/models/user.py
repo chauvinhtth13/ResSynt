@@ -5,8 +5,10 @@ User model with complete role integration
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as BaseUserManager
 from django.db import models
+from django.db.models import Prefetch
+from django.db import transaction
 from django.utils import timezone
-from django.utils import cache
+from django.core.cache import cache
 from typing import Optional, Tuple, Set, Dict, List, TYPE_CHECKING
 import logging
 
@@ -64,7 +66,7 @@ class User(AbstractUser):
     
     # Security fields
     must_change_password = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name="Must Change Password"
     )
     
@@ -236,7 +238,7 @@ class User(AbstractUser):
         
         result = {}
         for membership in memberships:
-            result[membership.study_id] = {
+            result[membership.study.id] = {
                 'study_code': membership.study.code,
                 'study_name': membership.study.safe_translation_getter('name', any_language=True),
                 'role_key': membership.get_role_key(),
@@ -358,7 +360,12 @@ class User(AbstractUser):
     # ==========================================
     
     def get_axes_status(self) -> Tuple[bool, Optional[str], Optional[int]]:
-        """Get axes block status"""
+        """
+        Get axes block status
+        
+        Returns:
+            tuple: (is_blocked, reason, attempts)
+        """
         from axes.models import AccessAttempt
         from axes.conf import settings as axes_settings
         
@@ -380,49 +387,109 @@ class User(AbstractUser):
                     
         except Exception as e:
             logger.error(f"Error checking axes status for user {self.username}: {e}")
-            attempts = self.failed_login_attempts
-            
+        
         return is_blocked, reason, attempts
     
     def reset_axes_locks(self) -> bool:
-        """Reset all axes locks"""
+        """
+        Reset all axes locks and cache - IMPROVED VERSION
+        
+        Features:
+        - Transaction safety
+        - Complete cache cleanup
+        - Detailed logging
+        - Consistent with signals.py
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
         from axes.models import AccessAttempt, AccessFailureLog
         from axes.utils import reset
         
         try:
-            reset(username=self.username)
-            AccessAttempt.objects.filter(username=self.username).delete()
-            AccessFailureLog.objects.filter(username=self.username).delete()
-            
-            cache.delete_many([
-                f"axes:username:{self.username}",
-                f"user_blocked_{self.username}",
-                f"user_obj_{self.pk}",
-            ])
+            with transaction.atomic():
+                # 1. Reset axes utilities (built-in function)
+                reset(username=self.username)
                 
+                # 2. Delete all attempts and logs
+                deleted_attempts = AccessAttempt.objects.filter(
+                    username=self.username
+                ).delete()
+                
+                deleted_logs = AccessFailureLog.objects.filter(
+                    username=self.username
+                ).delete()
+                
+                # 3. Clear ALL related cache keys (synchronized with signals.py)
+                cache_keys = [
+                    # Axes cache keys
+                    f"axes:username:{self.username}",
+                    
+                    # User cache keys by username
+                    f"user_{self.username}",
+                    f"user_blocked_{self.username}",
+                    f"user_obj_{self.username}",
+                    f"user_login_{self.username}",
+                    
+                    # User cache keys by pk
+                    f"user_obj_{self.pk}",
+                    f"user_login_{self.pk}",
+                ]
+                cache.delete_many(cache_keys)
+            
+            # 4. Log success for audit trail
+            logger.info(
+                f"Reset Axes locks for user '{self.username}' (pk={self.pk}): "
+                f"deleted {deleted_attempts[0]} attempts, {deleted_logs[0]} logs"
+            )
             return True
+            
         except Exception as e:
-            logger.error(f"Error resetting axes locks: {e}")
+            logger.error(
+                f"Error resetting axes locks for user '{self.username}' (pk={self.pk}): {e}", 
+                exc_info=True
+            )
             return False
     
     def unblock_user(self) -> bool:
-        """Unblock user completely"""
+        """
+        Unblock user completely - reset Axes + activate + clear counters
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        # 1. Reset Axes locks first
         success = self.reset_axes_locks()
+        
         if success:
+            # 2. Activate user and reset counters
             self.is_active = True
             self.failed_login_attempts = 0
             self.last_failed_login = None
             
+            # Use super().save() to avoid triggering custom save logic
             super().save(update_fields=[
-                'is_active', 'failed_login_attempts', 'last_failed_login'
+                'is_active', 
+                'failed_login_attempts', 
+                'last_failed_login'
             ])
             
-            logger.debug(f"User {self.username} unblocked successfully")
+            logger.info(f"User '{self.username}' (pk={self.pk}) unblocked successfully")
+        else:
+            logger.error(f"Failed to unblock user '{self.username}' (pk={self.pk})")
             
         return success
     
     def block_user(self, reason: Optional[str] = None) -> bool:
-        """Block user"""
+        """
+        Block user and add note
+        
+        Args:
+            reason: Optional reason for blocking
+            
+        Returns:
+            bool: True if successful
+        """
         self.is_active = False
         
         if reason:
@@ -431,25 +498,36 @@ class User(AbstractUser):
             self.notes = f"{current_notes}\n[{timestamp}] Blocked: {reason}".strip()
         
         self.save(update_fields=['is_active', 'notes'])
-        logger.debug(f"User {self.username} blocked: {reason or 'No reason'}")
+        logger.info(f"User '{self.username}' (pk={self.pk}) blocked: {reason or 'No reason'}")
         return True
+    
+    # ==========================================
+    # AXES PROPERTIES
+    # ==========================================
     
     @property
     def is_axes_blocked(self) -> bool:
-        """Check if blocked by axes"""
+        """Check if blocked by axes (attempts >= limit)"""
         is_blocked, _, _ = self.get_axes_status()
         return is_blocked
     
     @property
     def axes_failure_count(self) -> int:
-        """Get axes failure count"""
+        """Get current axes failure count"""
         _, _, attempts = self.get_axes_status()
         return attempts or 0
     
     @property
+    def has_axes_warning(self) -> bool:
+        """Check if has warning (0 < attempts < limit)"""
+        from axes.conf import settings as axes_settings
+        attempts = self.axes_failure_count
+        return 0 < attempts < axes_settings.AXES_FAILURE_LIMIT
+    
+    @property
     def is_blocked(self) -> bool:
-        """Check if blocked"""
-        return not self.is_active
+        """Check if user is blocked (inactive OR axes blocked)"""
+        return not self.is_active or self.is_axes_blocked
     
     # ==========================================
     # STUDY ACCESS METHODS
@@ -474,28 +552,39 @@ class User(AbstractUser):
         ).exists()
     
     def get_accessible_studies(self):
-        """Get all accessible studies"""
-        from backends.tenancy.models import Study
+        """OPTIMIZED: Better query with proper prefetching"""
+        from backends.tenancy.models import Study, StudyMembership
+        
+        # Option 1: More explicit (better for debugging)
+        study_ids = StudyMembership.objects.filter(
+            user=self,
+            is_active=True
+        ).values_list('study_id', flat=True)
         
         return Study.objects.filter(
-            memberships__user=self,
-            memberships__is_active=True,
+            id__in=study_ids,
             status__in=[Study.Status.ACTIVE, Study.Status.PLANNING]
-        ).distinct()
-    
+        ).select_related('created_by').prefetch_related(
+            'translations',
+            'study_sites__site',  # ✅ Prefetch sites if needed
+            Prefetch(
+                'memberships',
+                queryset=StudyMembership.objects.filter(user=self).select_related('group')
+            )
+        ).order_by('code')
+        
     def save(self, *args, **kwargs):
-        """Override save to handle axes synchronization"""
+        """OPTIMIZED: Check status change efficiently"""
         if self.pk:
             try:
-                original = User.objects.get(pk=self.pk)
+                # ✅ Only fetch is_active field
+                original = User.objects.only('is_active').get(pk=self.pk)
                 
                 if not original.is_active and self.is_active:
                     self.reset_axes_locks()
-                    logger.debug(f"User {self.username} activated - axes locks reset")
-                    
+                    logger.info(f"User {self.username} reactivated")
                 elif original.is_active and not self.is_active:
-                    logger.debug(f"User {self.username} deactivated")
-                    
+                    logger.warning(f"User {self.username} deactivated")
             except User.DoesNotExist:
                 pass
         

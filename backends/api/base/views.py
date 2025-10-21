@@ -5,38 +5,33 @@ Clean and maintainable - business logic moved to services
 """
 import logging
 from typing import Dict, Any
+from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 from django.http import HttpRequest, HttpResponse
-from django.utils import translation
-from django.urls import reverse
+from django.utils import translation, timezone
+from django.db import transaction, models
 
 from axes.exceptions import AxesBackendPermissionDenied
+from axes.handlers.proxy import AxesProxyHandler
 
-from backends.tenancy.models import StudyMembership
+from backends.tenancy.models.user import User
 
 # Local imports
 from .constants import AppConstants, LoginMessages, SessionKeys
 from .decorators import ensure_language, set_language_on_response
 from .services import LoginService, StudyService
-from .helpers import (
-    build_dashboard_context,
-    add_sites_to_context,
-    get_user_studies_list,
-    get_study_folder_path,
-)
 from .login import UsernameOrEmailAuthenticationForm
 
 logger = logging.getLogger(__name__)
+axes_handler = AxesProxyHandler()
 
 
-# ============================================
-# AUTHENTICATION VIEWS
-# ============================================
 @never_cache
 @csrf_protect
 @require_http_methods(["GET", "POST"])
@@ -44,101 +39,188 @@ logger = logging.getLogger(__name__)
 @set_language_on_response
 def custom_login(request: HttpRequest) -> HttpResponse:
     """
-    Login view with username or email support.
-    Handles account locking via Django-Axes.
+    Login view với auto-deactivate khi lockout.
     """
-    # Redirect if already authenticated
+    # Fast path: already authenticated
     if request.user.is_authenticated:
-        return redirect('admin:index' if request.user.is_superuser else 'select_study')
-
+        if request.user.is_superuser:
+            return redirect('admin:index')
+        return redirect('select_study')
+    
+    # Initialize context
     context: Dict[str, Any] = {
         'LANGUAGE_CODE': translation.get_language() or AppConstants.DEFAULT_LANGUAGE
     }
     
-    if request.method == 'POST':
-        username_input = request.POST.get('username', '').strip()
-        actual_username = LoginService.get_actual_username(username_input) if username_input else None
-        
-        # Check locks before authentication
-        if actual_username:
-            is_locked, lock_context = LoginService.check_account_status(request, actual_username)
-            if is_locked:
+    # GET request - display form
+    if request.method == 'GET':
+        context['form'] = UsernameOrEmailAuthenticationForm(request)
+        return render(request, 'authentication/login.html', context)
+    
+    # POST request - process login
+    username_input = request.POST.get('username', '').strip()
+    password = request.POST.get('password', '')
+    
+    # Validate input
+    if not username_input or not password:
+        context['form'] = UsernameOrEmailAuthenticationForm(request)
+        context['error_message'] = LoginMessages.INVALID_CREDENTIALS
+        return render(request, 'authentication/login.html', context)
+    
+    # Convert email to username if needed
+    actual_username = LoginService.get_actual_username(username_input)
+    
+    if actual_username:
+        # CHECK 1: Is user already deactivated?
+        try:
+            user = User.objects.only('is_active').get(username=actual_username)
+            if not user.is_active:
+                # User is deactivated (could be manual or from previous lockout)
                 form = UsernameOrEmailAuthenticationForm(request)
                 form.initial['username'] = username_input
-                context['form'] = form
-                context.update(lock_context)
-                logger.warning(f"Blocked access attempt for {actual_username}")
-                return render(request, 'authentication/login.html', context)
+                
+                context.update({
+                    'form': form,
+                    'error_message': LoginMessages.ACCOUNT_LOCKED,
+                    'form_disabled': True,
+                    'is_locked': True,
+                })
+                
+                logger.warning(f"Deactivated account login attempt: {actual_username}")
+                response = render(request, 'authentication/login.html', context)
+                response.status_code = 403
+                return response
+        except User.DoesNotExist:
+            pass
         
-        # Process authentication
-        try:
-            form = UsernameOrEmailAuthenticationForm(request, data=request.POST)
+        # CHECK 2: Is user locked by Axes (7+ failures)?
+        if LoginService.is_user_locked(actual_username):
+            # Deactivate user if not already deactivated
+            LoginService.deactivate_locked_user(actual_username, request)
             
-            if form.is_valid():
-                user = form.get_user()
-                
-                if not user.is_active:
-                    context['form'] = form
-                    context['error_message'] = LoginMessages.ACCOUNT_LOCKED
-                    return render(request, 'authentication/login.html', context)
-                
-                # Clear session and cache
-                request.session.pop(SessionKeys.LAST_FAILED_USERNAME, None)
-                LoginService.clear_user_cache(user.username)
-
-                # Login user
-                login(request, user)
-                logger.debug(f"User {user.username} logged in successfully")
-                
-                # Redirect to next URL or default
-                next_url = request.GET.get('next', '')
-                if next_url and next_url.startswith('/'):
-                    return redirect(next_url)
-                return redirect('admin:index' if user.is_superuser else 'select_study')
-            else:
-                # Handle invalid form
-                if username_input:
-                    request.session[SessionKeys.LAST_FAILED_USERNAME] = username_input
-                    context.update(LoginService.get_login_error_context(actual_username))
-                context['form'] = form
-                
-        except AxesBackendPermissionDenied:
-            logger.warning(f"AxesBackendPermissionDenied for {username_input}")
             form = UsernameOrEmailAuthenticationForm(request)
             form.initial['username'] = username_input
-            context['form'] = form
-            context['error_message'] = LoginMessages.ACCOUNT_LOCKED
             
+            context.update({
+                'form': form,
+                'error_message': LoginMessages.ACCOUNT_LOCKED,
+                'form_disabled': True,
+                'is_locked': True,
+            })
+            
+            logger.warning(f"Axes-locked account login attempt: {actual_username}")
+            response = render(request, 'authentication/login.html', context)
+            response.status_code = 403
+            return response
+    
+    # Try authentication
+    form = UsernameOrEmailAuthenticationForm(request, data=request.POST)
+    
+    if form.is_valid():
+        # Authentication successful
+        user = form.get_user()
+        
+        # Double-check user is active (shouldn't happen but safety check)
+        if not user.is_active:
+            context.update({
+                'form': form,
+                'error_message': LoginMessages.ACCOUNT_INACTIVE,
+                'form_disabled': True,
+            })
+            response = render(request, 'authentication/login.html', context)
+            response.status_code = 403
+            return response
+        
+        # Log user in
+        login(request, user)
+        LoginService.clear_user_cache(user.username)
+        
+        # Reset failure counters on successful login
+        user.failed_login_attempts = 0
+        user.last_failed_login = None
+        user.save(update_fields=['failed_login_attempts', 'last_failed_login'])
+        
+        logger.info(f"Successful login: {user.username}")
+        
+        # Handle redirect
+        next_url = request.POST.get('next') or request.GET.get('next')
+        if next_url and next_url.startswith('/'):
+            return redirect(next_url)
+        
+        if user.is_superuser:
+            return redirect('admin:index')
+        return redirect('select_study')
+    
+    # Authentication failed
+    if actual_username:
+        # Increment failure counter in User model
+        with transaction.atomic():
+            User.objects.filter(username=actual_username).update(
+                failed_login_attempts=models.F('failed_login_attempts') + 1,
+                last_failed_login=timezone.now()
+            )
+        
+        # Check if NOW locked after this failure
+        if LoginService.is_user_locked(actual_username):
+            # Just hit 7 failures - deactivate user
+            LoginService.deactivate_locked_user(actual_username, request)
+            
+            form = UsernameOrEmailAuthenticationForm(request)
+            form.initial['username'] = username_input
+            
+            context.update({
+                'form': form,
+                'error_message': LoginMessages.ACCOUNT_LOCKED,
+                'form_disabled': True,
+                'is_locked': True,
+            })
+            
+            logger.critical(f"Account locked and deactivated after failed attempt: {actual_username}")
+            response = render(request, 'authentication/login.html', context)
+            response.status_code = 403
+            return response
+        
+        # Not locked yet - show progressive warning
+        failures = LoginService.get_failure_count(actual_username)
+        remaining = 7 - failures
+        
+        if remaining <= 2:
+            error_message = LoginMessages.ACCOUNT_WILL_BE_LOCKED.format(remaining)
+            is_warning = True
+        else:
+            error_message = LoginMessages.INVALID_CREDENTIALS
+            is_warning = False
     else:
-        # GET request
-        form = UsernameOrEmailAuthenticationForm(request)
-        
-        # Check if returning from failed attempt
-        last_username = request.session.get(SessionKeys.LAST_FAILED_USERNAME)
-        if last_username:
-            form.initial['username'] = last_username
-            actual_username = LoginService.get_actual_username(last_username)
-            is_locked, lock_context = LoginService.check_account_status(request, actual_username)
-            if is_locked:
-                context.update(lock_context)
-        
-        context['form'] = form
-
+        # Username not found
+        error_message = LoginMessages.INVALID_CREDENTIALS
+        is_warning = False
+    
+    # Show error on same page
+    form = UsernameOrEmailAuthenticationForm(request)
+    form.initial['username'] = username_input
+    
+    context.update({
+        'form': form,
+        'error_message': error_message,
+        'is_warning': is_warning if actual_username else False,
+    })
+    
+    logger.warning(f"Failed login: {username_input}")
     return render(request, 'authentication/login.html', context)
+
 
 
 @login_required
 @never_cache
-def logout_view(request):
-    """Logout view - clears session and cache"""
+def logout_view(request: HttpRequest) -> HttpResponse:
+    """Logout and clear cache"""
     if request.user.is_authenticated:
         username = request.user.username
-        logger.debug(f"User {username} logged out")
         LoginService.clear_user_cache(username)
+        logger.info(f"User logged out: {username}")
     
     request.session.flush()
     logout(request)
-    
     return redirect('/')
 
 
@@ -209,56 +291,5 @@ def select_study(request):
 @ensure_language
 @set_language_on_response
 def dashboard(request):
-    """
-    Main dashboard view.
-    Displays study information, user permissions, and accessible sites.
-    """
-    logger.debug(f"Dashboard accessed by user {request.user.pk}")
-    
-    # Get study from middleware or recover from session
-    study = getattr(request, 'study', None)
-    if not study:
-        study = StudyService.recover_study_from_session(request)
-    
-    if not study:
-        logger.error("No study found, redirecting to select_study")
-        return redirect(reverse('select_study'))
-    
-    logger.debug(f"Loaded study: {study.code} (id={study.pk})")
-    
-    # Get user membership
-    user_membership = StudyMembership.objects.filter(
-        user=request.user,
-        study=study,
-        is_active=True
-    ).select_related('group').first() 
-    
-    if not user_membership:
-        logger.warning(f"User {request.user.pk} has no active membership in study {study.pk}")
-        return redirect('select_study')
-    
-    # Get user permissions and sites from middleware
-    user_permissions = getattr(request, 'study_permissions', set())
-    user_site_codes = list(getattr(request, 'study_sites', []))
-    
-    # Set current language on study
-    current_lang = translation.get_language() or AppConstants.DEFAULT_LANGUAGE
-    study.set_current_language(current_lang)
-    
-    # Build base context
-    context = build_dashboard_context(
-        request, study, user_membership, user_permissions, user_site_codes
-    )
-    
-    # Add sites information
-    add_sites_to_context(context, study, user_membership, current_lang, request)
-    
-    # Add user studies for study switcher
-    context['user_studies'] = get_user_studies_list(request.user, current_lang)
-    
-    # Add study folder path
-    context['study_folder'] = get_study_folder_path(study.code)
-    
-    logger.debug(f"Dashboard loaded successfully for user {request.user.pk}")
-    
-    return render(request, 'default/dashboard.html', context)
+
+    return render(request, 'default/dashboard.html', {})

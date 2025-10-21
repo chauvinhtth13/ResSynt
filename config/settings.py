@@ -69,42 +69,59 @@ BASE_LOCAL_APPS = [
 ]
 
 # ==========================================
+# DATEBASE CONFIGURATION CLASS 
+# ==========================================
+
+STUDY_DB_SCHEMA = env("STUDY_DB_SCHEMA")
+STUDY_DB_PREFIX = env("STUDY_DB_PREFIX")
+
+# ==========================================
 # LOAD STUDY APPS SAFELY
 # ==========================================
 
 
 def load_study_apps() -> tuple:
-    """Load both database and API study apps"""
+    """
+    Load study apps with comprehensive error handling
+    
+    Returns:
+        Tuple of (study_apps: List[str], has_errors: bool)
+    """
+    import sys
+    
+    # Check if we're in a management command
+    is_management_command = 'manage.py' in sys.argv[0] if sys.argv else False
+    
     try:
         from backends.studies.study_loader import get_loadable_apps
-
-        # This returns both database and API apps
+        
+        # Get study apps
         study_apps = get_loadable_apps()
-
+        
         if study_apps:
-            logger.debug(f"Loading {len(study_apps)} study app(s):")
-            for app in study_apps:
-                logger.debug(f"  - {app}")
             return study_apps, False
         else:
-            logger.debug("No study apps to load")
             return [], False
 
     except Exception as e:
-        logger.error(f"Error loading study apps: {e}")
+        logger.error("ERROR: Failed to load study apps")
+        logger.error(f"Error: {e}")
+        
+        import traceback
+        logger.debug(traceback.format_exc())
+        
         return [], True
 
-
-# Load study apps
 STUDY_APPS, HAS_STUDY_ERRORS = load_study_apps()
 
 # Combine all apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + BASE_LOCAL_APPS + STUDY_APPS
 
+logger.info(f"List installed: {INSTALLED_APPS}")
+
 # ==========================================
 # DATABASE CONFIGURATION
 # ==========================================
-
 
 class DatabaseConfig:
     """Database configuration"""
@@ -240,7 +257,7 @@ try:
 
     if study_databases:
         DATABASES.update(study_databases)
-        logger.info(f"Configured {len(study_databases)} study database(s)")
+        logger.debug(f"Configured {len(study_databases)} study database(s)")
 except Exception as e:
     logger.error(f"Error configuring databases: {e}")
 
@@ -253,12 +270,14 @@ DATABASE_ROUTERS = ["backends.tenancy.db_router.TenantRouter"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "backends.tenancy.middleware.UnifiedTenancyMiddleware",  # Unified middleware
+    "backends.tenancy.middleware.UnifiedTenancyMiddleware",
     "axes.middleware.AxesMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -357,21 +376,35 @@ SESSION_SAVE_EVERY_REQUEST = False
 AUTH_USER_MODEL = "tenancy.User"
 
 AUTHENTICATION_BACKENDS = [
-    "axes.backends.AxesStandaloneBackend",
-    "backends.tenancy.contrib.auth.BlockedUserBackend",
+    "axes.backends.AxesStandaloneBackend",  # ✅ First - handles lockout
+    "django.contrib.auth.backends.ModelBackend",  # Third - standard auth
+]
+
+# ==========================================
+# AXES CONFIGURATION
+# ==========================================
+
+AUTH_USER_MODEL = "tenancy.User"
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesBackend",  
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-# Axes configuration for brute-force protection
+# Axes configuration - Manual Check Mode
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 7
-AXES_COOLOFF_TIME = None  # Disable Auto-unlock
-AXES_RESET_ON_SUCCESS = True
-AXES_LOCK_OUT_AT_FAILURE = True
+AXES_COOLOFF_TIME = None  
 AXES_LOCKOUT_PARAMETERS = ["username"]
+AXES_RESET_ON_SUCCESS = True
+
+# KEY SETTING: Disable auto-lock to prevent redirect
+AXES_LOCK_OUT_AT_FAILURE = False  
+
+# Database handler
 AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
-AXES_LOCKOUT_TEMPLATE = "errors/lockout.html"
-AXES_CACHE_BACKEND = "default"
+AXES_VERBOSE = True
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
 
 # ==========================================
 # INTERNATIONALIZATION
@@ -384,7 +417,7 @@ LANGUAGE_CODE = "vi"
 
 # Available languages
 LANGUAGES = [
-    ("vi", _("Tiếng Việt")),  # Vietnamese first
+    ("vi", _("Vietnamese")),  # Vietnamese first
     ("en", _("English")),  # English second
 ]
 
@@ -591,7 +624,7 @@ LOGGING = {
         # Database queries - handler riêng
         "django.db.backends": {
             "handlers": ["file_db"],
-            "level": "DEBUG" if DEBUG else "WARNING",
+            "level": "DEBUG",
             "propagate": False,
         },
         # Django request/response - chỉ log ERROR

@@ -13,6 +13,6 @@ urlpatterns = [
     path('select-study/', views.select_study, name='select_study'),
     
     # Main dashboard (redirect to study-specific)
-    path('dashboard/', views.dashboard, name='dashboard'),
+    # path('dashboard/', views.dashboard, name='dashboard'),
     path("password-reset/", views.custom_login, name="password_reset")
 ]

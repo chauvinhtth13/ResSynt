@@ -1,110 +1,71 @@
 <!-- frontends\templates\authentication\login.html -->
-{% extends 'base.html' %}
+{% extends 'authentication/auth_base.html' %}
 {% load static %}
 {% load i18n %}
 
 {% block title %}Sign In - ResSync Platform{% endblock %}
+{% block auth_content %}
+<div class="p-responsive flex-grow-1 d-flex flex-column justify-content-center">
+    <!-- Title and Logo -->
+    <div class="text-center mb-3">
+        <h1 class="fs-title-2 fw-bold mb-2">{% trans "Welcome back" %}</h1>
+        <img src="{% static 'images/default/logo.svg' %}" 
+                alt="ResSync Logo" 
+                height="50"
+                class="d-block mx-auto">
+    </div>
 
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/default/authentication.css' %}" />
-{% endblock %}
+    <!-- Error Message -->
+    {% if error_message %}
+    <div class="alert alert-danger d-flex align-items-center px-3 py-2" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-3"></i>
+        <div class="small">{{ error_message }}</div>
+    </div>
+    {% endif %}
 
-{% block main %}
-<main class="row g-0">
+    <!-- Login Form -->
+    <form method="POST" id="loginForm">
+        {% csrf_token %}
 
-    <!-- Features Section - Hidden on mobile, visible from lg -->
-    <section class="col-lg-7 d-none d-lg-flex flex-column left-side">
-        {% include 'includes/misc/features_list.html' %}
-    </section>
-
-    <!-- Login Section -->
-    <section class="col-12 col-lg-5 right-side justify-content-between">
-        <!-- Header with Language Selector -->
-        <div class="d-flex justify-content-end align-items-stretch p-3 flex-shrink-0">
-            {% include 'includes/dropdown_header/language_selector.html' %}
+        <!-- Username/Email Input -->
+        <div class="mb-3">
+            <label class="form-label fs-5 fw-semibold mb-2" for="username">
+                <i class="bi bi-person-fill me-1 text-muted"></i> {% trans "Username or Email" %}
+            </label>
+            <input type="text" id="username" name="username"
+                    class="form-control app-form-control px-4 py-3 fs-5"
+                    value="{{ form.username.value|default:'' }}"
+                    placeholder="{% trans 'Enter username or email' %}" 
+                    required autofocus>
         </div>
-
-        <!-- Login Content -->
-        <div class="p-responsive flex-grow-1 d-flex flex-column justify-content-center">
-            <!-- Title and Logo -->
-            <div class="text-center mb-3">
-                <h1 class="fs-title-2 fw-bold mb-2">{% trans "Welcome back" %}</h1>
-                <img src="{% static 'images/default/logo.svg' %}" 
-                     alt="ResSync Logo" 
-                     height="50"
-                     class="d-block mx-auto">
-            </div>
-
-            <!-- Error Message -->
-            {% if error_message %}
-            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-3"></i>
-                <div class="small">{{ error_message }}</div>
-            </div>
-            {% endif %}
-
-            <!-- Login Form -->
-            <form method="POST" id="loginForm">
-                {% csrf_token %}
-
-                <!-- Username/Email Input -->
-                <div class="mb-3">
-                    <label class="form-label fs-5 fw-semibold mb-2" for="username">
-                        <i class="bi bi-person-fill me-1 text-muted"></i> {% trans "Username or Email" %}
-                    </label>
-                    <input type="text" id="username" name="username"
-                           class="form-control app-form-control px-4 py-3 fs-5"
-                           value="{{ form.username.value|default:'' }}"
-                           placeholder="{% trans 'Enter username or email' %}" 
-                           required autofocus>
-                </div>
-                
-                <!-- Password Input -->
-                <div class="mb-4">
-                    <label class="form-label fs-5 fw-semibold mb-2" for="passwordInput">
-                        <i class="bi bi-lock-fill me-1 text-muted"></i> {% trans "Password" %}
-                    </label>
-                    <div class="password-input-container position-relative">
-                        <input id="passwordInput" name="password" type="password"
-                               class="form-control px-4 py-3 fs-5"
-                               placeholder="{% trans 'Enter password' %}"
-                               required>
-                        <button type="button" class="password-toggle-icon btn btn-link position-absolute top-50 end-0 translate-middle-y me-3" id="togglePassword" aria-label="{% trans 'Toggle password visibility' %}">
-                            <i class="bi bi-eye-slash fs-4" id="toggleIcon"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-royal-blue w-100 py-3 fw-semibold mb-3 fs-5" id="submitBtn">
-                    <span id="btnText">{% trans "Sign In" %}</span>
+        
+        <!-- Password Input -->
+        <div class="mb-4">
+            <label class="form-label fs-5 fw-semibold mb-2" for="passwordInput">
+                <i class="bi bi-lock-fill me-1 text-muted"></i> {% trans "Password" %}
+            </label>
+            <div class="password-input-container position-relative">
+                <input id="passwordInput" name="password" type="password"
+                        class="form-control px-4 py-3 fs-5"
+                        placeholder="{% trans 'Enter password' %}"
+                        required>
+                <button type="button" class="password-toggle-icon btn btn-link position-absolute top-50 end-0 translate-middle-y me-3" id="togglePassword" aria-label="{% trans 'Toggle password visibility' %}">
+                    <i class="bi bi-eye-slash fs-4" id="toggleIcon"></i>
                 </button>
-            </form>
-
-            <!-- Forgot Password -->
-            <div class="text-center w-100 w-md-75 mx-auto">
-                <a href="{% url 'password_reset' %}" class="link-royal-blue fw-bold">
-                    {% trans "Forgotten password?" %}
-                </a>
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="text-center mt-auto pb-3 flex-shrink-0">
-            <p class="small text-muted mb-1">
-                {% trans 'Need help? Contact our support team at:' %}
-                <a href="mailto:ressync@oucru.org" class="link-royal-blue fw-medium">
-                    ressync@oucru.org
-                </a>
-            </p>
-            <p class="small text-muted mb-0">
-                {% trans 'Designed by Chau Vinh & Pham Tuong Duy' %}
-            </p>
-        </footer>
-    </section>
-</main>
-{% endblock %}
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-royal-blue w-100 py-3 fw-semibold mb-3 fs-5" id="submitBtn">
+            <span id="btnText">{% trans "Sign In" %}</span>
+        </button>
+    </form>
 
-{% block extra_js %}
-<script src="{% static 'js/default/login.js' %}" defer></script>
+    <!-- Forgot Password -->
+    <div class="text-center w-100 w-md-75 mx-auto">
+        <a href="{% url 'password_reset' %}" class="link-royal-blue fw-bold">
+            {% trans "Forgotten password?" %}
+        </a>
+    </div>
+</div>
 {% endblock %}

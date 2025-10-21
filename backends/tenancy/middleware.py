@@ -12,9 +12,11 @@ from django.http import HttpRequest, HttpResponse, Http404
 from django.conf import settings
 from django.core.cache import cache
 from django.utils.functional import SimpleLazyObject
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.db import connection, connections
+
+from axes.exceptions import AxesBackendPermissionDenied
 
 from .models import Study
 from .db_loader import study_db_manager
@@ -22,6 +24,7 @@ from .db_router import set_current_db
 from .utils import TenancyUtils
 
 logger = logging.getLogger(__name__)
+
 
 
 class UnifiedTenancyMiddleware:
@@ -171,11 +174,11 @@ class UnifiedTenancyMiddleware:
             HTTP response
         """
         # Start performance tracking
-        request._start_time = time.time()
-        request._middleware_processed = True
+        setattr(request, '_start_time', time.time())
+        setattr(request, '_middleware_processed', True)
         
         if settings.DEBUG:
-            request._queries_start = len(connection.queries)
+            setattr(request, '_queries_start', len(connection.queries))
         
         # Log request start
         self._log_request_start(request)
@@ -255,22 +258,35 @@ class UnifiedTenancyMiddleware:
         """
         Process request with all middleware features
         
+        ✅ FIXED: Handle case where response might be None due to exceptions
+        
         Args:
             request: HTTP request
             
         Returns:
-            HTTP response with headers and metrics
+            HTTP response with headers and metrics, or None if exception occurred
         """
         # Get response from next middleware/view
         response = self.get_response(request)
         
-        # Add performance metrics
+        # ✅ CRITICAL FIX: Check if response is None
+        # This can happen when an exception is raised by middleware further down the chain
+        # (e.g., AxesBackendPermissionDenied from Axes)
+        if response is None:
+            logger.warning(
+                f"Response is None for {request.path} - "
+                f"likely due to unhandled exception in downstream middleware"
+            )
+            # Return None to let Django's error handling take over
+            return response
+        
+        # Add performance metrics (only if response is valid)
         self._add_performance_metrics(request, response)
         
-        # Add security headers
+        # Add security headers (only if response is valid)
         self._add_security_headers(request, response)
         
-        # Add cache control headers
+        # Add cache control headers (only if response is valid)
         self._add_cache_headers(request, response)
         
         return response
@@ -370,8 +386,9 @@ class UnifiedTenancyMiddleware:
             Study instance or None
         """
         # Layer 1: Request-level cache (fastest)
-        if hasattr(request, '_study_cache'):
-            return request._study_cache
+        cached = getattr(request, '_study_cache', None)
+        if cached is not None:
+            return cached
         
         # Get study ID from session
         study_id = request.session.get(self.STUDY_ID_KEY)
@@ -414,8 +431,8 @@ class UnifiedTenancyMiddleware:
                 logger.error(f"Error loading study {study_id}: {e}", exc_info=True)
                 return None
         
-        # Store in request cache
-        request._study_cache = study
+        # Store in request cache using setattr to avoid static attribute checks
+        setattr(request, '_study_cache', study)
         return study
     
     def _update_session_study(self, request: HttpRequest, study: Study):
@@ -441,20 +458,24 @@ class UnifiedTenancyMiddleware:
             request: HTTP request
             study: Study instance
         """
-        # Set basic study info
-        request.study = study
-        request.study_code = study.code
-        request.study_id = study.pk
-        request.study_db = study.db_name
+        # Set basic study info using setattr for runtime attributes
+        setattr(request, 'study', study)
+        setattr(request, 'study_code', study.code)
+        setattr(request, 'study_id', study.pk)
+        setattr(request, 'study_db', study.db_name)
         
         # Lazy load permissions (only loaded when accessed)
-        request.study_permissions = SimpleLazyObject(
-            lambda: TenancyUtils.get_user_permissions(request.user, study)
+        setattr(
+            request,
+            'study_permissions',
+            SimpleLazyObject(lambda: TenancyUtils.get_user_permissions(request.user, study))
         )
         
         # Lazy load sites (only loaded when accessed)
-        request.study_sites = SimpleLazyObject(
-            lambda: TenancyUtils.get_user_sites(request.user, study)
+        setattr(
+            request,
+            'study_sites',
+            SimpleLazyObject(lambda: TenancyUtils.get_user_sites(request.user, study))
         )
         
         # Track access (throttled to avoid excessive updates)
@@ -470,12 +491,23 @@ class UnifiedTenancyMiddleware:
         """
         Add performance metrics to response headers
         
+        ✅ FIXED: Check response is not None before adding headers
+        
         Args:
             request: HTTP request
-            response: HTTP response
+            response: HTTP response (can be None)
         """
-        if hasattr(request, '_start_time'):
-            duration_ms = (time.time() - request._start_time) * 1000
+        # ✅ GUARD: Return early if response is None
+        if response is None:
+            logger.debug("Skipping performance metrics - response is None")
+            return
+        
+        # Safely obtain start time
+        start_time = getattr(request, '_start_time', None)
+        if start_time is not None:
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # ✅ Safe to add header now (response is not None)
             response['X-Response-Time'] = f"{duration_ms:.2f}ms"
             
             # Log slow requests
@@ -486,28 +518,40 @@ class UnifiedTenancyMiddleware:
                 )
         
         # Add query count in DEBUG mode
-        if settings.DEBUG and hasattr(request, '_queries_start'):
-            query_count = len(connection.queries) - request._queries_start
-            response['X-DB-Queries'] = str(query_count)
-            
-            # Warn about excessive queries
-            if query_count > self.MAX_QUERIES:
-                logger.warning(
-                    f"EXCESSIVE QUERIES: {request.path} "
-                    f"executed {query_count} queries"
-                )
-    
+        if settings.DEBUG:
+            queries_start = getattr(request, '_queries_start', None)
+            if queries_start is not None:
+                query_count = len(connection.queries) - queries_start
+                
+                # ✅ Safe to add header now (response is not None)
+                response['X-DB-Queries'] = str(query_count)
+                
+                if query_count > self.MAX_QUERIES:
+                    logger.warning(
+                        f"EXCESSIVE QUERIES: {request.path} "
+                        f"executed {query_count} queries"
+                    )
+
+
+
     def _add_security_headers(self, request: HttpRequest, response: HttpResponse):
         """
         Add security headers to response
         
+        ✅ FIXED: Check response is not None before adding headers
+        
         Args:
             request: HTTP request
-            response: HTTP response
+            response: HTTP response (can be None)
         """
+        # ✅ GUARD: Return early if response is None
+        if response is None:
+            logger.debug("Skipping security headers - response is None")
+            return
+        
         # Add standard security headers
         for header, value in self.SECURITY_HEADERS.items():
-            if header not in response:
+            if not response.has_header(header):
                 response[header] = value
         
         # Add HSTS for HTTPS connections
@@ -515,17 +559,25 @@ class UnifiedTenancyMiddleware:
             response['Strict-Transport-Security'] = (
                 'max-age=31536000; includeSubDomains; preload'
             )
-    
+
+
     def _add_cache_headers(self, request: HttpRequest, response: HttpResponse):
         """
         Add appropriate cache control headers
         
+        ✅ FIXED: Check response is not None before adding headers
+        
         Args:
             request: HTTP request
-            response: HTTP response
+            response: HTTP response (can be None)
         """
+        # ✅ GUARD: Return early if response is None
+        if response is None:
+            logger.debug("Skipping cache headers - response is None")
+            return
+        
         # Skip if cache headers already set
-        if 'Cache-Control' in response:
+        if response.has_header('Cache-Control'):
             return
         
         # Static files - cache forever
@@ -543,6 +595,8 @@ class UnifiedTenancyMiddleware:
         else:
             response['Cache-Control'] = 'public, max-age=300'
             response['Vary'] = 'Cookie, Accept-Encoding'
+
+
     
     # ==========================================
     # CLEANUP
@@ -624,58 +678,3 @@ class UnifiedTenancyMiddleware:
             )
         except Exception as e:
             logger.error(f"Error logging request start: {e}")
-
-
-# ==========================================
-# HELPER FUNCTION FOR MANUAL STUDY SWITCHING
-# ==========================================
-
-def switch_study_context(request: HttpRequest, study_code: str) -> bool:
-    """
-    Manually switch study context for a request
-    Useful in views or APIs
-    
-    Args:
-        request: HTTP request
-        study_code: Study code to switch to
-        
-    Returns:
-        True if successful, False otherwise
-    
-    Example:
-        if switch_study_context(request, '43EN'):
-            # Now working in study 43EN context
-            patients = Patient.objects.all()
-    """
-    try:
-        study = Study.objects.select_related('created_by').get(
-            code=study_code.upper(),
-            memberships__user=request.user,
-            memberships__is_active=True,
-            status__in=[Study.Status.ACTIVE, Study.Status.PLANNING]
-        )
-        
-        # Update session
-        request.session['current_study'] = study.pk
-        request.session['current_study_code'] = study.code
-        request.session['current_study_db'] = study.db_name
-        
-        # Setup context
-        request.study = study
-        request.study_code = study.code
-        request.study_id = study.pk
-        request.study_db = study.db_name
-        
-        # Switch database
-        set_current_db(study.db_name)
-        study_db_manager.add_study_db(study.db_name)
-        
-        logger.debug(f"Manually switched to study {study_code} for user {request.user.pk}")
-        return True
-        
-    except Study.DoesNotExist:
-        logger.error(f"Study {study_code} not found for user {request.user.pk}")
-        return False
-    except Exception as e:
-        logger.error(f"Error switching to study {study_code}: {e}")
-        return False
