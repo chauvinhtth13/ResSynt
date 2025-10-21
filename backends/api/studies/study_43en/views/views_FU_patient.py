@@ -14,16 +14,12 @@ from backends.studies.study_43en.models.patient import (
 
 )
 
-
 from backends.studies.study_43en.forms_patient import (
     FollowUpCaseForm,
     FollowUpAntibioticFormSet, RehospitalizationFormSet,
     Rehospitalization90FormSet,FollowUpCase90Form,FollowUpAntibiotic90FormSet,
 
-
 )
-
-
 
 # Import utils từ study app
 from backends.studies.study_43en.utils.audit_log_utils import (
@@ -32,11 +28,6 @@ from backends.studies.study_43en.utils.audit_log_utils import (
 from backends.studies.study_43en.utils.audit_log_cross_db import audit_log_decorator
 
 logger = logging.getLogger(__name__)
-
-
-
-
-
 
 @login_required
 @audit_log_decorator(model_name='FOLLOWUPCASE')
@@ -110,7 +101,7 @@ def followup_case_update(request, usubjid):
     enrollment_case = get_object_or_404(EnrollmentCase, USUBJID=screening_case)
     followup_case = get_object_or_404(FollowUpCase, USUBJID=enrollment_case)
 
-    print(f"POST Data: {request.POST}")
+    logger.debug(f"POST Data: {request.POST}")
 
     # Lấy old_data từ form nếu có
     old_data = safe_json_loads(request.POST.get('oldDataJson', '{}'))
@@ -119,10 +110,10 @@ def followup_case_update(request, usubjid):
     change_reason = request.POST.get('change_reason', '')
     
     # Debug audit data
-    print("DEBUG - old_data:", old_data)
-    print("DEBUG - new_data:", new_data)
-    print("DEBUG - reasons_json:", reasons_json)
-    print("DEBUG - change_reason:", change_reason)
+    logger.debug("old_data: %s", old_data)
+    logger.debug("new_data: %s", new_data)
+    logger.debug("reasons_json: %s", reasons_json)
+    logger.debug("change_reason: %s", change_reason)
     
     # Đặt audit_data vào request để audit_log_decorator có thể sử dụng
     request.audit_data = {
@@ -262,10 +253,10 @@ def followup_form(request, usubjid):
     change_reason = request.POST.get('change_reason', '')
     
     # Debug audit data
-    print("DEBUG - followup_form - old_data:", old_data)
-    print("DEBUG - followup_form - new_data:", new_data)
-    print("DEBUG - followup_form - reasons_json:", reasons_json)
-    print("DEBUG - followup_form - change_reason:", change_reason)
+    logger.debug("followup_form - old_data: %s", old_data)
+    logger.debug("followup_form - new_data: %s", new_data)
+    logger.debug("followup_form - reasons_json: %s", reasons_json)
+    logger.debug("followup_form - change_reason: %s", change_reason)
     
     # Đặt audit_data vào request để audit_log_decorator có thể sử dụng
     request.audit_data = {
@@ -499,8 +490,6 @@ def followup_form_view(request, usubjid):
     """View readonly cho follow-up"""
     return followup_form(request, usubjid)
 
-
-
 @login_required
 @audit_log_decorator(model_name='FOLLOWUPCASE90')
 def followup_case90_create(request, usubjid):
@@ -625,10 +614,10 @@ def followup_case90_update(request, usubjid):
     reasons_json = safe_json_loads(request.POST.get('reasonsJson', '{}'))
     change_reason = request.POST.get('change_reason', '')
     
-    print("DEBUG - old_data:", old_data)
-    print("DEBUG - new_data:", new_data)
-    print("DEBUG - reasons_json:", reasons_json)
-    print("DEBUG - change_reason:", change_reason)
+    logger.debug("old_data: %s", old_data)
+    logger.debug("new_data: %s", new_data)
+    logger.debug("reasons_json: %s", reasons_json)
+    logger.debug("change_reason: %s", change_reason)
     
     request.audit_data = {
         'old_data': old_data,
@@ -715,8 +704,6 @@ def followup_case90_update(request, usubjid):
         'today': date.today(),
     })
 
-
-
 @login_required
 @audit_log_decorator(model_name='FOLLOWUPCASE90')
 def followup_case90_view(request, usubjid):
@@ -759,7 +746,6 @@ def followup_case90_view(request, usubjid):
         'today': date.today(),
     })
 
-
 @login_required
 @audit_log_decorator(model_name='FOLLOWUPCASE90')
 def followup_form90(request, usubjid):
@@ -773,10 +759,10 @@ def followup_form90(request, usubjid):
     reasons_json = safe_json_loads(request.POST.get('reasonsJson', '{}'))
     change_reason = request.POST.get('change_reason', '')
     
-    print("DEBUG - followup_form90 - old_data:", old_data)
-    print("DEBUG - followup_form90 - new_data:", new_data)
-    print("DEBUG - followup_form90 - reasons_json:", reasons_json)
-    print("DEBUG - followup_form90 - change_reason:", change_reason)
+    logger.debug("followup_form90 - old_data: %s", old_data)
+    logger.debug("followup_form90 - new_data: %s", new_data)
+    logger.debug("followup_form90 - reasons_json: %s", reasons_json)
+    logger.debug("followup_form90 - change_reason: %s", change_reason)
     
     request.audit_data = {
         'old_data': old_data,
@@ -1052,7 +1038,6 @@ def followup_form90(request, usubjid):
         'rehospitalization90_formset': rehospitalization90_formset,
         'antibiotic90_formset': antibiotic90_formset,
     })
-
 
 @login_required
 def followup_form90_view(request, usubjid):

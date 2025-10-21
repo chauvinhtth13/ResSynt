@@ -39,12 +39,6 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ==========================================
-# STUDY DATABASE CONFIGURATION
-# ==========================================
-# STUDY_DB_PREFIX = env("STUDY_DB_PREFIX")
-# STUDY_DB_SCHEMA = env("STUDY_DB_SCHEMA")
-
-# ==========================================
 # INSTALLED APPS
 # ==========================================
 
@@ -145,12 +139,6 @@ class DatabaseConfig:
     @classmethod
     def get_base_config(cls) -> Dict:
         """Get base connection info"""
-        # Option 1: Use DATABASE_URL (recommended for Heroku, Railway, etc.)
-        # db_url = env("DATABASE_URL")
-
-        # if db_url:
-        #     return env.db("DATABASE_URL")
-
         return {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": env("PGDATABASE"),
@@ -376,20 +364,13 @@ SESSION_SAVE_EVERY_REQUEST = False
 AUTH_USER_MODEL = "tenancy.User"
 
 AUTHENTICATION_BACKENDS = [
-    "axes.backends.AxesStandaloneBackend",  # ✅ First - handles lockout
-    "django.contrib.auth.backends.ModelBackend",  # Third - standard auth
+    "axes.backends.AxesBackend",  
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 # ==========================================
 # AXES CONFIGURATION
 # ==========================================
-
-AUTH_USER_MODEL = "tenancy.User"
-
-AUTHENTICATION_BACKENDS = [
-    "axes.backends.AxesBackend",  
-    "django.contrib.auth.backends.ModelBackend",
-]
 
 # Axes configuration - Manual Check Mode
 AXES_ENABLED = True
