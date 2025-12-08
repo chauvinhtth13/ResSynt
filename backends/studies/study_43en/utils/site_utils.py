@@ -1,136 +1,133 @@
-# from functools import wraps
-# from django.db import models
-# from django.db.models import Q
-# import re
+# File: backends/studies/study_43en/utils/site_utils.py
 
-# def extract_site_id_from_usubjid(usubjid):
-#     """
-#     Trích xuất SITEID từ USUBJID (định dạng: 003-A-002)
-#     """
-#     if not usubjid:
-#         return None
-    
-#     # Lấy phần đầu tiên của USUBJID (trước dấu gạch ngang đầu tiên)
-#     match = re.match(r'^(\d+)-', str(usubjid))
-#     if match:
-#         return match.group(1)
-#     return None
+"""
+Site Filtering Utilities for Views
+===================================
 
-# def filter_by_site(view_func):
-#     """
-#     Decorator lọc queryset theo site được chọn trong session
-#     """
-#     @wraps(view_func)
-#     def _wrapped_view(request, *args, **kwargs):
-#         # Lấy site_id từ request (đã được thêm bởi middleware)
-#         site_id = getattr(request, 'selected_site_id', None)
-        
-#         # Gọi view gốc
-#         response = view_func(request, *args, **kwargs)
-        
-#         # Nếu response là QuerySet hoặc model instance
-#         if hasattr(response, 'model'):
-#             # Nếu model có custom manager site_objects
-#             if hasattr(response.model, 'site_objects'):
-#                 # Áp dụng bộ lọc site
-#                 if site_id:
-#                     return response.model.site_objects.filter_by_site(site_id)
-        
-#         return response
-    
-#     return _wrapped_view
+High-level helper functions matching dashboard.py logic
+"""
 
-# def apply_site_filter(func):
-#     """
-#     Decorator để tự động áp dụng bộ lọc site cho hàm sử dụng objects.all(), objects.filter(), v.v.
-#     Thêm decorator này vào các view để đảm bảo tự động lọc theo site.
-#     """
-#     @wraps(func)
-#     def wrapper(request, *args, **kwargs):
-#         # Lưu lại objects.all, objects.filter, v.v.
-#         old_all = models.Manager.all
-#         old_filter = models.Manager.filter
-#         old_exclude = models.Manager.exclude
-#         old_get = models.Manager.get
-        
-#         # Lấy site_id từ session
-#         site_id = request.session.get('selected_site_id')
-        
-#         # Chỉ áp dụng nếu có site_id và không phải 'all'
-#         if site_id and site_id != 'all':
-#             # Thay thế các phương thức của Manager để tự động lọc theo site
-#             def filtered_all(self, *args, **kwargs):
-#                 qs = old_all(self, *args, **kwargs)
-#                 model = self.model
-#                 # Kiểm tra xem model có site_objects không
-#                 if hasattr(model, 'site_objects'):
-#                     # Lọc theo site
-#                     try:
-#                         return model.site_objects.filter_by_site(site_id)
-#                     except:
-#                         return qs
-#                 return qs
-                
-#             def filtered_filter(self, *args, **kwargs):
-#                 qs = old_filter(self, *args, **kwargs)
-#                 model = self.model
-#                 # Kiểm tra xem model có site_objects không
-#                 if hasattr(model, 'site_objects'):
-#                     # Lọc theo site
-#                     try:
-#                         # Lọc qs theo site_id
-#                         if 'SITEID' in [f.name for f in model._meta.get_fields()]:
-#                             kwargs['SITEID'] = site_id
-#                             return qs.filter(**kwargs)
-#                         elif hasattr(model, 'USUBJID') and isinstance(model._meta.get_field('USUBJID'), models.CharField):
-#                             return qs.filter(USUBJID__startswith=f"{site_id}-")
-#                         return qs
-#                     except:
-#                         return qs
-#                 return qs
-                
-#             # Thay thế các phương thức
-#             models.Manager.all = filtered_all
-#             models.Manager.filter = filtered_filter
-            
-#         # Gọi hàm gốc
-#         result = func(request, *args, **kwargs)
-        
-#         # Khôi phục các phương thức ban đầu
-#         models.Manager.all = old_all
-#         models.Manager.filter = old_filter
-#         models.Manager.exclude = old_exclude
-#         models.Manager.get = old_get
-        
-#         return result
-        
-#     return wrapper
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import PermissionDenied
+import logging
 
-# def site_context_processor(request):
-#     """
-#     Context processor để thêm thông tin site vào mọi template
-#     """
-#     # Danh sách các site có sẵn - bạn có thể lấy từ cơ sở dữ liệu
-#     available_sites = [
-#         {'id': '003', 'name': 'Site 003'},
-#         {'id': '011', 'name': 'Site 011'},
-#         {'id': '020', 'name': 'Site 020'},
-#         # Thêm các site khác nếu cần
-#     ]
+logger = logging.getLogger(__name__)
+
+DB_ALIAS = 'db_study_43en'
+
+
+def get_site_filter_params(request):
+    """
+     REFACTORED: Single source of truth - uses middleware context
     
-#     # Lấy site được chọn từ session hoặc từ parameter
-#     selected_site_id = None
+    Determine site filter strategy from UnifiedTenancyMiddleware context.
+    Middleware ALWAYS injects site context for Study 43EN (after merge).
     
-#     # Ưu tiên lấy từ tham số URL
-#     if 'site_id' in request.GET:
-#         selected_site_id = request.GET.get('site_id')
-#         # Lưu vào session để dùng cho các request tiếp theo
-#         request.session['selected_site_id'] = selected_site_id
-#     # Nếu không có tham số, lấy từ session
-#     else:
-#         selected_site_id = request.session.get('selected_site_id', None)
+    Returns:
+        tuple: (site_filter, filter_type)
+            - site_filter: 'all' | str | list
+            - filter_type: 'all' | 'single' | 'multiple'
     
-#     return {
-#         'available_sites': available_sites,
-#         'selected_site_id': selected_site_id
-#     }
+    Examples:
+        site_filter, filter_type = get_site_filter_params(request)
+        
+        # filter_type='all' → site_filter='all' (super admin sees ALL sites)
+        # filter_type='single' → site_filter='003' (user selected specific site)
+        # filter_type='multiple' → site_filter=['003', '011'] (multi-site user)
+    """
+    #  Get from UnifiedTenancyMiddleware context (always present)
+    selected_site_id = getattr(request, 'selected_site_id', 'all')
+    can_access_all = getattr(request, 'can_access_all_sites', False)
+    user_site_codes = list(getattr(request, 'user_sites', set()))
+    
+    # Strategy 1: Single site selected
+    if selected_site_id and selected_site_id != 'all':
+        logger.debug(f"Site filter: single '{selected_site_id}'")
+        return (selected_site_id, 'single')
+    
+    # Strategy 2: Super admin with 'all' → see ALL sites in study
+    elif can_access_all and selected_site_id == 'all':
+        logger.debug(f"Site filter: all (super admin)")
+        return ('all', 'all')
+    
+    # Strategy 3: Multi-site user with 'all' → see only THEIR sites
+    elif selected_site_id == 'all' and user_site_codes:
+        logger.debug(f"Site filter: multiple {user_site_codes}")
+        return (user_site_codes, 'multiple')
+    
+    # Strategy 4: Fallback (no sites)
+    else:
+        logger.debug(f"Site filter: multiple {user_site_codes} (fallback)")
+        return (user_site_codes, 'multiple')
+
+
+def get_filtered_queryset(model, site_filter, filter_type):
+    """
+     COPY FROM DASHBOARD
+    Get filtered queryset matching dashboard logic
+    
+    Args:
+        model: Django model class
+        site_filter: 'all' | str | list
+        filter_type: 'all' | 'single' | 'multiple'
+    
+    Returns:
+        Filtered QuerySet using db_study_43en
+    """
+    if filter_type == 'all':
+        logger.debug(f"[{model.__name__}] Query all sites")
+        return model.objects.using(DB_ALIAS)
+    
+    elif filter_type == 'multiple':
+        logger.debug(f"[{model.__name__}] Query multiple sites: {site_filter}")
+        
+        if not site_filter:
+            logger.warning(f"[{model.__name__}] Empty site filter - returning empty")
+            return model.objects.using(DB_ALIAS).none()
+        
+        # Use manager's filter_by_site which handles multiple sites
+        return model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
+    
+    else:  # filter_type == 'single'
+        logger.debug(f"[{model.__name__}] Query single site: {site_filter}")
+        return model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
+
+
+def get_site_filtered_object_or_404(model, site_filter, filter_type, **kwargs):
+    """
+    Get object with site filtering and 404 handling
+    
+    Compatible with old function signature: get_site_filtered_object_or_404(model, site_id, USUBJID=...)
+    """
+    # Handle old signature: get_site_filtered_object_or_404(SCR_CASE, site_id, USUBJID=usubjid)
+    if isinstance(site_filter, str) and filter_type not in ['all', 'single', 'multiple']:
+        # Old signature: (model, site_id, **kwargs)
+        # site_filter is actually site_id
+        # filter_type is actually first kwarg key
+        old_site_id = site_filter
+        old_kwargs = {filter_type: kwargs.popitem()[1]} if kwargs else {}
+        
+        # Determine filter type from site_id
+        if old_site_id == 'all':
+            actual_filter_type = 'all'
+        else:
+            actual_filter_type = 'single'
+        
+        queryset = get_filtered_queryset(model, old_site_id, actual_filter_type)
+        kwargs = old_kwargs
+    else:
+        # New signature
+        queryset = get_filtered_queryset(model, site_filter, filter_type)
+    
+    try:
+        obj = queryset.get(**kwargs)
+        return obj
+    except model.DoesNotExist:
+        logger.warning(
+            f"[{model.__name__}] Object not found. "
+            f"Filter: {site_filter}, Lookup: {kwargs}"
+        )
+        raise PermissionDenied(
+            f"Object not found or access denied (Site: {site_filter})"
+        )

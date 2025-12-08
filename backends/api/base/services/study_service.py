@@ -37,7 +37,7 @@ class StudyService:
             logger.debug(f"Cache hit for user studies: {user.pk}")
             return cached_studies
         
-        # Query database
+        # Query database - BỎ prefetch_related('translations')
         studies = (
             Study.objects
             .filter(
@@ -46,23 +46,25 @@ class StudyService:
                 status__in=[Study.Status.ACTIVE, Study.Status.ARCHIVED]
             )
             .select_related('created_by')
-            .prefetch_related('translations')
+            # .prefetch_related('translations')  # BỎ DÒNG NÀY
             .distinct()
             .order_by('code')
         )
         
         # Apply search filter if provided
         if search_query:
-            current_lang = translation.get_language() or AppConstants.DEFAULT_LANGUAGE
+            # Tìm kiếm trực tiếp trên Study model
             studies = studies.filter(
                 Q(code__icontains=search_query) |
-                Q(translations__language_code=current_lang, translations__name__icontains=search_query)
+                Q(name__icontains=search_query)  # Sử dụng trường 'name' trực tiếp
             )
         
-        # Convert to list and set language
+        # Convert to list
         studies = list(studies)
-        for study in studies:
-            study.set_current_language(AppConstants.DEFAULT_LANGUAGE)
+        
+        # BỎ phần set_current_language nếu không có translations
+        # for study in studies:
+        #     study.set_current_language(AppConstants.DEFAULT_LANGUAGE)
         
         # Cache the results
         cache.set(cache_key, studies, AppConstants.CACHE_TIMEOUT)

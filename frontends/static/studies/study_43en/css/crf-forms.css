@@ -1,0 +1,2234 @@
+/* ========================================================================
+   CRF-FORMS.CSS - UNIFIED STYLING FOR ALL CRF FORMS
+   Study 43EN - Clinical Research Forms
+   
+   This file consolidates all CRF form styling including:
+   - Screening, Enrollment, Clinical forms
+   - Laboratory, Microbiology forms
+   - Discharge, End Case forms
+   - Follow-up forms
+   
+   Dependencies: base.css (for CSS variables)
+   ======================================================================== */
+
+/* ==============================
+   1. CSS VARIABLES (CRF-SPECIFIC)
+   ============================== */
+:root {
+    /* Form Section Colors */
+    --crf-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --crf-gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --crf-gradient-warning: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+    --crf-gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --crf-gradient-info: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    
+    /* Form Colors */
+    --crf-section-bg: #f8f9fa;
+    --crf-section-border: #667eea;
+    --crf-input-focus: rgba(102, 126, 234, 0.25);
+    --crf-performed-bg: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    --crf-performed-border: #10b981;
+    
+    /* Spacing */
+    --crf-section-padding: 20px;
+    --crf-item-margin: 15px;
+    --crf-card-radius: 8px;
+}
+
+/* ==============================
+   2. BASE CARD STYLES
+   ============================== */
+.crf-card,
+.card {
+    border: none;
+    margin-bottom: 25px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.3s ease;
+}
+
+.crf-card:hover,
+.card:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.crf-card-header,
+.card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.crf-card-title,
+.card-title {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.crf-card-title i,
+.card-title i {
+    margin-right: 8px;
+}
+
+/* Card Header Variants */
+.card-primary .card-header,
+.crf-card-primary .crf-card-header {
+    background: var(--crf-gradient-primary);
+    color: white;
+    border: none;
+}
+
+.card-success .card-header {
+    background: var(--crf-gradient-success);
+    color: white;
+    border: none;
+}
+
+.card-warning .card-header {
+    background: var(--crf-gradient-warning);
+    color: white;
+    border: none;
+}
+
+.card-danger .card-header {
+    background: var(--crf-gradient-danger);
+    color: white;
+    border: none;
+}
+
+.card-info .card-header {
+    background: var(--crf-gradient-info);
+    color: white;
+    border: none;
+}
+
+/* ==============================
+   3. CRF CONTAINER STYLES
+   ============================== */
+
+/* Main CRF Container */
+.clinical-case-container,
+.enr-case-container,
+.screening-case-container,
+.discharge-case-container,
+.crf-container {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--crf-card-radius);
+    margin-bottom: 20px;
+    overflow: hidden;
+    background: white;
+}
+
+/* CRF Header */
+.clinical-case-header,
+.enr-case-header,
+.screening-case-header,
+.discharge-case-header,
+.crf-header {
+    background: var(--crf-gradient-primary);
+    padding: 15px 20px;
+    color: white;
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.clinical-case-header h4,
+.enr-case-header h4,
+.crf-header h4 {
+    margin: 0;
+    color: white;
+}
+
+/* CRF Content */
+.clinical-case-content,
+.enr-case-content,
+.screening-case-content,
+.discharge-case-content,
+.crf-content {
+    padding: 25px;
+}
+
+/* Page Indicator */
+.page-indicator {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* ==============================
+   4. FORM SECTION HEADERS
+   ============================== */
+.form-section-header,
+.crf-section-header {
+    background: var(--crf-gradient-primary);
+    color: white;
+    font-weight: 600;
+    padding: 12px 20px;
+    margin: 25px 0 20px 0;
+    border-left: 4px solid #4c51bf;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-section-header i,
+.crf-section-header i {
+    margin-right: 8px;
+}
+
+/* Section Header Variants */
+.form-section-header.section-danger,
+.crf-section-header.section-danger {
+    background: var(--crf-gradient-danger);
+    border-left-color: #b91c1c;
+}
+
+.form-section-header.section-success,
+.crf-section-header.section-success {
+    background: var(--crf-gradient-success);
+    border-left-color: #047857;
+}
+
+.form-section-header.section-warning,
+.crf-section-header.section-warning {
+    background: var(--crf-gradient-warning);
+    border-left-color: #c2410c;
+}
+
+.form-section-header.section-info,
+.crf-section-header.section-info {
+    background: var(--crf-gradient-info);
+    border-left-color: #0e7490;
+}
+
+/* Section Title (Alternative) */
+.section-title {
+    font-weight: bold;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-royal-600);
+    color: #333;
+}
+
+/* ==============================
+   5. NUMBERED ITEMS
+   ============================== */
+.numbered-item {
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: var(--crf-item-margin);
+}
+
+.numbered-item::before {
+    content: attr(data-number);
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: 700;
+    color: #667eea;
+    font-size: 1.1rem;
+    min-width: 25px;
+}
+
+.numbered-item > label:first-of-type {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Question Number (Alternative) */
+.question-number {
+    font-weight: bold;
+    margin-right: 5px;
+    color: #667eea;
+}
+
+/* ==============================
+   6. FORM CONTROLS
+   ============================== */
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label,
+.crf-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #495057;
+    display: block;
+}
+
+/* Form Label */
+.form-label {
+    font-weight: 600;
+    color: var(--color-white-800);
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+}
+
+/* Input Focus State */
+.crf-form .form-control:focus,
+.crf-form .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem var(--crf-input-focus);
+}
+
+/* Required Field Indicator */
+.required-field label::after {
+    content: " *";
+    color: red;
+}
+
+/* Prevent asterisk on radio buttons */
+.custom-radio label::after,
+.form-check label::after {
+    content: none !important;
+}
+
+/* ==============================
+   7. RADIO & CHECKBOX STYLES
+   ============================== */
+
+/* Custom Radio */
+.custom-control-input:checked ~ .custom-control-label::before {
+    border-color: #667eea;
+    background-color: #667eea;
+}
+
+/* Form Check */
+.crf-form .form-check-input {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+}
+
+.crf-form .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.crf-form .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem var(--crf-input-focus);
+}
+
+.crf-form .form-check-label {
+    cursor: pointer;
+    margin-left: 4px;
+    font-weight: 500;
+}
+
+/* Inline Radio/Checkbox */
+.form-check-inline {
+    margin-right: 1rem;
+}
+
+/* Lab Performed Checkbox - Special Style */
+.lab-performed-checkbox:checked {
+    background-color: #10b981;
+    border-color: #10b981;
+}
+
+/* Compact Form Groups for Criteria */
+.card-body .form-group {
+    margin-bottom: 1rem;
+}
+
+/* Custom Radio Inline Layout */
+.custom-control.custom-radio {
+    display: inline-block;
+    margin-right: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.custom-control-label {
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+    padding-left: 0.25rem;
+}
+
+.custom-control-input {
+    cursor: pointer;
+}
+
+/* Control Label for Questions */
+.control-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* ==============================
+   8. RISK FACTOR ITEMS
+   ============================== */
+.risk-factor-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.risk-factor-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.risk-factor-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.risk-factor-options {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+/* ==============================
+   9. UNDERLYING CONDITIONS GRID
+   ============================== */
+.underlying-conditions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.underlying-condition-item {
+    background: white;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.underlying-condition-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.underlying-condition-item .form-check {
+    margin: 0;
+}
+
+.underlying-condition-item .form-check-input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+}
+
+.underlying-condition-item .form-check-label {
+    margin-left: 10px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.underlying-condition-item .form-check-input:checked ~ .form-check-label {
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* ==============================
+   10. CHECKBOX GROUP (Symptoms)
+   ============================== */
+.checkbox-group {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.checkbox-group .form-check {
+    margin-bottom: 8px;
+}
+
+.checkbox-group .form-check-label i {
+    width: 20px;
+    text-align: center;
+}
+
+/* ==============================
+   10A. SAMPLE COLLECTION CARDS
+   ============================== */
+/* Stool Sample */
+.card.border-left-success {
+    border-left: 4px solid #10b981;
+}
+
+.card.border-left-success .card-header {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-bottom: 1px solid #10b981;
+}
+
+/* Rectal Swab */
+.card.border-left-warning {
+    border-left: 4px solid #f97316;
+}
+
+.card.border-left-warning .card-header {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border-bottom: 1px solid #f97316;
+}
+
+/* Throat Swab */
+.card.border-left-info {
+    border-left: 4px solid #0891b2;
+}
+
+.card.border-left-info .card-header {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-bottom: 1px solid #0891b2;
+}
+
+/* Blood Sample */
+.card.border-left-danger {
+    border-left: 4px solid #dc2626;
+}
+
+.card.border-left-danger .card-header {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-bottom: 1px solid #dc2626;
+}
+
+/* Klebsiella/organism cards */
+.card.border-left-primary {
+    border-left: 4px solid #667eea;
+}
+
+.card.border-left-primary .card-header {
+    background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
+    border-bottom: 1px solid #667eea;
+}
+
+/* ==============================
+   11. CONDITIONAL SECTIONS
+   ============================== */
+.conditional-section {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #667eea;
+    border-radius: 4px;
+    animation: crf-slideDown 0.3s ease-out;
+}
+
+.conditional-section.show {
+    display: block;
+}
+
+@keyframes crf-slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Indent Section */
+.indent-section {
+    margin-left: 1.5rem;
+}
+
+/* ==============================
+   12. PATIENT INFO BOX
+   ============================== */
+.patient-info-box {
+    background: var(--color-royal-50);
+    border: 1px solid var(--color-royal-200);
+    border-left: 4px solid var(--color-royal-600);
+    border-radius: var(--bs-border-radius-lg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ==============================
+   13. SCREENING FORM OPTIMIZATIONS
+   ============================== */
+.screening-case-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.screening-case-header {
+    background: var(--crf-gradient-primary);
+    color: white;
+    padding: 18px 24px;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.screening-case-content {
+    padding: 24px;
+}
+
+/* Compact form layout for screening */
+.screening-case-content .form-group {
+    margin-bottom: 1rem;
+}
+
+.screening-case-content .card {
+    margin-bottom: 1.25rem;
+}
+
+.screening-case-content .card-body {
+    padding: 1.25rem;
+}
+
+/* Radio buttons inline for compact layout */
+.screening-case-content .custom-control.custom-radio {
+    display: inline-block;
+    margin-right: 25px;
+    margin-bottom: 0.5rem;
+}
+
+/* Eligibility status styling */
+.eligibility-status {
+    padding: 18px 24px;
+    margin: 20px 0;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.eligibility-status.eligible {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 2px solid #10b981;
+    color: #155724;
+}
+
+.eligibility-status.not-eligible {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border: 2px solid #dc3545;
+    color: #721c24;
+}
+
+/* Button pulse animation */
+.btn-pulse {
+    animation: pulse-animation 1.5s infinite;
+}
+
+@keyframes pulse-animation {
+    0% { 
+        box-shadow: 0 0 0 0px rgba(40, 167, 69, 0.4); 
+    }
+    100% { 
+        box-shadow: 0 0 0 15px rgba(40, 167, 69, 0); 
+    }
+}
+
+/* Read-only mode badge */
+.readonly-badge {
+    float: right;
+    font-size: 0.9rem;
+}
+
+/* Contact badge */
+.contact-badge {
+    background: var(--crf-gradient-primary);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+/* ==============================
+   14. ENDCASE FORM SPECIFIC
+   ============================== */
+.question-number {
+    font-weight: 700;
+    margin-right: 8px;
+    color: #667eea;
+    font-size: 1rem;
+}
+
+.indent-section {
+    margin-left: 2rem;
+    padding-left: 1.5rem;
+    border-left: 4px solid #667eea;
+    background: linear-gradient(to right, rgba(102, 126, 234, 0.02) 0%, transparent 100%);
+    border-radius: 0 6px 6px 0;
+}
+
+/* Visit completion cards */
+.visit-card {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.visit-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--crf-gradient-primary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.visit-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.12);
+    transform: translateX(4px);
+}
+
+.visit-card:hover::before {
+    opacity: 1;
+}
+
+.visit-card .form-check-input:checked ~ .form-check-label {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.visit-card .form-check-label {
+    font-size: 1.05rem;
+    margin-left: 8px;
+}
+
+/* Card headers enhanced */
+.card-header {
+    border-radius: 8px 8px 0 0;
+}
+
+.card-header h3.card-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.patient-info-box strong {
+    color: var(--color-royal-700);
+}
+
+.patient-info-box .info-label {
+    font-weight: 600;
+    color: #0e7490;
+    margin-bottom: 5px;
+}
+
+.patient-info-box .info-value {
+    font-size: 1.1rem;
+    color: #0c4a6e;
+    font-weight: 600;
+}
+
+/* Gradient Variant */
+.patient-info-box.gradient {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-left-color: #0891b2;
+}
+
+/* ==============================
+   13. FORMSET TABLES
+   ============================== */
+.formset-table {
+    background: white;
+    border-radius: var(--crf-card-radius);
+    overflow: hidden;
+}
+
+.formset-table .table {
+    margin-bottom: 0;
+}
+
+.formset-table thead {
+    background: var(--crf-gradient-primary);
+    color: white;
+}
+
+.formset-table thead th {
+    padding: 12px;
+    font-weight: 600;
+    border: none;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.formset-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.formset-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.formset-table td {
+    padding: 10px;
+    vertical-align: middle;
+}
+
+.formset-row {
+    transition: all 0.2s ease;
+}
+
+.empty-row td {
+    text-align: center;
+    color: var(--color-white-600);
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Medication Table */
+.medication-table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.medication-table thead {
+    background: var(--crf-gradient-primary);
+    color: white;
+}
+
+.medication-table thead th {
+    padding: 12px;
+    font-weight: 600;
+    border: none;
+}
+
+/* ==============================
+   14. LAB TEST CARDS
+   ============================== */
+.lab-test-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 18px;
+    transition: all 0.3s ease;
+    border-left: 4px solid #e9ecef;
+    margin-bottom: 12px;
+}
+
+.lab-test-card.performed {
+    border-left-color: var(--crf-performed-border);
+    background: var(--crf-performed-bg);
+}
+
+.lab-test-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.test-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.test-code {
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin-left: 8px;
+}
+
+.test-unit {
+    color: #6b7280;
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-left: 5px;
+}
+
+.test-details {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.test-details input,
+.test-details textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.test-details input:focus,
+.test-details textarea:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+/* Lab Category */
+.lab-category {
+    margin-bottom: 30px;
+}
+
+.category-title {
+    color: #667eea;
+    font-weight: 600;
+    background: linear-gradient(135deg, #f8f9fc 0%, #e9ecef 100%);
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #667eea;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.category-title i {
+    margin-right: 8px;
+}
+
+/* Category Date Picker */
+.category-date-picker {
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    border: 2px solid #fb923c;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.category-date-picker label {
+    font-weight: 600;
+    color: #c2410c;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.category-date-picker input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid #fb923c;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.category-date-picker button {
+    background: var(--crf-gradient-warning);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.category-date-picker button:hover {
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(251, 146, 60, 0.4);
+}
+
+/* ==============================
+   15. MICROBIOLOGY SPECIFIC
+   ============================== */
+
+/* Add Culture Section */
+.add-culture-section {
+    background: #ffffff;
+    border: 1px solid var(--bs-border-color);
+    border-left: 4px solid var(--bs-success);
+    border-radius: var(--bs-border-radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--bs-box-shadow-sm);
+}
+
+.add-culture-section h5 {
+    color: var(--bs-success);
+    border-bottom: 1px solid rgba(40, 167, 69, 0.2);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.add-culture-section h5 i {
+    margin-right: 0.5rem;
+}
+
+/* KPN Info Alert */
+.kpn-info-alert {
+    background-color: var(--color-cinnabar-50);
+    border: 1px solid var(--color-cinnabar-200);
+    border-left: 4px solid var(--color-cinnabar-500);
+    border-radius: var(--bs-border-radius);
+    padding: 0.875rem 1rem;
+    margin-bottom: 1.25rem;
+    color: var(--color-cinnabar-800);
+}
+
+.kpn-info-alert i {
+    color: var(--color-cinnabar-600);
+}
+
+/* Culture Badges */
+.badge-kpn {
+    background-color: var(--color-cinnabar-500);
+    color: #ffffff;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: var(--bs-border-radius-sm);
+    margin-left: 0.375rem;
+}
+
+.culture-id-badge {
+    background-color: var(--color-royal-600);
+    color: #ffffff;
+    padding: 0.25rem 0.5rem;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.8125rem;
+    border-radius: var(--bs-border-radius-sm);
+}
+
+/* Antibiotic Button */
+.btn-antibiotic {
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+    color: #ffffff;
+    transition: all var(--transition-fast);
+}
+
+.btn-antibiotic:hover {
+    background-color: #5a32a3;
+    border-color: #5a32a3;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(111, 66, 193, 0.3);
+}
+
+.btn-antibiotic:disabled {
+    background-color: var(--color-white-500);
+    border-color: var(--color-white-500);
+    opacity: 0.65;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--color-white-600);
+    background: var(--color-white-50);
+    border-radius: var(--bs-border-radius-lg);
+    border: 2px dashed var(--bs-border-color);
+}
+
+.empty-state i {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+    color: var(--color-royal-400);
+}
+
+.empty-state h4 {
+    color: var(--color-white-700);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    margin-bottom: 0;
+}
+
+/* ==============================
+   16. ADDRESS SELECTION
+   ============================== */
+.address-selection-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.address-option {
+    position: relative;
+}
+
+.address-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.address-option-label {
+    display: block;
+    padding: 15px 20px;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0;
+}
+
+.address-option-label:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.address-option input[type="radio"]:checked + .address-option-label {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.address-option-header {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+}
+
+.address-option-header i {
+    font-size: 1.3rem;
+    margin-right: 10px;
+}
+
+/* Address Fields Container */
+.address-fields-container {
+    margin-top: 20px;
+    animation: crf-slideDown 0.4s ease-out;
+}
+
+.address-subsection {
+    background: #f8f9fa;
+    border-left: 4px solid #667eea;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.address-subsection-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 1.05rem;
+}
+
+.address-subsection-header i {
+    font-size: 1.2rem;
+}
+
+/* Address Preview */
+.address-preview-content {
+    min-height: 40px;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 6px;
+    font-size: 1.05rem;
+}
+
+.address-preview-content.has-address {
+    color: #374151;
+    font-weight: 500;
+}
+
+.address-preview-section {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: #e3f2fd;
+    border-left: 3px solid #2196F3;
+    border-radius: 4px;
+}
+
+.address-preview-section:last-child {
+    margin-bottom: 0;
+}
+
+.address-preview-label {
+    font-weight: 600;
+    color: #1976d2;
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
+.address-preview-value {
+    color: #374151;
+}
+
+/* ==============================
+   17. VISIT COMPLETION CARDS
+   ============================== */
+.visit-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.visit-card:hover {
+    border-color: var(--color-royal-600);
+    box-shadow: 0 2px 8px rgba(59, 125, 221, 0.15);
+}
+
+.visit-card .form-check-input:checked ~ .form-check-label {
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* ==============================
+   18. ELIGIBILITY STATUS
+   ============================== */
+.eligibility-status {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+.eligibility-status.eligible {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.eligibility-status.not-eligible {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* ==============================
+   18A. ORGANISM SELECTION CARDS
+   ============================== */
+/* Klebsiella Card */
+.card.border-left-danger .card-header {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-bottom: 1px solid #ef4444;
+}
+
+.card.border-left-danger .card-header .form-check-label {
+    color: #991b1b;
+}
+
+/* Other Organism Card */
+.card.border-left-info .card-header .form-check-label {
+    color: #0e7490;
+}
+
+.card.border-left-info .card-body {
+    background-color: #f0f9ff;
+    border-top: 1px solid #0891b2;
+}
+
+.card.border-left-info .card-body label.small {
+    font-size: 0.85rem;
+}
+
+.card.border-left-info .card-body .form-control-sm {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+/* ==============================
+   19. TABS NAVIGATION
+   ============================== */
+.custom-tabs,
+.crf-tabs {
+    border-bottom: 2px solid #e9ecef;
+}
+
+.custom-tabs .nav-link,
+.crf-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 12px 20px;
+    font-weight: 600;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.custom-tabs .nav-link:hover,
+.crf-tabs .nav-link:hover {
+    color: #667eea;
+    border-bottom-color: rgba(102, 126, 234, 0.3);
+}
+
+.custom-tabs .nav-link.active,
+.crf-tabs .nav-link.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: transparent;
+}
+
+.custom-tabs .nav-link i,
+.crf-tabs .nav-link i {
+    margin-right: 8px;
+}
+
+/* ==============================
+   20. BUTTONS
+   ============================== */
+
+/* CRF Primary Button with Gradient */
+.crf-btn-primary,
+.crf-form .btn-primary {
+    background: var(--crf-gradient-primary);
+    border: none;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+}
+
+.crf-btn-primary:hover,
+.crf-form .btn-primary:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #64408a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* CRF Success Button */
+.crf-btn-success,
+.crf-form .btn-success {
+    background-color: #10b981;
+    border-color: #10b981;
+}
+
+.crf-btn-success:hover,
+.crf-form .btn-success:hover {
+    background-color: #059669;
+    border-color: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* CRF Info Button */
+.crf-btn-info,
+.crf-form .btn-info {
+    background-color: #06b6d4;
+    border-color: #06b6d4;
+}
+
+.crf-btn-info:hover,
+.crf-form .btn-info:hover {
+    background-color: #0891b2;
+    border-color: #0891b2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(6, 182, 212, 0.3);
+}
+
+/* Button Pulse Animation */
+.btn-pulse {
+    animation: crf-pulse-animation 1.5s infinite;
+}
+
+@keyframes crf-pulse-animation {
+    0% {
+        box-shadow: 0 0 0 0px rgba(40, 167, 69, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 0 15px rgba(40, 167, 69, 0);
+    }
+}
+
+/* Add Formset Row Button */
+.add-formset-row,
+#add-medication-btn,
+#add-vasodrug-btn,
+#add-main-antibiotic-btn,
+#add-prior-antibiotic-btn,
+#add-initial-antibiotic-btn,
+#add-icd {
+    background: var(--crf-gradient-success);
+    border: none;
+    color: white;
+}
+
+.add-formset-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* ==============================
+   21. READONLY MODE
+   ============================== */
+.readonly-form,
+.view-only-form,
+.readonly-mode {
+    opacity: 0.95;
+}
+
+.readonly-form .form-control:disabled,
+.readonly-form .form-control[readonly],
+.view-only-form .form-control,
+.view-only-form select,
+.view-only-form input,
+.view-only-form textarea,
+.readonly-mode .form-control {
+    background-color: #f8f9fa !important;
+    opacity: 1;
+    border: 1px solid #e9ecef;
+    pointer-events: none;
+}
+
+.readonly-form .custom-radio input[type="radio"]:disabled + label,
+.view-only-form .form-check-input:disabled + .form-check-label {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+/* Readonly Badge */
+.readonly-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10;
+    background: var(--color-royal-100);
+    color: var(--color-royal-700);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Hide buttons in readonly mode */
+.view-only-form .btn:not(.btn-back):not(.btn-edit),
+[data-read-only="true"] button[data-formset-add],
+[data-read-only="true"] button[data-formset-delete],
+[data-read-only="true"] button.add-formset-row,
+[data-read-only="true"] button.delete-formset-row,
+[data-read-only="true"] .btn-add-row,
+[data-read-only="true"] .btn-delete-row {
+    display: none !important;
+}
+
+/* Hide DELETE checkboxes in readonly mode */
+[data-read-only="true"] input[name$="-DELETE"] {
+    display: none !important;
+}
+
+/* ==============================
+   22. CRF BADGES
+   ============================== */
+.crf-badge {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+.crf-badge i {
+    margin-right: 4px;
+}
+
+.crf-badge-success {
+    background-color: #10b981 !important;
+    color: white;
+}
+
+.crf-badge-warning {
+    background-color: #f59e0b !important;
+    color: white;
+}
+
+.crf-badge-danger {
+    background-color: var(--color-cinnabar-500) !important;
+    color: white;
+}
+
+.crf-badge-info {
+    background-color: var(--color-royal-500) !important;
+    color: white;
+}
+
+/* ==============================
+   23. ALERTS
+   ============================== */
+.crf-alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.crf-alert-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid #ef4444;
+}
+
+.crf-alert-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+    border-left: 4px solid #f59e0b;
+}
+
+.crf-alert-info {
+    background-color: var(--color-royal-100);
+    color: var(--color-royal-800);
+    border-left: 4px solid var(--color-royal-500);
+}
+
+.crf-alert-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border-left: 4px solid #10b981;
+}
+
+/* Privacy Notice Alert */
+.alert.privacy-notice {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left: 4px solid #f59e0b;
+}
+
+/* ==============================
+   24. MODALS
+   ============================== */
+.modal-header.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+    color: var(--color-white-900);
+}
+
+.modal-header.bg-primary {
+    background: var(--crf-gradient-primary) !important;
+    color: white;
+}
+
+.modal-header.bg-danger {
+    background: var(--crf-gradient-danger) !important;
+    color: white;
+}
+
+/* ==============================
+   25. ICD FORM CARDS
+   ============================== */
+.icd-form {
+    border: 2px solid #dee2e6 !important;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+    margin-bottom: 10px;
+}
+
+.icd-form:hover {
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+}
+
+/* Fade in animation for new forms */
+@keyframes crf-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.icd-form[style*="animation"] {
+    animation: crf-fadeIn 0.3s ease-in;
+}
+
+/* ==============================
+   26. FORM STEPS INDICATOR
+   ============================== */
+.form-steps .step {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #ddd;
+}
+
+.form-steps .step.active {
+    border-left: 4px solid #667eea;
+    background-color: #e9f5ff;
+}
+
+/* ==============================
+   27. NEXT STEP INFO
+   ============================== */
+.next-step-info {
+    transition: all 0.3s ease;
+    padding: 15px;
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-radius: 8px;
+    border-left: 4px solid #10b981;
+}
+
+/* ==============================
+   28. FORM SECTION (Alternative)
+   ============================== */
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+/* ==============================
+   29. RESPONSIVE STYLES
+   ============================== */
+@media (max-width: 768px) {
+    .clinical-case-content,
+    .enr-case-content,
+    .crf-content {
+        padding: 15px;
+    }
+    
+    .form-section-header,
+    .crf-section-header {
+        font-size: 1rem;
+        padding: 10px 15px;
+    }
+    
+    .numbered-item {
+        padding-left: 30px;
+    }
+    
+    .numbered-item::before {
+        font-size: 1rem;
+    }
+    
+    .underlying-conditions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .risk-factor-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .address-selection-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .address-option-header {
+        flex-wrap: wrap;
+    }
+    
+    .address-option-header .badge {
+        margin-left: 0 !important;
+        margin-top: 5px;
+    }
+    
+    .patient-info-box {
+        padding: 0.875rem 1rem;
+    }
+    
+    .patient-info-box .row > div {
+        margin-bottom: 0.5rem;
+    }
+    
+    .category-date-picker {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .category-date-picker label {
+        margin-bottom: 10px;
+    }
+    
+    .category-date-picker button {
+        width: 100%;
+    }
+    
+    .custom-tabs .nav-link,
+    .crf-tabs .nav-link {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .custom-tabs .nav-link i,
+    .crf-tabs .nav-link i {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .formset-table thead th {
+        font-size: 0.75rem;
+        padding: 8px;
+    }
+    
+    .formset-table td {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+}
+
+/* ==============================
+   30. PRINT STYLES
+   ============================== */
+@media print {
+    .crf-card,
+    .card {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+    }
+    
+    .crf-card-header,
+    .card-header {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .btn,
+    .add-formset-row,
+    .category-date-picker,
+    .custom-tabs,
+    .crf-tabs {
+        display: none !important;
+    }
+    
+    .form-section-header,
+    .crf-section-header {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+    }
+    
+    .conditional-section {
+        display: block !important;
+        border: 1px solid #dee2e6;
+    }
+    
+    .patient-info-box {
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+}
+
+/* ==============================
+   31. UTILITY CLASSES
+   ============================== */
+
+/* Text Colors */
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+/* Spacing */
+.mt-form-section {
+    margin-top: 25px;
+}
+
+.mb-form-section {
+    margin-bottom: 25px;
+}
+
+/* Border Left Variants */
+.border-left-primary {
+    border-left: 4px solid var(--color-royal-600) !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #10b981 !important;
+}
+
+.border-left-warning {
+    border-left: 4px solid #f59e0b !important;
+}
+
+.border-left-danger {
+    border-left: 4px solid #ef4444 !important;
+}
+
+/* Input Group Fixes */
+.input-group-prepend .input-group-text,
+.input-group-prepend span {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-right: none;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem 0 0 0.25rem;
+}
+
+.input-group .form-control {
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+
+/* No Results Row */
+.no-results-row td {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    font-style: italic;
+    color: var(--color-white-600);
+    background-color: var(--color-white-50);
+}
+
+/* ==============================
+   32. LIST VIEW STYLES
+   ============================== */
+
+/* Patient Info Box */
+.patient-info-box {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-left: 4px solid #667eea;
+    border-radius: var(--crf-card-radius);
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.patient-info-box .info-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.patient-info-box .info-value {
+    font-size: 1rem;
+    color: #212529;
+    font-weight: 500;
+}
+
+/* Statistics Cards */
+.stat-card {
+    border: 1px solid #dee2e6;
+    border-radius: var(--crf-card-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.stat-card-header {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+    color: #667eea;
+    display: flex;
+    align-items: center;
+}
+
+.stat-card-header i {
+    margin-right: 8px;
+}
+
+.stat-big-number {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 10px;
+    background: var(--crf-gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Add Culture Section */
+.add-culture-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+    border: 2px solid #10b981;
+    border-radius: var(--crf-card-radius);
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
+}
+
+.add-culture-section h5 {
+    color: #10b981;
+    border-bottom: 2px solid #10b981;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.add-culture-section h5 i {
+    margin-right: 10px;
+}
+
+/* Culture Info Header */
+.culture-info-header {
+    background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);
+    border: 1px solid #ffc107;
+    border-left: 4px solid #ffc107;
+    border-radius: var(--crf-card-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.1);
+}
+
+.culture-badge {
+    background: var(--crf-gradient-primary);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.culture-id-badge {
+    background: var(--crf-gradient-info);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.badge-kpn,
+.kpn-badge {
+    background: var(--crf-gradient-danger);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Tier Cards */
+.tier-card {
+    border: 1px solid #dee2e6;
+    border-radius: var(--crf-card-radius);
+    margin-bottom: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.tier-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tier-header {
+    cursor: pointer;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.tier-header:hover {
+    filter: brightness(1.05);
+}
+
+/* WHO AWaRe Tier Colors */
+.tier-header[data-tier="Tier1"] {
+    background: var(--crf-gradient-success);
+    color: white;
+}
+
+.tier-header[data-tier="Tier2"] {
+    background: var(--crf-gradient-warning);
+    color: white;
+}
+
+.tier-header[data-tier="Tier3"] {
+    background: var(--crf-gradient-danger);
+    color: white;
+}
+
+.tier-header[data-tier="Tier4"] {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+}
+
+.tier-header[data-tier="Colistin"] {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    color: white;
+}
+
+.tier-badge {
+    padding: 5px 12px;
+    border-radius: 4px;
+    color: rgb(255, 255, 255);
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: inline-block;
+}
+
+.tier-badge.tier1 {
+    background: var(--crf-gradient-success);
+}
+
+.tier-badge.tier2 {
+    background: var(--crf-gradient-warning);
+}
+
+.tier-badge.tier3 {
+    background: var(--crf-gradient-danger);
+}
+
+.tier-badge.tier4 {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+}
+
+.tier-badge.colistin {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+}
+
+.tier-badge.other{
+    background: linear-gradient(135deg, #34a8f0 0%, #11badf 100%);
+}
+
+/* Tier Statistics */
+.tier-stat-row {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.tier-stat-row:last-child {
+    border-bottom: none;
+}
+
+.tier-stat-row:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+/* Progress Bars */
+.progress-resistance {
+    height: 28px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar-resistance {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(255, 255, 255);
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: width 0.6s ease;
+    background: var(--crf-gradient-danger);
+}
+
+/* Antibiotic Lists */
+.antibiotic-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.antibiotic-list-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.antibiotic-list-item:last-child {
+    border-bottom: none;
+}
+
+.antibiotic-list-item:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+    transform: translateX(5px);
+}
+
+.antibiotic-name {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Alert Styles */
+.alert-carbapenem {
+    background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);
+    border: 2px solid #dc3545;
+    border-left: 4px solid #dc3545;
+    border-radius: var(--crf-card-radius);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.15);
+}
+
+.kpn-info-alert {
+    background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);
+    border: 1px solid #ffc107;
+    border-left: 4px solid #ffc107;
+    border-radius: var(--crf-card-radius);
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.1);
+}
+
+/* Button Variants */
+.btn-antibiotic {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 85px;
+    text-align: center;
+}
+
+.btn-antibiotic:hover {
+    background: linear-gradient(135deg, #5a32a3 0%, #4c2889 100%);
+    color: white;
+    filter: brightness(1.1);
+    box-shadow: 0 2px 6px rgba(111, 66, 193, 0.3);
+}
+
+.btn-antibiotic:disabled {
+    background: #6c757d;
+    opacity: 0.65;
+    min-width: 85px;
+}
+
+.btn-edit {
+    background: var(--crf-gradient-warning);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-edit:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 2px 6px rgba(251, 146, 60, 0.3);
+    color: white;
+}
+
+/* Action Button Group */
+.action-btn-group {
+    display: flex;
+    gap: 5px;
+    flex-wrap: nowrap;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.3;
+    color: #667eea;
+}
+
+.empty-state h4 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-top: 20px;
+}
+
+/* DataTables Enhancements */
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    color: #495057;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.table td {
+    vertical-align: middle;
+    color: #495057;
+}
+
+/* Sample Dates Styling */
+.sample-dates {
+    line-height: 1.6;
+}
+
+.sample-dates > div {
+    padding: 4px 0;
+    border-left: 3px solid transparent;
+    padding-left: 10px;
+    margin-left: -10px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.sample-dates > div:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+    border-left-color: #667eea;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stat-big-number {
+        font-size: 2rem;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .patient-info-box {
+        padding: 15px;
+    }
+    
+    .add-culture-section {
+        padding: 15px;
+    }
+}

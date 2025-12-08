@@ -5,17 +5,16 @@ Import all patient-related models for Django registry
 """
 
 # Screening & Enrollment
-from .Screening import ScreeningCase
-from .ENR_Enrollment import EnrollmentCase
-from .ENR_MedHisDrug import MedHisDrug
+from .SCR_CASE import SCR_CASE
+from .ENR_CASE import ENR_CASE
+from .ENR_CASE_MedHisDrug import ENR_CASE_MedHisDrug
 from .ENR_Underlying import UnderlyingCondition
 
 # Clinical Information
-from .CLI_ClinicalCase import ClinicalCase
+from .CLI_CASE import CLI_CASE
 from .CLI_HospiProcess import HospiProcess
 from .CLI_ImproveSympt import ImproveSympt
 from .CLI_LaboratoryTest import LaboratoryTest, OtherTest
-from .CLI_Microbiology import CLI_Microbiology
 from .CLI_AEHospEvent import AEHospEvent
 from .CLI_HistorySymptom import HistorySymptom
 from .CLI_Symptom_72H import Symptom_72H
@@ -25,43 +24,49 @@ from .CLI_Antibiotic import PriorAntibiotic, InitialAntibiotic, MainAntibiotic
 from .CLI_VasoIDrug import VasoIDrug
 
 # Sample Collection
-from .SAM_SampleCollection import SampleCollection
+from .SAM_CASE import SAM_CASE
 
 # Laboratory
 from .LAB_Case import LAB_Microbiology
 from .LAB_AntibioticSensitivity import AntibioticSensitivity
 
+
+
 # Aliases for backwards compatibility (forms.py uses prefixed names)
-ENR_MedHisDrug = MedHisDrug
-CLI_ClinicalCase = ClinicalCase
+ENR_CASE_MedHisDrug = ENR_CASE_MedHisDrug
+CLI_ClinicalCase = CLI_CASE
 CLI_HospiProcess = HospiProcess
 CLI_ImproveSympt = ImproveSympt
 CLI_LaboratoryTest = LaboratoryTest
 CLI_AEHospEvent = AEHospEvent
 CLI_Antibiotic = InitialAntibiotic  # Default to InitialAntibiotic
 CLI_VasoIDrug = VasoIDrug
-SAM_SampleCollection = SampleCollection
+SAM_CASE = SAM_CASE
 LAB_AntibioticSensitivity = AntibioticSensitivity
 
 # Follow-up
-from .FU_FollowUp_28_90 import FollowUpCase, FollowUpCase90
-from .FU_Antibiotic_28_90 import FollowUpAntibiotic, FollowUpAntibiotic90
-from .FU_Rehospital_28_90 import Rehospitalization, Rehospitalization90
+from .FU_CASE_28 import FU_CASE_28
+from .FU_CASE_90 import FU_CASE_90
+from .FU_Antibiotic_28 import FollowUpAntibiotic
+from .FU_Antibiotic_90 import FollowUpAntibiotic90
+from .FU_Rehospital_28 import Rehospitalization
+from .FU_Rehospital_90 import Rehospitalization90
 
 # Discharge & End
-from .Discharge import DischargeCase, DischargeICD
+from .DISCH_CASE import DISCH_CASE, DischargeICD
 from .EndCaseCRF import EndCaseCRF
+
 
 # Export all models
 __all__ = [
     # Screening & Enrollment
-    'ScreeningCase',
-    'EnrollmentCase',
-    'MedHisDrug',
-    'ENR_MedHisDrug',  # Alias
+    'SCR_CASE',
+    'ENR_CASE',
+    'ENR_CASE_MedHisDrug',
+    'ENR_CASE_MedHisDrug',  # Alias
     
     # Clinical
-    'ClinicalCase',
+    'CLI_CASE',
     'CLI_ClinicalCase',  # Alias
     'HospiProcess',
     'CLI_HospiProcess',  # Alias
@@ -70,7 +75,6 @@ __all__ = [
     'LaboratoryTest',
     'CLI_LaboratoryTest',  # Alias
     'OtherTest',
-    'CLI_Microbiology',
     'AEHospEvent',
     'CLI_AEHospEvent',  # Alias
     
@@ -83,22 +87,22 @@ __all__ = [
     'CLI_VasoIDrug',  # Alias
     
     # Sample & Lab
-    'SampleCollection',
-    'SAM_SampleCollection',  # Alias
+    'SAM_CASE',
+    'SAM_CASE',  # Alias
     'LAB_Microbiology',
     'AntibioticSensitivity',
     'LAB_AntibioticSensitivity',  # Alias
     
     # Follow-up
-    'FollowUpCase',
-    'FollowUpCase90',
+    'FU_CASE_28',
+    'FU_CASE_90',
     'FollowUpAntibiotic',
     'FollowUpAntibiotic90',
     'Rehospitalization',
     'Rehospitalization90',
     
     # Discharge & End
-    'DischargeCase',
+    'DISCH_CASE',
     'DischargeICD',
     'EndCaseCRF',
 ]

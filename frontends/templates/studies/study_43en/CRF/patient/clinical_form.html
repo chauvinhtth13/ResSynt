@@ -1,0 +1,204 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}{% trans "Clinical Form 43EN" %}{% endblock %}
+
+{% block page_title %}{% trans "Clinical Form 43EN" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:screening_case_list' %}">{% trans "Patient List 43EN" %}</a></li>                
+<li class="breadcrumb-item"><a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID %}">{% trans "Patient" %} {{ enrollment_case.USUBJID }}</a></li>
+<li class="breadcrumb-item active">{% trans "Clinical Information" %}</li>
+{% endblock %}
+
+{% block extra_head_dashboard %}
+<!-- Include CRF unified styles -->
+{% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
+<!-- All readonly styles are now in crf-forms.css -->
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-stethoscope mr-2"></i>{% trans "Clinical Information 43EN" %} {{ enrollment_case.USUBJID }}
+        </h3>
+        <div class="card-tools">
+          <span class="badge badge-info">CL {% if is_create %}(New){% else %}(Update){% endif %}</span>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        {# Error Messages #}
+        {% if clinical_form.errors %}
+        <div class="alert alert-danger">
+          <h5><i class="icon fas fa-ban"></i> {% trans "Error!" %}</h5>
+          <ul>
+            {% for field in clinical_form %}
+              {% for error in field.errors %}
+                <li><strong>{{ field.label }}</strong>: {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in clinical_form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        {# Read-only Mode Alert #}
+        {% if is_readonly %}
+        <div class="alert alert-info">
+          <i class="fas fa-eye mr-2"></i> {% trans "You are in view-only mode. To edit, please click the Edit button below." %}
+        </div>
+
+        <div class="mb-3 text-right">
+          <a href="{% url 'study_43en:clinical_case_update' usubjid=enrollment_case.USUBJID %}" class="btn btn-info">
+            <i class="fas fa-edit mr-1"></i> {% trans "Edit" %}
+          </a>
+        </div>
+        {% endif %}
+
+        {# Tab Navigation #}
+        <ul class="nav nav-tabs custom-tabs" id="clinicalTabs" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="page1-tab" data-toggle="tab" href="#page1" role="tab">
+              <i class="fas fa-user-md"></i> {% trans "Page 1" %}
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="page2-tab" data-toggle="tab" href="#page2" role="tab">
+              <i class="fas fa-heartbeat"></i> {% trans "Page 2" %}
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="page3-tab" data-toggle="tab" href="#page3" role="tab">
+              <i class="fas fa-procedures"></i> {% trans "Page 3" %}
+            </a>
+          </li>
+        </ul>
+        
+        {# Main Form #}
+        <form method="post" 
+              id="clinicalForm" 
+              class="mt-4" 
+              data-enrollment-id="{{ enrollment_case.USUBJID }}" 
+              {% if is_readonly %}data-read-only="true"{% endif %}>
+          {% csrf_token %}
+          
+          {# Hidden Fields #}
+          <input type="hidden" name="EVENT" value="CASE">
+          
+          {% if clinical_case.USUBJID_id %}
+          <input type="hidden" name="USUBJID" value="{{ clinical_case.USUBJID_id }}" id="id_USUBJID" />
+          {% elif enrollment_case.USUBJID %}
+          <input type="hidden" name="USUBJID" value="{{ enrollment_case.pk }}" id="id_USUBJID" />
+          {% endif %}
+          
+          {# Tab Content #}
+          <div class="tab-content" id="clinicalTabsContent">
+            
+            {# ==================== PAGE 1 ==================== #}
+            <div class="tab-pane fade show active" id="page1" role="tabpanel" aria-labelledby="page1-tab">
+              <div class="clinical-case-container">
+                <div class="clinical-case-header">
+                  <div class="row">
+                    <div class="col">
+                      <h4 class="m-0">CLINICAL - CASE</h4>
+                    </div>
+                    <div class="col text-right">
+                      <span class="page-indicator">CL1 (1/3)</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="clinical-case-content">
+                  {# Study Identifiers #}
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>{% trans "Study Code [43EN]" %}</label>
+                        <input type="text" name="STUDYID" class="form-control" value="43EN" readonly>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>{% trans "Site" %}</label>
+                        <input type="text" name="SITEID" class="form-control" value="{{ enrollment_case.USUBJID.SITEID }}" readonly>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>{% trans "Subject Type [A]" %}</label>
+                        <input type="text" class="form-control" value="A" readonly>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label>{% trans "Subject ID" %}</label>
+                        <input type="text" name="SUBJID" class="form-control" value="{{ enrollment_case.USUBJID.SUBJID }}" readonly>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {# Section Header #}
+                  <div class="form-section-header">
+                    <i class="fas fa-hospital-user"></i> {% trans "Clinical Information" %}
+                  </div>
+                  
+                  {# ===== INCLUDE PAGE 1 CONTENT ===== #}
+                  {% include 'studies/study_43en/CRF/patient/clinical_page1.html' %}
+                  
+                  {# Navigation #}
+                  <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID %}" 
+                       class="btn btn-secondary">
+                      <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+                    </a>
+                    <button type="button" 
+                            class="btn btn-primary" 
+                            data-tab-action="next">
+                      {% trans "Next" %} <i class="fas fa-arrow-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {# ==================== PAGE 2 ==================== #}
+            {# ===== INCLUDE FULL PAGE 2 WITH TAB-PANE ===== #}
+            {% include 'studies/study_43en/CRF/patient/clinical_page2.html' %}
+            
+            {# ==================== PAGE 3 ==================== #}
+            {# ===== INCLUDE FULL PAGE 3 WITH TAB-PANE ===== #}
+            {% include 'studies/study_43en/CRF/patient/clinical_page3.html' %}
+            
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ========== CHANGE REASON MODAL ========== #}
+{% if show_reason_form and detected_changes %}
+  {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+{% include 'studies/study_43en/CRF/includes/datepicker_scripts.html' %}
+
+<!-- Clinical Form JavaScript -->
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/clinical_form.js' %}"></script>
+
+<!-- Change Reason Handler -->
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
+{% endblock %}

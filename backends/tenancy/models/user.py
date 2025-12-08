@@ -1,16 +1,15 @@
-# backend/tenancy/models/user.py - ENHANCED WITH ROLE INTEGRATION
+# backend/tenancy/models/user.py
 """
-User model with complete role integration
+User model optimized for django-axes 8.0.0
 """
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import UserManager as BaseUserManager
+from django.contrib.auth.models import AbstractUser, UserManager as BaseUserManager
 from django.db import models
-from django.db.models import Prefetch
-from django.db import transaction
 from django.utils import timezone
 from django.core.cache import cache
-from typing import Optional, Tuple, Set, Dict, List, TYPE_CHECKING
+from typing import Optional, Set, TYPE_CHECKING
 import logging
+
+from config import settings
 
 if TYPE_CHECKING:
     from backends.tenancy.models import StudyMembership
@@ -19,99 +18,39 @@ logger = logging.getLogger(__name__)
 
 
 class UserManager(BaseUserManager):
-    """Custom manager with axes integration"""
+    """Enhanced manager with axes 8.0.0 support"""
     
-    def get_blocked_users(self):
-        """Get all blocked users (is_active=False)"""
-        return self.filter(is_active=False)
+    def get_by_natural_key(self, username):
+        """Override for case-insensitive username"""
+        return self.get(username__iexact=username)
     
-    def get_active_users(self):
-        """Get all active users"""
-        return self.filter(is_active=True)
-    
-    def unblock_users(self, queryset=None):
-        """Bulk unblock users"""
-        if queryset is None:
-            queryset = self.filter(is_active=False)
-        
-        unblocked_count = 0
-        for user in queryset:
-            if user.unblock_user():
-                unblocked_count += 1
-        
-        logger.debug(f"Bulk unblocked {unblocked_count} users")
-        return unblocked_count
+    def reset_user_axes(self, user):
+        """Reset axes locks for specific user - axes 8.0.0 compatible"""
+        from axes.utils import reset
+        reset(username=user.username)
+        return True
 
 
 class User(AbstractUser):
     """
-    Extended User model with full role integration
+    User model optimized for axes 8.0.0
     """
-    
-    # Study tracking
-    last_study_accessed = models.ForeignKey(
-        'Study', 
-        null=True, 
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='last_accessed_by',
-        verbose_name="Last Study Accessed"
-    )
-    
-    last_study_accessed_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name="Last Study Access Time"
-    )
-    
     # Security fields
-    must_change_password = models.BooleanField(
-        default=True,
-        verbose_name="Must Change Password"
-    )
+    must_change_password = models.BooleanField(default=True,help_text="User must change password on next login")
+    password_changed_at = models.DateTimeField(null=True, blank=True)
     
-    password_changed_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name="Password Changed At"
-    )
-    
-    failed_login_attempts = models.IntegerField(
-        default=0,
-        verbose_name="Failed Login Attempts"
-    )
-    
-    last_failed_login = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name="Last Failed Login"
-    )
-    
-    notes = models.TextField(
-        blank=True,
-        verbose_name="Admin Notes",
-        help_text="Internal notes about user account status or issues"
-    )
-    
-    # Timestamps
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Created At"
-    )
-    
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Updated At"
-    )
-    
+    last_study_accessed_at= models.DateTimeField(null=True, blank=True)    
+    last_study_accessed_id= models.IntegerField(null=True, blank=True) 
+    # Metadata
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
-        'self',
+        settings.AUTH_USER_MODEL,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='users_created',
-        verbose_name="Created By (Admin User)",
-        help_text="The admin/staff user who created this account"
+        related_name='users_created'
     )
     
     objects = UserManager()
@@ -121,470 +60,256 @@ class User(AbstractUser):
         verbose_name = "Authentication Users"
         verbose_name_plural = "Authentication Users"
         indexes = [
-            models.Index(fields=['username'], name='idx_user_username'),
-            models.Index(fields=['email'], name='idx_user_email'),
-            models.Index(fields=['is_active'], name='idx_user_is_active'),
+            models.Index(fields=['username']),
+            models.Index(fields=['email']),
+            models.Index(fields=['is_active']),
         ]
-        
-    def __str__(self):
-        return self.get_full_name() or self.username
-    
+
     # ==========================================
-    # NEW: ROLE MANAGEMENT METHODS
+    # SIMPLIFIED ROLE METHODS
     # ==========================================
-    
-    def get_study_role(self, study) -> Optional[str]:
-        """
-        Get user's role key in a study
-        
-        Args:
-            study: Study instance
-            
-        Returns:
-            Role key (e.g., 'data_manager') or None
-            
-        Example:
-            >>> user.get_study_role(study)
-            'data_manager'
-        """
-        if not self.is_active:
-            return None
-        
-        from backends.tenancy.models import StudyMembership
-        
-        try:
-            membership = StudyMembership.objects.select_related('group').get(
-                user=self,
-                study=study,
-                is_active=True
-            )
-            return membership.get_role_key()
-        except StudyMembership.DoesNotExist:
-            return None
-    
-    def get_study_role_display(self, study) -> Optional[str]:
-        """
-        Get user's role display name in a study
-        
-        Args:
-            study: Study instance
-            
-        Returns:
-            Display name (e.g., 'Data Manager') or None
-            
-        Example:
-            >>> user.get_study_role_display(study)
-            'Data Manager'
-        """
-        if not self.is_active:
-            return None
-        
-        from backends.tenancy.models import StudyMembership
-        
-        try:
-            membership = StudyMembership.objects.select_related('group').get(
-                user=self,
-                study=study,
-                is_active=True
-            )
-            return membership.get_role_display_name()
-        except StudyMembership.DoesNotExist:
-            return None
-    
-    def has_role_in_study(self, study, role_key: str) -> bool:
-        """
-        Check if user has specific role in a study
-        
-        Args:
-            study: Study instance
-            role_key: Role key to check (e.g., 'data_manager')
-            
-        Returns:
-            True if user has this role
-            
-        Example:
-            >>> user.has_role_in_study(study, 'data_manager')
-            True
-        """
-        if not self.is_active:
-            return False
-        
-        current_role = self.get_study_role(study)
-        return current_role == role_key
-    
-    def get_all_study_roles(self) -> Dict[int, Dict[str, str]]:
-        """
-        Get all roles across all studies
-        
-        Returns:
-            Dict mapping study_id to role info
-            
-        Example:
-            >>> user.get_all_study_roles()
-            {
-                1: {'study_code': '43EN', 'role_key': 'data_manager', 'role_name': 'Data Manager'},
-                2: {'study_code': '44EN', 'role_key': 'research_staff', 'role_name': 'Research Staff'}
-            }
-        """
-        if not self.is_active:
-            return {}
-        
-        from backends.tenancy.models import StudyMembership
-        
-        memberships = StudyMembership.objects.filter(
-            user=self,
-            is_active=True
-        ).select_related('study', 'group')
-        
-        result = {}
-        for membership in memberships:
-            result[membership.study.id] = {
-                'study_code': membership.study.code,
-                'study_name': membership.study.safe_translation_getter('name', any_language=True),
-                'role_key': membership.get_role_key(),
-                'role_name': membership.get_role_display_name(),
-                'can_access_all_sites': membership.can_access_all_sites,
-            }
-        
-        return result
-    
-    def is_study_admin(self, study) -> bool:
-        """
-        Check if user is admin in a study (has privileged role)
-        
-        Args:
-            study: Study instance
-            
-        Returns:
-            True if user has privileged role
-        """
-        role_key = self.get_study_role(study)
-        if not role_key:
-            return False
-        
-        from backends.tenancy.utils.role_manager import RoleTemplate
-        
-        role_config = RoleTemplate.get_role_config(role_key)
-        return role_config.get('is_privileged', False) if role_config else False
     
     def get_study_membership(self, study) -> Optional['StudyMembership']:
-        """
-        Get active membership for a study
-        
-        Args:
-            study: Study instance
-            
-        Returns:
-            StudyMembership instance or None
-        """
+        """Get active membership for a study (cached)"""
         if not self.is_active:
             return None
         
-        from backends.tenancy.models import StudyMembership
+        cache_key = f'membership_{self.pk}_{study.pk}'
+        membership = cache.get(cache_key)
         
-        try:
-            return StudyMembership.objects.select_related('group', 'study').prefetch_related(
-                'study_sites__site'
-            ).get(
-                user=self,
-                study=study,
-                is_active=True
-            )
-        except StudyMembership.DoesNotExist:
-            return None
+        if membership is None:
+            from backends.tenancy.models import StudyMembership
+            
+            try:
+                membership = StudyMembership.objects.select_related(
+                    'group', 'study'
+                ).prefetch_related(
+                    'study_sites__site'
+                ).get(
+                    user=self,
+                    study=study,
+                    is_active=True
+                )
+                cache.set(cache_key, membership, 300)
+            except StudyMembership.DoesNotExist:
+                membership = False  # Cache negative result
+                cache.set(cache_key, membership, 60)
+        
+        return membership if membership else None
     
-    # ==========================================
-    # ENHANCED: PERMISSION METHODS WITH CACHING
-    # ==========================================
+    def get_study_role(self, study) -> Optional[str]:
+        """Get role key in study"""
+        membership = self.get_study_membership(study)
+        return membership.get_role_key() if membership else None
+    
+    def has_study_permission(self, study, permission: str) -> bool:
+        """Check permission in study (uses TenancyUtils for caching)"""
+        from backends.tenancy.utils import TenancyUtils
+        return TenancyUtils.user_has_permission(self, study, permission)
     
     def get_study_permissions(self, study) -> Set[str]:
-        """
-        Get all permissions for a specific study (CACHED)
-        
-        Args:
-            study: Study instance
-            
-        Returns:
-            Set of permission codenames
-        """
-        if not self.is_active:
-            return set()
-        
-        # Use optimized utility with caching
+        """Get all permissions in study (uses TenancyUtils)"""
         from backends.tenancy.utils import TenancyUtils
         return TenancyUtils.get_user_permissions(self, study)
     
-    def has_study_permission(self, study, permission_codename: str) -> bool:
-        """
-        Check if user has a specific permission in a study (CACHED)
-        
-        Args:
-            study: Study instance
-            permission_codename: Permission codename (e.g., 'add_patient')
-        
-        Returns:
-            True if user has permission
-        """
-        if not self.is_active:
-            return False
-        
-        from backends.tenancy.utils import TenancyUtils
-        return TenancyUtils.user_has_permission(self, study, permission_codename)
-    
-    def get_permission_summary(self, study) -> Dict[str, List[str]]:
-        """
-        Get organized permission summary for a study
-        
-        Args:
-            study: Study instance
-            
-        Returns:
-            Dict grouping permissions by model
-            
-        Example:
-            >>> user.get_permission_summary(study)
-            {
-                'patient': ['add', 'change', 'view'],
-                'visit': ['view'],
-                'report': ['add', 'view', 'export']
-            }
-        """
-        if not self.is_active:
-            return {}
-        
-        from backends.tenancy.utils import TenancyUtils
-        return TenancyUtils.get_permission_display(self, study)
-    
     # ==========================================
-    # AXES INTEGRATION
+    # NEW METHODS - SITES AND PERMISSIONS
     # ==========================================
     
-    def get_axes_status(self) -> Tuple[bool, Optional[str], Optional[int]]:
+    def get_accessible_sites(self, study=None):
+        from backends.tenancy.models import StudyMembership, StudySite
+        cache_key = f'user_sites_{self.pk}_{study.pk if study else "all"}'
+        sites = cache.get(cache_key)
+        
+        if sites is None:
+            if study:
+                # Single query với prefetch
+                membership = StudyMembership.objects.filter(
+                    user=self, 
+                    study=study, 
+                    is_active=True
+                ).prefetch_related(
+                    'study_sites__site'
+                ).first()
+                
+                if not membership:
+                    sites = []
+                elif membership.can_access_all_sites:
+                    sites = list(
+                        StudySite.objects.filter(study=study)
+                        .values_list('site__code', flat=True)
+                    )
+                else:
+                    sites = [ss.site.code for ss in membership.study_sites.all()]
+            else:
+                # Bulk query cho all studies
+                sites = list(
+                    StudySite.objects.filter(
+                        memberships__user=self,
+                        memberships__is_active=True
+                    ).values_list('site__code', flat=True).distinct()
+                )
+            
+            cache.set(cache_key, sites, 300)
+        
+        return sites
+        
+    def get_total_permissions_count(self) -> int:
+        """Count total permissions across all studies"""
+        cache_key = f'user_perms_count_{self.pk}'
+        count = cache.get(cache_key)
+        
+        if count is None:
+            count = 0
+            for study in self.get_accessible_studies():
+                count += len(self.get_study_permissions(study))
+            cache.set(cache_key, count, 300)
+        
+        return count
+    
+    @property
+    def studies_count(self) -> int:
+        """Count active studies"""
+        from backends.tenancy.models import StudyMembership
+        return StudyMembership.objects.filter(user=self, is_active=True).values('study').distinct().count()
+    
+    def get_memberships_summary(self) -> dict:
+        """Get summary of all memberships"""
+        from backends.tenancy.models import StudyMembership
+        memberships = StudyMembership.objects.filter(user=self, is_active=True).select_related('study', 'group')
+
+        return {
+            'total': memberships.count(),
+            'by_study': {m.study.code: m.get_role_display_name() for m in memberships},
+            'sites_access': sum(1 for m in memberships if m.can_access_all_sites)
+        }
+
+    # ==========================================
+    # AXES 8.0.0 INTEGRATION
+    # ==========================================
+    
+    def is_axes_locked(self) -> bool:
         """
-        Get axes block status
-        
-        Returns:
-            tuple: (is_blocked, reason, attempts)
+        Check if user is locked by django-axes
+        Direct database check - no cache
         """
-        from axes.models import AccessAttempt
-        from axes.conf import settings as axes_settings
-        
-        is_blocked = False
-        reason = None
-        attempts = 0
-        
         try:
-            username_attempts = AccessAttempt.objects.filter(
+            from axes.models import AccessAttempt
+            from axes.conf import settings as axes_settings
+            
+            # Force fresh query - no cache
+            attempt = AccessAttempt.objects.filter(
                 username=self.username
             ).first()
             
-            if username_attempts:
-                attempts = username_attempts.failures_since_start
-                
-                if attempts >= axes_settings.AXES_FAILURE_LIMIT:
-                    is_blocked = True
-                    reason = f"Too many failed login attempts ({attempts})"
-                    
+            if not attempt:
+                return False
+            
+            failure_limit = getattr(axes_settings, 'AXES_FAILURE_LIMIT', 5)
+            return attempt.failures_since_start >= failure_limit
+            
         except Exception as e:
-            logger.error(f"Error checking axes status for user {self.username}: {e}")
+            logger.error(f"Error checking axes lock: {e}")
+            return False
+
+
+    def can_authenticate(self) -> bool:
+        """
+        Check if user can authenticate
+        Returns False if manually blocked OR axes locked
+        """
+        # Manually blocked users cannot authenticate
+        if not self.is_active:
+            return False
         
-        return is_blocked, reason, attempts
-    
+        # Axes locked users cannot authenticate
+        if self.is_axes_locked():
+            return False
+        
+        return True
+        
+    def get_axes_attempts(self) -> int:
+        """
+        Get failed attempts - always fresh from DB
+        """
+        try:
+            from axes.models import AccessAttempt
+            
+            # Force fresh query
+            attempt = AccessAttempt.objects.filter(
+                username=self.username
+            ).first()
+            
+            return attempt.failures_since_start if attempt else 0
+            
+        except Exception as e:
+            logger.error(f"Error getting attempts: {e}")
+            return 0
+        
     def reset_axes_locks(self) -> bool:
         """
-        Reset all axes locks and cache - IMPROVED VERSION
-        
-        Features:
-        - Transaction safety
-        - Complete cache cleanup
-        - Detailed logging
-        - Consistent with signals.py
-        
-        Returns:
-            bool: True if successful, False otherwise
+        Complete axes reset - Fixed version
         """
-        from axes.models import AccessAttempt, AccessFailureLog
-        from axes.utils import reset
-        
         try:
-            with transaction.atomic():
-                # 1. Reset axes utilities (built-in function)
-                reset(username=self.username)
-                
-                # 2. Delete all attempts and logs
-                deleted_attempts = AccessAttempt.objects.filter(
-                    username=self.username
-                ).delete()
-                
-                deleted_logs = AccessFailureLog.objects.filter(
-                    username=self.username
-                ).delete()
-                
-                # 3. Clear ALL related cache keys (synchronized with signals.py)
-                cache_keys = [
-                    # Axes cache keys
-                    f"axes:username:{self.username}",
-                    
-                    # User cache keys by username
-                    f"user_{self.username}",
-                    f"user_blocked_{self.username}",
-                    f"user_obj_{self.username}",
-                    f"user_login_{self.username}",
-                    
-                    # User cache keys by pk
-                    f"user_obj_{self.pk}",
-                    f"user_login_{self.pk}",
-                ]
-                cache.delete_many(cache_keys)
-            
-            # 4. Log success for audit trail
-            logger.info(
-                f"Reset Axes locks for user '{self.username}' (pk={self.pk}): "
-                f"deleted {deleted_attempts[0]} attempts, {deleted_logs[0]} logs"
-            )
+            from axes.utils import reset
+            reset(username=self.username)
             return True
-            
         except Exception as e:
-            logger.error(
-                f"Error resetting axes locks for user '{self.username}' (pk={self.pk}): {e}", 
-                exc_info=True
-            )
+            logger.error(f"Error resetting axes locks: {e}", exc_info=True)
             return False
-    
+
     def unblock_user(self) -> bool:
-        """
-        Unblock user completely - reset Axes + activate + clear counters
+        """Unblock user account manually"""
+        self.is_active = True
+        self.save(update_fields=['is_active', 'updated_at'])
         
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        # 1. Reset Axes locks first
-        success = self.reset_axes_locks()
+        self.reset_axes_locks()
         
-        if success:
-            # 2. Activate user and reset counters
-            self.is_active = True
-            self.failed_login_attempts = 0
-            self.last_failed_login = None
-            
-            # Use super().save() to avoid triggering custom save logic
-            super().save(update_fields=[
-                'is_active', 
-                'failed_login_attempts', 
-                'last_failed_login'
-            ])
-            
-            logger.info(f"User '{self.username}' (pk={self.pk}) unblocked successfully")
-        else:
-            logger.error(f"Failed to unblock user '{self.username}' (pk={self.pk})")
-            
-        return success
-    
-    def block_user(self, reason: Optional[str] = None) -> bool:
-        """
-        Block user and add note
-        
-        Args:
-            reason: Optional reason for blocking
-            
-        Returns:
-            bool: True if successful
-        """
+        logger.info(f"User {self.username} unblocked manually")
+        return True
+
+
+    def block_user(self, reason: Optional[str] = None, blocked_by=None) -> bool:
+        """Block user account manually"""
         self.is_active = False
         
-        if reason:
-            current_notes = self.notes or ""
-            timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.notes = f"{current_notes}\n[{timestamp}] Blocked: {reason}".strip()
+        timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        blocker = blocked_by.username if blocked_by else 'System'
+        note = f"[{timestamp}] Blocked by {blocker}"
         
-        self.save(update_fields=['is_active', 'notes'])
-        logger.info(f"User '{self.username}' (pk={self.pk}) blocked: {reason or 'No reason'}")
+        if reason:
+            note += f": {reason}"
+        
+        self.notes = f"{self.notes}\n{note}".strip() if self.notes else note
+        self.save(update_fields=['is_active', 'notes', 'updated_at'])
+        
         return True
-    
+   
     # ==========================================
-    # AXES PROPERTIES
-    # ==========================================
-    
-    @property
-    def is_axes_blocked(self) -> bool:
-        """Check if blocked by axes (attempts >= limit)"""
-        is_blocked, _, _ = self.get_axes_status()
-        return is_blocked
-    
-    @property
-    def axes_failure_count(self) -> int:
-        """Get current axes failure count"""
-        _, _, attempts = self.get_axes_status()
-        return attempts or 0
-    
-    @property
-    def has_axes_warning(self) -> bool:
-        """Check if has warning (0 < attempts < limit)"""
-        from axes.conf import settings as axes_settings
-        attempts = self.axes_failure_count
-        return 0 < attempts < axes_settings.AXES_FAILURE_LIMIT
-    
-    @property
-    def is_blocked(self) -> bool:
-        """Check if user is blocked (inactive OR axes blocked)"""
-        return not self.is_active or self.is_axes_blocked
-    
-    # ==========================================
-    # STUDY ACCESS METHODS
+    # UTILITY METHODS
     # ==========================================
     
     def get_full_name(self):
-        """Return full name"""
-        parts = [self.first_name, self.last_name]
-        return ' '.join(part for part in parts if part).strip()
+        """Get full name"""
+        return f"{self.first_name} {self.last_name}".strip() or self.username
     
     def has_study_access(self, study) -> bool:
-        """Check if user has access to study"""
-        if not self.is_active:
-            return False
-            
-        from backends.tenancy.models import StudyMembership
-        
-        return StudyMembership.objects.filter(
-            user=self,
-            study=study,
-            is_active=True
-        ).exists()
+        """Check if has access to study"""
+        return self.get_study_membership(study) is not None
     
     def get_accessible_studies(self):
-        """OPTIMIZED: Better query with proper prefetching"""
-        from backends.tenancy.models import Study, StudyMembership
-        
-        # Option 1: More explicit (better for debugging)
-        study_ids = StudyMembership.objects.filter(
-            user=self,
-            is_active=True
-        ).values_list('study_id', flat=True)
-        
-        return Study.objects.filter(
-            id__in=study_ids,
-            status__in=[Study.Status.ACTIVE, Study.Status.PLANNING]
-        ).select_related('created_by').prefetch_related(
-            'translations',
-            'study_sites__site',  # ✅ Prefetch sites if needed
-            Prefetch(
-                'memberships',
-                queryset=StudyMembership.objects.filter(user=self).select_related('group')
-            )
-        ).order_by('code')
-        
+        """Get all accessible studies (cached)"""
+        from backends.tenancy.utils import TenancyUtils
+        return TenancyUtils.get_user_studies(self)
+    
     def save(self, *args, **kwargs):
-        """OPTIMIZED: Check status change efficiently"""
+        """Save with axes sync"""
+        # If activating user, reset axes locks
         if self.pk:
             try:
-                # ✅ Only fetch is_active field
-                original = User.objects.only('is_active').get(pk=self.pk)
-                
-                if not original.is_active and self.is_active:
+                old = User.objects.get(pk=self.pk)
+                if not old.is_active and self.is_active:
                     self.reset_axes_locks()
-                    logger.info(f"User {self.username} reactivated")
-                elif original.is_active and not self.is_active:
-                    logger.warning(f"User {self.username} deactivated")
             except User.DoesNotExist:
                 pass
         

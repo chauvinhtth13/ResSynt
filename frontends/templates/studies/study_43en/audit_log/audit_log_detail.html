@@ -1,0 +1,308 @@
+{% extends 'default/dashboard.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% translate "Log Detail" %} - {{ log.patient_id }}{% endblock %}
+
+{% block extra_head_dashboard %}
+<link rel="stylesheet" href="{% static 'studies/study_43en/css/audit_log.css' %}">
+{% endblock %}
+
+{% block dashboard_content %}
+<section class="content-header">
+    <div class="container-fluid">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-file-text me-2"></i> 
+            {% translate "Log Detail" %}
+        </h1>
+    </div>
+</section>
+
+<section class="content">
+    <!-- Integrity Check Alert -->
+    {% if not is_verified %}
+    <!--  Updated to BS5 alert structure -->
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <h5 class="alert-heading">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Warning!
+        </h5>
+        This record is <strong>INVALID</strong> - Checksum mismatch. May have been tampered!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% else %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <h5 class="alert-heading">
+            <i class="bi bi-check-circle-fill me-2"></i> Valid
+        </h5>
+        This record has been successfully verified for integrity.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Main Info Card -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i> <!--  Bootstrap Icons -->
+                    {% translate "General Information" %}
+                </h3>
+                <span class="badge bg-light text-dark">ID: {{ log.id }}</span> <!--  BS5 badge -->
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th width="40%">
+                                    <i class="bi bi-clock text-info me-2"></i> <!--  -->
+                                    {% translate "Timestamp" %}
+                                </th>
+                                <td>
+                                    <strong>{{ log.timestamp|date:"d/m/Y H:i:s" }}</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="bi bi-person text-primary me-2"></i>
+                                    {% translate "User" %}
+                                </th>
+                                <td>
+                                    <strong>{{ log.username }}</strong>
+                                    {% if user %}
+                                        <br><small class="text-muted">{{ user.get_full_name|default:user.email }}</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="bi bi-list-check text-success me-2"></i>
+                                    {% translate "Action" %}
+                                </th>
+                                <td>
+                                    {% if log.action == 'CREATE' %}
+                                        <span class="badge bg-success badge-lg"> <!--  BS5 -->
+                                            <i class="bi bi-plus-circle me-1"></i> CREATE
+                                        </span>
+                                    {% elif log.action == 'UPDATE' %}
+                                        <span class="badge bg-warning text-dark badge-lg">
+                                            <i class="bi bi-pencil-square me-1"></i> UPDATE
+                                        </span>
+                                    {% elif log.action == 'DELETE' %}
+                                        <span class="badge bg-danger badge-lg">
+                                            <i class="bi bi-trash me-1"></i> DELETE
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info text-dark badge-lg">
+                                            <i class="bi bi-eye me-1"></i> VIEW
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="col-md-6">
+                    <table class="table table-bordered table-hover">
+                        <tr>
+                            <th width="40%">
+                                <i class="fas fa-table text-secondary"></i>
+                                {% translate "Data Table" %}
+                            </th>
+                            <td>
+                                <code class="bg-light p-1">{{ log.model_name }}</code>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <i class="fas fa-id-card text-danger"></i>
+                                {% translate "Patient ID" %}
+                            </th>
+                            <td>
+                                <strong class="text-primary">{{ log.patient_id }}</strong>
+                                {% if log.SITEID %}
+                                    <br>
+                                    <span class="badge badge-secondary text-dark">Site: {{ log.SITEID }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <i class="fas fa-network-wired text-warning"></i>
+                                {% translate "IP Address" %}
+                            </th>
+                            <td>
+                                <code>{{ log.ip_address|default:"N/A" }}</code>
+                                {% if log.session_id %}
+                                    <br><small class="text-muted">Session: {{ log.session_id|slice:":8" }}...</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Changes Detail Card (Only for UPDATE) -->
+    {% if log.action == 'UPDATE' and changes %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning">
+            <h3 class="card-title">
+                <i class="fas fa-exchange-alt mr-2"></i>
+                {% translate "Change Details" %} ({{ changes|length }})
+            </h3>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th class="text-center" width="15%">{% translate "Field" %}</th>
+                            <th class="text-center" width="20%">{% translate "Display Name" %}</th>
+                            <th class="text-center" width="25%">{% translate "Old Value" %}</th>
+                            <th class="text-center" width="25%">{% translate "New Value" %}</th>
+                            <th class="text-center" width="15%">{% translate "Reason" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for change in changes %}
+                        <tr>
+                            <td class="text-center">
+                                <code class="bg-light p-1">{{ change.field }}</code>
+                            </td>
+                            <td class="text-center">
+                                {% if change.display_name %}
+                                    <strong>{{ change.display_name }}</strong>
+                                {% elif change.label %}
+                                    <strong>{{ change.label }}</strong>
+                                {% else %}
+                                    <em class="text-muted">{{ change.field }}</em>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="old-value text-black">
+                                    {{ change.old_display|safe }}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="new-value">
+                                    {{ change.new_display|safe }}
+                                </div>
+                            </td>
+                            <td class="text-left">
+                                {% if change.reason %}
+                                    <div class="reason-box">
+                                        <small>{{ change.reason|escape }}</small>
+                                    </div>
+                                {% else %}
+                                    <em class="text-muted">-</em>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% elif log.action == 'CREATE' %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle mr-2"></i>
+        <strong>Information:</strong> This is a new record, no change data available.
+    </div>
+    {% elif log.action == 'DELETE' %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        <strong>Warning:</strong> This record has been deleted from the system.
+    </div>
+    {% endif %}
+
+    <!-- Combined Reason Card -->
+    {% if log.reason %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title">
+                <i class="fas fa-comment-dots mr-2"></i>
+                {% translate "Overall Change Reason" %}
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="p-3 bg-light rounded border">
+                <p class="mb-0">{{ log.reason|escape }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Technical Info Card (Collapsible) -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary">
+            <h3 class="card-title">
+                <i class="fas fa-cog mr-2"></i>
+                {% translate "Technical Information" %}
+            </h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                    <i class="fas fa-minus"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm table-bordered">
+                <tr>
+                    <th width="30%">User ID</th>
+                    <td><code>{{ log.user_id }}</code></td>
+                </tr>
+                <tr>
+                    <th>Checksum (SHA-256)</th>
+                    <td>
+                        <code class="text-monospace small">{{ log.checksum }}</code>
+                        {% if is_verified %}
+                            <span class="badge badge-success ml-2">✓ Verified</span>
+                        {% else %}
+                            <span class="badge badge-danger ml-2">✗ Invalid</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Session ID</th>
+                    <td><code>{{ log.session_id|default:"N/A" }}</code></td>
+                </tr>
+                <tr>
+                    <th>Created At</th>
+                    <td>{{ log.timestamp|date:"Y-m-d H:i:s.u" }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="text-center mb-5">
+        <a href="{% url 'study_43en:audit_log_list' %}" class="btn btn-secondary btn-lg">
+            <i class="bi bi-arrow-left me-2"></i> {% translate "Back to List" %}
+        </a>
+        
+        {% if log.patient_id and log.model_name == 'SCREENINGCASE' %}
+        <a href="{% url 'study_43en:screening_case_update' log.patient_id %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-file-medical me-2"></i> View CRF
+        </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script nonce="{{ request.csp_nonce }}">
+    $(function() {
+        // Collapse technical info by default
+        $('[data-card-widget="collapse"]').CardWidget('collapse');
+    });
+</script>
+{% endblock %}

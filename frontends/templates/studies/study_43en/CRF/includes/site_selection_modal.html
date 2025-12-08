@@ -1,0 +1,245 @@
+{% load i18n %}
+
+<!-- Site Selection Modal for Screening Creation -->
+<div class="modal fade" id="siteSelectionModal" tabindex="-1" role="dialog" aria-labelledby="siteSelectionModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="siteSelectionModalLabel">
+          <i class="fas fa-hospital-alt me-2"></i>
+          {% trans "Create New Screening - Select Site" %}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <form id="siteSelectionForm">
+          <!-- Step 1: Site Selection -->
+          <div class="form-group">
+            <label for="modalSiteId" class="font-weight-bold">
+              <i class="fas fa-map-marker-alt me-1"></i>
+              {% trans "Site ID" %} <span class="text-danger">*</span>
+            </label>
+            
+            {% if selected_site_id == 'all' %}
+              <select class="form-control form-control-lg" id="modalSiteId" name="siteid" required>
+                <option value="">{% trans "-- Select Site --" %}</option>
+                {% for study_site in available_sites %}
+                  <option value="{{ study_site.site.code }}">
+                    {{ study_site.site.code }} - {{ study_site.site.name }}
+                  </option>
+                {% empty %}
+                  <option value="" disabled>{% trans "No sites available" %}</option>
+                {% endfor %}
+              </select>
+              <small class="form-text text-muted">
+                <i class="fas fa-info-circle"></i>
+                {% trans "Please select the site for this screening" %}
+              </small>
+            {% else %}
+              <input type="text" class="form-control form-control-lg" id="modalSiteId" name="siteid" 
+                     value="{{ selected_site_id }}" readonly 
+                     style="background-color: #e9ecef; font-weight: bold;">
+              <div class="mt-2">
+                <span class="badge badge-primary" style="font-size: 0.9em;">
+                  {% if selected_site_id == '003' %}
+                    003 - {% trans "Hospital for Tropical Diseases HCMC" %}
+                  {% elif selected_site_id == '020' %}
+                    020 - {% trans "National Hospital for Tropical Diseases" %}
+                  {% elif selected_site_id == '011' %}
+                    011 - {% trans "Cho Ray Hospital" %}
+                  {% endif %}
+                </span>
+              </div>
+              <small class="form-text text-muted">
+                <i class="fas fa-lock"></i>
+                {% trans "Your site is automatically selected" %}
+              </small>
+            {% endif %}
+          </div>
+
+          <!-- Step 2: Generated SCRID -->
+          <div class="form-group mt-3" id="scridPreviewGroup" style="display: none;">
+            <label class="font-weight-bold">
+              <i class="fas fa-id-card me-1"></i>
+              {% trans "Generated Screening ID" %}
+            </label>
+            <div class="input-group input-group-lg">
+              <input type="text" class="form-control" id="scridPreview" readonly 
+                     style="background-color: #e3f2fd; font-weight: bold; font-size: 1.2em; color: #1565c0; text-align: center;">
+            </div>
+            <small class="form-text text-primary">
+              <i class="fas fa-check-circle"></i>
+              {% trans "This ID will be used for the new screening record" %}
+            </small>
+          </div>
+
+          <!-- Loading indicator -->
+          <div class="text-center mt-3" id="loadingScrid" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">{% trans "Generating..." %}</span>
+            </div>
+            <p class="text-muted mt-2">{% trans "Generating Screening ID..." %}</p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelModalBtn">
+          <i class="fas fa-times me-1"></i>
+          {% trans "Cancel" %}
+        </button>
+        <button type="button" class="btn btn-primary" id="confirmCreateBtn" disabled>
+          <i class="fas fa-check-circle me-1"></i>
+          {% trans "Create Form" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+#siteSelectionModal .modal-content {
+  border: none;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  border-radius: 0.5rem;
+}
+
+#siteSelectionModal .modal-header {
+  background-color: var(--color-royal-blue-600);
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+#siteSelectionModal .form-control-lg {
+  font-size: 1.1rem;
+}
+
+#scridPreview {
+  border: 2px solid var(--color-royal-blue-600) !important;
+}
+
+#confirmCreateBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-body {
+  padding: 2rem;
+}
+</style>
+
+<!-- Script giữ nguyên -->
+<script nonce="{{ request.csp_nonce }}">
+// Site Selection Modal Script - KEEP ORIGINAL LOGIC
+(function() {
+  'use strict';
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModal);
+  } else {
+    initModal();
+  }
+  
+  function initModal() {
+    if (typeof $ === 'undefined') {
+      console.error('[SiteModal] jQuery not loaded!');
+      setTimeout(initModal, 100);
+      return;
+    }
+    
+    $(document).ready(function() {
+      console.log('[SiteModal] Initializing...');
+      
+      var selectedSiteId = "{{ selected_site_id }}";
+      var generatedScrid = null;
+      
+      console.log('[SiteModal] Selected site ID:', selectedSiteId);
+      console.log('[SiteModal] Modal exists:', $('#siteSelectionModal').length > 0);
+      
+      var sitesCount = $('#modalSiteId option').not(':first').length;
+      console.log('[SiteModal] Available sites in dropdown:', sitesCount);
+      
+      if (selectedSiteId && selectedSiteId !== 'all') {
+        console.log('[SiteModal] Single-site user - auto-generating SCRID');
+        $('#siteSelectionModal').on('shown.bs.modal', function() {
+          generateScrid(selectedSiteId);
+        });
+      }
+      
+      $('#modalSiteId').on('change', function() {
+        var siteid = $(this).val();
+        console.log('[SiteModal] Site selected:', siteid);
+        if (siteid) {
+          generateScrid(siteid);
+        } else {
+          $('#scridPreviewGroup').hide();
+          $('#confirmCreateBtn').prop('disabled', true);
+          generatedScrid = null;
+        }
+      });
+      
+      $('#cancelModalBtn').on('click', function() {
+        console.log('[SiteModal] Cancel clicked - closing modal');
+        $('#siteSelectionModal').modal('hide');
+        $('#modalSiteId').val('');
+        $('#scridPreviewGroup').hide();
+        $('#confirmCreateBtn').prop('disabled', true);
+        generatedScrid = null;
+      });
+      
+      $('#confirmCreateBtn').on('click', function() {
+        var siteid = $('#modalSiteId').val();
+        
+        console.log('[SiteModal] Confirm clicked - siteid:', siteid, 'scrid:', generatedScrid);
+        
+        if (!siteid || !generatedScrid) {
+          alert('{% trans "Please select a site first" %}');
+          return;
+        }
+        
+        var createUrl = "{% url 'study_43en:screening_case_create' %}" + "?siteid=" + siteid;
+        console.log('[SiteModal] Navigating to:', createUrl);
+        window.location.href = createUrl;
+      });
+      
+      console.log('[SiteModal] Initialized successfully');
+      
+      function generateScrid(siteid) {
+        console.log('[SiteModal] Generating SCRID for site:', siteid);
+        
+        $('#loadingScrid').show();
+        $('#scridPreviewGroup').hide();
+        $('#confirmCreateBtn').prop('disabled', true);
+        
+        $.ajax({
+          url: "{% url 'study_43en:api_generate_scrid' %}",
+          method: 'POST',
+          data: {
+            siteid: siteid,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+          },
+          success: function(response) {
+            console.log('[SiteModal] API response:', response);
+            if (response.success && response.scrid) {
+              generatedScrid = response.scrid;
+              $('#scridPreview').val(generatedScrid);
+              $('#scridPreviewGroup').show();
+              $('#confirmCreateBtn').prop('disabled', false);
+              console.log('[SiteModal] Generated SCRID:', generatedScrid);
+            } else {
+              alert('{% trans "Error generating Screening ID" %}');
+              console.error('[SiteModal] API error:', response);
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('[SiteModal] AJAX error:', {xhr: xhr, status: status, error: error});
+            alert('{% trans "Network error. Please try again." %}');
+          },
+          complete: function() {
+            $('#loadingScrid').hide();
+          }
+        });
+      }
+    });
+  }
+  
+})();
+</script>

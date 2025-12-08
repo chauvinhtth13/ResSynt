@@ -1,243 +1,366 @@
 <!-- frontends/templates/studies/study_43en/home_dashboard.html -->
 {% extends 'default/dashboard.html' %}
 {% load static %}
-{% load i18n %}
+{% load i18n %} 
 
 {% block title %}{% trans "Dashboard Overview" %} - {{ request.study_code|upper }}{% endblock %}
 
 {% block extra_head_dashboard %}
-<!-- jQuery - PHẢI LOAD TRƯỚC Chart.js -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-<!-- Chart.js & Plugin -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-
-<style>
-.stat-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-.stat-number {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0 4px;
-    display: inline-block;
-}
-.chart-container {
-    position: relative;
-    height: 300px;
-}
-.table-responsive {
-    max-height: 400px;
-    overflow-y: auto;
-}
-</style>
+<!-- ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<!-- Dashboard CSS -->
+<link rel="stylesheet" href="{% static 'studies/study_43en/css/home_dashboard.css' %}">
 {% endblock %}
 
 {% block dashboard_content %}
-<!-- Page Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="mb-1 fw-bold">{% trans "Dashboard Overview" %}</h2>
-        <p class="text-muted mb-0">
-            {% trans "Welcome back" %}, {{ user.get_full_name|default:user.username }}
-        </p>
-    </div>
-    <div class="text-end">
-        <small class="text-muted">{% trans "Last updated" %}:</small><br>
-        <strong>{{ today|date:"d/m/Y" }}</strong>
+<!-- ============================================================================ -->
+<!-- NEW ENHANCED HEADER -->
+<!-- ============================================================================ -->
+<div class="dashboard-header-new">
+    <div class="header-main">
+        <div class="study-info">
+            <h1 class="study-title">{{ study_name|default:"Study Name Not Available" }}</h1>
+        </div>
+        
+        <div class="header-meta-cards">
+            <!-- Site Card -->
+            <div class="meta-card meta-card-site">
+                <div class="meta-icon">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <div class="meta-content">
+                    <span class="meta-label">{% trans "Site" %}</span>
+                    <span class="meta-value">{{ site_name|default:"All Sites" }}</span>
+                    {% if filter_type %}
+                        <span class="meta-subvalue">({{ filter_type }})</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Project Duration Card -->
+            <div class="meta-card meta-card-duration">
+                <div class="meta-icon">
+                    <i class="bi bi-calendar-range"></i>
+                </div>
+                <div class="meta-content">
+                    <span class="meta-label">{% trans "Project Duration" %}</span>
+                    <span class="meta-value">
+                        {% if project_start %}
+                            {{ project_start|date:"d/m/Y" }} - {{ today|date:"d/m/Y" }}
+                        {% else %}
+                            {% trans "Not started" %}
+                        {% endif %}
+                    </span>
+                    {% if project_start %}
+                        <span class="meta-subvalue">
+                            {{ today|timeuntil:project_start }} days
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Last Updated Card -->
+            <div class="meta-card meta-card-update">
+                <div class="meta-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="meta-content">
+                    <span class="meta-label">{% trans "Last Updated" %}</span>
+                    <span class="meta-value">{{ today|date:"d/m/Y H:i" }}</span>
+                    <span class="meta-subvalue">{{ today|date:"D" }}</span>
+                </div>
+            </div>
+            
+            <!-- Refresh Button -->
+            <div class="meta-card meta-card-refresh" id="btnRefreshDashboard" style="cursor: pointer;" title="{% trans 'Refresh Dashboard' %}">
+                <div class="meta-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </div>
+                <div class="meta-content">
+                    <span class="meta-label">{% trans "Refresh" %}</span>
+                    <span class="meta-value">{% trans "Click to update" %}</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Stats Cards Row -->
+<!-- ============================================================================ -->
+<!-- ENHANCED STATS CARDS ROW 1: SCREENING & ENROLLMENT -->
+<!-- ============================================================================ -->
 <div class="row g-4 mb-4">
-    <!-- Total Screening Card -->
+    <!-- 1. Total Screening Patients -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="bg-primary bg-opacity-10 rounded-3 p-3">
-                            <i class="bi bi-people-fill text-primary" style="font-size: 2rem;"></i>
-                        </div>
+        <div class="enhanced-stat-card stat-primary">
+            <div class="stat-background">
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+            <div class="stat-content">
+                <div class="stat-header">
+                    <span class="stat-label">{% trans "Screening Patients" %}</span>
+                    <div class="stat-badge">
+                        <i class="bi bi-arrow-up"></i>
                     </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="text-muted mb-1 text-uppercase small">
-                            {% trans "Total Screening" %}
-                        </h6>
-                        <h3 class="mb-0 fw-bold">{{ screening_patients|default:0 }}</h3>
-                        <small class="text-muted">
-                            {% trans "Patients" %}
-                        </small>
+                </div>
+                <div class="stat-value">
+                    <span class="count-up" data-target="{{ screening_patients|default:0 }}">0</span>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-sublabel">{% trans "Total screened" %}</span>
+                </div>
+                <div class="stat-chart" id="sparkline-screening-patients"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Enrolled Patients -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="enhanced-stat-card stat-success">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <span class="stat-label">{% trans "Enrolled Patients" %}</span>
+                    <div class="stat-badge badge-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-value">
+                    <span class="count-up" data-target="{{ enrolled_patients|default:0 }}">0</span>
+                </div>
+                <div class="stat-footer">
+                    <div class="progress-wrapper">
+                        <span class="stat-sublabel">
+                            {% if percent_target %}
+                                {{ percent_target|floatformat:1 }}% {% trans "of target" %}  
+                                {#  Use floatformat:1 #}
+                            {% else %}
+                                {% trans "Target" %}: {{ target_enrollment }}
+                            {% endif %}
+                        </span>
+                        <div class="mini-progress">
+                            <div class="mini-progress-bar" style="width: {{ percent_target|default:0 }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Enrolled Patients Card -->
+    <!-- 3. Total Contacts -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="bg-success bg-opacity-10 rounded-3 p-3">
-                            <i class="bi bi-person-check-fill text-success" style="font-size: 2rem;"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="text-muted mb-1 text-uppercase small">
-                            {% trans "Enrolled Patients" %}
-                        </h6>
-                        <h3 class="mb-0 fw-bold">{{ enrolled_patients|default:0 }}</h3>
-                        <small class="text-success">
-                            <i class="bi bi-arrow-up"></i> {{ percent_target }}% {% trans "of target" %}
-                        </small>
+        <div class="enhanced-stat-card stat-info">
+            <div class="stat-background">
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+            <div class="stat-content">
+                <div class="stat-header">
+                    <span class="stat-label">{% trans "Screening Contacts" %}</span>
+                    <div class="stat-badge badge-info">
+                        <i class="bi bi-graph-up"></i>
                     </div>
                 </div>
+                <div class="stat-value">
+                    <span class="count-up" data-target="{{ screening_contacts|default:0 }}">0</span>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-sublabel">{% trans "Total screened" %}</span>
+                </div>
+                <div class="stat-chart" id="sparkline-screening-contacts"></div>
             </div>
         </div>
     </div>
 
-    <!-- Total Contacts Card -->
+    <!-- 4. Enrolled Contacts -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="bg-info bg-opacity-10 rounded-3 p-3">
-                            <i class="bi bi-people text-info" style="font-size: 2rem;"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="text-muted mb-1 text-uppercase small">
-                            {% trans "Total Contacts" %}
-                        </h6>
-                        <h3 class="mb-0 fw-bold">{{ screening_contacts|default:0 }}</h3>
-                        <small class="text-muted">
-                            {% trans "Screening" %}
-                        </small>
-                    </div>
+        <div class="enhanced-stat-card stat-warning">
+            <div class="stat-background">
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-person-plus-fill"></i>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Enrolled Contacts Card -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 stat-card">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="bg-warning bg-opacity-10 rounded-3 p-3">
-                            <i class="bi bi-person-plus-fill text-warning" style="font-size: 2rem;"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h6 class="text-muted mb-1 text-uppercase small">
-                            {% trans "Enrolled Contacts" %}
-                        </h6>
-                        <h3 class="mb-0 fw-bold">{{ enrolled_contacts|default:0 }}</h3>
-                        <small class="text-muted">
-                            {% trans "Participants" %}
-                        </small>
+            <div class="stat-content">
+                <div class="stat-header">
+                    <span class="stat-label">{% trans "Enrolled Contacts" %}</span>
+                    <div class="stat-badge badge-warning">
+                        <i class="bi bi-star-fill"></i>
                     </div>
                 </div>
+                <div class="stat-value">
+                    <span class="count-up" data-target="{{ enrolled_contacts|default:0 }}">0</span>
+                </div>
+                <div class="stat-footer">
+                    {% if screening_contacts > 0 %}
+                        <div class="stat-ratio">
+                            <span class="ratio-text">{{ enrolled_contacts }}/{{ screening_contacts }}</span>
+                            <span class="ratio-percent">{% widthratio enrolled_contacts screening_contacts 100 %}%</span>
+                        </div>
+                    {% else %}
+                        <span class="stat-sublabel">{% trans "No screening yet" %}</span>
+                    {% endif %}
+                </div>
+                <div class="stat-chart" id="donut-enrolled-contacts"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Project Timeline & Target Progress -->
+<!-- ============================================================================ -->
+<!-- STATS CARDS ROW 2: CLINICAL OUTCOMES -->
+<!-- ============================================================================ -->
 <div class="row g-4 mb-4">
-    <!-- Project Info Card -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4">
-                <h5 class="card-title mb-0 fw-bold">
-                    <i class="bi bi-info-circle me-2 text-primary"></i>
-                    {% trans "Project Overview" %}
-                </h5>
+    <!-- 1. Average Hospital Stay -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="enhanced-stat-card stat-secondary">
+            <div class="stat-background">
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
             </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-3">
-                        <strong>{% trans "Project Start Date" %}:</strong>
-                        <span class="stat-number text-primary">{{ project_start|date:"d/m/Y"|default:"N/A" }}</span>
-                        <span class="text-muted">{% trans "to" %}</span>
-                        <span class="stat-number text-info">{{ today|date:"d/m/Y" }}</span>
-                    </li>
-                    <li class="mb-3">
-                        <strong>{% trans "Contacts" %}:</strong>
-                        <span class="stat-number text-info">{{ screening_contacts|default:"0" }}</span>
-                        <span class="text-muted small">{% trans "Screening" %}</span>
-                        <span class="mx-2">|</span>
-                        <span class="stat-number text-success">{{ enrolled_contacts|default:"0" }}</span>
-                        <span class="text-muted small">{% trans "Enrolled" %}</span>
-                    </li>
-                    <li>
-                        <strong>{% trans "Patients" %}:</strong>
-                        <span class="stat-number text-info">{{ screening_patients|default:"0" }}</span>
-                        <span class="text-muted small">{% trans "Screening" %}</span>
-                        <span class="mx-2">|</span>
-                        <span class="stat-number text-success">{{ enrolled_patients|default:"0" }}</span>
-                        <span class="text-muted small">{% trans "Enrolled" %}</span>
-                    </li>
-                </ul>
+            <div class="stat-content">
+                <div class="stat-header">
+                    <span class="stat-label">{% trans "Avg Hospital Stay" %}</span>
+                    <div class="stat-badge badge-secondary">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+                <div class="stat-value">
+                    {% if avg_hospital_stay %}
+                        <span class="count-up" data-target="{{ avg_hospital_stay|floatformat:0 }}" data-decimal="1">0</span>
+                        <span class="stat-unit">days</span>
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-sublabel">
+                        {% if avg_hospital_stay %}{% trans "Average duration" %}{% else %}{% trans "No data" %}{% endif %}
+                    </span>
+                </div>
+                <div class="stat-chart" id="bar-hospital-stay"></div>
             </div>
         </div>
     </div>
 
-    <!-- Target Progress Card -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4">
-                <h5 class="card-title mb-0 fw-bold">
-                    <i class="bi bi-bullseye me-2 text-success"></i>
-                    {% trans "Enrollment Target Progress" %}
-                </h5>
-            </div>
-            <div class="card-body d-flex align-items-center justify-content-center">
-                <canvas id="enrollPercentPie" style="max-height: 200px;"></canvas>
+    <!-- 2. Mortality Rate -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="enhanced-stat-card stat-danger">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <span class="stat-label">{% trans "Mortality Rate" %}</span>
+                    <div class="stat-badge badge-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="stat-value">
+                    {% if mortality_rate is not None %}
+                        <span class="count-up 
+                            {% if mortality_rate >= 20 %}text-danger
+                            {% elif mortality_rate >= 10 %}text-warning
+                            {% else %}
+                            {% endif %}" 
+                            data-target="{{ mortality_rate }}"  
+                            {#  Pre-formatted in Python #}
+                            data-decimal="1">0</span>
+                        <span class="stat-unit">%</span>
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-sublabel">
+                        {% if total_deaths is not None and total_enrolled_for_mortality is not None %}
+                            {{ total_deaths }}/{{ total_enrolled_for_mortality }} {% trans "deaths" %}
+                        {% else %}
+                            {% trans "No data" %}
+                        {% endif %}
+                    </span>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- 3. Active Cases -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="enhanced-stat-card stat-purple">
+            <div class="stat-background">
+                <div class="stat-icon-wrapper">
+                    <i class="bi bi-virus"></i>
+                </div>
+            </div>
+            <div class="stat-content">
+                <div class="stat-header">
+                    <span class="stat-label">{% trans "Active Cases" %}</span>
+                    <div class="stat-badge badge-purple">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                </div>
+                <div class="stat-value">
+                    <span class="count-up" data-target="{{ enrolled_patients|default:0 }}">0</span>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-sublabel">{% trans "Currently enrolled" %}</span>
+                </div>
+                <div class="stat-chart" id="radar-active-cases"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Study Progress -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="enhanced-stat-card stat-teal">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <span class="stat-label">{% trans "Study Progress" %}</span>
+                    <div class="stat-badge badge-teal">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                </div>
+                <div class="stat-value">
+                    <span class="count-up" 
+                        data-target="{{ percent_target }}"  
+                        {#  Pre-formatted in Python #}
+                        data-decimal="1">0</span>
+                    <span class="stat-unit">%</span>
+                </div>
+                <div class="stat-footer">
+                    <span class="stat-sublabel">{% trans "Of target reached" %}</span>
+                </div>
+            </div>
+                <!-- Progress ring for study target (created by JS) -->
+                <div class="stat-chart" id="ring-study-progress"></div>
+        </div>
+    </div>
+
 
 <!-- Gender Distribution Charts -->
 <div class="row g-4 mb-4">
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4">
-                <h5 class="card-title mb-0 fw-bold">
-                    <i class="bi bi-gender-ambiguous me-2 text-info"></i>
-                    {% trans "Patient Gender Distribution" %}
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="patientGenderChart"></canvas>
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="header-icon">
+                    <i class="bi bi-gender-ambiguous"></i>
                 </div>
+                <h5>{% trans "Patient Gender Distribution" %}</h5>
+            </div>
+            <div class="chart-card-body">
+                <div id="patientGenderChart" style="height: 350px;"></div>
             </div>
         </div>
     </div>
 
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4">
-                <h5 class="card-title mb-0 fw-bold">
-                    <i class="bi bi-gender-ambiguous me-2 text-success"></i>
-                    {% trans "Contact Gender Distribution" %}
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="contactGenderChart"></canvas>
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="header-icon">
+                    <i class="bi bi-gender-ambiguous"></i>
                 </div>
+                <h5>{% trans "Contact Gender Distribution" %}</h5>
+            </div>
+            <div class="chart-card-body">
+                <div id="contactGenderChart" style="height: 350px;"></div>
             </div>
         </div>
     </div>
@@ -246,17 +369,21 @@
 <!-- Screening Comparison Chart -->
 <div class="row g-4 mb-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 pt-4">
-                <h5 class="card-title mb-0 fw-bold">
-                    <i class="bi bi-bar-chart-line me-2 text-primary"></i>
-                    {% trans "Monthly Screening Comparison" %}
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 350px;">
-                    <canvas id="screeningComparisonChart"></canvas>
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="header-icon">
+                    <i class="bi bi-bar-chart-line"></i>
                 </div>
+                <h5>{% trans "Monthly Screening Comparison" %}</h5>
+                <div class="header-actions">
+                    <button class="btn-icon btn-refresh-chart" 
+                            data-chart-id="screeningComparison">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-card-body">
+                <div id="screeningComparisonChart" style="height: 400px;"></div>
             </div>
         </div>
     </div>
@@ -265,363 +392,230 @@
 <!-- Patient Enrollment Chart -->
 <div class="row g-4 mb-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 pt-4">
-                <h5 class="card-title mb-0 fw-bold">
-                    <i class="bi bi-graph-up me-2 text-success"></i>
-                    {% trans "Patient Enrollment Over Time" %}
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 350px;">
-                    <canvas id="patientEnrollmentChart"></canvas>
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="header-icon">
+                    <i class="bi bi-graph-up"></i>
                 </div>
+                <h5>{% trans "Patient Enrollment Over Time" %}</h5>
+            </div>
+            <div class="chart-card-body">
+                <div id="patientEnrollmentChart" style="height: 400px;"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Unrecruited Reasons Tables -->
-<div class="row g-4">
-    <!-- Contact Reasons -->
+<!-- Infection Focus & Antibiotic Resistance Charts -->
+<div class="row g-4 mb-4">
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4">
-                <h5 class="card-title mb-0 fw-bold">
-                    <i class="bi bi-x-circle me-2 text-warning"></i>
-                    {% trans "Contact Unrecruited Reasons" %}
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>{% trans "Reason" %}</th>
-                                <th class="text-end">{% trans "Count" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for reason in contact_reasons %}
-                            <tr>
-                                <td>{{ reason.UNRECRUITED_REASON|default:"(Not specified)" }}</td>
-                                <td class="text-end">
-                                    <span class="badge bg-warning">{{ reason.count }}</span>
-                                    <small class="text-muted">({{ reason.percent }}%)</small>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="2" class="text-center text-muted">
-                                    {% trans "No data available" %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="header-icon">
+                    <i class="bi bi-virus"></i>
                 </div>
+                <h5>{% trans "Infection Focus Distribution" %}</h5>
+            </div>
+            <div class="chart-card-body">
+                <div id="infectionFocusChart" style="height: 400px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Patient Reasons -->
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4">
-                <h5 class="card-title mb-0 fw-bold">
-                    <i class="bi bi-x-circle me-2 text-danger"></i>
-                    {% trans "Patient Unrecruited Reasons" %}
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>{% trans "Reason" %}</th>
-                                <th class="text-end">{% trans "Count" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for reason in patient_reasons %}
-                            <tr>
-                                <td>{{ reason.UNRECRUITED_REASON|default:"(Not specified)" }}</td>
-                                <td class="text-end">
-                                    <span class="badge bg-danger">{{ reason.count }}</span>
-                                    <small class="text-muted">({{ reason.percent }}%)</small>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="2" class="text-center text-muted">
-                                    {% trans "No data available" %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="header-icon">
+                    <i class="bi bi-shield-exclamation"></i>
                 </div>
+                <h5>{% trans "Top 10 Antibiotic Resistance Rates" %}</h5>
+            </div>
+            <div class="chart-card-body">
+                <div id="antibioticResistanceChart" style="height: 400px;"></div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
-<!-- frontends/templates/studies/study_43en/home_dashboard.html -->
+
 
 {% block extra_js_dashboard %}
-<script>
-// Kiểm tra các thư viện đã load
-console.log('Chart.js loaded:', typeof Chart !== 'undefined');
-console.log('jQuery loaded:', typeof jQuery !== 'undefined');
-console.log('ChartDataLabels loaded:', typeof ChartDataLabels !== 'undefined');
-
-$(document).ready(function() {
-    console.log('Initializing charts...');
+<script nonce="{{ request.csp_nonce }}">
+// ==================== CHECK AUTO-REFRESH FIRST ====================
+//  MUST run BEFORE anything else
+var isAutoRefresh = (function() {
+    const autoRefreshTime = sessionStorage.getItem('dashboardAutoRefreshTime');
+    const now = Date.now();
+    const timeDiff = autoRefreshTime ? (now - parseInt(autoRefreshTime)) : null;
+    const result = autoRefreshTime && timeDiff < 2000;
     
-    // 1. Target Progress Chart
-    const enrolled = Number({{ enrolled_patients|default:"0" }});
-    const target = 750;
-    const remain = Math.max(target - enrolled, 0);
+    console.log(' Auto-refresh check:');
+    console.log('  - Stored time:', autoRefreshTime);
+    console.log('  - Current time:', now);
+    console.log('  - Time diff (ms):', timeDiff);
+    console.log('  - Is auto-refresh?:', result);
+    
+    // Clear the flag immediately
+    sessionStorage.removeItem('dashboardAutoRefreshTime');
+    
+    console.log(' isAutoRefresh =', result);
+    return result;
+})();
 
-    const ctxPie = document.getElementById('enrollPercentPie').getContext('2d');
-    new Chart(ctxPie, {
-        type: 'doughnut',
-        data: {
-            labels: ['{% trans "Enrolled" %}', '{% trans "Remaining" %}'],
-            datasets: [{
-                data: [enrolled, remain],
-                backgroundColor: ['rgba(40, 167, 69, 0.85)', 'rgba(220, 220, 220, 0.5)'],
-                borderColor: ['#fff', '#fff'],
-                borderWidth: 3
-            }]
-        },
-        options: {
-            rotation: -90,
-            circumference: 180,
-            cutout: '70%',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = enrolled + remain;
-                            const percentage = Math.round((value / total) * 100);
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
-                    }
-                },
-                datalabels: {
-                    color: ['#fff', '#333'],
-                    font: { weight: 'bold', size: 16 },
-                    formatter: function(value, context) {
-                        const total = enrolled + remain;
-                        const percentage = Math.round((value / total) * 100);
-                        return percentage + '%';
-                    }
-                }
-            }
-        },
-        plugins: [
-            ChartDataLabels,
-            {
-                id: 'centerText',
-                afterDraw: function(chart) {
-                    const width = chart.width;
-                    const height = chart.height;
-                    const ctx = chart.ctx;
-                    const x = width / 2;
-                    const y = height * 0.95;
-                    
-                    ctx.save();
-                    ctx.font = 'bold 48px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillStyle = '#28a745';
-                    ctx.fillText(enrolled, x - 40, y);
-                    
-                    ctx.fillStyle = '#000';
-                    ctx.fillText('/', x, y);
-                    
-                    ctx.fillStyle = '#666';
-                    ctx.fillText(target, x + 40, y);
-                    ctx.restore();
-                }
-            }
-        ]
-    });
-
-    // 2. Gender Distribution
-    $.ajax({
-        url: "{% url 'study_43en:gender_distribution_chart_data' %}",
-        type: "GET",
-        dataType: "json",
-        success: function(response) {
-            const patientData = response.data.patient;
-            const contactData = response.data.contact;
-            
-            // Patient chart
-            new Chart(document.getElementById('patientGenderChart').getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: patientData.labels,
-                    datasets: [{
-                        data: patientData.data,
-                        backgroundColor: patientData.colors,
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 14 },
-                            formatter: function(value) {
-                                const total = patientData.data.reduce((a, b) => a + b, 0);
-                                return total > 0 ? Math.round((value / total) * 100) + '%' : '0%';
-                            }
-                        }
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-            
-            // Contact chart
-            new Chart(document.getElementById('contactGenderChart').getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: contactData.labels,
-                    datasets: [{
-                        data: contactData.data,
-                        backgroundColor: contactData.colors,
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 14 },
-                            formatter: function(value) {
-                                const total = contactData.data.reduce((a, b) => a + b, 0);
-                                return total > 0 ? Math.round((value / total) * 100) + '%' : '0%';
-                            }
-                        }
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-        },
-        error: function(xhr, status, error) {
-            console.error("Gender distribution error:", error);
+// ==================== IMMEDIATE CONFIG DEFINITION ====================
+(function() {
+    'use strict';
+    
+    console.log('🔧 Defining dashboard config...');
+    
+    // Define translations
+    window.translations = {
+        enrolled: '{% trans "Enrolled" %}',
+        remaining: '{% trans "Remaining" %}',
+        patients: '{% trans "Patients" %}',
+        contacts: '{% trans "Contacts" %}',
+        male: '{% trans "Male" %}',
+        female: '{% trans "Female" %}',
+        other: '{% trans "Other" %}',
+        cumulativePatients: '{% trans "Cumulative (Patients)" %}',
+        cumulativeContacts: '{% trans "Cumulative (Contacts)" %}',
+        monthlyCount: '{% trans "Monthly Count" %}',
+        cumulativeCount: '{% trans "Cumulative Count" %}',
+        monthlyEnrollment: '{% trans "Monthly Enrollment" %}',
+        cumulativeTotal: '{% trans "Cumulative Total" %}',
+        resistanceRate: '{% trans "Resistance Rate (%)" %}',
+        resistant: '{% trans "resistant" %}',
+        tests: '{% trans "tests" %}',
+        underlyingConditions: '{% trans "Underlying Conditions" %}',
+        patientsWithCondition: '{% trans "Patients with condition" %}',
+        totalTests: '{% trans "Total AST tests" %}',
+        sensitive: '{% trans "Sensitive" %}',
+        intermediate: '{% trans "Intermediate" %}',
+        errorLoading: '{% trans "Error loading chart data" %}',
+        insufficientData: '{% trans "Insufficient data available" %}'
+    };
+    
+    // Define dashboard config
+    window.dashboardConfig = {
+        enrolledPatients: {{ enrolled_patients|default:0 }},
+        targetEnrollment: {{ target_enrollment|default:750 }},
+        screeningContacts: {{ screening_contacts|default:0 }},
+        enrolledContacts: {{ enrolled_contacts|default:0 }},
+        percentTarget: parseFloat('{{ percent_target|default:"0" }}'),
+        mortalityRate: parseFloat('{{ mortality_rate|default:"0" }}'),
+        avgHospitalStay: parseFloat('{{ avg_hospital_stay|floatformat:1|default:"0" }}'),
+        siteId: '{{ site_id|default:"all" }}',
+        filterType: '{{ filter_type|default:"" }}',
+        endpoints: {
+            genderDistribution: '/studies/43en/api/charts/gender-distribution/',
+            screeningComparison: '/studies/43en/api/charts/screening-comparison/',
+            patientEnrollment: '/studies/43en/api/charts/patient-enrollment/',
+            infectionFocus: '/studies/43en/api/charts/infection-focus/',
+            antibioticResistance: '/studies/43en/api/charts/antibiotic-resistance/',
+            resistanceComorbidity: '/studies/43en/api/charts/resistance-comorbidity/'
         }
-    });
-
-    // 3. Screening Comparison
-    $.ajax({
-        url: "{% url 'study_43en:screening_comparison_chart_data' %}",
-        type: "GET",
-        dataType: "json",
-        success: function(response) {
-            new Chart(document.getElementById('screeningComparisonChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: response.data.labels,
-                    datasets: [
-                        {
-                            label: '{% trans "Patients" %}',
-                            data: response.data.patients,
-                            backgroundColor: 'rgba(0, 123, 255, 0.7)',
-                            borderColor: '#007bff',
-                            borderWidth: 1
-                        },
-                        {
-                            label: '{% trans "Contacts" %}',
-                            data: response.data.contacts,
-                            backgroundColor: 'rgba(23, 162, 184, 0.7)',
-                            borderColor: '#17a2b8',
-                            borderWidth: 1
-                        },
-                        {
-                            label: '{% trans "Cumulative (Patients)" %}',
-                            data: response.data.patientsCumulative,
-                            type: 'line',
-                            borderColor: '#dc3545',
-                            yAxisID: 'y1'
-                        },
-                        {
-                            label: '{% trans "Cumulative (Contacts)" %}',
-                            data: response.data.contactsCumulative,
-                            type: 'line',
-                            borderColor: '#28a745',
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: '{% trans "Monthly Count" %}' } },
-                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '{% trans "Cumulative Count" %}' } }
-                    }
-                }
-            });
-        },
-        error: function(xhr, status, error) {
-            console.error("Screening comparison error:", error);
-        }
-    });
-
-    // 4. Patient Enrollment
-    $.ajax({
-        url: "{% url 'study_43en:patient_enrollment_chart_data' %}",
-        type: "GET",
-        dataType: "json",
-        success: function(response) {
-            new Chart(document.getElementById('patientEnrollmentChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: response.data.labels,
-                    datasets: [
-                        {
-                            label: '{% trans "Monthly Enrollment" %}',
-                            data: response.data.monthly,
-                            backgroundColor: 'rgba(0, 123, 255, 0.7)'
-                        },
-                        {
-                            label: '{% trans "Cumulative Total" %}',
-                            data: response.data.cumulative,
-                            type: 'line',
-                            borderColor: '#28a745',
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: '{% trans "Monthly Count" %}' } },
-                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '{% trans "Cumulative Total" %}' } }
-                    }
-                }
-            });
-        },
-        error: function(xhr, status, error) {
-            console.error("Patient enrollment error:", error);
-        }
-    });
-});
+    };
+    
+    console.log(' Config defined:', window.dashboardConfig);
+})();
 </script>
+
+<!-- Load Dashboard Script -->
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard.js' %}"></script>
+
+<script nonce="{{ request.csp_nonce }}">
+(function() {
+    'use strict';
+    
+    console.log('🚀 Dashboard initialization (NO animations)...');
+    
+    // Main initialization
+    function initializeDashboard() {
+        console.log('=== INITIALIZING DASHBOARD ===');
+        
+        if (typeof DashboardCharts === 'undefined') {
+            console.error('❌ DashboardCharts not loaded');
+            return;
+        }
+        
+        if (typeof window.dashboardConfig === 'undefined') {
+            console.error('❌ dashboardConfig not defined');
+            return;
+        }
+        
+        try {
+            //  Initialize stat counters - NO ANIMATION
+            $('.count-up').each(function() {
+                const $this = $(this);
+                const target = parseFloat($this.data('target')) || 0;
+                const decimals = parseInt($this.data('decimal')) || 0;
+                
+                // Direct update - no animation
+                $this.text(target.toFixed(decimals));
+            });
+            
+            // Initialize charts
+            DashboardCharts.init(window.dashboardConfig);
+            console.log(' Dashboard initialized (no animations)!');
+            
+            // Setup refresh button click handler
+            $('#btnRefreshDashboard').on('click', function() {
+                console.log('🔄 Refresh button clicked');
+                const $icon = $(this).find('.bi-arrow-clockwise');
+                
+                // Add spinning animation
+                $icon.addClass('fa-spin');
+                
+                // Reload the page
+                setTimeout(function() {
+                    window.location.reload();
+                }, 300);
+            });
+            
+        } catch (error) {
+            console.error('❌ Dashboard initialization failed:', error);
+        }
+    }
+    
+    // Execute initialization
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initializeDashboard, 100);
+        });
+    } else {
+        setTimeout(initializeDashboard, 100);
+    }
+    
+})();
+</script>
+
+<style>
+/* Count-up transition */
+.count-up {
+    transition: color 0.3s ease;
+}
+
+/* Refresh button spin animation */
+.fa-spin, .bi-arrow-clockwise.fa-spin {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Refresh button hover effect */
+#btnRefreshDashboard:hover .meta-icon {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+#btnRefreshDashboard:active .bi-arrow-clockwise {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+</style>
+
 {% endblock %}

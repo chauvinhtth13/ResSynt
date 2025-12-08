@@ -209,7 +209,6 @@ class Command(BaseCommand):
         role_display = RoleChecker.get_role_display(user, study)
         
         self.stdout.write(f"User: {user.username} ({user.get_full_name()})")
-        self.stdout.write(f"Study: {study.code} - {study.safe_translation_getter('name', any_language=True)}")
         self.stdout.write(f"Role Key: {role_key}")
         self.stdout.write(f"Role Name: {role_display}")
         

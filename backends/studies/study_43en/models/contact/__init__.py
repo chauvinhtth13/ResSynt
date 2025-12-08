@@ -5,16 +5,16 @@ Import all contact-related models for Django registry
 """
 
 # Screening & Enrollment
-from .Screening import ScreeningContact
-from .Enrollment import EnrollmentContact
-from .MedHisDrug import ContactMedHisDrug
+from .SCR_CONTACT import SCR_CONTACT
+from .ENR_CONTACT import ENR_CONTACT
+from .ENR_CONTACT_MedHisDrug import ENR_CONTACT_MedHisDrug
 
 # Sample Collection
-from .SampleCollection import ContactSampleCollection
+from .SAM_CONTACT import SAM_CONTACT
 
 # Follow-up
-from .FollowUp28 import ContactFollowUp28
-from .FollowUp90 import ContactFollowUp90
+from .FU_CONTACT_28 import FU_CONTACT_28
+from .FU_CONTACT_90 import FU_CONTACT_90
 from .MedicationHistory import ContactMedicationHistory28, ContactMedicationHistory90
 
 # End Case
@@ -25,12 +25,12 @@ from .UnderlyingCondition import ContactUnderlyingCondition
 
 # Export all models
 __all__ = [
-    'ScreeningContact',
-    'EnrollmentContact',
-    'ContactMedHisDrug',
-    'ContactSampleCollection',
-    'ContactFollowUp28',
-    'ContactFollowUp90',
+    'SCR_CONTACT',
+    'ENR_CONTACT',
+    'ENR_CONTACT_MedHisDrug',
+    'SAM_CONTACT',
+    'FU_CONTACT_28',
+    'FU_CONTACT_90',
     'ContactMedicationHistory28',
     'ContactMedicationHistory90',
     'ContactEndCaseCRF',

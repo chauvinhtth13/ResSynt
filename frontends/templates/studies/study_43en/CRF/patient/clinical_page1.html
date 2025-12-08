@@ -1,0 +1,284 @@
+{% load i18n %}
+
+{# ==================== ADMISSION INFO ==================== #}
+<div class="numbered-item" data-number="1">
+  <label for="{{ clinical_form.ADMISDATE.id_for_label }}">{{ clinical_form.ADMISDATE.label }}</label>
+  <div class="input-group">
+    {{ clinical_form.ADMISDATE }}
+  </div>
+  {% if clinical_form.ADMISDATE.errors %}
+    <small class="text-danger">{{ clinical_form.ADMISDATE.errors.0 }}</small>
+  {% endif %}
+</div>
+
+<div class="numbered-item" data-number="2">
+  <label for="{{ clinical_form.ADMISREASON.id_for_label }}">{{ clinical_form.ADMISREASON.label }}</label>
+  <div class="input-group">
+    {{ clinical_form.ADMISREASON }}
+  </div>
+</div>
+
+<div class="numbered-item" data-number="3">
+  <label for="{{ clinical_form.SYMPTOMONSETDATE.id_for_label }}">{{ clinical_form.SYMPTOMONSETDATE.label }}</label>
+  <div class="input-group">
+    {{ clinical_form.SYMPTOMONSETDATE }}
+  </div>
+</div>
+
+<div class="numbered-item" data-number="4">
+  <label for="{{ clinical_form.ADMISDEPT.id_for_label }}">{{ clinical_form.ADMISDEPT.label }}</label>
+  <div class="input-group">
+    {{ clinical_form.ADMISDEPT }}
+  </div>
+</div>
+
+{# ==================== DIAGNOSIS ==================== #}
+<div class="numbered-item" data-number="5">
+  <label>{% trans "Diagnosis at Admission" %}</label>
+  <div class="row">
+    <div class="col-md-6">
+      <label class="text-muted small">{% trans "5a. Outpatient/ER Department" %}</label>
+      {{ clinical_form.OUTPATIENT_ERDEPT }}
+    </div>
+    <div class="col-md-6">
+      <label class="text-muted small">{% trans "5b. Admission Department" %}</label>
+      {{ clinical_form.SYMPTOMADMISDEPT }}
+    </div>
+  </div>
+</div>
+
+{# ==================== VITAL SIGNS ==================== #}
+<div class="form-section-header">
+  <i class="fas fa-heart"></i> {% trans "Vital Signs on Admission" %}
+</div>
+
+<div class="numbered-item" data-number="6">
+  <label>{% trans "Vital Signs" %}</label>
+  
+  {# 6a. Consciousness #}
+  <div class="row mt-2">
+    <div class="col-md-12">
+      <label>{% trans "a. Consciousness" %}</label>
+      {{ clinical_form.AWARENESS }}
+    </div>
+  </div>
+  
+  {# 6b. GCS #}
+  <div class="row mt-2">
+    <div class="col-md-3">
+      <label for="{{ clinical_form.GCS.id_for_label }}">{% trans "b. GCS (score)" %}</label>
+      {{ clinical_form.GCS }}
+      <small class="text-muted">{% trans "Score 3-15" %}</small>
+    </div>
+    <div class="col-md-3">
+      <label for="{{ clinical_form.EYES.id_for_label }}">{% trans "Eyes (E)" %}</label>
+      {{ clinical_form.EYES }}
+    </div>
+    <div class="col-md-3">
+      <label for="{{ clinical_form.MOTOR.id_for_label }}">{% trans "Motor (M)" %}</label>
+      {{ clinical_form.MOTOR }}
+    </div>
+    <div class="col-md-3">
+      <label for="{{ clinical_form.VERBAL.id_for_label }}">{% trans "Verbal (V)" %}</label>
+      {{ clinical_form.VERBAL }}
+    </div>
+  </div>
+  
+  {# 6c. Pulse #}
+  <div class="row mt-2">
+    <div class="col-md-4">
+      <label for="{{ clinical_form.PULSE.id_for_label }}">{% trans "c. Pulse (bpm)" %}</label>
+      {{ clinical_form.PULSE }}
+    </div>
+    <div class="col-md-4">
+      <label for="{{ clinical_form.AMPLITUDE.id_for_label }}">{% trans "Amplitude" %}</label>
+      {{ clinical_form.AMPLITUDE }}
+    </div>
+    <div class="col-md-4">
+      <label for="{{ clinical_form.CAPILLARYMOIS.id_for_label }}">{% trans "Capillary Moisture" %}</label>
+      {{ clinical_form.CAPILLARYMOIS }}
+    </div>
+  </div>
+  
+  {# 6d. CRT #}
+  <div class="row mt-2">
+    <div class="col-md-4">
+      <label for="{{ clinical_form.CRT.id_for_label }}">{% trans "d. CRT (seconds)" %}</label>
+      {{ clinical_form.CRT }}
+    </div>
+  </div>
+  
+  {# 6e. Temperature #}
+  <div class="row mt-2">
+    <div class="col-md-4">
+      <label for="{{ clinical_form.TEMPERATURE.id_for_label }}">{% trans "e. Temperature (°C)" %}</label>
+      {{ clinical_form.TEMPERATURE }}
+    </div>
+  </div>
+  
+  {# 6f. Blood Pressure #}
+  <div class="row mt-2">
+    <div class="col-md-6">
+      <label>{% trans "f. Blood Pressure (mmHg)" %}</label>
+      <div class="input-group">
+        {{ clinical_form.BLOODPRESSURE_SYS }}
+        {{ clinical_form.BLOODPRESSURE_DIAS }}
+      </div>
+      <small class="text-muted">{% trans "Systolic / Diastolic" %}</small>
+    </div>
+  </div>
+  
+  {# 6g. Respiratory Rate #}
+  <div class="row mt-2">
+    <div class="col-md-4">
+      <label for="{{ clinical_form.RESPRATE.id_for_label }}">{% trans "g. Respiratory Rate (/min)" %}</label>
+      {{ clinical_form.RESPRATE }}
+    </div>
+  </div>
+  
+  {# 6h. SpO2 #}
+  <div class="row mt-2">
+    <div class="col-md-4">
+      <label for="{{ clinical_form.SPO2.id_for_label }}">{% trans "h. SpO2 (%)" %}</label>
+      {{ clinical_form.SPO2 }}
+    </div>
+  </div>
+  
+  {# 6i. FiO2 #}
+  <div class="row mt-2">
+    <div class="col-md-4">
+      <label for="{{ clinical_form.FIO2.id_for_label }}">{% trans "i. FiO2 (%)" %}</label>
+      {{ clinical_form.FIO2 }}
+    </div>
+  </div>
+  
+  {# 6j. Respiratory Pattern #}
+  <div class="row mt-2">
+    <div class="col-md-12">
+      <label>{% trans "j. Respiratory Pattern" %}</label>
+      <div class="mt-2">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="RESPPATTERN" id="id_RESPPATTERN_1" value="Kussmaul" 
+                 {% if clinical_form.RESPPATTERN.value == 'Kussmaul' %}checked{% endif %}>
+          <label class="form-check-label" for="id_RESPPATTERN_1">{% trans "Kussmaul" %}</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="RESPPATTERN" id="id_RESPPATTERN_2" value="SlowBreathingApnea"
+                 {% if clinical_form.RESPPATTERN.value in 'SlowBreathingApnea,Thở chậm/cơn ngưng thở' %}checked{% endif %}>
+          <label class="form-check-label" for="id_RESPPATTERN_2">{% trans "Slow Breathing/Apnea" %}</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="RESPPATTERN" id="id_RESPPATTERN_3" value="NormalBreath"
+                 {% if clinical_form.RESPPATTERN.value in 'NormalBreath,Thở bình thường' %}checked{% endif %}>
+          <label class="form-check-label" for="id_RESPPATTERN_3">{% trans "Normal Breathing" %}</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="RESPPATTERN" id="id_RESPPATTERN_OTHER" value="Other"
+                 {% if clinical_form.RESPPATTERN.value and clinical_form.RESPPATTERN.value not in 'Kussmaul,SlowBreathingApnea,NormalBreath,Thở chậm/cơn ngưng thở,Thở bình thường,Other,Khác' %}checked{% endif %}>
+          <label class="form-check-label" for="id_RESPPATTERN_OTHER">{% trans "Other, specify:" %}</label>
+        </div>
+      </div>
+      
+      <div id="resppattern_other_detail" class="conditional-section mt-2" 
+           style="display:{% if clinical_form.RESPPATTERN.value and clinical_form.RESPPATTERN.value not in 'Kussmaul,SlowBreathingApnea,NormalBreath,Thở chậm/cơn ngưng thở,Thở bình thường,Other,Khác' %}block{% else %}none{% endif %};">
+        <input type="text" class="form-control" id="id_RESPPATTERNOTHERSPEC" name="RESPPATTERNOTHERSPEC" 
+               value="{{ clinical_form.RESPPATTERNOTHERSPEC.value|default:'' }}" placeholder="{% trans 'Specify respiratory pattern' %}">
+      </div>
+    </div>
+  </div>
+  
+  {# 6k. Respiratory Support #}
+  <div class="row mt-2">
+    <div class="col-md-12">
+      <label>{% trans "k. Respiratory Support" %}</label>
+      <div class="mt-2">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="RESPSUPPORT" id="id_RESPSUPPORT_1" value="OxyMask"
+                 {% if clinical_form.RESPSUPPORT.value in 'OxyMask,Oxy mũi/mask,MaskO2,Mask O2,Oxy' %}checked{% endif %}>
+          <label class="form-check-label" for="id_RESPSUPPORT_1">{% trans "Oxygen Mask/Nasal" %}</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="RESPSUPPORT" id="id_RESPSUPPORT_2" value="Intubation"
+                 {% if clinical_form.RESPSUPPORT.value in 'Intubation,Đặt nội khí quản,Intub,Intubated' %}checked{% endif %}>
+          <label class="form-check-label" for="id_RESPSUPPORT_2">{% trans "Intubation" %}</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="RESPSUPPORT" id="id_RESPSUPPORT_3" value="NoSupport"
+                 {% if clinical_form.RESPSUPPORT.value in 'NoSupport,Không,None,' %}checked{% endif %}>
+          <label class="form-check-label" for="id_RESPSUPPORT_3">{% trans "No" %}</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {# 6l. Vasopressors -  Use Django form checkbox #}
+  <div class="row mt-2">
+    <div class="col-md-6">
+      <div class="form-check">
+        {{ clinical_form.VASOMEDS }}
+        <label class="form-check-label" for="{{ clinical_form.VASOMEDS.id_for_label }}">
+          {% trans "l. Vasopressors" %}
+        </label>
+      </div>
+    </div>
+    
+    {#  6m. Hypotension - Use Django form checkbox #}
+    <div class="col-md-6">
+      <div class="form-check">
+        {{ clinical_form.HYPOTENSION }}
+        <label class="form-check-label" for="{{ clinical_form.HYPOTENSION.id_for_label }}">
+          {% trans "m." %} {{ clinical_form.HYPOTENSION.label }}
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ==================== CLINICAL SCORES ==================== #}
+<div class="form-section-header">
+  <i class="fas fa-chart-line"></i> {% trans "Clinical Severity Scores" %}
+</div>
+
+{# 7. qSOFA #}
+<div class="numbered-item" data-number="7">
+  <label>{{ clinical_form.QSOFA.label }}</label>
+  <div class="mt-2">
+    {{ clinical_form.QSOFA }}
+    {% if clinical_form.QSOFA.errors %}
+      <div class="invalid-feedback d-block">{{ clinical_form.QSOFA.errors }}</div>
+    {% endif %}
+  </div>
+</div>
+
+{#  8. NEWS2 - Styled like other radio buttons #}
+<div class="numbered-item" data-number="8">
+  <label>{{ clinical_form.NEWS2.label }}</label>
+  
+  {# NEWS2 Range Radio Buttons - these are the actual form fields #}
+  <div class="mt-2">
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="NEWS2" id="id_NEWS2_LOW" value="low"
+             {% if clinical_form.NEWS2.value == 'low' %}checked{% endif %}>
+      <label class="form-check-label" for="id_NEWS2_LOW">
+        0-4 <span class="text-success">(Low)</span>
+      </label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="NEWS2" id="id_NEWS2_MEDIUM" value="medium"
+             {% if clinical_form.NEWS2.value == 'medium' %}checked{% endif %}>
+      <label class="form-check-label" for="id_NEWS2_MEDIUM">
+        5-6 <span class="text-warning">(Medium)</span>
+      </label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="NEWS2" id="id_NEWS2_HIGH" value="high"
+             {% if clinical_form.NEWS2.value == 'high' %}checked{% endif %}>
+      <label class="form-check-label" for="id_NEWS2_HIGH">
+        ≥7 <span class="text-danger">(High)</span>
+      </label>
+    </div>
+  </div>
+  {% if clinical_form.NEWS2.errors %}
+    <div class="invalid-feedback d-block">{{ clinical_form.NEWS2.errors }}</div>
+  {% endif %}
+</div>

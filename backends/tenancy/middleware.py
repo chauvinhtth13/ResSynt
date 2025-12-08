@@ -12,11 +12,9 @@ from django.http import HttpRequest, HttpResponse, Http404
 from django.conf import settings
 from django.core.cache import cache
 from django.utils.functional import SimpleLazyObject
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.db import connection, connections
-
-from axes.exceptions import AxesBackendPermissionDenied
 
 from .models import Study
 from .db_loader import study_db_manager
@@ -24,7 +22,6 @@ from .db_router import set_current_db
 from .utils import TenancyUtils
 
 logger = logging.getLogger(__name__)
-
 
 
 class UnifiedTenancyMiddleware:
@@ -158,6 +155,52 @@ class UnifiedTenancyMiddleware:
         self.extract_study_code = extract_study_code
         
         logger.debug("Path matchers compiled successfully")
+
+
+    # ==========================================
+    # AXES INTEGRATION
+    # ==========================================
+    
+    def _setup_axes_attributes(self, request: HttpRequest):
+        """
+        Setup request attributes required by django-axes 8.0.0
+        This is CRITICAL for axes to work properly
+        """
+        # Set attempt time
+        if not hasattr(request, 'axes_attempt_time'):
+            setattr(request, 'axes_attempt_time', time.time())
+        
+        # Set IP address
+        if not hasattr(request, 'axes_ip_address'):
+            setattr(request, 'axes_ip_address', self._get_client_ip(request))
+        
+        # Set user agent
+        if not hasattr(request, 'axes_user_agent'):
+            setattr(request, 'axes_user_agent', request.META.get('HTTP_USER_AGENT', '<unknown>')[:255])
+        
+        # Set path info
+        if not hasattr(request, 'axes_path_info'):
+            setattr(request, 'axes_path_info', request.META.get('PATH_INFO', '<unknown>')[:255])
+        
+        # Set http accept
+        if not hasattr(request, 'axes_http_accept'):
+            setattr(request, 'axes_http_accept', request.META.get('HTTP_ACCEPT', '<unknown>')[:1025])
+    
+    def _get_client_ip(self, request: HttpRequest) -> str:
+        """
+        Get client IP address
+        Handles proxies and X-Forwarded-For headers
+        """
+        # Check for forwarded IP first (proxy/load balancer)
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            # X-Forwarded-For can contain multiple IPs, take the first
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            # Fall back to remote address
+            ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
+        
+        return ip
     
     # ==========================================
     # MAIN MIDDLEWARE ENTRY POINT
@@ -165,13 +208,7 @@ class UnifiedTenancyMiddleware:
     
     def __call__(self, request: HttpRequest) -> HttpResponse:
         """
-        Main middleware processing
-        
-        Args:
-            request: Django HTTP request
-            
-        Returns:
-            HTTP response
+        Main middleware processing - SIMPLIFIED
         """
         # Start performance tracking
         setattr(request, '_start_time', time.time())
@@ -194,11 +231,15 @@ class UnifiedTenancyMiddleware:
         if self.is_public(request.path):
             return self._process_request(request)
         
-        # Check authentication
+        # Check authentication (axes handles blocking internally)
         if not request.user.is_authenticated:
             if self.needs_auth(request.path):
                 return redirect(f"{reverse('login')}?next={request.path}")
             return self._process_request(request)
+        
+        # Check if user account is active and can authenticate
+        if hasattr(request.user, 'is_active') and not request.user.is_active:
+            return HttpResponse('Your account has been deactivated.', status=403)
         
         # Handle admin paths (superuser only)
         if self.is_admin(request.path):
@@ -206,7 +247,7 @@ class UnifiedTenancyMiddleware:
                 raise Http404("Page not found")
             return self._process_request(request)
         
-        # Handle study-specific paths or paths requiring study context
+        # Handle study-specific paths
         if self.is_study_path(request.path) or self.needs_auth(request.path):
             study = self._get_study_for_request(request)
             
@@ -258,35 +299,22 @@ class UnifiedTenancyMiddleware:
         """
         Process request with all middleware features
         
-        ✅ FIXED: Handle case where response might be None due to exceptions
-        
         Args:
             request: HTTP request
             
         Returns:
-            HTTP response with headers and metrics, or None if exception occurred
+            HTTP response with headers and metrics
         """
         # Get response from next middleware/view
         response = self.get_response(request)
         
-        # ✅ CRITICAL FIX: Check if response is None
-        # This can happen when an exception is raised by middleware further down the chain
-        # (e.g., AxesBackendPermissionDenied from Axes)
-        if response is None:
-            logger.warning(
-                f"Response is None for {request.path} - "
-                f"likely due to unhandled exception in downstream middleware"
-            )
-            # Return None to let Django's error handling take over
-            return response
-        
-        # Add performance metrics (only if response is valid)
+        # Add performance metrics
         self._add_performance_metrics(request, response)
         
-        # Add security headers (only if response is valid)
+        # Add security headers
         self._add_security_headers(request, response)
         
-        # Add cache control headers (only if response is valid)
+        # Add cache control headers
         self._add_cache_headers(request, response)
         
         return response
@@ -386,9 +414,8 @@ class UnifiedTenancyMiddleware:
             Study instance or None
         """
         # Layer 1: Request-level cache (fastest)
-        cached = getattr(request, '_study_cache', None)
-        if cached is not None:
-            return cached
+        if hasattr(request, '_study_cache'):
+            return getattr(request, '_study_cache')
         
         # Get study ID from session
         study_id = request.session.get(self.STUDY_ID_KEY)
@@ -431,7 +458,7 @@ class UnifiedTenancyMiddleware:
                 logger.error(f"Error loading study {study_id}: {e}", exc_info=True)
                 return None
         
-        # Store in request cache using setattr to avoid static attribute checks
+        # Store in request cache
         setattr(request, '_study_cache', study)
         return study
     
@@ -458,30 +485,149 @@ class UnifiedTenancyMiddleware:
             request: HTTP request
             study: Study instance
         """
-        # Set basic study info using setattr for runtime attributes
+        # Set basic study info
         setattr(request, 'study', study)
         setattr(request, 'study_code', study.code)
         setattr(request, 'study_id', study.pk)
         setattr(request, 'study_db', study.db_name)
         
         # Lazy load permissions (only loaded when accessed)
-        setattr(
-            request,
-            'study_permissions',
-            SimpleLazyObject(lambda: TenancyUtils.get_user_permissions(request.user, study))
-        )
+        setattr(request, 'study_permissions', SimpleLazyObject(
+            lambda: TenancyUtils.get_user_permissions(request.user, study)
+        ))
         
         # Lazy load sites (only loaded when accessed)
-        setattr(
-            request,
-            'study_sites',
-            SimpleLazyObject(lambda: TenancyUtils.get_user_sites(request.user, study))
-        )
+        setattr(request, 'study_sites', SimpleLazyObject(
+            lambda: TenancyUtils.get_user_sites(request.user, study)
+        ))
+        
+        #  MERGED FROM SiteContextMiddleware: Inject site-specific context
+        self._inject_site_context(request, study)
         
         # Track access (throttled to avoid excessive updates)
         TenancyUtils.track_study_access(request.user, study)
         
         logger.debug(f"Study context setup: {study.code} for user {request.user.pk}")
+    
+    # ==========================================
+    # SITE CONTEXT INJECTION (Merged from SiteContextMiddleware)
+    # ==========================================
+    
+    def _inject_site_context(self, request: HttpRequest, study: Study):
+        """
+         MERGED: Inject site filtering context for Study 43EN
+        
+        Sets the following attributes:
+        - request.user_membership: StudyMembership object
+        - request.can_access_all_sites: Boolean
+        - request.user_sites: Set of accessible site codes {'003', '011', '020'}
+        - request.selected_site_id: Current site selection ('all' | 'XXX')
+        
+        Args:
+            request: HTTP request
+            study: Study instance
+        """
+        # Only inject for Study 43EN (this is study-specific logic)
+        if study.code != '43EN':
+            return
+        
+        user = request.user
+        
+        try:
+            # Get user's study membership
+            membership = user.get_study_membership(study)
+            
+            if not membership:
+                # No membership - set safe defaults
+                self._set_default_site_context(request)
+                return
+            
+            # Inject membership object
+            setattr(request, 'user_membership', membership)
+            
+            # Determine if user can access all sites
+            can_access_all = membership.can_access_all_sites
+            setattr(request, 'can_access_all_sites', can_access_all)
+            
+            # Get user's accessible sites
+            user_sites_list = TenancyUtils.get_user_sites(user, study)
+            user_sites = set(user_sites_list)
+            
+            setattr(request, 'user_sites', user_sites)
+            
+            # Get or initialize selected site
+            selected_site = self._get_selected_site(request, can_access_all, user_sites)
+            setattr(request, 'selected_site_id', selected_site)
+            
+            logger.debug(
+                f"Site context: User={user.pk} | Sites={user_sites} | "
+                f"Selected={selected_site} | CanAccessAll={can_access_all}"
+            )
+            
+        except Exception as e:
+            logger.error(f"Error injecting site context: {e}", exc_info=True)
+            self._set_default_site_context(request)
+    
+    def _get_selected_site(self, request: HttpRequest, can_access_all: bool, user_sites: set) -> str:
+        """
+         MERGED: Get or initialize selected site from session
+        
+        Auto-selection logic:
+        - If can_access_all: default to 'all'
+        - If single site: auto-select that site
+        - If multiple sites: default to 'all'
+        
+        Args:
+            request: HTTP request
+            can_access_all: Boolean
+            user_sites: Set of accessible site codes
+            
+        Returns:
+            Selected site code or 'all'
+        """
+        selected_site = request.session.get('selected_site_id')
+        
+        if not selected_site:
+            # First time: auto-select based on permissions
+            if can_access_all:
+                selected_site = 'all'
+            elif len(user_sites) == 1:
+                # Only one site: auto-select it
+                selected_site = list(user_sites)[0]
+            elif len(user_sites) > 1:
+                # Multiple sites → default to 'all'
+                selected_site = 'all'
+            else:
+                # No sites (safe default)
+                selected_site = 'all'
+            
+            request.session['selected_site_id'] = selected_site
+            logger.info(f"Auto-selected site: {selected_site} for user {request.user.pk}")
+        
+        # Validate selected site
+        if selected_site != 'all' and selected_site not in user_sites and not can_access_all:
+            logger.warning(
+                f"Invalid site selection '{selected_site}' for user {request.user.pk}, "
+                f"resetting to 'all' (accessible: {user_sites})"
+            )
+            selected_site = 'all'
+            request.session['selected_site_id'] = selected_site
+        
+        return selected_site
+    
+    def _set_default_site_context(self, request: HttpRequest):
+        """
+         MERGED: Set safe default context when membership not found
+        
+        Args:
+            request: HTTP request
+        """
+        setattr(request, 'user_membership', None)
+        setattr(request, 'can_access_all_sites', False)
+        setattr(request, 'user_sites', set())
+        setattr(request, 'selected_site_id', 'all')
+        
+        logger.warning(f"Set default site context for user {request.user.pk}")
     
     # ==========================================
     # RESPONSE ENHANCEMENTS
@@ -491,23 +637,12 @@ class UnifiedTenancyMiddleware:
         """
         Add performance metrics to response headers
         
-        ✅ FIXED: Check response is not None before adding headers
-        
         Args:
             request: HTTP request
-            response: HTTP response (can be None)
+            response: HTTP response
         """
-        # ✅ GUARD: Return early if response is None
-        if response is None:
-            logger.debug("Skipping performance metrics - response is None")
-            return
-        
-        # Safely obtain start time
-        start_time = getattr(request, '_start_time', None)
-        if start_time is not None:
-            duration_ms = (time.time() - start_time) * 1000
-            
-            # ✅ Safe to add header now (response is not None)
+        if hasattr(request, '_start_time'):
+            duration_ms = (time.time() - getattr(request, '_start_time', time.time())) * 1000
             response['X-Response-Time'] = f"{duration_ms:.2f}ms"
             
             # Log slow requests
@@ -518,66 +653,49 @@ class UnifiedTenancyMiddleware:
                 )
         
         # Add query count in DEBUG mode
-        if settings.DEBUG:
-            queries_start = getattr(request, '_queries_start', None)
-            if queries_start is not None:
-                query_count = len(connection.queries) - queries_start
-                
-                # ✅ Safe to add header now (response is not None)
-                response['X-DB-Queries'] = str(query_count)
-                
-                if query_count > self.MAX_QUERIES:
-                    logger.warning(
-                        f"EXCESSIVE QUERIES: {request.path} "
-                        f"executed {query_count} queries"
-                    )
-
-
-
+        if settings.DEBUG and hasattr(request, '_queries_start'):
+            query_count = len(connection.queries) - getattr(request, '_queries_start', 0)
+            response['X-DB-Queries'] = str(query_count)
+            
+            # Warn about excessive queries
+            if query_count > self.MAX_QUERIES:
+                logger.warning(
+                    f"EXCESSIVE QUERIES: {request.path} "
+                    f"executed {query_count} queries"
+                )
+    
     def _add_security_headers(self, request: HttpRequest, response: HttpResponse):
         """
         Add security headers to response
         
-        ✅ FIXED: Check response is not None before adding headers
-        
         Args:
             request: HTTP request
-            response: HTTP response (can be None)
+            response: HTTP response
         """
-        # ✅ GUARD: Return early if response is None
-        if response is None:
-            logger.debug("Skipping security headers - response is None")
-            return
-        
         # Add standard security headers
         for header, value in self.SECURITY_HEADERS.items():
-            if not response.has_header(header):
+            if header not in response.headers:
                 response[header] = value
         
         # Add HSTS for HTTPS connections
+        if request.path.startswith('/admin/'):
+            return
+
         if request.is_secure():
             response['Strict-Transport-Security'] = (
                 'max-age=31536000; includeSubDomains; preload'
             )
-
-
+    
     def _add_cache_headers(self, request: HttpRequest, response: HttpResponse):
         """
         Add appropriate cache control headers
         
-        ✅ FIXED: Check response is not None before adding headers
-        
         Args:
             request: HTTP request
-            response: HTTP response (can be None)
+            response: HTTP response
         """
-        # ✅ GUARD: Return early if response is None
-        if response is None:
-            logger.debug("Skipping cache headers - response is None")
-            return
-        
         # Skip if cache headers already set
-        if response.has_header('Cache-Control'):
+        if 'Cache-Control' in response.headers:
             return
         
         # Static files - cache forever
@@ -595,8 +713,6 @@ class UnifiedTenancyMiddleware:
         else:
             response['Cache-Control'] = 'public, max-age=300'
             response['Vary'] = 'Cookie, Accept-Encoding'
-
-
     
     # ==========================================
     # CLEANUP
@@ -678,3 +794,70 @@ class UnifiedTenancyMiddleware:
             )
         except Exception as e:
             logger.error(f"Error logging request start: {e}")
+
+
+# ==========================================
+# HELPER FUNCTION FOR MANUAL STUDY SWITCHING
+# ==========================================
+
+def switch_study_context(request: HttpRequest, study_code: str) -> bool:
+    """
+    Manually switch study context for a request
+    Useful in views or APIs
+    
+    Args:
+        request: HTTP request
+        study_code: Study code to switch to
+        
+    Returns:
+        True if successful, False otherwise
+    
+    Example:
+        if switch_study_context(request, '43EN'):
+            # Now working in study 43EN context
+            patients = Patient.objects.all()
+    """
+    try:
+        study = Study.objects.select_related('created_by').get(
+            code=study_code.upper(),
+            memberships__user=request.user,
+            memberships__is_active=True,
+            status__in=[Study.Status.ACTIVE, Study.Status.PLANNING]
+        )
+        
+        # Update session
+        request.session['current_study'] = study.pk
+        request.session['current_study_code'] = study.code
+        request.session['current_study_db'] = study.db_name
+        
+        # Setup context
+        setattr(request, 'study', study)
+        setattr(request, 'study_code', study.code)
+        setattr(request, 'study_id', study.pk)
+        setattr(request, 'study_db', study.db_name)
+        
+        # Switch database
+        set_current_db(study.db_name)
+        study_db_manager.add_study_db(study.db_name)
+        
+        logger.debug(f"Manually switched to study {study_code} for user {request.user.pk}")
+        return True
+        
+    except Study.DoesNotExist:
+        logger.error(f"Study {study_code} not found for user {request.user.pk}")
+        return False
+    except Exception as e:
+        logger.error(f"Error switching to study {study_code}: {e}")
+        return False
+    
+from django.http import Http404
+
+class BlockSignupMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path == '/accounts/signup/':
+            raise Http404()
+        response = self.get_response(request)
+        return response

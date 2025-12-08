@@ -56,11 +56,8 @@ class DatabaseReadinessChecker:
                     )
                 """, [schema, table_name])
                 
-                row = cursor.fetchone()
-                # cursor.fetchone() can return None in some DB states; handle safely
-                if not row:
-                    return False
-                return bool(row[0])
+                result = cursor.fetchone()
+                return result[0] if result else False
                 
         except Exception as e:
             logger.debug(f"Cannot check table {schema}.{table_name}: {e}")
@@ -312,30 +309,45 @@ class StudyRoleManager:
     
     @classmethod
     def get_study_models(cls, app_label: str) -> List[str]:
-        """Get all model names for a study app"""
+        """
+        Get all model names for a study app
         
+        IMPROVED: Graceful handling when ContentType not ready
+        """
+        # Check if ContentType is ready
         if not DatabaseReadinessChecker.are_contenttypes_ready():
-            logger.debug(f"ContentType not ready for {app_label}")
+            logger.debug(
+                f"ContentType not ready for {app_label}. "
+                f"Run migrations first."
+            )
             return []
         
         try:
-            # ✅ Query từ DEFAULT database - KHÔNG dùng .using()
-            content_types = ContentType.objects.filter(
-                app_label=app_label
-            )
+            content_types = ContentType.objects.filter(app_label=app_label)
             model_names = [ct.model for ct in content_types]
+            
+            if model_names:
+                logger.debug(f"Found {len(model_names)} models in {app_label}")
+            else:
+                logger.debug(
+                    f"No models found for {app_label}. "
+                    f"May need to run: python manage.py migrate --database db_study_{app_label.replace('study_', '')}"
+                )
             
             return model_names
             
         except Exception as e:
             logger.debug(f"Error getting models for {app_label}: {e}")
             return []
-
+    
     @classmethod
     def _build_permission_map(cls, app_label: str) -> Dict[str, Dict[str, Permission]]:
-        """Build a map of permissions"""
+        """
+        Build a map of permissions organized by model and action
+        
+        IMPROVED: Safe handling when permissions don't exist
+        """
         try:
-            # ✅ Query từ DEFAULT database - KHÔNG dùng .using()
             all_permissions = Permission.objects.filter(
                 content_type__app_label=app_label
             ).select_related('content_type')
@@ -359,9 +371,7 @@ class StudyRoleManager:
     @transaction.atomic
     def assign_permissions(cls, study_code: str, force: bool = False) -> Dict[str, int]:
         """
-        Assign permissions to study groups based on role templates
-        
-        IMPROVED: Better error handling and user guidance
+        OPTIMIZED: Assign permissions using bulk operations
         """
         stats = {
             'groups_updated': 0,
@@ -378,14 +388,10 @@ class StudyRoleManager:
         
         app_label = f'study_{study_code.lower()}'
         
-        # Get all models in study app
+        # Get all models
         model_names = cls.get_study_models(app_label)
-        
         if not model_names:
-            logger.debug(
-                f"No models found for study {study_code}. "
-                f"This is normal if migrations haven't been run yet."
-            )
+            logger.debug(f"No models found for study {study_code}")
             return stats
         
         stats['models_found'] = len(model_names)
@@ -398,63 +404,62 @@ class StudyRoleManager:
                 try:
                     groups[role_key] = Group.objects.get(name=group_name)
                 except Group.DoesNotExist:
-                    logger.debug(
-                        f"Group not found: {group_name}. "
-                        f"Run: python manage.py sync_study_roles --study {study_code}"
-                    )
                     continue
             
             if not groups:
-                logger.warning(
-                    f"No groups found for study {study_code}. "
-                    f"Create groups first with: python manage.py sync_study_roles --study {study_code}"
-                )
                 return stats
             
-            # Build permission map
-            permission_map = cls._build_permission_map(app_label)
+            # Get all permissions for the app
+            all_permissions = Permission.objects.filter(
+                content_type__app_label=app_label
+            ).select_related('content_type')
             
-            if not permission_map:
-                logger.debug(f"No permissions found for {app_label}")
-                return stats
-            
-            # Assign permissions to each group
-            for role_key, group in groups.items():
-                # Clear existing permissions if force=True
-                if force:
-                    study_perms = list(group.permissions.filter(
-                        content_type__app_label=app_label
-                    ))
-                    
-                    if study_perms:
-                        group.permissions.remove(*study_perms)
-                        stats['permissions_removed'] += len(study_perms)
-                
-                # Get allowed actions for this role
+            # Build permission sets for each role
+            role_permissions = {}
+            for role_key in groups.keys():
                 allowed_actions = RoleTemplate.get_permissions(role_key)
+                role_permissions[role_key] = set()
                 
-                # Collect permissions to assign
-                permissions_to_assign = set()
-                for model_name, actions_map in permission_map.items():
-                    for action in allowed_actions:
-                        if action in actions_map:
-                            permissions_to_assign.add(actions_map[action])
+                for perm in all_permissions:
+                    action = perm.codename.split('_')[0]
+                    if action in allowed_actions:
+                        role_permissions[role_key].add(perm)
+            
+            # Bulk update permissions
+            Through = Group.permissions.through
+            
+            # Collect all relations to create
+            relations_to_create = []
+            
+            for role_key, group in groups.items():
+                if force:
+                    # Clear existing
+                    group.permissions.clear()
+                    stats['permissions_removed'] += group.permissions.count()
                 
-                # Assign permissions in bulk
-                if permissions_to_assign:
-                    group.permissions.add(*permissions_to_assign)
-                    stats['permissions_assigned'] += len(permissions_to_assign)
-                    stats['groups_updated'] += 1
-                    logger.debug(
-                        f"Assigned {len(permissions_to_assign)} permissions to {group.name}"
+                # Add new permissions
+                for perm in role_permissions[role_key]:
+                    relations_to_create.append(
+                        Through(group_id=group.id, permission_id=perm.id)
                     )
+                
+                stats['groups_updated'] += 1
+            
+            # Bulk create all relations
+            if relations_to_create:
+                Through.objects.bulk_create(
+                    relations_to_create,
+                    ignore_conflicts=True,
+                    batch_size=500
+                )
+                stats['permissions_assigned'] = len(relations_to_create)
             
             return stats
             
         except Exception as e:
-            logger.error(f"Error assigning permissions for {study_code}: {e}")
+            logger.error(f"Error assigning permissions: {e}")
             return stats
-    
+        
     @classmethod
     @transaction.atomic
     def initialize_study(cls, study_code: str, force: bool = False) -> Dict[str, Any]:
@@ -563,13 +568,7 @@ class StudyRoleManager:
         if not group:
             return set()
         
-        # Safely obtain an identifier for the group for cache keys in a way
-        # that static type checkers won't complain about a missing 'id' attribute.
-        gid = getattr(group, "pk", getattr(group, "id", None))
-        if gid is None:
-            # Fall back to the group name (or a generic string) if no numeric id is available
-            gid = getattr(group, "name", "unknown")
-        cache_key = f'group_perms_{gid}'
+        cache_key = f'group_perms_{group.pk}'
         
         if use_cache:
             perms = cache.get(cache_key)
@@ -585,7 +584,7 @@ class StudyRoleManager:
             return perms
             
         except Exception as e:
-            logger.debug(f"Error getting permissions for group {getattr(group, 'name', str(group))}: {e}")
+            logger.debug(f"Error getting permissions for group {group.name}: {e}")
             return set()
     
     @classmethod
@@ -683,11 +682,7 @@ class StudyRoleManager:
         try:
             groups = Group.objects.filter(name__startswith=prefix)
             for group in groups:
-                # Safely obtain an identifier for the group (prefer pk, then id, then name)
-                gid = getattr(group, "pk", getattr(group, "id", None))
-                if gid is None:
-                    gid = getattr(group, "name", str(group))
-                cache.delete(f'group_perms_{gid}')
+                cache.delete(f'group_perms_{group.pk}')
         except Exception:
             pass
         

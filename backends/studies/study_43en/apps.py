@@ -7,5 +7,6 @@ class Study43ENConfig(AppConfig):
     verbose_name = "Study 43EN"
     
     def ready(self):
-        """App initialization"""
-        pass
+        """App initialization - Import signals to register them"""
+        # Import signals to ensure they are registered
+        from backends.studies.study_43en.services import signals

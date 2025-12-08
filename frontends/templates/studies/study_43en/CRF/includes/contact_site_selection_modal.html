@@ -1,0 +1,251 @@
+{% load i18n %}
+
+<!-- Contact Site Selection Modal for Screening Creation -->
+<div class="modal fade" id="contactSiteSelectionModal" tabindex="-1" role="dialog" aria-labelledby="contactSiteSelectionModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="contactSiteSelectionModalLabel">
+          <i class="fas fa-users me-2"></i>
+          {% trans "Create New Contact - Select Site" %}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <form id="contactSiteSelectionForm">
+          <!-- Step 1: Site Selection -->
+          <div class="form-group">
+            <label for="modalContactSiteId" class="font-weight-bold">
+              <i class="fas fa-map-marker-alt me-1"></i>
+              {% trans "Site ID" %} <span class="text-danger">*</span>
+            </label>
+            
+            {% if selected_site_id == 'all' %}
+              <select class="form-control form-control-lg" id="modalContactSiteId" name="siteid" required>
+                <option value="">{% trans "-- Select Site --" %}</option>
+                {% for site_code in user_sites %}
+                  {% if site_code == '003' %}
+                    <option value="003">003 - {% trans "Hospital for Tropical Diseases HCMC" %}</option>
+                  {% elif site_code == '020' %}
+                    <option value="020">020 - {% trans "National Hospital for Tropical Diseases" %}</option>
+                  {% elif site_code == '011' %}
+                    <option value="011">011 - {% trans "Cho Ray Hospital" %}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <small class="form-text text-muted">
+                <i class="fas fa-info-circle"></i>
+                {% trans "Please select the site for this contact screening" %}
+              </small>
+            {% else %}
+              <input type="text" class="form-control form-control-lg" id="modalContactSiteId" name="siteid" 
+                     value="{{ selected_site_id }}" readonly 
+                     style="background-color: #e9ecef; font-weight: bold;">
+              <div class="mt-2">
+                <span class="badge badge-primary" style="font-size: 0.9em;">
+                  {% if selected_site_id == '003' %}
+                    003 - {% trans "Hospital for Tropical Diseases HCMC" %}
+                  {% elif selected_site_id == '020' %}
+                    020 - {% trans "National Hospital for Tropical Diseases" %}
+                  {% elif selected_site_id == '011' %}
+                    011 - {% trans "Cho Ray Hospital" %}
+                  {% endif %}
+                </span>
+              </div>
+              <small class="form-text text-muted">
+                <i class="fas fa-lock"></i>
+                {% trans "Your site is automatically selected" %}
+              </small>
+            {% endif %}
+          </div>
+
+          <!-- Step 2: Generated Contact SCRID -->
+          <div class="form-group mt-3" id="contactScridPreviewGroup" style="display: none;">
+            <label class="font-weight-bold">
+              <i class="fas fa-id-card me-1"></i>
+              {% trans "Generated Contact Screening ID" %}
+            </label>
+            <div class="input-group input-group-lg">
+              <input type="text" class="form-control" id="contactScridPreview" readonly 
+                     style="background-color: #e3f2fd; font-weight: bold; font-size: 1.2em; color: #1565c0; text-align: center;">
+            </div>
+            <small class="form-text text-primary">
+              <i class="fas fa-check-circle"></i>
+              {% trans "This ID will be used for the new contact screening record" %}
+            </small>
+          </div>
+
+          <!-- Loading indicator -->
+          <div class="text-center mt-3" id="loadingContactScrid" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">{% trans "Generating..." %}</span>
+            </div>
+            <p class="text-muted mt-2">{% trans "Generating Contact Screening ID..." %}</p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelContactModalBtn">
+          <i class="fas fa-times me-1"></i>
+          {% trans "Cancel" %}
+        </button>
+        <button type="button" class="btn btn-primary" id="confirmCreateContactBtn" disabled>
+          <i class="fas fa-check-circle me-1"></i>
+          {% trans "Create Contact Form" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Contact Modal Styling - Royal Blue Theme */
+#contactSiteSelectionModal .modal-content {
+  border: none;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  border-radius: 0.5rem;
+}
+
+#contactSiteSelectionModal .modal-header {
+  background-color: var(--color-royal-blue-600);
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+#contactSiteSelectionModal .form-control-lg {
+  font-size: 1.1rem;
+}
+
+#contactScridPreview {
+  border: 2px solid var(--color-royal-blue-600) !important;
+}
+
+#confirmCreateContactBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#contactSiteSelectionModal .modal-body {
+  padding: 2rem;
+}
+</style>
+
+<!-- Script giữ nguyên -->
+<script nonce="{{ request.csp_nonce }}">
+// Contact Site Selection Modal Script
+(function() {
+  'use strict';
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContactModal);
+  } else {
+    initContactModal();
+  }
+  
+  function initContactModal() {
+    if (typeof $ === 'undefined') {
+      console.error('[ContactModal] jQuery not loaded!');
+      setTimeout(initContactModal, 100);
+      return;
+    }
+    
+    $(document).ready(function() {
+      console.log('[ContactModal] Initializing...');
+      
+      var selectedSiteId = "{{ selected_site_id }}";
+      var generatedContactScrid = null;
+      
+      console.log('[ContactModal] Selected site ID:', selectedSiteId);
+      console.log('[ContactModal] Modal exists:', $('#contactSiteSelectionModal').length > 0);
+      
+      $('#btnAddNewContact, #btnAddNewContactEmpty').on('click', function(e) {
+        e.preventDefault();
+        console.log('[ContactModal] Button clicked, opening modal...');
+        $('#contactSiteSelectionModal').modal('show');
+      });
+      
+      if (selectedSiteId && selectedSiteId !== 'all') {
+        console.log('[ContactModal] Single-site user - auto-generating SCRID');
+        $('#contactSiteSelectionModal').on('shown.bs.modal', function() {
+          generateContactScrid(selectedSiteId);
+        });
+      }
+      
+      $('#modalContactSiteId').on('change', function() {
+        var siteid = $(this).val();
+        console.log('[ContactModal] Site selected:', siteid);
+        if (siteid) {
+          generateContactScrid(siteid);
+        } else {
+          $('#contactScridPreviewGroup').hide();
+          $('#confirmCreateContactBtn').prop('disabled', true);
+          generatedContactScrid = null;
+        }
+      });
+      
+      $('#cancelContactModalBtn').on('click', function() {
+        console.log('[ContactModal] Cancel clicked - closing modal');
+        $('#contactSiteSelectionModal').modal('hide');
+        $('#modalContactSiteId').val('');
+        $('#contactScridPreviewGroup').hide();
+        $('#confirmCreateContactBtn').prop('disabled', true);
+        generatedContactScrid = null;
+      });
+      
+      $('#confirmCreateContactBtn').on('click', function() {
+        var siteid = $('#modalContactSiteId').val();
+        
+        console.log('[ContactModal] Confirm clicked - siteid:', siteid, 'scrid:', generatedContactScrid);
+        
+        if (!siteid || !generatedContactScrid) {
+          alert('{% trans "Please select a site first" %}');
+          return;
+        }
+        
+        var createUrl = "{% url 'study_43en:screening_contact_create' %}" + "?siteid=" + siteid;
+        console.log('[ContactModal] Navigating to:', createUrl);
+        window.location.href = createUrl;
+      });
+      
+      console.log('[ContactModal] Initialized successfully');
+      
+      function generateContactScrid(siteid) {
+        console.log('[ContactModal] Generating Contact SCRID for site:', siteid);
+        
+        $('#loadingContactScrid').show();
+        $('#contactScridPreviewGroup').hide();
+        $('#confirmCreateContactBtn').prop('disabled', true);
+        
+        $.ajax({
+          url: "{% url 'study_43en:api_generate_contact_scrid' %}",
+          method: 'POST',
+          data: {
+            siteid: siteid,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+          },
+          success: function(response) {
+            console.log('[ContactModal] API response:', response);
+            if (response.success && response.scrid) {
+              generatedContactScrid = response.scrid;
+              $('#contactScridPreview').val(generatedContactScrid);
+              $('#contactScridPreviewGroup').show();
+              $('#confirmCreateContactBtn').prop('disabled', false);
+              console.log('[ContactModal] Generated Contact SCRID:', generatedContactScrid);
+            } else {
+              alert('{% trans "Error generating Contact Screening ID" %}');
+              console.error('[ContactModal] API error:', response);
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('[ContactModal] AJAX error:', {xhr: xhr, status: status, error: error});
+            alert('{% trans "Network error. Please try again." %}');
+          },
+          complete: function() {
+            $('#loadingContactScrid').hide();
+          }
+        });
+      }
+    });
+  }
+  
+})();
+</script>

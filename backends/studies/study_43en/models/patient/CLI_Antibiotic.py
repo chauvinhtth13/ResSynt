@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from backends.studies.study_43en.study_site_manage import SiteFilteredManage
+from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 
 
 class PriorAntibiotic(models.Model):
@@ -11,11 +11,11 @@ class PriorAntibiotic(models.Model):
     
     # Managers
     objects = models.Manager()
-    site_objects = SiteFilteredManage()
+    site_objects = SiteFilteredManager()
     
     # Foreign key
     USUBJID = models.ForeignKey(
-        'ClinicalCase',
+        'CLI_CASE',
         to_field='USUBJID',
         db_column='USUBJID',
         on_delete=models.CASCADE,
@@ -40,7 +40,7 @@ class PriorAntibiotic(models.Model):
     PRIORANTIBIOSTARTDTC = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Prior Antibiotic Start Date')
     )
     
@@ -48,6 +48,11 @@ class PriorAntibiotic(models.Model):
         null=True,
         blank=True,
         verbose_name=_('Prior Antibiotic End Date')
+    )
+
+    SEQUENCE = models.PositiveIntegerField(
+        default=1,
+        help_text="Sequence number for ordering"
     )
 
     class Meta:
@@ -58,6 +63,13 @@ class PriorAntibiotic(models.Model):
         indexes = [
             models.Index(fields=['USUBJID', 'PRIORANTIBIOSTARTDTC'], name='idx_pa_subj_start'),
         ]
+
+    @property
+    def SITEID(self):
+        """Get SITEID from related CLI_CASE"""
+        if self.USUBJID and hasattr(self.USUBJID, 'SITEID'):
+            return self.USUBJID.SITEID
+        return None
 
     def __str__(self):
         return f"{self.PRIORANTIBIONAME} - {self.PRIORANTIBIODOSAGE}"
@@ -71,11 +83,10 @@ class InitialAntibiotic(models.Model):
     
     # Managers
     objects = models.Manager()
-    site_objects = SiteFilteredManage()
+    site_objects = SiteFilteredManager()
     
     # Foreign key
-    USUBJID = models.ForeignKey('ClinicalCase',
-        to_field='USUBJID',
+    USUBJID = models.ForeignKey('CLI_CASE',
         db_column='USUBJID',
         on_delete=models.CASCADE,
         related_name='initial_antibiotics',
@@ -99,7 +110,7 @@ class InitialAntibiotic(models.Model):
     INITIALANTIBIOSTARTDTC = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Initial Antibiotic Start Date')
     )
     
@@ -108,7 +119,10 @@ class InitialAntibiotic(models.Model):
         blank=True,
         verbose_name=_('Initial Antibiotic End Date')
     )
-
+    SEQUENCE = models.PositiveIntegerField(
+        default=1,
+        help_text="Sequence number for ordering"
+    )
     class Meta:
         db_table = 'CLI_Initial_Antibiotic'
         verbose_name = _('Initial Antibiotic')
@@ -117,6 +131,13 @@ class InitialAntibiotic(models.Model):
         indexes = [
             models.Index(fields=['USUBJID', 'INITIALANTIBIOSTARTDTC'], name='idx_ia_subj_start'),
         ]
+
+    @property
+    def SITEID(self):
+        """Get SITEID from related CLI_CASE"""
+        if self.USUBJID and hasattr(self.USUBJID, 'SITEID'):
+            return self.USUBJID.SITEID
+        return None
 
     def __str__(self):
         return f"{self.INITIALANTIBIONAME} - {self.INITIALANTIBIODOSAGE}"
@@ -130,11 +151,10 @@ class MainAntibiotic(models.Model):
     
     # Managers
     objects = models.Manager()
-    site_objects = SiteFilteredManage()
+    site_objects = SiteFilteredManager()
     
     # Foreign key
-    USUBJID = models.ForeignKey('ClinicalCase',
-        to_field='USUBJID',
+    USUBJID = models.ForeignKey('CLI_CASE',
         on_delete=models.CASCADE,
         related_name='main_antibiotics',
         verbose_name=_('Patient ID'),
@@ -158,7 +178,7 @@ class MainAntibiotic(models.Model):
     MAINANTIBIOSTARTDTC = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Main Antibiotic Start Date')
     )
     
@@ -166,6 +186,11 @@ class MainAntibiotic(models.Model):
         null=True,
         blank=True,
         verbose_name=_('Main Antibiotic End Date')
+    )
+
+    SEQUENCE = models.PositiveIntegerField(
+        default=1,
+        help_text="Sequence number for ordering"
     )
 
     class Meta:
@@ -176,6 +201,13 @@ class MainAntibiotic(models.Model):
         indexes = [
             models.Index(fields=['USUBJID', 'MAINANTIBIOSTARTDTC'], name='idx_ma_subj_start'),
         ]
+
+    @property
+    def SITEID(self):
+        """Get SITEID from related CLI_CASE"""
+        if self.USUBJID and hasattr(self.USUBJID, 'SITEID'):
+            return self.USUBJID.SITEID
+        return None
 
     def __str__(self):
         return f"{self.MAINANTIBIONAME} - {self.MAINANTIBIODOSAGE}"

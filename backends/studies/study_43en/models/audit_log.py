@@ -1,190 +1,267 @@
 # backends/studies/study_43en/models/audit_log.py
 """
-Audit Log Model - Track user activities and data changes
+ FIXED: Audit Log Models - Schema handled by schema_editor
 """
 from django.db import models
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
-
-from backends.studies.study_43en.study_site_manage import SiteFilteredManage
-from backends.studies.study_43en.utils.audit_log_utils import safe_json_loads
-
+from django.core.serializers.json import DjangoJSONEncoder
+from django.core.exceptions import PermissionDenied
+from django.utils import timezone
+from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 
 class AuditLog(models.Model):
     """
-    Audit log for tracking user activities
-    Records all CREATE, UPDATE, DELETE, VIEW actions
+    Main audit log entry
+     Schema routing handled automatically by schema_editor
     """
+
+    objects = models.Manager()
+    site_objects = SiteFilteredManager()
     
-    # Choices definition (keep original format)
     ACTION_CHOICES = [
-        ('CREATE', _('Create')),
-        ('UPDATE', _('Update')),
-        ('DELETE', _('Delete')),
-        ('VIEW', _('View')),
+        ('CREATE', 'Create'),
+        ('UPDATE', 'Update'),
+        ('VIEW', 'View'),
     ]
     
-    # Managers
-    objects = models.Manager()
-    site_objects = SiteFilteredManage()
-    
-    # User information
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_constraint=False,
-        verbose_name=_('User')
+    # WHO
+    user_id = models.IntegerField(
+        db_index=True,
+        help_text="User ID from management database"
     )
+    
     username = models.CharField(
         max_length=150,
-        null=True,
-        blank=True,
-        verbose_name=_('Username')
+        db_index=True,
+        help_text="Username backup"
     )
     
-    # Action details
+    # WHEN
     timestamp = models.DateTimeField(
-        auto_now_add=True,
-        db_index=True,
-        verbose_name=_('Timestamp')
+        default=timezone.now,
+        db_index=True
     )
+    
+    # WHAT
     action = models.CharField(
         max_length=10,
         choices=ACTION_CHOICES,
-        db_index=True,
-        verbose_name=_('Action')
+        db_index=True
     )
+    
     model_name = models.CharField(
         max_length=100,
         db_index=True,
-        verbose_name=_('Model Name')
+        help_text="CRF model (e.g., SCREENINGCASE)"
     )
+    
     patient_id = models.CharField(
-        max_length=100,
+        max_length=50,
         db_index=True,
-        verbose_name=_('Patient ID')
+        help_text="Patient identifier"
     )
+    
     SITEID = models.CharField(
-        max_length=20,
+        max_length=10,
         null=True,
         blank=True,
-        db_index=True,
-        verbose_name=_('Site ID')
+        db_index=True
     )
     
-    # Data changes
-    old_data = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name=_('Old Data')
-    )
-    new_data = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name=_('New Data')
+    # WHY
+    reason = models.TextField(
+        help_text="Combined change reason"
     )
     
-    # Additional info
+    # METADATA
     ip_address = models.GenericIPAddressField(
         null=True,
-        blank=True,
-        verbose_name=_('IP Address')
-    )
-    reason = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name=_('Change Reason')
-    )
-    reasons_json = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name=_('Field-wise Change Reasons')
+        blank=True
     )
     
+    session_id = models.CharField(
+        max_length=40,
+        null=True,
+        blank=True
+    )
+    
+    # INTEGRITY
+    checksum = models.CharField(
+        max_length=64,
+        editable=False
+    )
+    
+    is_verified = models.BooleanField(default=True)
+    
     class Meta:
-        db_table = 'audit_log'
-        verbose_name = _('Audit Log')
-        verbose_name_plural = _('Audit Logs')
+        #  CHANGED: No schema prefix - let schema_editor handle it
+        db_table = 'audit_log'  # Simple table name
+        
+        #  ADD: Mark this as audit log table using db_table_comment
+        db_table_comment = 'AUDIT_LOG_TABLE'  # Special marker
+        
         ordering = ['-timestamp']
+        verbose_name = 'Audit Log'
+        verbose_name_plural = 'Audit Logs'
+        
+        default_permissions = ('add', 'view')
+        
         indexes = [
-            models.Index(fields=['-timestamp', 'model_name'], name='idx_audit_time_model'),
-            models.Index(fields=['patient_id', 'action'], name='idx_audit_patient_action'),
-            models.Index(fields=['SITEID', '-timestamp'], name='idx_audit_site_time'),
+            models.Index(fields=['-timestamp'], name='audit_log_time_idx'),
+            models.Index(fields=['patient_id', '-timestamp'], name='audit_log_patient_idx'),
+            models.Index(fields=['user_id', '-timestamp'], name='audit_log_user_idx'),
+            models.Index(fields=['SITEID', '-timestamp'], name='audit_log_site_idx'),
+            models.Index(fields=['model_name', 'action'], name='audit_log_model_idx'),
         ]
     
     def __str__(self):
-        username = self.username or (self.user.username if self.user else "unknown")
-        action_display = dict(self.ACTION_CHOICES).get(self.action, self.action)
-        return f"{username} - {action_display} {self.model_name} #{self.patient_id}"
+        return f"{self.username} {self.action} {self.model_name} at {self.timestamp}"
+    
+    def delete(self, *args, **kwargs):
+        raise PermissionDenied("Audit logs cannot be deleted")
     
     def save(self, *args, **kwargs):
-        """Auto-populate username from user"""
-        if self.user and not self.username:
-            self.username = self.user.username
+        """Generate checksum if not exists"""
+        if self.pk:
+            raise PermissionDenied("Audit logs are immutable")
+        
+        if not self.checksum:
+            from backends.studies.study_43en.utils.audit.integrity import IntegrityChecker
+            
+            if hasattr(self, '_temp_checksum_data'):
+                audit_data = self._temp_checksum_data.copy()
+                audit_data['timestamp'] = str(self.timestamp)
+            else:
+                old_data = {}
+                new_data = {}
+                
+                if hasattr(self, '_temp_details'):
+                    for detail in self._temp_details:
+                        field_name = detail['field_name']
+                        old_data[field_name] = detail['old_value']
+                        new_data[field_name] = detail['new_value']
+                
+                audit_data = {
+                    'user_id': self.user_id,
+                    'username': self.username,
+                    'action': self.action,
+                    'model_name': self.model_name,
+                    'patient_id': self.patient_id,
+                    'timestamp': str(self.timestamp),
+                    'old_data': old_data,
+                    'new_data': new_data,
+                    'reason': self.reason,
+                }
+            
+            self.checksum = IntegrityChecker.generate_checksum(audit_data)
+        
         super().save(*args, **kwargs)
     
-    def get_old_data_dict(self):
-        """Get old data as flattened dictionary"""
-        if not self.old_data:
-            return {}
-        if isinstance(self.old_data, dict):
-            return self.old_data
-        return flatten_formset_data(safe_json_loads(self.old_data, {}))
-
-    def get_new_data_dict(self):
-        """Get new data as flattened dictionary"""
-        if not self.new_data:
-            return {}
-        if isinstance(self.new_data, dict):
-            return self.new_data
-        return flatten_formset_data(safe_json_loads(self.new_data, {}))
-
-
-def flatten_formset_data(data):
-    """
-    Flatten formset data structure to simple key-value pairs
+    def verify_integrity(self) -> bool:
+        """Verify checksum"""
+        from backends.studies.study_43en.utils.audit.integrity import IntegrityChecker
+        
+        details = self.details.all()
+        
+        old_data = {}
+        new_data = {}
+        
+        for detail in details:
+            old_data[detail.field_name] = detail.old_value
+            new_data[detail.field_name] = detail.new_value
+        
+        audit_data = {
+            'user_id': self.user_id,
+            'username': self.username,
+            'action': self.action,
+            'model_name': self.model_name,
+            'patient_id': self.patient_id,
+            'timestamp': str(self.timestamp),
+            'old_data': old_data,
+            'new_data': new_data,
+            'reason': self.reason,
+        }
+        
+        calculated_checksum = IntegrityChecker.generate_checksum(audit_data)
+        is_valid = (calculated_checksum == self.checksum)
+        
+        if not is_valid:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f" INTEGRITY VIOLATION: AuditLog {self.id} checksum mismatch!\n"
+                f"   Expected: {calculated_checksum}\n"
+                f"   Stored:   {self.checksum}"
+            )
+        
+        return is_valid
     
-    Args:
-        data: Dictionary potentially containing nested formset arrays
-        
-    Returns:
-        Flattened dictionary with keys like 'antibiotic_0_field'
+    def get_user(self):
+        """Get user from management database"""
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            return User.objects.using('default').get(id=self.user_id)
+        except:
+            return None
+
+
+class AuditLogDetail(models.Model):
     """
-    if not isinstance(data, dict):
-        return {}
-            
-    result = {}
+    Field-level change details
+     Schema routing handled automatically by schema_editor
+    """
     
-    # Handle main + nested formsets structure
-    if 'main' in data:
-        # Add main fields
-        for k, v in data.get('main', {}).items():
-            result[k] = v
+    audit_log = models.ForeignKey(
+        AuditLog,
+        on_delete=models.PROTECT,
+        related_name='details'
+    )
+    
+    field_name = models.CharField(
+        max_length=100,
+        help_text="Technical field name"
+    )
+    
+    old_value = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Old value (as string)"
+    )
+    
+    new_value = models.TextField(
+        null=True,
+        blank=True,
+        help_text="New value (as string)"
+    )
+    
+    reason = models.TextField(
+        help_text="Reason for this specific field change"
+    )
+    
+    class Meta:
+        #  CHANGED: No schema prefix
+        db_table = 'audit_log_detail'
         
-        # Flatten antibiotic formset
-        antibiotics = data.get('antibiotic', [])
-        for idx, item in enumerate(antibiotics):
-            if item:
-                for field, value in item.items():
-                    result[f"antibiotic_{idx}_{field}"] = value
+        #  ADD: Mark as audit log table
+        db_table_comment = 'AUDIT_LOG_TABLE'
         
-        # Flatten rehospitalization formset
-        rehospitalizations = data.get('rehospitalization', [])
-        for idx, item in enumerate(rehospitalizations):
-            if item:
-                for field, value in item.items():
-                    result[f"rehospitalization_{idx}_{field}"] = value
-    else:
-        # Handle direct structure
-        for k, v in data.items():
-            if isinstance(v, list):
-                for idx, row in enumerate(v):
-                    if row:
-                        for field, value in row.items():
-                            result[f"{k}_{idx}_{field}"] = value
-            else:
-                result[k] = v
-                
-    return result
+        ordering = ['field_name']
+        verbose_name = 'Audit Log Detail'
+        verbose_name_plural = 'Audit Log Details'
+        
+        default_permissions = ('add', 'view')
+        
+        indexes = [
+            models.Index(fields=['audit_log', 'field_name'], name='audit_detail_log_idx'),
+        ]
+    
+    def __str__(self):
+        return f"{self.field_name}: {self.old_value} → {self.new_value}"
+    
+    def delete(self, *args, **kwargs):
+        raise PermissionDenied("Audit log details cannot be deleted")
+    
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise PermissionDenied("Audit log details are immutable")
+        super().save(*args, **kwargs)

@@ -6,7 +6,7 @@
 {% block title %}Select Study - ResSync Platform{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/default/select_study.css' %}">
+<link rel="stylesheet" href="{% static 'base/css/select_study.css' %}">
 {% endblock %}
 
 {% block main %}
@@ -88,7 +88,7 @@
             </section>
 
             <!-- FOOTER - PAGINATION -->
-            <footer class="card-footer bg-light border-top p-3">
+            <footer class="app-card-footer">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <!-- Info bên trái -->
                     <div class="pagination-info text-muted small">
@@ -101,8 +101,10 @@
 
                     <!-- Pagination Controls bên phải -->
                     <nav aria-label="Study pagination">
-                        <ul class="pagination pagination-sm mb-0" id="paginationControls">
-                            <!-- JavaScript sẽ tạo các nút ở đây -->
+                        <ul class="app-pagination mb-0" id="paginationControls">
+                            <li>
+                                <a href="#" class="app-pagination__link app-pagination__link--prev">Previous</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
@@ -114,5 +116,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/default/select_study.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/select_study.js' %}"></script>
 {% endblock %}

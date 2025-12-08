@@ -1,0 +1,194 @@
+/* ========================================================================== 
+   PROFILE USERS PAGE - Using System CSS
+   Note: Extends base.css and dashboard.css - minimal additions only
+   ========================================================================== */
+
+/* ========================================================================== 
+   PROFILE ICON - Gradient Icon Wrapper
+   ========================================================================== */
+.profile-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: var(--app-linear-gradient);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.profile-icon-wrapper i {
+    font-size: 2rem;
+    color: white;
+}
+
+/* ========================================================================== 
+   CARDS - Extends base.css card styles
+   ========================================================================== */
+.card-modern {
+    border: none;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: box-shadow var(--transition-base), transform var(--transition-base);
+    background-color: #fff;
+}
+
+.card-modern:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* ========================================================================== 
+   INFO LIST - Semantic dl/dt/dd styling
+   ========================================================================== */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacer-3);
+    margin-bottom: 0;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacer-2) 0;
+    border-bottom: 1px solid var(--bs-gray-200);
+}
+
+.info-item:last-child,
+.info-item.mb-0 {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    color: var(--bs-gray-600);
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.info-value {
+    font-size: 0.875rem;
+    color: var(--bs-gray-900);
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+/* ========================================================================== 
+   PASSWORD STRENGTH INDICATOR
+   ========================================================================== */
+.password-strength {
+    height: 4px;
+    border-radius: var(--radius-sm);
+    background-color: var(--bs-gray-200);
+    overflow: hidden;
+    transition: opacity var(--transition-base);
+}
+
+.password-strength-bar {
+    height: 100%;
+    width: 0;
+    transition: width var(--transition-smooth), 
+                background-color var(--transition-smooth);
+}
+
+/* ========================================================================== 
+   PASSWORD INPUT WITH TOGGLE - Extends form-control.modern from base.css
+   ========================================================================== */
+.password-input-container {
+    position: relative;
+}
+
+.password-input-container input {
+    padding-right: 3rem;
+}
+
+.password-input-container .password-toggle-icon {
+    position: absolute;
+    top: 50%;
+    right: var(--spacer-2);
+    transform: translateY(-50%);
+    z-index: 3;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacer-2);
+    color: var(--bs-gray-600);
+    transition: color var(--transition-fast);
+    border-radius: var(--radius-sm);
+}
+
+.password-input-container .password-toggle-icon:hover {
+    color: var(--color-royal-blue-500);
+}
+
+.password-input-container .password-toggle-icon:focus {
+    outline: 2px solid var(--color-royal-blue-500);
+    outline-offset: 2px;
+}
+
+.password-input-container .password-toggle-icon i {
+    font-size: 1.125rem;
+}
+
+/* ========================================================================== 
+   FORM VALIDATION STATES - Using Bootstrap validation styles
+   ========================================================================== */
+.form-control.is-valid {
+    border-color: #198754;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Adjust padding for password inputs with toggle */
+.password-input-container .form-control.is-valid,
+.password-input-container .form-control.is-invalid {
+    padding-right: 3rem;
+    background-position: right calc(2.5rem) center;
+}
+
+/* ========================================================================== 
+   RESPONSIVE ADJUSTMENTS
+   ========================================================================== */
+@media (max-width: 576px) {
+    .profile-icon-wrapper {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .profile-icon-wrapper i {
+        font-size: 1.75rem;
+    }
+    
+    .card-modern .card-body {
+        padding: 1.25rem !important;
+    }
+}
+
+/* ========================================================================== 
+   MODERN CSS with clamp() support
+   ========================================================================== */
+@supports (width: clamp(48px, 10vw, 56px)) {
+    .profile-icon-wrapper {
+        width: clamp(48px, 10vw, 56px);
+        height: clamp(48px, 10vw, 56px);
+    }
+    
+    .profile-icon-wrapper i {
+        font-size: clamp(1.75rem, 3vw, 2rem);
+    }
+}

@@ -1,21 +1,19 @@
-# backend/tenancy/models/study.py - COMPLETE
+# backend/tenancy/models/study.py
 """
-Study and Site models
+Study and Site models - Optimized version
 """
 from django.db import models
 from django.conf import settings
 from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
-from parler.models import TranslatableModel, TranslatedFields
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 import logging
 
 logger = logging.getLogger(__name__)
 
-class Study(TranslatableModel):
-    """
-    Study/Research Project - Main tenant entity
-    Each study has its own database
-    """
+
+class Study(models.Model):
+    """Study/Research Project"""
     
     class Status(models.TextChoices):
         PLANNING = 'planning', 'Planning'
@@ -26,200 +24,194 @@ class Study(TranslatableModel):
         max_length=50,
         unique=True,
         db_index=True,
-        verbose_name="Study Code",
-        help_text="Unique code for the study (e.g., 43EN, 44EN) - uppercase letters, numbers, underscores only",
         validators=[RegexValidator(
-            regex=r'^[A-Z0-9_]+$',
-            message="Code must contain only uppercase letters, numbers, and underscores"
+            regex=r'^[A-z0-9_]+$',
+            message="Only uppercase letters, numbers, underscores"
         )]
     )
+
+    name_vi = models.TextField(max_length=255, verbose_name='Name (Vietnamese)')
+    name_en = models.TextField(max_length=255, verbose_name='Name (English)')
     
     db_name = models.CharField(
         max_length=100,
         unique=True,
         db_index=True,
-        verbose_name="Database Name",
-        help_text="Auto-generated from study code (e.g., db_study_43en). Leave blank for auto-generation.",
         blank=True,
-        validators=[RegexValidator(
-            regex=r'^db_study_[a-z0-9_]+$',
-            message="Database name must start with 'db_study_' and contain only lowercase letters, numbers, and underscores"
-        )]
+        verbose_name="Database Name"
     )
     
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.PLANNING,
-        db_index=True,
-        verbose_name="Status",
-        help_text="Study status. Archived studies won't be loaded by the system."
+        db_index=True
     )
     
-    # Relationships
     sites = models.ManyToManyField(
         "Site",
         through="StudySite",
         related_name="studies",
-        verbose_name="Sites"
+        blank=True
     )
     
-    # Metadata
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Created At"
-    )
-    
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Updated At"
-    )
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='studies_created',
-        verbose_name="Created By"
+        related_name='studies_created'
     )
 
-    # Translatable fields
-    translations = TranslatedFields(
-        name=models.TextField(
-            max_length=255,
-            db_index=True,
-            verbose_name="Study Name"
-        )
-    )
-
-    class Meta(TranslatableModel.Meta):
+    class Meta:
         db_table = 'study_information'
-        verbose_name = "Study Information"
-        verbose_name_plural = "Study Information"
+        verbose_name = "Studies Information"
+        verbose_name_plural = "Studies Information"
         ordering = ['-created_at', 'code']
-        indexes = [
-            models.Index(fields=['status', 'code'], name='idx_study_status_code'),
-        ]
 
     def clean(self):
-        """Validate and auto-generate db_name from code"""
+        """Validate and generate db_name"""
         super().clean()
-        
-        if not self.code:
-            raise ValidationError({'code': 'Study code is required.'})
         
         if not self.db_name:
             self.db_name = self.generate_db_name()
-        
-        expected_db_name = self.generate_db_name()
-        if self.db_name != expected_db_name:
-            raise ValidationError({
-                'db_name': f"Database name must be '{expected_db_name}' for study code '{self.code}'. "
-                           f"Leave blank for auto-generation."
-            })
 
     def save(self, *args, **kwargs):
-        """Override save to auto-generate db_name"""
+        """Save with auto db_name"""
         if not self.db_name:
             self.db_name = self.generate_db_name()
         
         self.full_clean()
-        
         super().save(*args, **kwargs)
 
     def generate_db_name(self) -> str:
-        """Generate database name from study code"""
-        if not self.code:
-            raise ValidationError("Study code is required")
-        
-        # Use settings.STUDY_DB_PREFIX (correct)
+        """Generate database name"""
         prefix = getattr(settings, 'STUDY_DB_PREFIX', 'db_study_')
         return f"{prefix}{self.code.lower()}"
+    
+    @property
+    def name(self):
+        from django.utils import translation
+        lang = translation.get_language()
+        if lang == 'en':
+            return self.name_en or self.name_vi
+        return self.name_vi or self.name_en
 
     def __str__(self):
-        name = self.safe_translation_getter('name', any_language=True)
-        return f"{self.code} - {name}" if name else self.code
+        return f"Study {self.code}"
+    
+    # ==========================================
+    # NEW METHODS - STATISTICS AND HEALTH
+    # ==========================================
+    
+    def get_active_users_count(self) -> int:
+        """Count active users in this study"""
+        from backends.tenancy.models import StudyMembership
+        return StudyMembership.objects.filter(
+            is_active=True, 
+            user__is_active=True,
+            study=self
+        ).values('user').distinct().count()
+    
+    def get_sites_list(self) -> list:
+        """Get list of site codes"""
+        from backends.tenancy.models import StudySite
+        return list(StudySite.objects.filter(study=self).values_list('site__code', flat=True))
+    
+    def get_role_distribution(self) -> dict:
+        """Get distribution of roles in this study"""
+        from django.db.models import Count
+        from backends.tenancy.models import StudyMembership
+        return dict(
+            StudyMembership.objects.filter(study=self, is_active=True)
+            .values('group__name')
+            .annotate(count=Count('id'))
+            .values_list('group__name', 'count')
+        )
 
 
-class Site(TranslatableModel):
-    """Research Site/Location"""
+class Site(models.Model):
+    """Research Site"""
     
     code = models.CharField(
         max_length=50,
         unique=True,
         db_index=True,
-        verbose_name="Site Code",
         validators=[RegexValidator(
             regex=r'^[A-Z0-9_]+$',
-            message="Code must contain only uppercase letters, numbers, and underscores"
+            message="Only uppercase letters, numbers, underscores"
         )]
     )
     
     abbreviation = models.CharField(
         max_length=10,
         unique=True,
-        db_index=True,
-        verbose_name="Abbreviation"
+        db_index=True
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Created At"
-    )
     
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Updated At"
+    name_vi = models.TextField(max_length=255, verbose_name='Name (Vietnamese)')
+    name_en = models.TextField(max_length=255, verbose_name='Name (English)')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='sites_created'
     )
 
-    translations = TranslatedFields(
-        name=models.TextField(
-            max_length=255,
-            verbose_name="Name"
-        ),
-    )
-
-    class Meta(TranslatableModel.Meta):
+    class Meta:
         db_table = 'study_sites'
         verbose_name = "Study Sites"
         verbose_name_plural = "Study Sites"
-        ordering = ['code']
-        indexes = [
-            models.Index(fields=['code'], name='idx_site_code'),
-        ]
+        ordering = ['id','code']
+
+    @property
+    def name(self):
+        from django.utils import translation
+        lang = translation.get_language()
+        if lang == 'en':
+            return self.name_en or self.name_vi
+        return self.name_vi or self.name_en
 
     def __str__(self):
-        name = self.safe_translation_getter('name', any_language=True)
-        return f"{self.code} - {name}" if name else self.code
+        abbreviation= self.abbreviation if self.abbreviation else ''
+        return f"{self.code} - {abbreviation}" if abbreviation else self.code
 
 
+# In study.py
 class StudySite(models.Model):
-    """Link between Study and Site with specific configuration"""
+    """Link between Study and Site"""
     
     study = models.ForeignKey(
         Study,
         on_delete=models.CASCADE,
-        related_name="study_sites",
-        verbose_name="Study"
+        related_name="study_sites"
     )
     
     site = models.ForeignKey(
         Site,
         on_delete=models.CASCADE,
-        related_name="site_studies",
-        verbose_name="Site"
+        related_name="site_studies"
     )
     
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Created At"
+    # Add this field if you want to track who created the link
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='study_sites_created'
     )
     
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Updated At"
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'study_site_links'
@@ -231,11 +223,37 @@ class StudySite(models.Model):
                 name='unique_study_site'
             )
         ]
-        indexes = [
-            models.Index(fields=['study'], name='idx_studysite'),
-            models.Index(fields=["site"], name="ix_studysite_site"),
-        ]
 
     def __str__(self):
         return f"{self.study.code} - {self.site.code}"
     
+
+
+
+
+# Single signal for database creation
+@receiver(post_save, sender=Study)
+def handle_study_database(sender, instance, created, **kwargs):
+    if not created:
+        return
+    
+    from django.db import transaction
+    
+    def _create_database():
+        try:
+            from backends.tenancy.utils.db_study_creator import DatabaseStudyCreator
+            from backends.tenancy.utils.role_manager import StudyRoleManager
+            
+            if not DatabaseStudyCreator.database_exists(instance.db_name):
+                success, message = DatabaseStudyCreator.create_study_database(instance.db_name)
+                if not success:
+                    logger.error(f"Failed to create database: {message}")
+                    return
+            
+            StudyRoleManager.initialize_study(instance.code)
+            
+        except Exception as e:
+            logger.error(f"Error in database creation: {e}")
+    
+    # Delay until transaction commits
+    transaction.on_commit(_create_database)

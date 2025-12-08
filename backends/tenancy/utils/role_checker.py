@@ -19,7 +19,7 @@ Usage Examples:
     >>> RoleChecker.get_role(user, study)
     'data_manager'
 """
-from typing import Optional, Set, Dict, List
+from typing import Optional, Set, Dict, List, Any
 from django.db.utils import OperationalError 
 import logging
 
@@ -181,7 +181,8 @@ class RoleChecker:
             config = RoleTemplate.get_role_config(role_key)
             return config.get('is_privileged', False) if config else False
         
-        return SafeQueryWrapper.safe_query(_query, default=False, log_error=False)
+        result = SafeQueryWrapper.safe_query(_query, default=False, log_error=False)
+        return bool(result) if result is not None else False
     
     # ==========================================
     # QUICK ROLE CHECKS
@@ -230,7 +231,8 @@ class RoleChecker:
             from backends.tenancy.utils import TenancyUtils
             return TenancyUtils.user_has_permission(user, study, permission_codename)
         
-        return SafeQueryWrapper.safe_query(_query, default=False, log_error=False)
+        result = SafeQueryWrapper.safe_query(_query, default=False, log_error=False)
+        return bool(result) if result is not None else False
     
     @staticmethod
     def can_add(user, study, model_name: str) -> bool:
@@ -294,7 +296,8 @@ class RoleChecker:
             from backends.tenancy.utils import TenancyUtils
             return TenancyUtils.get_user_permissions(user, study)
         
-        return SafeQueryWrapper.safe_query(_query, default=set(), log_error=False)
+        result = SafeQueryWrapper.safe_query(_query, default=set(), log_error=False)
+        return result if result is not None else set()
     
     @staticmethod
     def get_permission_summary(user, study) -> Dict[str, List[str]]:
@@ -310,7 +313,8 @@ class RoleChecker:
             from backends.tenancy.utils import TenancyUtils
             return TenancyUtils.get_permission_display(user, study)
         
-        return SafeQueryWrapper.safe_query(_query, default={}, log_error=False)
+        result = SafeQueryWrapper.safe_query(_query, default={}, log_error=False)
+        return result if result is not None else {}
     
     @staticmethod
     def get_all_user_roles(user) -> Dict[int, Dict[str, str]]:
@@ -335,7 +339,7 @@ class RoleChecker:
             
             result = {}
             for membership in memberships:
-                result[membership.study_id] = {
+                result[membership.study.id] = {
                     'study_code': membership.study.code,
                     'study_name': membership.study.safe_translation_getter('name', any_language=True),
                     'role_key': membership.get_role_key(),
@@ -344,14 +348,15 @@ class RoleChecker:
             
             return result
         
-        return SafeQueryWrapper.safe_query(_query, default={}, log_error=False)
+        result = SafeQueryWrapper.safe_query(_query, default={}, log_error=False)
+        return result if result is not None else {}
     
     # ==========================================
     # COMPARISON & VALIDATION
     # ==========================================
     
     @staticmethod
-    def compare_roles(role_key_1: str, role_key_2: str) -> Dict[str, any]:
+    def compare_roles(role_key_1: str, role_key_2: str) -> Dict[str, Any]:
         """
         Compare two roles
         
@@ -388,14 +393,15 @@ class RoleChecker:
                 'role_2_privileged': config_2.get('is_privileged', False),
             }
         
-        return SafeQueryWrapper.safe_query(
+        result = SafeQueryWrapper.safe_query(
             _query, 
             default={'error': 'Query failed'}, 
             log_error=True
         )
+        return result if result is not None else {'error': 'Query failed'}
     
     @staticmethod
-    def validate_role_change(user, study, new_role_key: str) -> Dict[str, any]:
+    def validate_role_change(user, study, new_role_key: str) -> Dict[str, Any]:
         """
         Validate if changing to a new role is valid
         
@@ -442,11 +448,12 @@ class RoleChecker:
                 ),
             }
         
-        return SafeQueryWrapper.safe_query(
+        result = SafeQueryWrapper.safe_query(
             _query,
             default={'valid': False, 'error': 'Query failed'},
             log_error=True
         )
+        return result if result is not None else {'valid': False, 'error': 'Query failed'}
     
     # ==========================================
     # DEBUGGING & UTILITIES
@@ -505,7 +512,7 @@ class RoleChecker:
         print("=" * 70 + "\n")
     
     @staticmethod
-    def get_role_hierarchy() -> List[Dict[str, any]]:
+    def get_role_hierarchy() -> List[Dict[str, Any]]:
         """
         Get all roles sorted by priority
         
@@ -531,7 +538,8 @@ class RoleChecker:
             roles.sort(key=lambda x: x['priority'], reverse=True)
             return roles
         
-        return SafeQueryWrapper.safe_query(_query, default=[], log_error=True)
+        result = SafeQueryWrapper.safe_query(_query, default=[], log_error=True)
+        return result if result is not None else []
 
 
 # ==========================================

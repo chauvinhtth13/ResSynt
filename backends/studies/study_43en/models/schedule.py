@@ -6,8 +6,9 @@ Manages expected dates, calendars, and follow-up status tracking
 from datetime import date
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from encrypted_model_fields.fields import EncryptedCharField
 
-from backends.studies.study_43en.study_site_manage import SiteFilteredManage
+from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 
 
 class ExpectedDates(models.Model):
@@ -18,13 +19,14 @@ class ExpectedDates(models.Model):
     
     # Managers
     objects = models.Manager()
-    site_objects = SiteFilteredManage()
+    site_objects = SiteFilteredManager()
     
     # Primary relationship
-    USUBJID = models.OneToOneField('EnrollmentCase',
+    USUBJID = models.OneToOneField('ENR_CASE',
         on_delete=models.CASCADE,
         related_name='expected_dates',
         to_field='USUBJID',
+        db_column='USUBJID',
         verbose_name=_('Patient')
     )
     
@@ -32,7 +34,7 @@ class ExpectedDates(models.Model):
     ENROLLMENT_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Enrollment Date')
     )
     
@@ -50,7 +52,7 @@ class ExpectedDates(models.Model):
     V2_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('V2 Expected Date')
     )
     
@@ -68,7 +70,7 @@ class ExpectedDates(models.Model):
     V3_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('V3 Expected Date')
     )
     
@@ -86,7 +88,7 @@ class ExpectedDates(models.Model):
     V4_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('V4 Expected Date')
     )
     
@@ -125,7 +127,7 @@ class ExpectedDates(models.Model):
         if not self.ENROLLMENT_DATE:
             return False
 
-        calendar = ExpectedCalendar.objects.filter(
+        calendar = ExpectedCalendar.objects.using('db_study_43en').filter(
             ENROLLMENT_DATE=self.ENROLLMENT_DATE
         ).first()
         
@@ -143,7 +145,7 @@ class ExpectedDates(models.Model):
         self.V4_EXPECTED_TO = calendar.V4_EXPECTED_TO
         self.V4_EXPECTED_DATE = calendar.V4_EXPECTED_DATE
         
-        self.save(update_fields=[
+        self.save(using='db_study_43en', update_fields=[
             'V2_EXPECTED_FROM', 'V2_EXPECTED_TO', 'V2_EXPECTED_DATE',
             'V3_EXPECTED_FROM', 'V3_EXPECTED_TO', 'V3_EXPECTED_DATE',
             'V4_EXPECTED_FROM', 'V4_EXPECTED_TO', 'V4_EXPECTED_DATE'
@@ -158,7 +160,7 @@ class ExpectedDates(models.Model):
         Useful for initial data setup or bulk updates
         """
         success_count = 0
-        for obj in cls.objects.all():
+        for obj in cls.objects.using('db_study_43en').all():
             if obj.auto_map_from_calendar():
                 success_count += 1
         return success_count
@@ -172,13 +174,14 @@ class ContactExpectedDates(models.Model):
     
     # Managers
     objects = models.Manager()
-    site_objects = SiteFilteredManage()
+    site_objects = SiteFilteredManager()
     
     # Primary relationship
-    USUBJID = models.OneToOneField('EnrollmentContact',
+    USUBJID = models.OneToOneField('ENR_CONTACT',
         on_delete=models.CASCADE,
         related_name='expected_dates',
         to_field='USUBJID',
+        db_column='USUBJID',
         verbose_name=_('Contact')
     )
     
@@ -186,7 +189,7 @@ class ContactExpectedDates(models.Model):
     ENROLLMENT_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Enrollment Date')
     )
     
@@ -204,7 +207,7 @@ class ContactExpectedDates(models.Model):
     V2_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('V2 Expected Date')
     )
     
@@ -222,7 +225,7 @@ class ContactExpectedDates(models.Model):
     V3_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('V3 Expected Date')
     )
     
@@ -260,7 +263,7 @@ class ContactExpectedDates(models.Model):
         if not self.ENROLLMENT_DATE:
             return False
 
-        calendar = ExpectedCalendar.objects.filter(
+        calendar = ExpectedCalendar.objects.using('db_study_43en').filter(
             ENROLLMENT_DATE=self.ENROLLMENT_DATE
         ).first()
         
@@ -275,7 +278,7 @@ class ContactExpectedDates(models.Model):
         self.V3_EXPECTED_TO = calendar.V3_EXPECTED_TO
         self.V3_EXPECTED_DATE = calendar.V3_EXPECTED_DATE
         
-        self.save(update_fields=[
+        self.save(using='db_study_43en', update_fields=[
             'V2_EXPECTED_FROM', 'V2_EXPECTED_TO', 'V2_EXPECTED_DATE',
             'V3_EXPECTED_FROM', 'V3_EXPECTED_TO', 'V3_EXPECTED_DATE'
         ])
@@ -289,7 +292,7 @@ class ContactExpectedDates(models.Model):
         Useful for initial data setup or bulk updates
         """
         success_count = 0
-        for obj in cls.objects.all():
+        for obj in cls.objects.using('db_study_43en').all():
             if obj.auto_map_from_calendar():
                 success_count += 1
         return success_count
@@ -308,7 +311,7 @@ class ExpectedCalendar(models.Model):
     # Enrollment date (used as lookup key)
     ENROLLMENT_DATE = models.DateField(
         unique=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Enrollment Date')
     )
     
@@ -403,32 +406,32 @@ class FollowUpStatus(models.Model):
     
     # Managers
     objects = models.Manager()
-    site_objects = SiteFilteredManage()
+    site_objects = SiteFilteredManager()
     
     # Subject identification
     USUBJID = models.CharField(
         max_length=50,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Subject ID')
     )
     SUBJECT_TYPE = models.CharField(
         max_length=10,
         choices=SUBJECT_TYPE_CHOICES,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Subject Type')
     )
     INITIAL = models.CharField(
         max_length=50,
         blank=True,
         null=True,
-        verbose_name=_('Initials')
+        verbose_name=_('Initial')
     )
     
     # Visit information
     VISIT = models.CharField(
         max_length=10,
         choices=VISIT_CHOICES,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Visit')
     )
     
@@ -441,13 +444,13 @@ class FollowUpStatus(models.Model):
     EXPECTED_TO = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Expected To')
     )
     EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Expected Date')
     )
     
@@ -455,19 +458,32 @@ class FollowUpStatus(models.Model):
     ACTUAL_DATE = models.DateField(
         null=True,
         blank=True,
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Actual Visit Date')
     )
+
+    MISSED_DATE = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_('Missed Date')
+    )
+
+    MISSED_REASON = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_('Missed Reason')
+    )
+
     STATUS = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='UPCOMING',
-        db_index=True,
+        #db_index=True,
         verbose_name=_('Status')
     )
     
     # Contact information
-    PHONE = models.CharField(
+    PHONE = EncryptedCharField(
         max_length=20,
         blank=True,
         null=True,
@@ -504,33 +520,34 @@ class FollowUpStatus(models.Model):
     def save(self, *args, **kwargs):
         """
         Auto-update status based on dates
-        Status priority: COMPLETED > MISSED > LATE > UPCOMING
+        UPDATED: COMPLETED > MISSED (manual) > LATE > UPCOMING
         """
-        # Don't recalculate if status was explicitly set
         update_fields = kwargs.get('update_fields', None)
         if update_fields and 'STATUS' in update_fields:
             super().save(*args, **kwargs)
             return
         
-        # Don't recalculate if already COMPLETED or MISSED
         if self.STATUS in ['COMPLETED', 'MISSED']:
             super().save(*args, **kwargs)
             return
         
-        # Calculate status based on dates
         today = date.today()
         
         if self.ACTUAL_DATE:
-            # Visit completed
             self.STATUS = 'COMPLETED'
-        elif self.EXPECTED_TO and today > self.EXPECTED_TO:
-            # Missed the window
+        elif self.MISSED_DATE:
+            #  NEW: Manual missed
             self.STATUS = 'MISSED'
-        elif self.EXPECTED_FROM and today >= self.EXPECTED_FROM:
-            # Within window but not completed
+        elif self.EXPECTED_TO and today > self.EXPECTED_TO:
+            #  CHANGED: Past expected_to → LATE (not MISSED)
             self.STATUS = 'LATE'
+        elif self.EXPECTED_DATE and today > self.EXPECTED_DATE and today <= self.EXPECTED_TO:
+            self.STATUS = 'LATE'
+        elif self.EXPECTED_FROM and today >= self.EXPECTED_FROM and today <= self.EXPECTED_TO:
+            self.STATUS = 'UPCOMING'
+        elif self.EXPECTED_DATE and today < self.EXPECTED_FROM:
+            self.STATUS = 'UPCOMING'
         else:
-            # Not yet in window
             self.STATUS = 'UPCOMING'
         
         super().save(*args, **kwargs)
@@ -542,12 +559,12 @@ class FollowUpStatus(models.Model):
         """
         if self.SUBJECT_TYPE == 'PATIENT':
             try:
-                expected = ExpectedDates.objects.get(USUBJID__USUBJID=self.USUBJID)
+                expected = ExpectedDates.objects.using('db_study_43en').get(USUBJID__USUBJID=self.USUBJID)
             except ExpectedDates.DoesNotExist:
                 return False
         else:  # CONTACT
             try:
-                expected = ContactExpectedDates.objects.get(USUBJID__USUBJID=self.USUBJID)
+                expected = ContactExpectedDates.objects.using('db_study_43en').get(USUBJID__USUBJID=self.USUBJID)
             except ContactExpectedDates.DoesNotExist:
                 return False
         
@@ -563,7 +580,7 @@ class FollowUpStatus(models.Model):
             self.EXPECTED_FROM = getattr(expected, from_field)
             self.EXPECTED_TO = getattr(expected, to_field)
             self.EXPECTED_DATE = getattr(expected, date_field)
-            self.save(update_fields=['EXPECTED_FROM', 'EXPECTED_TO', 'EXPECTED_DATE'])
+            self.save(using='db_study_43en', update_fields=['EXPECTED_FROM', 'EXPECTED_TO', 'EXPECTED_DATE'])
             return True
         
         return False

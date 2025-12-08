@@ -1,0 +1,49 @@
+<!-- frontends\templates\account\auth_base.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Sign In - ResSync Platform{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'base/css/authentication.css' %}" />
+{% endblock %}
+
+{% block main %}
+<main class="container-fluid row">
+
+    <!-- Features Section - Hidden on mobile, visible from lg -->
+    <section class="col-lg-7 d-none d-lg-flex flex-column left-side">
+        {% include 'includes/misc/features_list.html' %}
+    </section>
+
+    <!-- Login Section -->
+    <section class="col-12 col-lg-5 right-side justify-content-between">
+        <!-- Header with Language Selector -->
+        <div class="d-flex justify-content-end align-items-stretch p-3 flex-shrink-0">
+            {% include 'includes/dropdown_header/language_selector.html' %}
+        </div>
+
+        <!-- Login Content -->
+        {% block auth_content %}
+        {% endblock %}
+
+        <!-- Footer -->
+        <footer class="text-center mt-auto pb-3 flex-shrink-0">
+            <p class="small text-muted mb-1">
+                {% trans 'Need help? Contact our support team at:' %}
+                <a href="mailto:ressync@oucru.org" class="link-royal-blue fw-medium">
+                    ressync@oucru.org
+                </a>
+            </p>
+            <p class="small text-muted mb-0">
+                {% trans 'Designed by Chau Vinh & Pham Tuong Duy' %}
+            </p>
+        </footer>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/authentication.js' %}" defer></script>
+{% endblock %}

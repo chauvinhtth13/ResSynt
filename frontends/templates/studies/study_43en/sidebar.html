@@ -1,46 +1,56 @@
 <!-- frontends/templates/studies/study_43en/sidebar.html -->
 {% load static i18n %}
 
-<!-- Sidebar Overlay -->
-<div
-  class="position-fixed top-0 start-0 w-100 h-100 d-none"
-  style="z-index: 1040"
-  id="sidebarOverlay"
-></div>
+<!-- ============================================================================
+     STUDY SIDEBAR NAVIGATION
+     - Left sidebar with study logo, navigation menu, and quick actions
+     - Responsive design with Bootstrap 5
+     - CSP compliant (no inline event handlers)
+     ============================================================================ -->
 
-<!-- Left Sidebar -->
-<aside
-  class="sidebar text-white shadow-sm overflow-scroll" id="sidebar" aria-label="Study sidebar"
->
-  <!-- Header -->
-  <header class="d-flex flex-column sidebar-header">
-    <div class="d-flex flex-row align-items-center"> 
-      {% with logo_path="images/studies/study_43en/logo.webp" %}
-      <div
-        class="p-2 align-items-center justify-content-center rounded bg-white"
-      >
-        <img
-          src="{% static logo_path %}"
-          alt="43EN Study"
-          style="height: 30px"
-        />
+<aside class="sidebar bg-royal-blue-900 border-end text-white shadow-sm" id="sidebar" aria-label="Study sidebar">
+  
+  <!-- ========================================
+       HEADER - Study Logo & Title
+       ======================================== -->
+  <header class="d-flex sidebar-header border-bottom align-items-center">
+    <!-- Logo Container -->
+    <div class="d-flex p-1 align-items-center justify-content-center rounded bg-white" 
+         style="width: 56px; height: 56px; flex-shrink: 0;">
+      <!-- Logo Image -->
+      <img src="{% static 'studies/study_43en/images/logo.webp' %}" 
+           alt="{{ request.study_code|default:'Study' }}" 
+           class="logo-image"
+           style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+      
+      <!-- Fallback Text (shown if image fails to load) -->
+      <div class="logo-fallback d-none fw-bold text-primary" style="font-size: 24px;">
+        {{ request.study_code|default:"S"|first|upper }}
       </div>
-      {% endwith %}
-      <div class="ms-2">
-        <p class="mb-0 fw-semibold text-truncate fs-6">43EN Study Dashboard</p>
-      </div>
+    </div>
+    
+    <!-- Study Title -->
+    <div class="flex-grow-1 min-w-0 ms-3">
+      <h5 class="mb-0 fw-semibold text-truncate">
+        {{ request.study_code|upper }} Study
+      </h5>
     </div>
   </header>
 
-  <!-- Navigation -->
-  <nav class="flex-grow-1 px-3 py-2">
-    <!-- Dashboard Section -->
-    <div>
-      <h6 class="sidebar-section-title fw-bolder">Dashboard</h6>
+  <!-- ========================================
+       NAVIGATION MENU
+       ======================================== -->
+  <nav class="flex-grow-1 p-3" style="overflow-y: auto;">
 
-      <ul class="list-unstyled">
-        <li>
-          <a href="#" class="sidebar-link">
+    <!-- ==================== DASHBOARD SECTION ==================== -->
+    <div class="mb-2">
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
+        {% trans "Dashboard" %}
+      </h6>
+
+      <ul class="list-unstyled mt-2">
+        <li class="mb-1">
+          <a href="{% url 'study_43en:home_dashboard' %}" class="sidebar-link">
             <i class="bi bi-speedometer2"></i>
             <span>{% trans "Management Report" %}</span>
           </a>
@@ -48,33 +58,30 @@
       </ul>
     </div>
 
-    <hr class="my-2 border-white" />
+    <hr class="my-3 border-white opacity-25">
 
-    <div class="mb-3">
-      <h6 class="sidebar-section-title fw-bolder">
+    <!-- ==================== CASE REPORT FORMS ==================== -->
+    <div class="mb-2">
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
         {% trans "Case Report Forms" %}
       </h6>
 
       <!-- Patient Information Card -->
-      <div class="sidebar-card mb-3">
+      <div class="sidebar-card mt-3">
         <div class="sidebar-card-header">
-          <span class="sidebar-card-title"
-            >{% trans "Patient Information" %}</span
-          >
+          <i class="bi bi-person-fill me-2"></i>
+          <span class="sidebar-card-title">{% trans "Patient Information" %}</span>
         </div>
-        <div class="px-2 py-0">
+        <div class="p-2">
           <ul class="list-unstyled mb-0">
             <li class="mb-1">
-              <a
-                href="{% url 'study_43en:screening_case_list' %}"
-                class="sidebar-link"
-              >
+              <a href="{% url 'study_43en:screening_case_list' %}" class="sidebar-link small">
                 <i class="bi bi-card-list"></i>
                 <span>{% trans "Screening List" %}</span>
               </a>
             </li>
             <li>
-              <a href="#" class="sidebar-link">
+              <a href="{% url 'study_43en:patient_list' %}" class="sidebar-link small">
                 <i class="bi bi-person-check-fill"></i>
                 <span>{% trans "Enrollment List" %}</span>
               </a>
@@ -84,22 +91,21 @@
       </div>
 
       <!-- Contact Information Card -->
-      <div class="sidebar-card">
+      <div class="sidebar-card mt-3">
         <div class="sidebar-card-header">
-          <span class="sidebar-card-title"
-            >{% trans "Contact Information" %}</span
-          >
+          <i class="bi bi-people-fill me-2"></i>
+          <span class="sidebar-card-title">{% trans "Contact Information" %}</span>
         </div>
-        <div class="px-2 py-0">
+        <div class="p-2">
           <ul class="list-unstyled mb-0">
             <li class="mb-1">
-              <a href="#" class="sidebar-link">
+              <a href="{% url 'study_43en:screening_contact_list' %}" class="sidebar-link small">
                 <i class="bi bi-card-list"></i>
                 <span>{% trans "Screening List" %}</span>
               </a>
             </li>
             <li>
-              <a href="#" class="sidebar-link">
+              <a href="{% url 'study_43en:contact_list' %}" class="sidebar-link small">
                 <i class="bi bi-person-check-fill"></i>
                 <span>{% trans "Enrollment List" %}</span>
               </a>
@@ -109,17 +115,17 @@
       </div>
     </div>
 
-    <hr class="my-2 border-white" />
+    <hr class="my-3 border-white opacity-25">
 
-    <!-- Notifications -->
+    <!-- ==================== NOTIFICATIONS ==================== -->
     <div class="mb-2">
-      <h6 class="sidebar-section-title fw-bolder">
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
         {% trans "Notifications" %}
       </h6>
 
       <ul class="list-unstyled mt-2">
         <li class="mb-1">
-          <a href="#" class="sidebar-link">
+          <a href="{% url 'study_43en:followup_tracking_list' %}" class="sidebar-link">
             <i class="bi bi-calendar-event-fill"></i>
             <span>{% trans "Follow-up Schedule" %}</span>
           </a>
@@ -127,17 +133,17 @@
       </ul>
     </div>
 
-    <hr class="my-2 border-white" />
+    <hr class="my-3 border-white opacity-25">
 
-    <!-- Activity Log -->
+    <!-- ==================== ACTIVITY LOG ==================== -->
     <div class="mb-2">
-      <h6 class="sidebar-section-title fw-bolder">
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
         {% trans "Activity Log" %}
       </h6>
 
       <ul class="list-unstyled mt-2">
         <li class="mb-1">
-          <a href="#" class="sidebar-link">
+          <a href="{% url 'study_43en:audit_log_list' %}" class="sidebar-link">
             <i class="bi bi-activity"></i>
             <span>{% trans "Data Log" %}</span>
           </a>
@@ -145,15 +151,17 @@
       </ul>
     </div>
 
-    <hr class="my-2 border-white" />
-
-    <!-- Tools -->
+    <hr class="my-3 border-white opacity-25">
+    
+    <!-- ==================== TOOLS ==================== -->
     <div class="mb-2">
-      <h6 class="sidebar-section-title fw-bolder">{% trans "Tools" %}</h6>
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
+        {% trans "Tools" %}
+      </h6>
 
       <ul class="list-unstyled mt-2">
         <li class="mb-1">
-          <a href="#" class="sidebar-link">
+          <a href="{% url 'study_43en:export_data' %}" class="sidebar-link">
             <i class="bi bi-arrow-down-circle"></i>
             <span>{% trans "Export Data" %}</span>
           </a>
@@ -161,4 +169,52 @@
       </ul>
     </div>
   </nav>
+
+  <!-- ========================================
+       JAVASCRIPT - Logo Error Handling
+       CSP Compliant with nonce
+       ======================================== -->
+  <script nonce="{{ request.csp_nonce }}">
+  (function() {
+    'use strict';
+    
+    /**
+     * Handle logo image loading errors
+     * Shows fallback text if image fails to load
+     */
+    function initLogoFallback() {
+      const logoImg = document.querySelector('.logo-image');
+      const logoFallback = document.querySelector('.logo-fallback');
+      
+      if (!logoImg || !logoFallback) {
+        console.warn('Sidebar: Logo elements not found');
+        return;
+      }
+      
+      logoImg.addEventListener('error', function() {
+        console.log('Sidebar: Logo image failed to load, showing fallback');
+        
+        // Hide broken image
+        this.classList.add('d-none');
+        
+        // Show fallback text
+        logoFallback.classList.remove('d-none');
+      });
+      
+      logoImg.addEventListener('load', function() {
+        console.log('Sidebar: Logo image loaded successfully');
+      });
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLogoFallback);
+    } else {
+      // DOM already loaded
+      initLogoFallback();
+    }
+    
+  })();
+  </script>
+
 </aside>

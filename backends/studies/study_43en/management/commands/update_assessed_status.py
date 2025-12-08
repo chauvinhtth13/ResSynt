@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
 from study_43en.models import (
-    FollowUpCase, FollowUpCase90, 
-    ContactFollowUp28, ContactFollowUp90,
-    SampleCollection, ContactSampleCollection,
+    FU_CASE_28, FU_CASE_90, 
+    FU_CONTACT_28, FU_CONTACT_90,
+    SAM_CASE, SAM_CONTACT,
     FollowUpStatus
 )
 
@@ -12,26 +12,26 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('Bắt đầu cập nhật trạng thái từ ASSESSED và SAMPLE...')
         
-        # Cập nhật từ FollowUpCase (V3 của bệnh nhân)
+        # Cập nhật từ FU_CASE_28 (V3 của bệnh nhân)
         self.update_from_followup_case()
         
-        # Cập nhật từ FollowUpCase90 (V4 của bệnh nhân)
+        # Cập nhật từ FU_CASE_90 (V4 của bệnh nhân)
         self.update_from_followup_case90()
         
-        # Cập nhật từ ContactFollowUp28 (V2 của người tiếp xúc)
+        # Cập nhật từ FU_CONTACT_28 (V2 của người tiếp xúc)
         self.update_from_contact_followup28()
         
-        # Cập nhật từ ContactFollowUp90 (V3 của người tiếp xúc)
+        # Cập nhật từ FU_CONTACT_90 (V3 của người tiếp xúc)
         self.update_from_contact_followup90()
         
-        # Cập nhật từ SampleCollection (V2 của bệnh nhân)
+        # Cập nhật từ SAM_CASE (V2 của bệnh nhân)
         self.update_from_sample_collection()
         
         self.stdout.write(self.style.SUCCESS('Hoàn thành cập nhật trạng thái!'))
     
     def update_from_followup_case(self):
-        """Cập nhật trạng thái từ FollowUpCase (V3 của bệnh nhân)"""
-        followups = FollowUpCase.objects.all()
+        """Cập nhật trạng thái từ FU_CASE_28 (V3 của bệnh nhân)"""
+        followups = FU_CASE_28.objects.all()
         count = 0
         
         for followup in followups:
@@ -51,11 +51,11 @@ class Command(BaseCommand):
             except FollowUpStatus.DoesNotExist:
                 self.stdout.write(f'Không tìm thấy FollowUpStatus cho {followup.USUBJID_id} - V3')
         
-        self.stdout.write(f'Đã cập nhật {count} trạng thái từ FollowUpCase')
+        self.stdout.write(f'Đã cập nhật {count} trạng thái từ FU_CASE_28')
     
     def update_from_followup_case90(self):
-        """Cập nhật trạng thái từ FollowUpCase90 (V4 của bệnh nhân)"""
-        followups = FollowUpCase90.objects.all()
+        """Cập nhật trạng thái từ FU_CASE_90 (V4 của bệnh nhân)"""
+        followups = FU_CASE_90.objects.all()
         count = 0
         
         for followup in followups:
@@ -75,11 +75,11 @@ class Command(BaseCommand):
             except FollowUpStatus.DoesNotExist:
                 self.stdout.write(f'Không tìm thấy FollowUpStatus cho {followup.USUBJID_id} - V4')
         
-        self.stdout.write(f'Đã cập nhật {count} trạng thái từ FollowUpCase90')
+        self.stdout.write(f'Đã cập nhật {count} trạng thái từ FU_CASE_90')
     
     def update_from_contact_followup28(self):
-        """Cập nhật trạng thái từ ContactFollowUp28 (V2 của người tiếp xúc)"""
-        followups = ContactFollowUp28.objects.all()
+        """Cập nhật trạng thái từ FU_CONTACT_28 (V2 của người tiếp xúc)"""
+        followups = FU_CONTACT_28.objects.all()
         count = 0
         
         for followup in followups:
@@ -99,11 +99,11 @@ class Command(BaseCommand):
             except FollowUpStatus.DoesNotExist:
                 self.stdout.write(f'Không tìm thấy FollowUpStatus cho {followup.USUBJID_id} - V2')
         
-        self.stdout.write(f'Đã cập nhật {count} trạng thái từ ContactFollowUp28')
+        self.stdout.write(f'Đã cập nhật {count} trạng thái từ FU_CONTACT_28')
     
     def update_from_contact_followup90(self):
-        """Cập nhật trạng thái từ ContactFollowUp90 (V3 của người tiếp xúc)"""
-        followups = ContactFollowUp90.objects.all()
+        """Cập nhật trạng thái từ FU_CONTACT_90 (V3 của người tiếp xúc)"""
+        followups = FU_CONTACT_90.objects.all()
         count = 0
         
         for followup in followups:
@@ -123,15 +123,15 @@ class Command(BaseCommand):
             except FollowUpStatus.DoesNotExist:
                 self.stdout.write(f'Không tìm thấy FollowUpStatus cho {followup.USUBJID_id} - V3')
         
-        self.stdout.write(f'Đã cập nhật {count} trạng thái từ ContactFollowUp90')
+        self.stdout.write(f'Đã cập nhật {count} trạng thái từ FU_CONTACT_90')
     
     def update_from_sample_collection(self):
-        """Cập nhật trạng thái từ SampleCollection (V2 của bệnh nhân)"""
-        samples = SampleCollection.objects.filter(SAMPLE_TYPE='2')
+        """Cập nhật trạng thái từ SAM_CASE (V2 của bệnh nhân)"""
+        samples = SAM_CASE.objects.filter(SAMPLE_TYPE='2')
         count = 0
         
         for sample in samples:
-            actual_date = sample.COMPLETEDDATE if sample.SAMPLE else None
+            actual_date = sample.SAMPLEDATE if sample.SAMPLE else None
             status = 'COMPLETED' if sample.SAMPLE else 'MISSED'
             
             try:
@@ -147,4 +147,4 @@ class Command(BaseCommand):
             except FollowUpStatus.DoesNotExist:
                 self.stdout.write(f'Không tìm thấy FollowUpStatus cho {sample.USUBJID_id} - V2')
         
-        self.stdout.write(f'Đã cập nhật {count} trạng thái từ SampleCollection')
+        self.stdout.write(f'Đã cập nhật {count} trạng thái từ SAM_CASE')

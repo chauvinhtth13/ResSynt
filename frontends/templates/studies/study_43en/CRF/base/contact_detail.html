@@ -1,0 +1,483 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Contact Details" %} {{ screening_contact.USUBJID }}{% endblock %}
+
+{% block page_title %}{% trans "Contact Details" %} {{ screening_contact.USUBJID }}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'study_43en:contact_list' %}">{% trans "Contact List" %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ screening_contact.USUBJID }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <!-- Header Card -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-user-friends mr-2"></i>
+                    {% trans "CONTACT DETAILS" %}
+                </h4>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p><strong>{% trans "Contact ID:" %}</strong> {{ screening_contact.USUBJID }}</p>
+                    <p><strong>{% trans "Initials:" %}</strong> {{ screening_contact.INITIAL }}</p>
+                    <p><strong>{% trans "Screening ID:" %}</strong> {{ screening_contact.SCRID|default:"-" }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>{% trans "Related Patient:" %}</strong> 
+                        {% if screening_contact.SUBJIDENROLLSTUDY %}
+                            <a href="{% url 'study_43en:patient_detail' usubjid=screening_contact.SUBJIDENROLLSTUDY.USUBJID %}" class="text-primary">
+                                {{ screening_contact.SUBJIDENROLLSTUDY.USUBJID }}
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+                    <p><strong>{% trans "Screening Date:" %}</strong> {{ screening_contact.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}</p>
+                    <p><strong>{% trans "Site ID:" %}</strong> {{ screening_contact.SITEID }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expected Dates Card -->
+    <div class="card mt-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                {% trans "Contact Follow-up Schedule" %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if contactexpecteddates %}
+            <div class="table-outline-wrapper">
+                <table class="table table-bordered table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-center">{% trans "Visit" %}</th>
+                            <th class="text-center">{% trans "Follow-up Timepoint" %}</th>
+                            <th class="text-center">{% trans "Expected Window" %}</th>
+                            <th class="text-center">{% trans "Expected Date" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center">
+                                <span class="badge badge-primary">V2</span>
+                            </td>
+                            <td class="text-center">D28 ± 3</td>
+                            <td class="text-center">
+                                {{ contactexpecteddates.V2_EXPECTED_FROM|date:"d/m/Y" }} - {{ contactexpecteddates.V2_EXPECTED_TO|date:"d/m/Y" }}
+                            </td>
+                            <td class="text-center">
+                                <strong>{{ contactexpecteddates.V2_EXPECTED_DATE|date:"d/m/Y" }}</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-center">
+                                <span class="badge badge-primary">V3</span>
+                            </td>
+                            <td class="text-center">D90 ± 3</td>
+                            <td class="text-center">
+                                {{ contactexpecteddates.V3_EXPECTED_FROM|date:"d/m/Y" }} - {{ contactexpecteddates.V3_EXPECTED_TO|date:"d/m/Y" }}
+                            </td>
+                            <td class="text-center">
+                                <strong>{{ contactexpecteddates.V3_EXPECTED_DATE|date:"d/m/Y" }}</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-warning mb-0">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% trans "No expected schedule for this contact yet." %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Forms Table -->
+    <div class="card mt-3">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-clipboard-list mr-2"></i>
+                {% trans "CRF FORMS LIST" %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-outline-wrapper">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 5%" class="text-center">#</th>
+                                <th style="width: 25%">{% trans "Form Name" %}</th>
+                                <th style="width: 15%" class="text-center">{% trans "Status" %}</th>
+                                <th style="width: 15%" class="text-center">{% trans "Last Updated" %}</th>
+                                <th style="width: 20%" class="text-center">{% trans "Modified By" %}</th>
+                                <th style="width: 20%" class="text-center">{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 1. Screening Contact -->
+                            <tr>
+                                <td class="text-center"><strong>1</strong></td>
+                                <td class="text-center">
+                                    <i class="fas fa-clipboard-check text-primary mr-2"></i>
+                                    <strong>{% trans "Contact Screening" %}</strong>
+                                </td>
+                                <td class="text-center">
+                                {% if screening_contact %}
+                                    <span class="badge bg-success badge-status">
+                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-status">
+                                        <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                    </span>
+                                {% endif %}
+                                <td class="text-center">{{ screening_contact.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}</td>
+                                <td class="text-center">{{ screening_contact.COMPLETEDBY|default:"-" }}</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                        <a href="{% url 'study_43en:screening_contact_view' SCRID=screening_contact.SCRID %}" 
+                                        class="btn btn-info">
+                                            <i class="fas fa-eye"></i> {% trans "View" %}
+                                        </a>
+                                        {% if perms.study_43en.change_scr_contact %}
+                                        <a href="{% url 'study_43en:screening_contact_update' SCRID=screening_contact.SCRID %}" 
+                                        class="btn btn-warning">
+                                            <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+
+                        <!-- 2. Enrollment Contact -->
+                        <tr>
+                            <td class="text-center"><strong>2</strong></td>
+                            <td class="text-center">
+                                <i class="fas fa-user-plus text-success mr-2"></i>
+                                <strong>{% trans "Contact Enrollment" %}</strong>
+                            </td>
+                            <td class="text-center">
+                                {% if enrollment_contact %}
+                                    <span class="badge bg-success badge-status">
+                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-status">
+                                        <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if enrollment_contact %}
+                                    {{ enrollment_contact.ENRDATE|date:"d/m/Y"|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if enrollment_contact %}
+                                    {{ enrollment_contact.COMPLETEDBY|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if not enrollment_contact %}
+                                        {% if perms.study_43en.add_enr_contact %}
+                                        <a href="{% url 'study_43en:enrollment_contact_create' usubjid=screening_contact.USUBJID %}" 
+                                            class="btn btn-primary btn-sm">
+                                            <i class="fas fa-plus"></i> {% trans "Create" %}
+                                        </a>
+                                        {% endif %}
+                                    {% else %}
+                                    <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                        <a href="{% url 'study_43en:enrollment_contact_view' usubjid=screening_contact.USUBJID %}" 
+                                           class="btn btn-info" title="{% trans 'View Details' %}">
+                                            <i class="fas fa-eye"></i> {% trans "View" %}
+                                        </a>
+                                        {% if perms.study_43en.change_enr_contact %}
+                                        <a href="{% url 'study_43en:enrollment_contact_update' usubjid=screening_contact.USUBJID %}" 
+                                           class="btn btn-warning" title="{% trans 'Edit' %}">
+                                            <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- 3. Sample Collection -->
+                        <tr>
+                            <td class="text-center"><strong>3</strong></td>
+                            <td class="text-center">
+                                <i class="fas fa-vial text-purple mr-2"></i>
+                                <strong>{% trans "Contact Sample Collection" %}</strong>
+                                {% if sample_count > 0 %}
+                                    <span class="badge bg-info ms-2">{{ sample_count }} {% trans "samples" %}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if has_sample %}
+                                    <span class="badge bg-success badge-status">
+                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-status">
+                                        <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if sample_collection %}
+                                    {{ sample_collection.COMPLETEDDATE|date:"d/m/Y"|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if sample_collection %}
+                                    {{ sample_collection.COMPLETEDBY|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                {% if has_enrollment %}
+                                        <a href="{% url 'study_43en:contact_sample_collection_list' usubjid=screening_contact.USUBJID %}" 
+                                        class="btn btn-primary btn-sm btn-action-single">
+                                            <i class="fas fa-cogs"></i> {% trans "Manage" %}
+                                        </a>
+                                {% else %}
+                                    <span class="text-muted small">
+                                        <i class="fas fa-info-circle"></i>
+                                        {% trans "Complete Enrollment first" %}
+                                    </span>
+                                {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- 4. Follow-up Day 28 -->
+                        <tr>
+                            <td class="text-center"><strong>4</strong></td>
+                            <td class="text-center">
+                                <i class="fas fa-calendar-check text-success mr-2"></i>
+                                <strong>{% trans "Contact Follow-up Day 28" %}</strong>
+                            </td>
+                            <td class="text-center">
+                                {% if followup_28 %}
+                                    <span class="badge bg-success badge-status">
+                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-status">
+                                        <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if followup_28 %}
+                                    {{ followup_28.FU28ASSESSDATE|date:"d/m/Y"|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if followup_28 %}
+                                    {{ followup_28.COMPLETEDBY|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if enrollment_contact %}
+                                        {% if not followup_28 %}
+                                            {% if perms.study_43en.add_fu_contact_28 %}
+                                            <a href="{% url 'study_43en:contact_followup_28_create' usubjid=screening_contact.USUBJID %}" 
+                                               class="btn btn-primary btn-sm btn-action-single">
+                                                <i class="fas fa-plus"></i> {% trans "Create" %}
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                        <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                            <a href="{% url 'study_43en:contact_followup_28_view' usubjid=screening_contact.USUBJID %}" 
+                                               class="btn btn-info" title="{% trans 'View Follow-up Day 28' %}">
+                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                            </a>
+                                            {% if perms.study_43en.change_fu_contact_28 %}
+                                            <a href="{% url 'study_43en:contact_followup_28_update' usubjid=screening_contact.USUBJID %}" 
+                                               class="btn btn-primary btn-sm btn-action-single">
+                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted small">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans "Complete Enrollment first" %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- 5. Follow-up Day 90 -->
+                        <tr>
+                            <td class="text-center"><strong>5</strong></td>
+                            <td class="text-center">
+                                <i class="fas fa-calendar-alt text-info mr-2"></i>
+                                <strong>{% trans "Contact Follow-up Day 90" %}</strong>
+                            </td>
+                            <td class="text-center">
+                                {% if followup_90 %}
+                                    <span class="badge bg-success badge-status">
+                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-status">
+                                        <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if followup_90 %}
+                                    {{ followup_90.FU90ASSESSDATE|date:"d/m/Y"|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if followup_90 %}
+                                    {{ followup_90.COMPLETEDBY|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if enrollment_contact %}
+                                        {% if not followup_90 %}
+                                            {% if perms.study_43en.add_fu_contact_90 %}
+                                            <a href="{% url 'study_43en:contact_followup_90_create' usubjid=screening_contact.USUBJID %}" 
+                                               class="btn btn-primary btn-sm btn-action-single">
+                                                <i class="fas fa-plus"></i> {% trans "Create" %}
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                        <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                            <a href="{% url 'study_43en:contact_followup_90_view' usubjid=screening_contact.USUBJID %}" 
+                                               class="btn btn-info" title="{% trans 'View Follow-up Day 90' %}">
+                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                            </a>
+                                            {% if perms.study_43en.change_fu_contact_90 %}
+                                            <a href="{% url 'study_43en:contact_followup_90_update' usubjid=screening_contact.USUBJID %}" 
+                                               class="btn btn-warning" title="{% trans 'Edit Follow-up Day 90' %}">
+                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted small">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans "Complete Enrollment first" %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- 6. End of Study CRF -->
+                        <tr>
+                            <td class="text-center"><strong>6</strong></td>
+                            <td class="text-center">
+                                <i class="fas fa-flag-checkered text-danger mr-2"></i>
+                                <strong>{% trans "End of Study CRF" %}</strong>
+                            </td>
+                            <td class="text-center">
+                                {% if contactendcasecrf or has_contactendcasecrf %}
+                                    <span class="badge bg-success badge-status">
+                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-status">
+                                        <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if contactendcasecrf %}
+                                    {{ contactendcasecrf.ENDDATE|date:"d/m/Y"|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if contactendcasecrf %}
+                                    {{ contactendcasecrf.COMPLETEDBY|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if not contactendcasecrf and not has_contactendcasecrf %}
+                                    {% if perms.study_43en.add_contactendcasecrf %}
+                                    <a href="{% url 'study_43en:contactendcasecrf_create' usubjid=screening_contact.USUBJID %}" 
+                                       class="btn btn-primary btn-sm btn-action-single">
+                                        <i class="fas fa-plus"></i> {% trans "Create" %}
+                                    </a>
+                                    {% endif %}
+                                {% else %}
+                                <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                    <a href="{% url 'study_43en:contactendcasecrf_view' usubjid=screening_contact.USUBJID %}" 
+                                       class="btn btn-info">
+                                        <i class="fas fa-eye"></i> {% trans "View" %}
+                                    </a>
+                                    {% if perms.study_43en.change_contactendcasecrf %}
+                                    <a href="{% url 'study_43en:contactendcasecrf_update' usubjid=screening_contact.USUBJID %}" 
+                                       class="btn btn-warning">
+                                        <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                    </a>
+                                <div>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="card mt-3">
+        <div class="card-body text-center">
+            <a href="{% url 'study_43en:contact_list' %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-left mr-2"></i> {% trans "Back to List" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

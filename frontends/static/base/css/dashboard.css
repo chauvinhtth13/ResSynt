@@ -1,0 +1,419 @@
+/* frontends/static/base/css/dashboard.css */
+
+/* ==========================================
+   DASHBOARD SPECIFIC VARIABLES
+   ========================================== */
+:root {
+  /* Layout */
+  --sidebar-width: 18rem;
+  
+  /* Sidebar Colors */
+  --sidebar-bg: var(--color-royal-blue-900);
+  --sidebar-hover-bg: rgba(30, 64, 175, 0.7);
+  --sidebar-active-bg: #1e40af;
+  --sidebar-card-bg: rgba(30, 58, 138, 0.2);
+  --sidebar-card-header-bg: rgba(30, 58, 138, 0.3);
+  --sidebar-card-border: rgba(147, 197, 253, 0.15);
+  --sidebar-text-color: #fff;
+  
+  /* Sidebar Specific Spacing */
+  --sidebar-padding: var(--spacer-3);
+  --sidebar-header-padding-y: 0.3rem;
+  --sidebar-header-padding-x: 1rem;
+  --sidebar-link-padding-y: 0.625rem;
+  --sidebar-link-padding-x: 0.75rem;
+  --sidebar-link-gap: 0.75rem;
+  --sidebar-card-margin: 0.75rem;
+  
+  /* Transitions */
+  --transition-base: 0.3s ease;
+  --transition-fast: 0.2s ease;
+}
+
+/* ==========================================
+   DASHBOARD LAYOUT
+   ========================================== */
+.dashboard-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+/* ==========================================
+   SIDEBAR LAYOUT
+   ========================================== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1040;
+  width: var(--sidebar-width);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text-color);
+  transition: transform var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  
+  /* Hide scrollbar completely */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* ==========================================
+   SIDEBAR HEADER
+   ========================================== */
+.sidebar-header {
+  padding: var(--sidebar-header-padding-y) var(--sidebar-header-padding-x);
+  background: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  flex-shrink: 0;
+}
+
+.sidebar-section-title {
+  margin: 0;
+  padding: var(--spacer-1) var(--spacer-1);
+  color: var(--sidebar-text-color);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--color-royal-blue-950);
+}
+
+/* ==========================================
+   SIDEBAR NAVIGATION
+   ========================================== */
+.sidebar nav {
+  flex: 1;
+  padding: var(--sidebar-padding);
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==========================================
+   SIDEBAR LINKS
+   ========================================== */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sidebar-link-gap);
+  padding: var(--sidebar-link-padding-y) var(--sidebar-link-padding-x);
+  margin: 0.25rem 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9375rem;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  transition: var(--transition-fast);
+}
+
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  transform: translateX(4px);
+}
+
+.sidebar-link.active {
+  background-color: var(--sidebar-active-bg);
+  color: #fff;
+  font-weight: 600;
+}
+
+.sidebar-link i {
+  font-size: 1.15rem;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-link.small {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+
+/* ==========================================
+   SIDEBAR CARDS (Nested Items)
+   ========================================== */
+.sidebar-card {
+  margin: var(--sidebar-card-margin) 0;
+  background: var(--sidebar-card-bg);
+  border: 1px solid var(--sidebar-card-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.sidebar-card-header {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--sidebar-card-header-bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-card-title {
+  margin: 0;
+  color: var(--sidebar-text-color);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sidebar-card .p-2 {
+  padding: 0.5rem !important;
+}
+
+/* ==========================================
+   SIDEBAR DIVIDERS
+   ========================================== */
+.sidebar hr {
+  border-color: rgba(255, 255, 255, 0.15);
+  opacity: 1;
+  margin: 1rem 0;
+}
+
+/* ==========================================
+   SIDEBAR OVERLAY (Mobile)
+   ========================================== */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1039;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-base), visibility var(--transition-base);
+}
+
+.sidebar-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ==========================================
+   MAIN CONTENT
+   ========================================== */
+.dashboard-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  transition: margin-left var(--transition-base);
+  overflow-x: hidden; /* Prevent horizontal scrollbar during sidebar transition */
+  padding-top: 56px; /* Height of navbar to prevent content being hidden */
+}
+
+/* Navbar inside main content */
+.dashboard-content .navbar {
+  background-color: #fff;
+  border-bottom: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  z-index: 1030;
+  transition: left var(--transition-base);
+}
+
+.dashboard-content .navbar .vr {
+  width: 1px;
+  height: 24px;
+  background-color: #dee2e6;
+  opacity: 1;
+}
+
+/* ==========================================
+   RESPONSIVE - MOBILE (< 992px)
+   ========================================== */
+@media (max-width: 991.98px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.show {
+    transform: translateX(0);
+    box-shadow: 0 0 2rem rgba(0, 0, 0, 0.5);
+  }
+  
+  .dashboard-content {
+    margin-left: 0;
+  }
+  
+  .dashboard-content .navbar {
+    left: 0;
+  }
+}
+
+/* ==========================================
+   RESPONSIVE - DESKTOP (>= 992px)
+   ========================================== */
+@media (min-width: 992px) {
+  .sidebar {
+    transform: translateX(0);
+  }
+  
+  .sidebar.hide {
+    transform: translateX(-100%) !important;
+  }
+  
+  .dashboard-content.sidebar-hidden {
+    margin-left: 0;
+  }
+  
+  .dashboard-content.sidebar-hidden .navbar {
+    left: 0;
+  }
+}
+
+/* ==========================================
+   UTILITIES
+   ========================================== */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+/* ==========================================
+   PRINT STYLES
+   ========================================== */
+@media print {
+  .sidebar,
+  .sidebar-overlay,
+  .navbar {
+    display: none !important;
+  }
+  
+  .dashboard-content {
+    margin-left: 0 !important;
+  }
+}
+
+
+/* ==========================================
+   AUTO-DISMISS ALERTS
+   ========================================== */
+
+/* Alert container positioning */
+.auto-dismiss-alert {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Progress bar at bottom of alert */
+.alert-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.alert-progress-bar {
+  height: 100%;
+  width: 100%;
+  transform-origin: left;
+  background-color: currentColor;
+  opacity: 0.5;
+}
+
+/* Progress bar animation */
+@keyframes alertProgress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Fade out animation */
+@keyframes alertFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
+/* Hover effect - show that timer is paused */
+.auto-dismiss-alert:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.auto-dismiss-alert:hover .alert-progress-bar {
+  opacity: 0.3;
+}
+
+/* Alert type specific colors for progress bar */
+.alert-success .alert-progress-bar {
+  background-color: #155724;
+}
+
+.alert-danger .alert-progress-bar,
+.alert-error .alert-progress-bar {
+  background-color: #721c24;
+}
+
+.alert-warning .alert-progress-bar {
+  background-color: #856404;
+}
+
+.alert-info .alert-progress-bar {
+  background-color: #0c5460;
+}
+
+/* Slide in animation on appear */
+.auto-dismiss-alert {
+  animation: alertSlideIn 0.4s ease-out;
+}
+
+@keyframes alertSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

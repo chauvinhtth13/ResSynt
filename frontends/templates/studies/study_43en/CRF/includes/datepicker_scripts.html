@@ -1,77 +1,70 @@
 {% load static %}
 
 <!-- Thêm vào phần head của template -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+<!-- Use jsDelivr (allowed by CSP) instead of cdnjs.cloudflare.com -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
 
 <!-- Thêm vào phần cuối body, trước khi đóng thẻ </body> -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
+<!-- Load from jsDelivr (allowed by CSP) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/locales/bootstrap-datepicker.vi.min.js"></script>
 
-<script>
+<script nonce="{{ request.csp_nonce }}">
     $(document).ready(function() {
         // Kiểm tra xem datepicker đã được khởi tạo chưa
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery không được tải. Datepicker cần jQuery để hoạt động.');
+            return;
+        }
+
         if (typeof $.fn.datepicker === 'undefined') {
             console.error('Bootstrap Datepicker không được tải. Kiểm tra lại thư viện và liên kết!');
             return;
         }
-        
-        // Khởi tạo datepicker cho các trường
-        $('.datepicker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true,
-            clearBtn: true,
-            language: 'vi'
-        });
-        
-        // Form validation trước khi submit
-        $('form').on('submit', function(e) {
-            var hasError = false;
-            
-            // Kiểm tra các trường ngày tháng
-            $('.datepicker').each(function() {
-                var dateValue = $(this).val();
-                
-                // Chuyển đổi từ DD/MM/YYYY sang YYYY-MM-DD
-                if (dateValue && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateValue)) {
-                    try {
-                        var parts = dateValue.split('/');
-                        var day = parseInt(parts[0], 10);
-                        var month = parseInt(parts[1], 10);
-                        var year = parseInt(parts[2], 10);
-                        
-                        // Kiểm tra tính hợp lệ của ngày
-                        var testDate = new Date(year, month - 1, day);
-                        var isValidDate = testDate.getFullYear() === year &&
-                                         testDate.getMonth() === month - 1 &&
-                                         testDate.getDate() === day;
-                        
-                        if (isValidDate) {
-                            // Chuyển đổi sang định dạng YYYY-MM-DD
-                            var isoDate = year + '-' + 
-                                          (month < 10 ? '0' + month : month) + '-' + 
-                                          (day < 10 ? '0' + day : day);
-                            $(this).val(isoDate);
-                            console.log('Chuyển đổi ngày: ' + dateValue + ' -> ' + isoDate);
-                        } else {
-                            console.log('Ngày không hợp lệ: ' + dateValue);
-                            $(this).addClass('is-invalid');
-                            $(this).after('<div class="invalid-feedback">Ngày không hợp lệ</div>');
-                            hasError = true;
-                        }
-                    } catch (err) {
-                        console.error('Lỗi chuyển đổi ngày: ' + err);
-                        $(this).addClass('is-invalid');
-                        $(this).after('<div class="invalid-feedback">Lỗi chuyển đổi ngày tháng</div>');
-                        hasError = true;
-                    }
-                }
+
+        // reusable initializer so dynamically inserted inputs (modals, ajax) work
+        function initDatepicker($el) {
+            var $items = $el || $('.datepicker');
+            $items.each(function() {
+                var $this = $(this);
+                if ($this.data('datepicker-initialized')) return;
+
+                $this.datepicker({
+                    format: 'yyyy-mm-dd',
+                    autoclose: true,
+                    todayHighlight: true,
+                    clearBtn: true,
+                    // language removed to avoid dd/mm conflict
+                    defaultViewDate: new Date(),
+                    startDate: '-100y',
+                    endDate: '+10y',
+                    forceParse: false
+                });
+
+                // mark as initialized
+                $this.data('datepicker-initialized', true);
             });
-            
-            if (hasError) {
-                e.preventDefault();
-                return false;
+        }
+
+        // Initialize on DOM ready
+        initDatepicker();
+
+        // Initialize when a datepicker input receives focus (useful for dynamically added elements)
+        $(document).on('focus', '.datepicker', function() {
+            var $this = $(this);
+            if (!$this.data('datepicker-initialized')) {
+                initDatepicker($this);
+                // open widget on focus for better UX
+                try { $this.datepicker('show'); } catch (e) { /* ignore */ }
             }
         });
+
+        // Initialize datepickers inside Bootstrap modals when they are shown
+        $(document).on('shown.bs.modal', function(e) {
+            var $modal = $(e.target);
+            initDatepicker($modal.find('.datepicker'));
+        });
+
+        //  No form validation needed - datepicker already ensures yyyy-mm-dd format
     });
 </script>

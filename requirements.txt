@@ -12,8 +12,6 @@ psycopg[pool]==3.2.3    # Optional: connection pooling support
 # Security
 django-axes==6.1.1
 
-# Internationalization
-django-parler==2.3
 
 # Caching
 django-redis==5.4.0

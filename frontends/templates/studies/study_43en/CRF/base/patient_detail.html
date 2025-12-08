@@ -1,0 +1,701 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Patient Details" %} {{ screeningcase.USUBJID }}{% endblock %}
+
+{% block page_title %}{% trans "Patient Details" %} {{ screeningcase.USUBJID }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb float-sm-right">
+    <li class="breadcrumb-item"><a href="{% url 'study_43en:patient_list' %}">{% trans "Patient List" %}</a></li>
+    <li class="breadcrumb-item active">{{ screeningcase.USUBJID }}</li>
+</ol>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <!-- Header Card -->
+    <!-- Header Card -->
+    <div class="card {% if is_deceased %}border-danger{% endif %}">
+        <div class="card-header {% if is_deceased %}bg-danger{% else %}bg-primary{% endif %} text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-user-injured mr-2"></i>
+                        {% trans "PATIENT DETAILS" %}
+                    </h4>
+                    {% if is_deceased %}
+                        <span class="badge badge-dark ms-3">
+                            <i class="fas fa-cross mr-1"></i> (DECEASED)
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if is_deceased %}
+            <div class="mt-2">
+                <small>
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {% trans "Death recorded in" %}: <strong>{{ death_form }}</strong>
+                    {% if death_date %}
+                        | {% trans "Date" %}: <strong>{{ death_date|date:"d/m/Y" }}</strong>
+                    {% endif %}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Column 1: Basic Info -->
+                <div class="col-md-4">
+                    <p><strong>{% trans "Study ID:" %}</strong> {{ screeningcase.USUBJID }}</p>
+                    <p><strong>{% trans "Initials:" %}</strong> {{ screeningcase.INITIAL }}</p>
+                    <p><strong>{% trans "Screening ID:" %}</strong> {{ screeningcase.SCRID|default:"-" }}</p>
+                </div>
+                
+                <!-- Column 2: Dates & Site -->
+                <div class="col-md-4">
+                    <p><strong>{% trans "Enrollment Date:" %}</strong> 
+                        {% if enrollmentcase and enrollmentcase.ENRDATE %}
+                            {{ enrollmentcase.ENRDATE|date:"d/m/Y" }}
+                        {% else %}
+                            <span class="text-muted">{% trans "Not enrolled yet" %}</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>{% trans "Site ID:" %}</strong> {{ screeningcase.SITEID }}</p>
+                    <p><strong>{% trans "Days in Study:" %}</strong> 
+                        {% if days_since_enrollment > 0 %}
+                            {{ days_since_enrollment }} {% trans "days" %}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <!-- Column 3: Hospital Stay & Discharge -->
+                <div class="col-md-4">
+                    <p><strong>{% trans "Admission Date:" %}</strong> {{ admission_date|date:"d/m/Y"|default:"-" }}</p>
+                    <p><strong>{% trans "Discharge Date:" %}</strong> {{ discharge_date|date:"d/m/Y"|default:"-" }}</p>
+                    <p><strong>{% trans "Hospital Stay:" %}</strong> 
+                        {% if hospital_stay_days %}
+                            {{ hospital_stay_days }} {% trans "days" %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Expected Dates -->
+    <div class="card mt-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                {% trans "Patient Follow-up Schedule" %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if expecteddates %}
+            <div class="table-outline-wrapper">
+                <table class="table table-bordered table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-center">{% trans "Visit" %}</th>
+                            <th class="text-center">{% trans "Follow-up Timepoint" %}</th>
+                            <th class="text-center">{% trans "Expected Range" %}</th>
+                            <th class="text-center">{% trans "Expected Date" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center">
+                                <span class="badge badge-primary">V2</span>
+                            </td>
+                            <td class="text-center">D10 ± 3</td>
+                            <td class="text-center">
+                                {{ expecteddates.V2_EXPECTED_FROM|date:"d/m/Y" }} - {{ expecteddates.V2_EXPECTED_TO|date:"d/m/Y" }}
+                            </td>
+                            <td class="text-center">
+                                <strong>{{ expecteddates.V2_EXPECTED_DATE|date:"d/m/Y" }}</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-center">
+                                <span class="badge badge-primary">V3</span>
+                            </td>
+                            <td class="text-center">D28 ± 3</td>
+                            <td class="text-center">
+                                {{ expecteddates.V3_EXPECTED_FROM|date:"d/m/Y" }} - {{ expecteddates.V3_EXPECTED_TO|date:"d/m/Y" }}
+                            </td>
+                            <td class="text-center">
+                                <strong>{{ expecteddates.V3_EXPECTED_DATE|date:"d/m/Y" }}</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-center">
+                                <span class="badge badge-primary">V4</span>
+                            </td>
+                            <td class="text-center">D90 ± 3</td>
+                            <td class="text-center">
+                                {{ expecteddates.V4_EXPECTED_FROM|date:"d/m/Y" }} - {{ expecteddates.V4_EXPECTED_TO|date:"d/m/Y" }}
+                            </td>
+                            <td class="text-center">
+                                <strong>{{ expecteddates.V4_EXPECTED_DATE|date:"d/m/Y" }}</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-warning mb-0">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% trans "No expected schedule for this patient yet." %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Form Details -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-success card-outline">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-clipboard-list mr-2"></i>
+                        {% trans "CRF Forms Details" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-outline-wrapper">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 5%"  class="text-center">#</th>
+                                        <th style="width: 25%" class="text-center">{% trans "Form Name" %}</th>
+                                        <th style="width: 15%" class="text-center">{% trans "Status" %}</th>
+                                        <th style="width: 15%" class="text-center">{% trans "Last Updated" %}</th>
+                                        <th style="width: 15%" class="text-center">{% trans "Modified By" %}</th>
+                                        <th style="width: 25%" class="text-center">{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 1. Screening -->
+                                    <tr>
+                                        <td class="text-center"><strong>1</strong></td>
+                                        <td class="text-center">
+                                            <i class="fas fa-clipboard-check text-primary mr-2"></i>
+                                            <strong>{% trans "ScreeningCase" %}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success badge-status">
+                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">{{ screeningcase.last_modified_at|date:"d/m/Y H:i"|default:"-" }}</td>
+                                        <td class="text-center">{{ screeningcase.last_modified_by_username|default:"-" }}</td>
+                                        <td class="text-center">
+                                             <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                                <a href="{% url 'study_43en:screening_case_view' SCRID=screeningcase.SCRID %}" 
+                                                class="btn btn-info">
+                                                    <i class="fas fa-eye"></i> {% trans "View" %}
+                                                </a>
+                                                {% if perms.study_43en.change_scr_case %}
+                                                <a href="{% url 'study_43en:screening_case_update' SCRID=screeningcase.SCRID %}" 
+                                                class="btn btn-warning">
+                                                    <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                <!-- 2. Enrollment -->
+                                <tr>
+                                    <td class="text-center"><strong>2</strong></td>
+                                    <td class="text-center">
+                                        <i class="fas fa-user-plus text-success mr-2"></i>
+                                        <strong>{% trans "EnrollmentCase" %}</strong>
+                                   </td> 
+                                    <td class="text-center">
+                                        {% if enrollmentcase %}
+                                            <span class="badge bg-success badge-status">
+                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary badge-status">
+                                                <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if enrollmentcase %}
+                                            {{ enrollmentcase.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if enrollmentcase %}
+                                            {{ enrollmentcase.last_modified_by_username|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if not enrollmentcase %}
+                                            {% if perms.study_43en.add_enr_case %}
+                                            <a href="{% url 'study_43en:enrollment_case_create' usubjid=screeningcase.USUBJID %}" 
+                                               class="btn btn-primary btn-sm btn-action-single">
+                                                <i class="fas fa-plus"></i> {% trans "Create" %}
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                                <a href="{% url 'study_43en:enrollment_case_view' usubjid=screeningcase.USUBJID %}" 
+                                                   class="btn btn-info">
+                                                    <i class="fas fa-eye"></i> {% trans "View" %}
+                                                </a>
+                                                {% if perms.study_43en.change_enr_case %}
+                                                <a href="{% url 'study_43en:enrollment_case_update' usubjid=screeningcase.USUBJID %}" 
+                                                   class="btn btn-warning">
+                                                    <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+
+                            <!-- 3. Clinical -->
+                            <tr>
+                                <td class="text-center"><strong>3</strong></td>
+                                <td class="text-center">
+                                    <i class="fas fa-stethoscope text-info mr-2"></i>
+                                    <strong>{% trans "ClinicalCase" %}</strong>
+                                </td>
+                                <td class="text-center">
+                                    {% if clinicalcase %}
+                                        <span class="badge bg-success badge-status">
+                                            <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary badge-status">
+                                            <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if clinicalcase %}
+                                        {{ clinicalcase.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if clinicalcase %}
+                                        {{ clinicalcase.last_modified_by_username|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if not clinicalcase %}
+                                        {% if perms.study_43en.add_cli_case %}
+                                        <a href="{% url 'study_43en:clinical_case_create' usubjid=screeningcase.USUBJID %}" 
+                                        class="btn btn-primary btn-sm btn-action-single">
+                                            <i class="fas fa-plus"></i> {% trans "Create" %}
+                                        </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                            <a href="{% url 'study_43en:clinical_case_view' usubjid=screeningcase.USUBJID %}" 
+                                            class="btn btn-info">
+                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                            </a>
+                                            {% if perms.study_43en.change_cli_case %}
+                                            <a href="{% url 'study_43en:clinical_case_update' usubjid=screeningcase.USUBJID %}" 
+                                            class="btn btn-warning">
+                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            <!-- 4. Laboratory -->
+                            <tr>
+                                <td class="text-center"><strong>4</strong></td>
+                                <td class="text-center">
+                                    <i class="fas fa-flask text-warning mr-2"></i>
+                                    <strong>{% trans "Laboratory" %}</strong>
+                                </td>
+                                <td class="text-center">
+                                    {% if laboratory_count > 0 %}
+                                        <span class="badge bg-info badge-status">
+                                            <i class="fas fa-vials"></i> {{ laboratory_count }} {% trans "samples" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary badge-status">
+                                            <i class="fas fa-hourglass-half"></i> {% trans "None" %}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if latest_laboratory %}
+                                        {{ latest_laboratory.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if latest_laboratory %}
+                                        {{ latest_laboratory.last_modified_by_username|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'study_43en:laboratory_test_list' usubjid=screeningcase.USUBJID %}" 
+                                    class="btn btn-primary btn-sm btn-action-single">
+                                        <i class="fas fa-cogs"></i> {% trans "Manage" %}
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <!-- 5. Microbiology -->
+                            <tr>
+                                <td class="text-center"><strong>5</strong></td>
+                                <td class="text-center">
+                                    <i class="fas fa-bacterium text-danger mr-2"></i>
+                                    <strong>{% trans "Microbiology" %}</strong>
+                                </td>
+                                <td class="text-center">
+                                    {% if microbiology_count > 0 %}
+                                        <span class="badge bg-info badge-status">
+                                            <i class="fas fa-bacteria"></i> {{ microbiology_count }} {% trans "samples" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary badge-status">
+                                            <i class="fas fa-hourglass-half"></i> {% trans "None" %}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if latest_microbiology %}
+                                        {{ latest_microbiology.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if latest_microbiology %}
+                                        {{ latest_microbiology.last_modified_by_username|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'study_43en:microbiology_list' usubjid=screeningcase.USUBJID %}" 
+                                    class="btn btn-primary btn-sm btn-action-single">
+                                        <i class="fas fa-cogs"></i> {% trans "Manage" %}
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <!-- 6. Sample Collection -->
+                            <tr>
+                                <td class="text-center"><strong>6</strong></td>
+                                <td class="text-center">
+                                    <i class="fas fa-vial text-purple mr-2"></i>
+                                    <strong>{% trans "Sample Collection" %}</strong>
+                                </td>
+                                <td class="text-center">
+                                    {% if sample_count > 0 %}
+                                        <span class="badge bg-info badge-status">
+                                            <i class="fas fa-syringe"></i> {{ sample_count }} {% trans "samples" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary badge-status">
+                                            <i class="fas fa-hourglass-half"></i> {% trans "None" %}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if latest_sample %}
+                                        {{ latest_sample.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if latest_sample %}
+                                        {{ latest_sample.last_modified_by_username|default:"-" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'study_43en:sample_collection_list' usubjid=screeningcase.USUBJID %}" 
+                                    class="btn btn-primary btn-sm btn-action-single">
+                                        <i class="fas fa-cogs"></i> {% trans "Manage" %}
+                                    </a>
+                                </td>
+                            </tr>
+
+                                <!-- 7. Follow-up 28 days -->
+                                <tr>
+                                    <td class="text-center"><strong>7</strong></td>
+                                    <td class="text-center">
+                                        <i class="fas fa-calendar-check text-success mr-2"></i>
+                                        <strong>{% trans "Follow-up Day 28" %}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if fu_case_28 %}
+                                            <span class="badge bg-success badge-status">
+                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary badge-status">
+                                                <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if fu_case_28 %}
+                                            {{ fu_case_28.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if fu_case_28 %}
+                                            {{ fu_case_28.last_modified_by_username|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if not fu_case_28 %}
+                                            {% if perms.study_43en.add_fu_case_28 %}
+                                            <a href="{% url 'study_43en:followup_28_create' usubjid=screeningcase.USUBJID %}" 
+                                                class="btn btn-primary btn-sm btn-action-single">
+                                                <i class="fas fa-plus"></i> {% trans "Create" %}
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                        <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                            <a href="{% url 'study_43en:followup_28_view' usubjid=screeningcase.USUBJID %}" 
+                                            class="btn btn-info">
+                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                            </a>
+                                            {% if perms.study_43en.change_fu_case_28 %}
+                                            <a href="{% url 'study_43en:followup_28_update' usubjid=screeningcase.USUBJID %}" 
+                                            class="btn btn-warning">
+                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            </a>
+                                        <div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+
+                                <!-- 8. Follow-up 90 days -->
+                                <tr>
+                                    <td class="text-center"><strong>8</strong></td>
+                                    <td class="text-center">
+                                        <i class="fas fa-calendar-alt text-info mr-2"></i>
+                                        <strong>{% trans "Follow-up Day 90" %}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if fu_case_90 %}
+                                            <span class="badge bg-success badge-status">
+                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary badge-status">
+                                                <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if fu_case_90 %}
+                                            {{ fu_case_90.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if fu_case_90 %}
+                                            {{ fu_case_90.last_modified_by_username|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if not fu_case_90 %}
+                                            {% if perms.study_43en.add_fu_case_90 %}
+                                            <a href="{% url 'study_43en:followup_90_create' usubjid=screeningcase.USUBJID %}" 
+                                                class="btn btn-primary btn-sm btn-action-single">
+                                                <i class="fas fa-plus"></i> {% trans "Create" %}
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                        <div class="btn-group btn-group-sm btn-action-group" role="group"></div>
+                                            <a href="{% url 'study_43en:followup_90_view' usubjid=screeningcase.USUBJID %}" 
+                                            class="btn btn-info">
+                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                            </a>
+                                            {% if perms.study_43en.change_fu_case_90 %}
+                                            <a href="{% url 'study_43en:followup_90_update' usubjid=screeningcase.USUBJID %}" 
+                                            class="btn btn-warning">
+                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+
+                                <!-- 9. Discharge -->
+                                <tr>
+                                    <td class="text-center"><strong>9</strong></td>
+                                    <td class="text-center">
+                                        <i class="fas fa-stethoscope text-info mr-2"></i>
+                                        <strong>{% trans "DischargeCase" %}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if disch_case %}
+                                            <span class="badge bg-success badge-status">
+                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary badge-status">
+                                                <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if disch_case %}
+                                            {{ disch_case.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if disch_case %}
+                                            {{ disch_case.last_modified_by_username|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if not disch_case %}
+                                            {% if perms.study_43en.add_disch_case %}
+                                            <a href="{% url 'study_43en:discharge_create' usubjid=screeningcase.USUBJID %}" 
+                                               class="btn btn-primary btn-sm btn-action-single">
+                                                <i class="fas fa-plus"></i> {% trans "Create" %}
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                                <a href="{% url 'study_43en:discharge_view' usubjid=screeningcase.USUBJID %}" 
+                                                class="btn btn-info">
+                                                    <i class="fas fa-eye"></i> {% trans "View" %}
+                                                </a>
+                                                {% if perms.study_43en.change_disch_case %}
+                                                <a href="{% url 'study_43en:discharge_update' usubjid=screeningcase.USUBJID %}" 
+                                                class="btn btn-warning">
+                                                    <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+
+                                <!-- 10. End Study CRF -->
+                                <tr>
+                                    <td class="text-center"><strong>10</strong></td>
+                                    <td class="text-center">
+                                        <i class="fas fa-flag-checkered text-danger mr-2"></i>
+                                        <strong>{% trans "End of Study CRF" %}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if endcasecrf %}
+                                            <span class="badge bg-success badge-status">
+                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary badge-status">
+                                                <i class="fas fa-hourglass-half"></i> {% trans "Incomplete" %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if endcasecrf %}
+                                            {{ endcasecrf.last_modified_at|date:"d/m/Y H:i"|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if endcasecrf %}
+                                            {{ endcasecrf.last_modified_by_username|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if not endcasecrf %}
+                                            {% if perms.study_43en.add_endcasecrf %}
+                                            <a href="{% url 'study_43en:endcase_create' usubjid=screeningcase.USUBJID %}" 
+                                                class="btn btn-primary btn-sm btn-action-single">
+                                                <i class="fas fa-plus"></i> {% trans "Create" %}
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                        <div class="btn-group btn-group-sm btn-action-group" role="group">
+                                            <a href="{% url 'study_43en:endcase_view' usubjid=screeningcase.USUBJID %}" 
+                                            class="btn btn-info">
+                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                            </a>
+                                            {% if perms.study_43en.change_endcasecrf %}
+                                            <a href="{% url 'study_43en:endcase_update' usubjid=screeningcase.USUBJID %}" 
+                                            class="btn btn-warning">
+                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-light">
+                <div class="card-body text-center">
+                    <a href="{% url 'study_43en:patient_list' %}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left mr-2"></i> {% trans "Back to List" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Initialize Bootstrap tooltips #}
+<script nonce="{{ request.csp_nonce }}">
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
+{% endblock %}

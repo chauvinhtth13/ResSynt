@@ -1,88 +1,111 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import date
-from study_43en.models import (
-    ExpectedDates, ContactExpectedDates, 
-    EnrollmentCase, EnrollmentContact,
-    FollowUpCase, FollowUpCase90, 
-    ContactFollowUp28, ContactFollowUp90,
-    SampleCollection, ContactSampleCollection,
-    FollowUpStatus
+from backends.studies.study_43en.models.schedule import (
+    ExpectedDates, ContactExpectedDates, FollowUpStatus
 )
+from backends.studies.study_43en.models.patient import (
+    ENR_CASE, FU_CASE_28, FU_CASE_90, SAM_CASE
+)
+from backends.studies.study_43en.models.contact import (
+    ENR_CONTACT, FU_CONTACT_28, FU_CONTACT_90, SAM_CONTACT
+)
+
 
 class Command(BaseCommand):
     help = 'Cập nhật bảng FollowUpStatus từ dữ liệu hiện có'
 
     def handle(self, *args, **options):
-        self.stdout.write('Bắt đầu cập nhật FollowUpStatus...')
+        self.stdout.write('🚀 Bắt đầu cập nhật FollowUpStatus...')
         
-        # Xóa dữ liệu cũ (tùy chọn)
         if options.get('reset', False):
-            FollowUpStatus.objects.all().delete()
-            self.stdout.write('Đã xóa dữ liệu cũ')
+            deleted = FollowUpStatus.objects.using('db_study_43en').all().delete()
+            self.stdout.write(f'🗑️  Đã xóa {deleted[0]} records cũ')
         
-        # Cập nhật cho bệnh nhân
         self.update_patient_statuses()
-        
-        # Cập nhật cho người tiếp xúc
         self.update_contact_statuses()
-        
-        # Cập nhật trạng thái dựa trên ngày
         self.update_all_statuses()
         
-        self.stdout.write(self.style.SUCCESS('Hoàn thành cập nhật FollowUpStatus!'))
+        self.stdout.write(self.style.SUCCESS(' Hoàn thành cập nhật FollowUpStatus!'))
     
     def update_patient_statuses(self):
         """Cập nhật dữ liệu theo dõi từ bệnh nhân"""
         count = 0
-        # Lấy tất cả lịch dự kiến
-        expected_dates = ExpectedDates.objects.select_related('USUBJID').all()
+        expected_dates = ExpectedDates.objects.using('db_study_43en').select_related('USUBJID').all()
         
         for expected in expected_dates:
-            # Lấy thông tin bệnh nhân
             patient = expected.USUBJID
             
-            # Lấy các form theo dõi đã hoàn thành (nếu có)
+            #  Get INITIAL and PHONE - ONLY if they have values
             try:
-                followup_v3 = FollowUpCase.objects.get(USUBJID=patient)
-                v3_actual_date = followup_v3.ASSESSDATE if followup_v3.ASSESSED == 'Yes' else None
-                v3_status = 'COMPLETED' if followup_v3.ASSESSED == 'Yes' else 'MISSED'
-            except FollowUpCase.DoesNotExist:
-                v3_actual_date = None
-                v3_status = None
-                
-            try:
-                followup_v4 = FollowUpCase90.objects.get(USUBJID=patient)
-                v4_actual_date = followup_v4.ASSESSDATE if followup_v4.ASSESSED == 'Yes' else None
-                v4_status = 'COMPLETED' if followup_v4.ASSESSED == 'Yes' else 'MISSED'
-            except FollowUpCase90.DoesNotExist:
-                v4_actual_date = None
-                v4_status = None
+                screening = patient.USUBJID
+                initial = screening.INITIAL if screening and screening.INITIAL else ''
+            except:
+                initial = ''
             
-            # Kiểm tra nếu có mẫu lần 2 (V2)
+            #  CRITICAL: Only get phone if it exists, otherwise use existing value
             try:
-                sample_v2 = SampleCollection.objects.get(USUBJID=patient, SAMPLE_TYPE='2')
-                v2_actual_date = sample_v2.COMPLETEDDATE if sample_v2.SAMPLE else None
-                v2_status = 'COMPLETED' if sample_v2.SAMPLE else 'MISSED'
-            except SampleCollection.DoesNotExist:
+                phone = patient.PHONE if patient.PHONE else None
+            except:
+                phone = None
+            
+            #  Check V2 (Sample) - Get EARLIEST date
+            try:
+                sample_v2 = SAM_CASE.objects.using('db_study_43en').get(USUBJID=patient, SAMPLE_TYPE='2')
+                
+                if sample_v2.SAMPLE:
+                    sample_dates = [
+                        sample_v2.STOOLDATE,
+                        sample_v2.RECTSWABDATE,
+                        sample_v2.THROATSWABDATE,
+                        sample_v2.BLOODDATE
+                    ]
+                    valid_dates = [d for d in sample_dates if d is not None]
+                    v2_actual_date = min(valid_dates) if valid_dates else None
+                    v2_status = 'COMPLETED' if v2_actual_date else None
+                else:
+                    v2_actual_date = None
+                    v2_status = None
+                    
+            except SAM_CASE.DoesNotExist:
                 v2_actual_date = None
                 v2_status = None
             
-            # Cập nhật cho V2
+            # Check V3
+            try:
+                followup_v3 = FU_CASE_28.objects.using('db_study_43en').get(USUBJID=patient)
+                v3_actual_date = followup_v3.EvaluateDate if followup_v3.EvaluatedAtDay28 == 'Yes' else None
+                v3_status = 'COMPLETED' if followup_v3.EvaluatedAtDay28 == 'Yes' else None
+            except FU_CASE_28.DoesNotExist:
+                v3_actual_date = None
+                v3_status = None
+            
+            # Check V4
+            try:
+                followup_v4 = FU_CASE_90.objects.using('db_study_43en').get(USUBJID=patient)
+                v4_actual_date = followup_v4.EvaluateDate if followup_v4.EvaluatedAtDay90 == 'Yes' else None
+                v4_status = 'COMPLETED' if followup_v4.EvaluatedAtDay90 == 'Yes' else None
+            except FU_CASE_90.DoesNotExist:
+                v4_actual_date = None
+                v4_status = None
+            
+            #  Update V2 - Only update phone if new value exists
             if expected.V2_EXPECTED_DATE:
                 status_data = {
-                    'INITIAL': getattr(patient, 'INITIAL', ''),
-                    'VISIT_DESCRIPTION': 'D10±3',
+                    'INITIAL': initial,
                     'EXPECTED_FROM': expected.V2_EXPECTED_FROM,
                     'EXPECTED_TO': expected.V2_EXPECTED_TO,
                     'EXPECTED_DATE': expected.V2_EXPECTED_DATE,
                     'ACTUAL_DATE': v2_actual_date,
                 }
+                #  Only update PHONE if we have a new value
+                if phone:
+                    status_data['PHONE'] = phone
                 
                 if v2_status:
                     status_data['STATUS'] = v2_status
                 
-                FollowUpStatus.objects.update_or_create(
+                FollowUpStatus.objects.using('db_study_43en').update_or_create(
                     USUBJID=patient.USUBJID_id,
                     SUBJECT_TYPE='PATIENT',
                     VISIT='V2',
@@ -90,21 +113,22 @@ class Command(BaseCommand):
                 )
                 count += 1
             
-            # Cập nhật cho V3
+            #  Update V3 - Only update phone if new value exists
             if expected.V3_EXPECTED_DATE:
                 status_data = {
-                    'INITIAL': getattr(patient, 'INITIAL', ''),
-                    'VISIT_DESCRIPTION': 'D28±3',
+                    'INITIAL': initial,
                     'EXPECTED_FROM': expected.V3_EXPECTED_FROM,
                     'EXPECTED_TO': expected.V3_EXPECTED_TO,
                     'EXPECTED_DATE': expected.V3_EXPECTED_DATE,
                     'ACTUAL_DATE': v3_actual_date,
                 }
+                if phone:
+                    status_data['PHONE'] = phone
                 
                 if v3_status:
                     status_data['STATUS'] = v3_status
                 
-                FollowUpStatus.objects.update_or_create(
+                FollowUpStatus.objects.using('db_study_43en').update_or_create(
                     USUBJID=patient.USUBJID_id,
                     SUBJECT_TYPE='PATIENT',
                     VISIT='V3',
@@ -112,21 +136,22 @@ class Command(BaseCommand):
                 )
                 count += 1
             
-            # Cập nhật cho V4
+            #  Update V4 - Only update phone if new value exists
             if expected.V4_EXPECTED_DATE:
                 status_data = {
-                    'INITIAL': getattr(patient, 'INITIAL', ''),
-                    'VISIT_DESCRIPTION': 'D90±3',
+                    'INITIAL': initial,
                     'EXPECTED_FROM': expected.V4_EXPECTED_FROM,
                     'EXPECTED_TO': expected.V4_EXPECTED_TO,
                     'EXPECTED_DATE': expected.V4_EXPECTED_DATE,
                     'ACTUAL_DATE': v4_actual_date,
                 }
+                if phone:
+                    status_data['PHONE'] = phone
                 
                 if v4_status:
                     status_data['STATUS'] = v4_status
                 
-                FollowUpStatus.objects.update_or_create(
+                FollowUpStatus.objects.using('db_study_43en').update_or_create(
                     USUBJID=patient.USUBJID_id,
                     SUBJECT_TYPE='PATIENT',
                     VISIT='V4',
@@ -134,51 +159,63 @@ class Command(BaseCommand):
                 )
                 count += 1
         
-        self.stdout.write(f'Đã cập nhật {count} mục theo dõi cho bệnh nhân')
+        self.stdout.write(f'📋 Đã cập nhật {count} mục theo dõi cho bệnh nhân')
     
     def update_contact_statuses(self):
         """Cập nhật dữ liệu theo dõi từ người tiếp xúc"""
         count = 0
-        # Lấy tất cả lịch dự kiến
-        expected_dates = ContactExpectedDates.objects.select_related('USUBJID').all()
+        expected_dates = ContactExpectedDates.objects.using('db_study_43en').select_related('USUBJID').all()
         
         for expected in expected_dates:
-            # Lấy thông tin người tiếp xúc
             contact = expected.USUBJID
             
-            # Lấy các form theo dõi đã hoàn thành (nếu có)
+            #  Get INITIAL and PHONE - ONLY if they have values
             try:
-                followup_v2 = ContactFollowUp28.objects.get(USUBJID=contact)
+                screening = contact.USUBJID
+                initial = screening.INITIAL if screening and screening.INITIAL else ''
+            except:
+                initial = ''
+            
+            #  CRITICAL: Only get phone if it exists
+            try:
+                phone = contact.PHONE if contact.PHONE else None
+            except:
+                phone = None
+            
+            # Check V2
+            try:
+                followup_v2 = FU_CONTACT_28.objects.using('db_study_43en').get(USUBJID=contact)
                 v2_actual_date = followup_v2.ASSESSDATE if followup_v2.ASSESSED == 'Yes' else None
-                v2_status = 'COMPLETED' if followup_v2.ASSESSED == 'Yes' else 'MISSED'
-            except ContactFollowUp28.DoesNotExist:
+                v2_status = 'COMPLETED' if followup_v2.ASSESSED == 'Yes' else None
+            except FU_CONTACT_28.DoesNotExist:
                 v2_actual_date = None
                 v2_status = None
-                
+            
+            # Check V3
             try:
-                followup_v3 = ContactFollowUp90.objects.get(USUBJID=contact)
+                followup_v3 = FU_CONTACT_90.objects.using('db_study_43en').get(USUBJID=contact)
                 v3_actual_date = followup_v3.ASSESSDATE if followup_v3.ASSESSED == 'Yes' else None
-                v3_status = 'COMPLETED' if followup_v3.ASSESSED == 'Yes' else 'MISSED'
-            except ContactFollowUp90.DoesNotExist:
+                v3_status = 'COMPLETED' if followup_v3.ASSESSED == 'Yes' else None
+            except FU_CONTACT_90.DoesNotExist:
                 v3_actual_date = None
                 v3_status = None
             
-            # Cập nhật cho V2
+            #  Update V2 - Only update phone if new value exists
             if expected.V2_EXPECTED_DATE:
                 status_data = {
-                    'INITIAL': getattr(contact, 'INITIAL', ''),
-                    'VISIT_DESCRIPTION': 'D28±3',
+                    'INITIAL': initial,
                     'EXPECTED_FROM': expected.V2_EXPECTED_FROM,
                     'EXPECTED_TO': expected.V2_EXPECTED_TO,
                     'EXPECTED_DATE': expected.V2_EXPECTED_DATE,
                     'ACTUAL_DATE': v2_actual_date,
-                    'PHONE': getattr(contact, 'PHONE', None),
                 }
+                if phone:
+                    status_data['PHONE'] = phone
                 
                 if v2_status:
                     status_data['STATUS'] = v2_status
                 
-                FollowUpStatus.objects.update_or_create(
+                FollowUpStatus.objects.using('db_study_43en').update_or_create(
                     USUBJID=contact.USUBJID_id,
                     SUBJECT_TYPE='CONTACT',
                     VISIT='V2',
@@ -186,22 +223,22 @@ class Command(BaseCommand):
                 )
                 count += 1
             
-            # Cập nhật cho V3
+            #  Update V3 - Only update phone if new value exists
             if expected.V3_EXPECTED_DATE:
                 status_data = {
-                    'INITIAL': getattr(contact, 'INITIAL', ''),
-                    'VISIT_DESCRIPTION': 'D90±3',
+                    'INITIAL': initial,
                     'EXPECTED_FROM': expected.V3_EXPECTED_FROM,
                     'EXPECTED_TO': expected.V3_EXPECTED_TO,
                     'EXPECTED_DATE': expected.V3_EXPECTED_DATE,
                     'ACTUAL_DATE': v3_actual_date,
-                    'PHONE': getattr(contact, 'PHONE', None),
                 }
+                if phone:
+                    status_data['PHONE'] = phone
                 
                 if v3_status:
                     status_data['STATUS'] = v3_status
                 
-                FollowUpStatus.objects.update_or_create(
+                FollowUpStatus.objects.using('db_study_43en').update_or_create(
                     USUBJID=contact.USUBJID_id,
                     SUBJECT_TYPE='CONTACT',
                     VISIT='V3',
@@ -209,36 +246,52 @@ class Command(BaseCommand):
                 )
                 count += 1
         
-        self.stdout.write(f'Đã cập nhật {count} mục theo dõi cho người tiếp xúc')
+        self.stdout.write(f'📋 Đã cập nhật {count} mục theo dõi cho người tiếp xúc')
     
     def update_all_statuses(self):
-        """Cập nhật trạng thái dựa trên ngày hiện tại cho các mục chưa hoàn thành"""
+        """
+         FIXED: Re-evaluate MISSED → LATE if no MISSED_DATE
+        Only truly MISSED records have MISSED_DATE set manually
+        """
         today = date.today()
         updated_count = 0
         
-        # Lấy các mục chưa hoàn thành và không có trạng thái rõ ràng
-        followups = FollowUpStatus.objects.filter(STATUS__isnull=True) | FollowUpStatus.objects.filter(STATUS='')
+        #  Only exclude COMPLETED (truly final state)
+        # Re-check all MISSED/LATE/UPCOMING records
+        followups = FollowUpStatus.objects.using('db_study_43en').exclude(
+            STATUS='COMPLETED'
+        )
         
         for followup in followups:
-            # Nếu đã có ngày thực tế, đánh dấu là hoàn thành
+            old_status = followup.STATUS
+            
+            # Priority 1: Has ACTUAL_DATE → COMPLETED (final)
             if followup.ACTUAL_DATE:
                 followup.STATUS = 'COMPLETED'
-                followup.save(update_fields=['STATUS'])
-                updated_count += 1
-                continue
-                
-            # Nếu không có ngày thực tế, xác định trạng thái dựa trên khoảng thời gian
-            if followup.EXPECTED_TO and today > followup.EXPECTED_TO:
+            
+            # Priority 2: Has MISSED_DATE (manual) → MISSED (final)
+            elif followup.MISSED_DATE:
                 followup.STATUS = 'MISSED'
-            elif followup.EXPECTED_FROM and today >= followup.EXPECTED_FROM:
+            
+            # Priority 3: Past EXPECTED_TO → LATE
+            elif followup.EXPECTED_TO and today > followup.EXPECTED_TO:
                 followup.STATUS = 'LATE'
+            
+            # Priority 4: Past EXPECTED_DATE → LATE
+            elif followup.EXPECTED_DATE and today > followup.EXPECTED_DATE:
+                followup.STATUS = 'LATE'
+            
+            # Priority 5: Within/approaching window → UPCOMING
             else:
                 followup.STATUS = 'UPCOMING'
-                
-            followup.save(update_fields=['STATUS'])
-            updated_count += 1
+            
+            # Save if changed
+            if followup.STATUS != old_status:
+                followup.save(using='db_study_43en', update_fields=['STATUS'])
+                updated_count += 1
+                self.stdout.write(f'  {followup.USUBJID} {followup.VISIT}: {old_status} → {followup.STATUS}')
         
-        self.stdout.write(f'Đã cập nhật {updated_count} trạng thái dựa trên ngày hiện tại')
+        self.stdout.write(f' Đã cập nhật {updated_count} trạng thái')
 
     def add_arguments(self, parser):
         parser.add_argument(

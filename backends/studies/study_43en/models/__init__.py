@@ -4,6 +4,14 @@ Main models package for study_43en
 Import all model subpackages for Django registry
 """
 
+# ==========================================
+# BASE MODELS (MIXINS)
+# ==========================================
+from .base_models import AuditFieldsMixin, TimestampMixin, SiteFilteredMixin
+
+# ==========================================
+# STUDY 43EN MODELS (EXISTING)
+# ==========================================
 # Import patient models
 from .patient import *
 
@@ -14,8 +22,104 @@ from .contact import *
 from .audit_log import *
 from .schedule import *
 
-# Define what gets exported when using "from models import *"
+# ==========================================
+# STUDY 44EN - HOUSEHOLD MODELS
+# ==========================================
+from .test_44en.HOUSEHOLD import (
+    # Main household
+    HH_CASE,
+    HH_Member,
+    
+    # Exposure
+    HH_Exposure,
+    HH_WaterSource,
+    HH_WaterTreatment,
+    HH_Animal,
+    
+    # Food
+    HH_FoodFrequency,
+    HH_FoodSource,
+)
+
+# ==========================================
+# STUDY 44EN - INDIVIDUAL MODELS
+# ==========================================
+from .test_44en.individual import (
+    # Main individual
+    Individual,
+    Individual_Exposure,
+    
+    # Water
+    Individual_WaterSource,
+    Individual_WaterTreatment,
+    
+    # Medical history
+    Individual_Comorbidity,
+    Individual_Vaccine,
+    Individual_Hospitalization,
+    Individual_Medication,
+    
+    # Lifestyle
+    Individual_FoodFrequency,
+    Individual_Travel,
+    
+    # Follow-up
+    Individual_FollowUp,
+    Individual_Symptom,
+    Individual_Sample,
+)
+
+# ==========================================
+# EXPORTS
+# ==========================================
 __all__ = [
-    # This will include all models from subpackages
-    # patient.__all__ + contact.__all__ + audit_log models + schedule models
+    # ==========================================
+    # BASE MODELS
+    # ==========================================
+    'AuditFieldsMixin',
+    'TimestampMixin',
+    'SiteFilteredMixin',
+    
+    # ==========================================
+    # STUDY 44EN - HOUSEHOLD MODELS (8 models)
+    # ==========================================
+    'HH_CASE',                  # Main household
+    'HH_Member',                # Household members
+    'HH_Exposure',              # Household exposure
+    'HH_WaterSource',           # Water sources (normalized)
+    'HH_WaterTreatment',        # Water treatment (normalized)
+    'HH_Animal',                # Animals (normalized)
+    'HH_FoodFrequency',         # Food frequency
+    'HH_FoodSource',            # Food sources
+    
+    # ==========================================
+    # STUDY 44EN - INDIVIDUAL MODELS (13 models)
+    # ==========================================
+    # Demographics & Basic Info
+    'Individual',               # Individual demographic info
+    'Individual_Exposure',      # Individual exposure factors
+    
+    # Water & Sanitation
+    'Individual_WaterSource',   # Individual water sources
+    'Individual_WaterTreatment', # Individual water treatment
+    
+    # Medical History
+    'Individual_Comorbidity',   # Comorbidities
+    'Individual_Vaccine',       # Vaccination records
+    'Individual_Hospitalization', # Hospitalization (3 months)
+    'Individual_Medication',    # Medication use (3 months)
+    
+    # Lifestyle & Behavior
+    'Individual_FoodFrequency', # Individual food frequency
+    'Individual_Travel',        # Travel history
+    
+    # Follow-up & Monitoring
+    'Individual_FollowUp',      # Follow-up visits (Day 14, 28, 90)
+    'Individual_Symptom',       # Symptoms at follow-up
+    'Individual_Sample',        # Sample collection
+    
+    # ==========================================
+    # STUDY 43EN MODELS (EXISTING)
+    # ==========================================
+    # Note: patient.__all__, contact.__all__, etc. are included
 ]

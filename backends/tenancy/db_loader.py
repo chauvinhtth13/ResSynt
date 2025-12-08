@@ -15,9 +15,12 @@ from typing import Dict, Any
 from datetime import datetime
 from django.db import connections
 from django.conf import settings
+from config.settings import env
 from django.core.cache import cache
 from threading import RLock
 import psycopg
+from psycopg import sql
+from psycopg.rows import dict_row
 
 logger = logging.getLogger(__name__)
 
@@ -141,53 +144,63 @@ class EnhancedStudyDatabaseManager:
     
     def ensure_schema_exists(self, db_name: str) -> bool:
         """
-        Ensure 'data' schema exists in database
-        Creates schema if missing
+        Ensure 'data' schema exists - PSYCOPG3 VERSION
         
         Args:
             db_name: Database name
             
         Returns:
-            True if schema exists or was created successfully
+            True if schema exists or was created
         """
         try:
             self.add_study_db(db_name)
             
-            # Get database configuration
-            db_config = self._get_config_with_schema(db_name)
+            # Use DatabaseStudyCreator for consistency
+            from backends.tenancy.utils.db_study_creator import DatabaseStudyCreator
             
-            # Build connection string for psycopg3
-            conninfo = (
-                f"host={db_config['HOST']} "
-                f"port={db_config['PORT']} "
-                f"user={db_config['USER']} "
-                f"password={db_config['PASSWORD']} "
-                f"dbname={db_name}"
-            )
+            # Get connection string or kwargs
+            conn_string = DatabaseStudyCreator.get_connection_string(db_name)
             
-            # Use psycopg3 directly
-            with psycopg.connect(conninfo, autocommit=True) as conn:
-                with conn.cursor() as cursor:
-                    # Check if schema exists
-                    cursor.execute("""
+            # Psycopg3 context manager with autocommit
+            with psycopg.connect(conn_string, autocommit=True) as conn:
+                with conn.cursor() as cur:
+                    # Check schema existence - parameterized
+                    cur.execute(
+                        """
                         SELECT schema_name 
                         FROM information_schema.schemata 
-                        WHERE schema_name = 'data'
-                    """)
+                        WHERE schema_name = %(schema_name)s
+                        """,
+                        {'schema_name': 'data'}
+                    )
                     
-                    if not cursor.fetchone():
-                        # Create schema
-                        cursor.execute("CREATE SCHEMA IF NOT EXISTS data")
-                        cursor.execute("GRANT ALL ON SCHEMA data TO CURRENT_USER")
-                        logger.debug(f"Created 'data' schema in {db_name}")
-                        return True
+                    if not cur.fetchone():
+                        # Create schema safely
+                        cur.execute(
+                            sql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(
+                                sql.Identifier('data')
+                            )
+                        )
+                        
+                        # Grant permissions using connection info
+                        cur.execute(
+                            sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                                sql.Identifier('data'),
+                                sql.Identifier(conn.info.user)  # psycopg3 way
+                            )
+                        )
+                        
+                        logger.info(f"Created 'data' schema in {db_name}")
                     else:
                         logger.debug(f"Schema 'data' already exists in {db_name}")
             
             return True
             
+        except psycopg.OperationalError as e:
+            logger.error(f"Connection error for {db_name}: {e}")
+            return False
         except psycopg.Error as e:
-            logger.error(f"PostgreSQL error ensuring schema for {db_name}: {e}")
+            logger.error(f"PostgreSQL error for {db_name}: {e}")
             return False
         except Exception as e:
             logger.error(f"Unexpected error for {db_name}: {e}")
@@ -233,7 +246,8 @@ class EnhancedStudyDatabaseManager:
                             
                             # Check current schema
                             cursor.execute("SELECT current_schema()")
-                            result['schema'] = cursor.fetchone()[0]
+                            schema_row = cursor.fetchone()
+                            result['schema'] = schema_row[0] if schema_row else None
                             
                             # Count tables in data schema
                             cursor.execute("""
@@ -242,7 +256,8 @@ class EnhancedStudyDatabaseManager:
                                 WHERE table_schema = 'data'
                                 AND table_type = 'BASE TABLE'
                             """)
-                            result['tables'] = cursor.fetchone()[0]
+                            table_count = cursor.fetchone()
+                            result['tables'] = table_count[0] if table_count else 0
                             
                             result['status'] = 'OK'
                     else:
@@ -294,7 +309,7 @@ class EnhancedStudyDatabaseManager:
         logger.debug(f"Building config for {db_name}")
         
         from config.settings import DatabaseConfig
-        config = DatabaseConfig.get_study_db_config(db_name)
+        config = DatabaseConfig.get_study_db_config(db_name, env)
         
         # Ensure OPTIONS exists
         if 'OPTIONS' not in config:

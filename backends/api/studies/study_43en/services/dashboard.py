@@ -1,26 +1,37 @@
 """
 Dashboard views and chart APIs for Study 43EN
-Contains both main dashboard view and all chart data endpoints
+ REFACTORED: Sử dụng site_utils thống nhất với views khác
 """
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
-from django.db.models import Count
+from django.db.models import Count, Avg, F, ExpressionWrapper, IntegerField, Q, Case, When
 from django.core.exceptions import FieldError
 from collections import OrderedDict
 from datetime import datetime, date
 import logging
 
-from .....studies.study_43en.models import (
-    ScreeningCase, 
-    EnrollmentCase, 
-    ScreeningContact, 
-    EnrollmentContact,
-    SampleCollection,
-    ContactSampleCollection
+from django.db.models.functions import Extract
+
+#  IMPORT TỪ SITE_UTILS (thay vì define riêng)
+from backends.studies.study_43en.utils.site_utils import (
+    get_site_filter_params,
+    get_filtered_queryset
 )
+
+from backends.studies.study_43en.models import (
+    SCR_CASE, 
+    ENR_CASE, 
+    SCR_CONTACT, 
+    ENR_CONTACT,
+    SAM_CASE,
+    SAM_CONTACT,
+    CLI_CASE,
+    AntibioticSensitivity
+)
+from backends.studies.study_43en.models.patient import DISCH_CASE, FU_CASE_28, FU_CASE_90
 
 logger = logging.getLogger(__name__)
 
@@ -35,20 +46,6 @@ TARGET_ENROLLMENT = 750
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
-
-def get_filtered_queryset(model, site_id):
-    """
-    Get filtered queryset using custom SiteFilteredManage
-    
-    Args:
-        model: Django model class (must have site_objects manager)
-        site_id: Site ID to filter by ('all' or specific site code)
-        
-    Returns:
-        Filtered queryset using db_study_43en with site filter applied
-    """
-    return model.site_objects.using(DB_ALIAS).filter_by_site(site_id)
-
 
 def add_percent_to_reasons(reason_qs):
     """
@@ -73,185 +70,103 @@ def add_percent_to_reasons(reason_qs):
 # MAIN DASHBOARD VIEW
 # ============================================================================
 
-# backend/studies/study_43en/dashboard.py
+def get_enrolled_patients_queryset(site_filter, filter_type):
+    """
+     CENTRALIZED: Get enrolled patients queryset
+    Use this everywhere to ensure consistency
+    """
+    return get_filtered_queryset(SCR_CASE, site_filter, filter_type).filter(
+        UPPER16AGE=True,
+        INFPRIOR2OR48HRSADMIT=True,
+        ISOLATEDKPNFROMINFECTIONORBLOOD=True,
+        KPNISOUNTREATEDSTABLE=False,
+        CONSENTTOSTUDY=True
+    )
+
 
 @login_required
 def home_dashboard(request):
-    """Main dashboard view for Study 43EN"""
+    """
+    Main dashboard view for Study 43EN
+    """
+    site_filter, filter_type = get_site_filter_params(request)
     
-    # Get user's site access
-    user_membership = getattr(request, 'user_membership', None)
-    can_access_all = getattr(user_membership, 'can_access_all_sites', False) if user_membership else False
-    user_site_codes = getattr(request, 'study_sites', [])
-    user_site_codes = list(user_site_codes) if user_site_codes else []
-    
-    selected_site_id = request.session.get('selected_site_id')
-    
-    if selected_site_id and selected_site_id != 'all':
-        site_filter = selected_site_id
-    elif can_access_all:
-        site_filter = 'all'
-    else:
-        site_filter = user_site_codes
-    
-    logger.debug(f"Loading dashboard for site filter: {site_filter}")
+    logger.debug(f"Loading dashboard - Site: {site_filter}, Type: {filter_type}")
     
     try:
         study = getattr(request, 'study', None)
         study_code = '43en'
         study_folder = 'studies/study_43en'
         
-        # ===== PATIENT STATISTICS =====
-        if site_filter == 'all':
-            screening_patients = ScreeningCase.objects.using(DB_ALIAS).count()
-            enrolled_patients = (
-                ScreeningCase.objects.using(DB_ALIAS)
-                .filter(
-                    UPPER16AGE=True,
-                    INFPRIOR2OR48HRSADMIT=True,
-                    ISOLATEDKPNFROMINFECTIONORBLOOD=True,
-                    KPNISOUNTREATEDSTABLE=False,
-                    CONSENTTOSTUDY=True
-                )
-                .count()
-            )
-        elif isinstance(site_filter, list):
-            # Multiple sites - aggregate
-            from django.db.models import Q
-            q_objects = Q()
-            for site_code in site_filter:
-                q_objects |= Q(SITEID=site_code)
-            
-            screening_patients = ScreeningCase.objects.using(DB_ALIAS).filter(q_objects).count()
-            enrolled_patients = (
-                ScreeningCase.objects.using(DB_ALIAS)
-                .filter(q_objects)
-                .filter(
-                    UPPER16AGE=True,
-                    INFPRIOR2OR48HRSADMIT=True,
-                    ISOLATEDKPNFROMINFECTIONORBLOOD=True,
-                    KPNISOUNTREATEDSTABLE=False,
-                    CONSENTTOSTUDY=True
-                )
-                .count()
-            )
-        else:
-            # Single site - use manager
-            screening_patients = get_filtered_queryset(ScreeningCase, site_filter).count()
-            enrolled_patients = (
-                get_filtered_queryset(ScreeningCase, site_filter)
-                .filter(
-                    UPPER16AGE=True,
-                    INFPRIOR2OR48HRSADMIT=True,
-                    ISOLATEDKPNFROMINFECTIONORBLOOD=True,
-                    KPNISOUNTREATEDSTABLE=False,
-                    CONSENTTOSTUDY=True
-                )
-                .count()
-            )
+        # ===== STUDY INFO =====
+        study_name = "Klebsiella pneumoniae Epidemiology Study"
+        site_name = "All Sites"
         
-        # ===== CONTACT STATISTICS - FIX QUAN TRỌNG =====
-        if site_filter == 'all':
-            screening_contacts = ScreeningContact.objects.using(DB_ALIAS).count()
-            enrolled_contacts = EnrollmentContact.objects.using(DB_ALIAS).count()
-            
-        elif isinstance(site_filter, list):
-            # Multiple sites - ScreeningContact có SITEID
-            q_screening_contact = Q()
-            for site_code in site_filter:
-                q_screening_contact |= Q(SITEID=site_code)
-            screening_contacts = ScreeningContact.objects.using(DB_ALIAS).filter(q_screening_contact).count()
-            
-            # EnrollmentContact KHÔNG có SITEID - phải qua USUBJID
-            q_enrolled_contact = Q()
-            for site_code in site_filter:
-                q_enrolled_contact |= Q(USUBJID__SITEID=site_code)  # ← FIX: qua relationship
-            enrolled_contacts = EnrollmentContact.objects.using(DB_ALIAS).filter(q_enrolled_contact).count()
-            
-        else:
-            # Single site - use manager
-            screening_contacts = get_filtered_queryset(ScreeningContact, site_filter).count()
-            enrolled_contacts = get_filtered_queryset(EnrollmentContact, site_filter).count()
+        # Lấy site name nếu có filter
+        if site_filter and site_filter != 'all':
+            from backends.tenancy.models import Site
+            try:
+                if filter_type == 'single':
+                    site = Site.objects.get(code=site_filter)
+                    site_name = site.name
+                elif filter_type == 'multiple':
+                    sites = Site.objects.filter(code__in=site_filter)
+                    site_count = sites.count()
+                    site_names = ', '.join([s.code for s in sites[:3]])
+                    site_name = f"{site_names}" + (f" (+{site_count - 3} more)" if site_count > 3 else "")
+            except Site.DoesNotExist:
+                site_name = f"Site {site_filter}"
+        
+        # ===== PATIENT STATISTICS =====
+        screening_patients = get_filtered_queryset(SCR_CASE, site_filter, filter_type).count()
+        
+        #  Use centralized function
+        enrolled_patients = get_enrolled_patients_queryset(site_filter, filter_type).count()
+        
+        logger.info(f"[Dashboard] Screening: {screening_patients}, Enrolled: {enrolled_patients}")
+        
+        # ===== CONTACT STATISTICS =====
+        screening_contacts = get_filtered_queryset(SCR_CONTACT, site_filter, filter_type).count()
+        enrolled_contacts = get_filtered_queryset(ENR_CONTACT, site_filter, filter_type).count()
         
         # ===== PROJECT START DATE =====
-        if site_filter == 'all':
-            first_enrollment = (
-                EnrollmentCase.objects.using(DB_ALIAS)
-                .order_by('ENRDATE')
-                .values_list('ENRDATE', flat=True)
-                .first()
-            )
-        elif isinstance(site_filter, list):
-            q_objects = Q()
-            for site_code in site_filter:
-                q_objects |= Q(USUBJID__SITEID=site_code)  # EnrollmentCase cũng qua USUBJID
-            first_enrollment = (
-                EnrollmentCase.objects.using(DB_ALIAS)
-                .filter(q_objects)
-                .order_by('ENRDATE')
-                .values_list('ENRDATE', flat=True)
-                .first()
-            )
-        else:
-            first_enrollment = (
-                get_filtered_queryset(EnrollmentCase, site_filter)
-                .order_by('ENRDATE')
-                .values_list('ENRDATE', flat=True)
-                .first()
-            )
+        first_enrollment = (
+            get_filtered_queryset(ENR_CASE, site_filter, filter_type)
+            .order_by('ENRDATE')
+            .values_list('ENRDATE', flat=True)
+            .first()
+        )
         
         project_start = first_enrollment if first_enrollment else None
-        percent_target = round(enrolled_patients / TARGET_ENROLLMENT * 100, 1) if enrolled_patients else 0
+        raw_percent = (enrolled_patients / TARGET_ENROLLMENT * 100) if enrolled_patients else 0.0
+        percent_target = f"{raw_percent:.1f}"  # Format as string with 1 decimal
         
+
+        avg_hospital_stay = get_average_hospital_stay(site_filter, filter_type)
+        mortality_stats = get_mortality_rate(site_filter, filter_type)
+        
+        logger.info(f"[Dashboard] Mortality stats:")
+        logger.info(f"  - Dashboard enrolled: {enrolled_patients}")
+        logger.info(f"  - Mortality enrolled: {mortality_stats['total_enrolled']}")
+        logger.info(f"  - Match: {enrolled_patients == mortality_stats['total_enrolled']}")
+
         # ===== UNRECRUITED REASONS =====
-        if site_filter == 'all':
-            patient_reasons_qs = (
-                ScreeningCase.objects.using(DB_ALIAS)
-                .filter(CONSENTTOSTUDY=False)
-                .exclude(UNRECRUITED_REASON__isnull=True)
-                .exclude(UNRECRUITED_REASON__exact='')
-            )
-            contact_reasons_qs = (
-                ScreeningContact.objects.using(DB_ALIAS)
-                .filter(CONSENTTOSTUDY=False)
-            )
-        elif isinstance(site_filter, list):
-            q_objects = Q()
-            for site_code in site_filter:
-                q_objects |= Q(SITEID=site_code)
-            
-            patient_reasons_qs = (
-                ScreeningCase.objects.using(DB_ALIAS)
-                .filter(q_objects)
-                .filter(CONSENTTOSTUDY=False)
-                .exclude(UNRECRUITED_REASON__isnull=True)
-                .exclude(UNRECRUITED_REASON__exact='')
-            )
-            contact_reasons_qs = (
-                ScreeningContact.objects.using(DB_ALIAS)
-                .filter(q_objects)
-                .filter(CONSENTTOSTUDY=False)
-            )
-        else:
-            patient_reasons_qs = (
-                get_filtered_queryset(ScreeningCase, site_filter)
-                .filter(CONSENTTOSTUDY=False)
-                .exclude(UNRECRUITED_REASON__isnull=True)
-                .exclude(UNRECRUITED_REASON__exact='')
-            )
-            contact_reasons_qs = (
-                get_filtered_queryset(ScreeningContact, site_filter)
-                .filter(CONSENTTOSTUDY=False)
-            )
-        
         patient_reasons = (
-            patient_reasons_qs
+            get_filtered_queryset(SCR_CASE, site_filter, filter_type)
+            .filter(CONSENTTOSTUDY=False)
+            .exclude(UNRECRUITED_REASON__isnull=True)
+            .exclude(UNRECRUITED_REASON__exact='')
             .values('UNRECRUITED_REASON')
             .annotate(count=Count('*'))
             .order_by('-count')
         )
         
-        contact_not_consented = contact_reasons_qs.count()
+        contact_not_consented = (
+            get_filtered_queryset(SCR_CONTACT, site_filter, filter_type)
+            .filter(CONSENTTOSTUDY=False)
+            .count()
+        )
+        
         contact_reasons = [
             {'UNRECRUITED_REASON': 'Did not consent', 'count': contact_not_consented}
         ] if contact_not_consented > 0 else []
@@ -259,10 +174,11 @@ def home_dashboard(request):
         context = {
             'study': study,
             'study_code': study_code,
-            'study_name': study.safe_translation_getter('name') if study else '43EN Study',
             'study_folder': study_folder,
+            'study_name': study_name,
+            'site_name': site_name,
             'screening_patients': screening_patients,
-            'enrolled_patients': enrolled_patients,
+            'enrolled_patients': enrolled_patients, 
             'screening_contacts': screening_contacts,
             'enrolled_contacts': enrolled_contacts,
             'percent_target': percent_target,
@@ -271,10 +187,15 @@ def home_dashboard(request):
             'today': datetime.now(),
             'patient_reasons': add_percent_to_reasons(patient_reasons),
             'contact_reasons': add_percent_to_reasons(contact_reasons),
-            'site_id': selected_site_id or 'all',
+            'site_id': site_filter,
+            'filter_type': filter_type,
+            'avg_hospital_stay': avg_hospital_stay,
+            'mortality_rate': f"{mortality_stats['mortality_rate']:.1f}",  # Format as string with 1 decimal
+            'total_deaths': mortality_stats['total_deaths'],
+            'total_enrolled_for_mortality': mortality_stats['total_enrolled'], 
         }
         
-        logger.debug(f"Dashboard loaded - Screening: {screening_patients}, Enrolled: {enrolled_patients}, Contacts: {enrolled_contacts}")
+        logger.debug(f"Dashboard loaded successfully")
         return render(request, 'studies/study_43en/home_dashboard.html', context)
         
     except Exception as e:
@@ -287,53 +208,16 @@ def home_dashboard(request):
         })
 
 # ============================================================================
-# CHART DATA APIs
-# ============================================================================
-def get_site_filter(request):
-    """
-    Determine site filter strategy based on user permissions and session
-    
-    Returns:
-        tuple: (site_filter, filter_type) where:
-            - site_filter: 'all', single site code, or list of site codes
-            - filter_type: 'all', 'single', or 'multiple'
-    """
-    user_membership = getattr(request, 'user_membership', None)
-    can_access_all = getattr(user_membership, 'can_access_all_sites', False) if user_membership else False
-    user_site_codes = getattr(request, 'study_sites', [])
-    user_site_codes = list(user_site_codes) if user_site_codes else []
-    
-    selected_site_id = request.session.get('selected_site_id')
-    
-    if selected_site_id and selected_site_id != 'all':
-        return (selected_site_id, 'single')
-    elif can_access_all:
-        return ('all', 'all')
-    else:
-        return (user_site_codes, 'multiple')
-
-
-# ============================================================================
-# CHART DATA APIs - UPDATED
+# CHART DATA APIs -  REFACTORED
 # ============================================================================
 
 @require_GET
 @login_required
 def patient_cumulative_chart_data(request):
     """API: Patient cumulative enrollment by month"""
-    site_filter, filter_type = get_site_filter(request)
+    site_filter, filter_type = get_site_filter_params(request)
     
-    if filter_type == 'all':
-        queryset = EnrollmentCase.objects.using(DB_ALIAS)
-    elif filter_type == 'multiple':
-        from django.db.models import Q
-        q_objects = Q()
-        for site_code in site_filter:
-            q_objects |= Q(USUBJID__SITEID=site_code)
-        queryset = EnrollmentCase.objects.using(DB_ALIAS).filter(q_objects)
-    else:
-        queryset = get_filtered_queryset(EnrollmentCase, site_filter)
-    
+    queryset = get_filtered_queryset(ENR_CASE, site_filter, filter_type)
     enroll_dates = queryset.values_list('ENRDATE', flat=True).order_by('ENRDATE')
     
     month_counts = OrderedDict()
@@ -355,19 +239,9 @@ def patient_cumulative_chart_data(request):
 @login_required
 def contact_cumulative_chart_data(request):
     """API: Contact cumulative enrollment by date"""
-    site_filter, filter_type = get_site_filter(request)
+    site_filter, filter_type = get_site_filter_params(request)
     
-    if filter_type == 'all':
-        queryset = EnrollmentContact.objects.using(DB_ALIAS)
-    elif filter_type == 'multiple':
-        from django.db.models import Q
-        q_objects = Q()
-        for site_code in site_filter:
-            q_objects |= Q(USUBJID__SITEID=site_code)
-        queryset = EnrollmentContact.objects.using(DB_ALIAS).filter(q_objects)
-    else:
-        queryset = get_filtered_queryset(EnrollmentContact, site_filter)
-    
+    queryset = get_filtered_queryset(ENR_CONTACT, site_filter, filter_type)
     enroll_dates = queryset.values_list('ENRDATE', flat=True).order_by('ENRDATE')
     
     date_counts = {}
@@ -389,21 +263,10 @@ def contact_cumulative_chart_data(request):
 @login_required
 def screening_comparison_chart_data(request):
     """API: Screening comparison between patients and contacts"""
-    site_filter, filter_type = get_site_filter(request)
+    site_filter, filter_type = get_site_filter_params(request)
     
-    if filter_type == 'all':
-        patient_queryset = ScreeningCase.objects.using(DB_ALIAS)
-        contact_queryset = ScreeningContact.objects.using(DB_ALIAS)
-    elif filter_type == 'multiple':
-        from django.db.models import Q
-        q_objects = Q()
-        for site_code in site_filter:
-            q_objects |= Q(SITEID=site_code)
-        patient_queryset = ScreeningCase.objects.using(DB_ALIAS).filter(q_objects)
-        contact_queryset = ScreeningContact.objects.using(DB_ALIAS).filter(q_objects)
-    else:
-        patient_queryset = get_filtered_queryset(ScreeningCase, site_filter)
-        contact_queryset = get_filtered_queryset(ScreeningContact, site_filter)
+    patient_queryset = get_filtered_queryset(SCR_CASE, site_filter, filter_type)
+    contact_queryset = get_filtered_queryset(SCR_CONTACT, site_filter, filter_type)
     
     patient_dates = patient_queryset.values_list('SCREENINGFORMDATE', flat=True)
     contact_dates = contact_queryset.values_list('SCREENINGFORMDATE', flat=True)
@@ -479,21 +342,12 @@ def screening_comparison_chart_data(request):
 def gender_distribution_chart_data(request):
     """API: Gender distribution for enrolled patients and contacts"""
     try:
-        site_filter, filter_type = get_site_filter(request)
+        site_filter, filter_type = get_site_filter_params(request)
         
         # Patient gender
-        if filter_type == 'all':
-            patient_queryset = EnrollmentCase.objects.using(DB_ALIAS)
-        elif filter_type == 'multiple':
-            from django.db.models import Q
-            q_objects = Q()
-            for site_code in site_filter:
-                q_objects |= Q(USUBJID__SITEID=site_code)
-            patient_queryset = EnrollmentCase.objects.using(DB_ALIAS).filter(q_objects)
-        else:
-            patient_queryset = get_filtered_queryset(EnrollmentCase, site_filter)
-        
+        patient_queryset = get_filtered_queryset(ENR_CASE, site_filter, filter_type)
         patient_gender_counts = patient_queryset.values('SEX').annotate(count=Count('SEX'))
+        
         patient_data = {'male': 0, 'female': 0}
         for item in patient_gender_counts:
             if item['SEX'] == 'Male':
@@ -502,17 +356,9 @@ def gender_distribution_chart_data(request):
                 patient_data['female'] = item['count']
         
         # Contact gender
-        if filter_type == 'all':
-            contact_queryset = EnrollmentContact.objects.using(DB_ALIAS)
-        elif filter_type == 'multiple':
-            q_objects = Q()
-            for site_code in site_filter:
-                q_objects |= Q(USUBJID__SITEID=site_code)
-            contact_queryset = EnrollmentContact.objects.using(DB_ALIAS).filter(q_objects)
-        else:
-            contact_queryset = get_filtered_queryset(EnrollmentContact, site_filter)
-        
+        contact_queryset = get_filtered_queryset(ENR_CONTACT, site_filter, filter_type)
         contact_gender_counts = contact_queryset.values('SEX').annotate(count=Count('SEX'))
+        
         contact_data = {'male': 0, 'female': 0}
         for item in contact_gender_counts:
             if item['SEX'] == 'Male':
@@ -543,19 +389,9 @@ def gender_distribution_chart_data(request):
 @login_required
 def patient_enrollment_chart_data(request):
     """API: Patient enrollment by month with cumulative"""
-    site_filter, filter_type = get_site_filter(request)
+    site_filter, filter_type = get_site_filter_params(request)
     
-    if filter_type == 'all':
-        queryset = EnrollmentCase.objects.using(DB_ALIAS)
-    elif filter_type == 'multiple':
-        from django.db.models import Q
-        q_objects = Q()
-        for site_code in site_filter:
-            q_objects |= Q(USUBJID__SITEID=site_code)
-        queryset = EnrollmentCase.objects.using(DB_ALIAS).filter(q_objects)
-    else:
-        queryset = get_filtered_queryset(EnrollmentCase, site_filter)
-    
+    queryset = get_filtered_queryset(ENR_CASE, site_filter, filter_type)
     enroll_dates = queryset.values_list('ENRDATE', flat=True).order_by('ENRDATE')
     
     monthly_counts = {}
@@ -614,7 +450,7 @@ def patient_enrollment_chart_data(request):
 def sample_distribution_chart_data(request):
     """API: Sample distribution for patients and contacts"""
     try:
-        site_filter, filter_type = get_site_filter(request)
+        site_filter, filter_type = get_site_filter_params(request)
         
         sample_types = {
             'Phân': 'STOOL',
@@ -634,17 +470,7 @@ def sample_distribution_chart_data(request):
         patient_counts = {}
         
         for name, field in sample_types.items():
-            if filter_type == 'all':
-                queryset = SampleCollection.objects.using(DB_ALIAS)
-            elif filter_type == 'multiple':
-                from django.db.models import Q
-                q_objects = Q()
-                for site_code in site_filter:
-                    q_objects |= Q(USUBJID__USUBJID__SITEID=site_code)
-                queryset = SampleCollection.objects.using(DB_ALIAS).filter(q_objects)
-            else:
-                queryset = get_filtered_queryset(SampleCollection, site_filter)
-            
+            queryset = get_filtered_queryset(SAM_CASE, site_filter, filter_type)
             count = queryset.filter(**{field: True}).count()
             if count > 0:
                 patient_counts[name] = patient_counts.get(name, 0) + count
@@ -653,19 +479,10 @@ def sample_distribution_chart_data(request):
             for name, field in sample_types.items():
                 if name == 'Máu' and suffix == '_4':
                     continue
-                    
+                
                 field_name = f"{field}{suffix}"
                 try:
-                    if filter_type == 'all':
-                        queryset = SampleCollection.objects.using(DB_ALIAS)
-                    elif filter_type == 'multiple':
-                        q_objects = Q()
-                        for site_code in site_filter:
-                            q_objects |= Q(USUBJID__USUBJID__SITEID=site_code)
-                        queryset = SampleCollection.objects.using(DB_ALIAS).filter(q_objects)
-                    else:
-                        queryset = get_filtered_queryset(SampleCollection, site_filter)
-                    
+                    queryset = get_filtered_queryset(SAM_CASE, site_filter, filter_type)
                     count = queryset.filter(**{field_name: True}).count()
                     if count > 0:
                         patient_counts[name] = patient_counts.get(name, 0) + count
@@ -676,16 +493,7 @@ def sample_distribution_chart_data(request):
         contact_counts = {}
         
         for name, field in sample_types.items():
-            if filter_type == 'all':
-                queryset = ContactSampleCollection.objects.using(DB_ALIAS)
-            elif filter_type == 'multiple':
-                q_objects = Q()
-                for site_code in site_filter:
-                    q_objects |= Q(USUBJID__USUBJID__SITEID=site_code)
-                queryset = ContactSampleCollection.objects.using(DB_ALIAS).filter(q_objects)
-            else:
-                queryset = get_filtered_queryset(ContactSampleCollection, site_filter)
-            
+            queryset = get_filtered_queryset(SAM_CONTACT, site_filter, filter_type)
             count = queryset.filter(**{field: True}).count()
             if count > 0:
                 contact_counts[name] = contact_counts.get(name, 0) + count
@@ -694,19 +502,10 @@ def sample_distribution_chart_data(request):
             for name, field in sample_types.items():
                 if name == 'Máu':
                     continue
-                    
+                
                 field_name = f"{field}{suffix}"
                 try:
-                    if filter_type == 'all':
-                        queryset = ContactSampleCollection.objects.using(DB_ALIAS)
-                    elif filter_type == 'multiple':
-                        q_objects = Q()
-                        for site_code in site_filter:
-                            q_objects |= Q(USUBJID__USUBJID__SITEID=site_code)
-                        queryset = ContactSampleCollection.objects.using(DB_ALIAS).filter(q_objects)
-                    else:
-                        queryset = get_filtered_queryset(ContactSampleCollection, site_filter)
-                    
+                    queryset = get_filtered_queryset(SAM_CONTACT, site_filter, filter_type)
                     count = queryset.filter(**{field_name: True}).count()
                     if count > 0:
                         contact_counts[name] = contact_counts.get(name, 0) + count
@@ -730,3 +529,264 @@ def sample_distribution_chart_data(request):
     except Exception as e:
         logger.error(f"Error in sample_distribution_chart_data: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+@login_required
+def infection_focus_chart_data(request):
+    """API: Infection focus distribution"""
+    site_filter, filter_type = get_site_filter_params(request)
+    
+    queryset = get_filtered_queryset(CLI_CASE, site_filter, filter_type)
+    
+    focus_counts = (
+        queryset
+        .exclude(INFECTFOCUS48H__isnull=True)
+        .exclude(INFECTFOCUS48H__exact='')
+        .values('INFECTFOCUS48H')
+        .annotate(count=Count('*'))
+        .order_by('-count')
+    )
+    
+    labels = []
+    counts = []
+    colors = {
+        'Pneumonia': '#FF6384',        # Đỏ hồng
+        'UTI': '#36A2EB',              # Xanh dương
+        'AbdAbscess': '#FFCE56',       # Vàng
+        'Peritonitis': '#4BC0C0',      # Xanh ngọc
+        'SoftTissue': '#9966FF',       # Tím
+        'Meningitis': '#FF9F40',       # Cam
+        'NTTKTW': '#8B4513',           #  CHANGED: Nâu (khác với Empyema)
+        'Empyema': '#696969',          #  CHANGED: Xám đậm
+        'Other': '#C9CBCF'             # Xám nhạt
+    }
+    
+    chart_colors = []
+    for item in focus_counts:
+        focus = item['INFECTFOCUS48H']
+        labels.append(dict(CLI_CASE.InfectFocus48HChoices.choices).get(focus, focus))
+        counts.append(item['count'])
+        chart_colors.append(colors.get(focus, '#808080'))
+    
+    return JsonResponse({
+        'data': {
+            'labels': labels,
+            'counts': counts,
+            'colors': chart_colors
+        }
+    })
+
+
+@require_GET
+@login_required
+def antibiotic_resistance_chart_data(request):
+    """API: Antibiotic resistance overview"""
+    site_filter, filter_type = get_site_filter_params(request)
+    
+    #  SIMPLIFIED: Sử dụng get_filtered_queryset thống nhất
+    queryset = get_filtered_queryset(AntibioticSensitivity, site_filter, filter_type)
+    queryset = queryset.exclude(SENSITIVITY_LEVEL='ND')
+    
+    antibiotic_stats = {}
+    
+    for record in queryset.values('ANTIBIOTIC_NAME', 'SENSITIVITY_LEVEL'):
+        abx = record['ANTIBIOTIC_NAME']
+        sens = record['SENSITIVITY_LEVEL']
+        
+        if abx not in antibiotic_stats:
+            antibiotic_stats[abx] = {'total': 0, 'resistant': 0, 'sensitive': 0}
+        
+        antibiotic_stats[abx]['total'] += 1
+        if sens == 'R':
+            antibiotic_stats[abx]['resistant'] += 1
+        elif sens == 'S':
+            antibiotic_stats[abx]['sensitive'] += 1
+    
+    resistance_data = []
+    for abx, stats in antibiotic_stats.items():
+        if stats['total'] >= 5:
+            resistance_pct = round((stats['resistant'] / stats['total']) * 100, 1)
+            resistance_data.append({
+                'antibiotic': abx,
+                'resistance_pct': resistance_pct,
+                'total': stats['total']
+            })
+    
+    resistance_data.sort(key=lambda x: x['resistance_pct'], reverse=True)
+    top_10 = resistance_data[:10]
+    
+    return JsonResponse({
+        'data': {
+            'labels': [item['antibiotic'] for item in top_10],
+            'resistance': [item['resistance_pct'] for item in top_10],
+            'totals': [item['total'] for item in top_10]
+        }
+    })
+
+
+@require_GET
+@login_required
+def resistance_by_comorbidity_data(request):
+    """API: Antibiotic resistance rates by underlying conditions"""
+    site_filter, filter_type = get_site_filter_params(request)
+    
+    try:
+        enrollment_qs = get_filtered_queryset(ENR_CASE, site_filter, filter_type)
+        
+        conditions_to_check = {
+            'Diabetes': 'DIABETES',
+            'CKD': 'KIDNEYDISEASE',
+            'Cancer': 'CANCER',
+            'HIV/AIDS': 'HIV',
+            'Cirrhosis': 'CIRRHOSIS',
+            'COPD': 'COPD',
+            'Heart Failure': 'HEARTFAILURE'
+        }
+        
+        results = {}
+        
+        for condition_name, condition_field in conditions_to_check.items():
+            patients_with_condition = []
+            
+            for enrollment in enrollment_qs.select_related('Underlying_Condition'):
+                try:
+                    underlying = enrollment.Underlying_Condition
+                    if underlying and getattr(underlying, condition_field, False):
+                        usubjid_str = enrollment.USUBJID.USUBJID
+                        patients_with_condition.append(usubjid_str)
+                except Exception as e:
+                    logger.debug(f"Error checking condition for {enrollment.USUBJID}: {e}")
+                    continue
+            
+            if not patients_with_condition:
+                continue
+            
+            #  SIMPLIFIED: Sử dụng get_filtered_queryset
+            ast_qs = get_filtered_queryset(AntibioticSensitivity, site_filter, filter_type)
+            ast_qs = ast_qs.filter(
+                LAB_CULTURE_ID__USUBJID__USUBJID__USUBJID__in=patients_with_condition
+            ).exclude(SENSITIVITY_LEVEL='ND')
+            
+            total = ast_qs.count()
+            
+            if total < 5:
+                continue
+            
+            resistant = ast_qs.filter(SENSITIVITY_LEVEL='R').count()
+            sensitive = ast_qs.filter(SENSITIVITY_LEVEL='S').count()
+            intermediate = ast_qs.filter(SENSITIVITY_LEVEL='I').count()
+            
+            resistance_rate = round((resistant / total) * 100, 1)
+            
+            results[condition_name] = {
+                'resistance_rate': resistance_rate,
+                'total_tests': total,
+                'resistant_tests': resistant,
+                'sensitive_tests': sensitive,
+                'intermediate_tests': intermediate,
+                'patient_count': len(patients_with_condition)
+            }
+        
+        sorted_results = dict(sorted(results.items(), key=lambda x: x[1]['resistance_rate'], reverse=True))
+        
+        return JsonResponse({
+            'data': sorted_results,
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in resistance_by_comorbidity_data: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'error': str(e),
+            'status': 'error'
+        }, status=500)
+
+
+# ============================================================================
+# HELPER FUNCTIONS FOR METRICS -  UPDATED
+# ============================================================================
+
+def get_average_hospital_stay(site_filter, filter_type):
+    """
+     UPDATED: Nhận thêm filter_type parameter
+    Tính thời gian nằm viện trung bình
+    """
+    discharges = get_filtered_queryset(DISCH_CASE, site_filter, filter_type)
+    
+    discharges_with_stay = discharges.select_related(
+        'USUBJID__clinical_case'
+    ).filter(
+        DISCHDATE__isnull=False,
+        USUBJID__clinical_case__ADMISDATE__isnull=False
+    ).annotate(
+        stay_days=ExpressionWrapper(
+            Extract(F('DISCHDATE') - F('USUBJID__clinical_case__ADMISDATE'), 'day') + 1,
+            output_field=IntegerField()
+        )
+    )
+    
+    avg_stay = discharges_with_stay.aggregate(
+        avg_days=Avg('stay_days')
+    )['avg_days']
+    
+    return round(avg_stay, 1) if avg_stay else None
+
+
+def get_mortality_rate(site_filter, filter_type):
+    """
+    Calculate mortality rate from all enrolled patients
+     FIXED: Use enrolled patients from SCR_CASE (same as dashboard)
+    """
+    #  Use centralized function
+    enrolled_qs = get_enrolled_patients_queryset(site_filter, filter_type)
+    total_enrolled = enrolled_qs.count()
+    
+    logger.info(f"[Mortality] Total enrolled from SCR_CASE: {total_enrolled}")
+    
+    if total_enrolled == 0:
+        return {
+            'total_enrolled': 0,
+            'total_deaths': 0,
+            'mortality_rate': 0.0
+        }
+    
+    enrolled_usubjids = list(enrolled_qs.values_list('USUBJID', flat=True))
+    logger.info(f"[Mortality] Enrolled USUBJID count: {len(enrolled_usubjids)}")
+    
+    deaths_at_discharge = get_filtered_queryset(DISCH_CASE, site_filter, filter_type).filter(
+        USUBJID__in=enrolled_usubjids,  
+        DEATHATDISCH='Yes'
+    ).values_list('USUBJID', flat=True)
+    
+    deaths_at_fu28 = get_filtered_queryset(FU_CASE_28, site_filter, filter_type).filter(
+        USUBJID__in=enrolled_usubjids,  
+        Dead='Yes'
+    ).values_list('USUBJID', flat=True)
+    
+    deaths_at_fu90 = get_filtered_queryset(FU_CASE_90, site_filter, filter_type).filter(
+        USUBJID__in=enrolled_usubjids,  
+        Dead='Yes'
+    ).values_list('USUBJID', flat=True)
+    
+    all_death_usubjids = set(deaths_at_discharge) | set(deaths_at_fu28) | set(deaths_at_fu90)
+    total_deaths = len(all_death_usubjids)
+    
+    # Calculate with explicit decimal precision
+    raw_rate = (total_deaths / total_enrolled) * 100
+    mortality_rate = round(raw_rate, 1)
+    
+    logger.info(f"[Mortality] Deaths breakdown:")
+    logger.info(f"  - At discharge: {len(deaths_at_discharge)}")
+    logger.info(f"  - At FU-28: {len(deaths_at_fu28)}")
+    logger.info(f"  - At FU-90: {len(deaths_at_fu90)}")
+    logger.info(f"  - Total unique deaths: {total_deaths}")
+    logger.info(f"  - Raw rate: {raw_rate}")
+    logger.info(f"  - Rounded rate: {mortality_rate}")
+    logger.info(f"  - Mortality rate: {total_deaths}/{total_enrolled} = {mortality_rate}%")
+    
+    return {
+        'total_enrolled': total_enrolled,
+        'total_deaths': total_deaths,
+        'mortality_rate': mortality_rate
+    }

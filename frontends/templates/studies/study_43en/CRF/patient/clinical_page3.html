@@ -1,0 +1,903 @@
+{% load i18n %}
+<div class="tab-pane fade" id="page3" role="tabpanel" aria-labelledby="page3-tab">
+  <div class="clinical-case-container">
+    <div class="clinical-case-header">
+      <div class="row">
+        <div class="col">
+          <h4 class="m-0"><i class="fas fa-procedures mr-2"></i>CLINICAL - INTERVENTIONS & TREATMENTS</h4>
+        </div>
+        <div class="col text-right">
+          <span class="page-indicator">CL1 (3/3)</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="clinical-case-content">
+      {# ========== INFECTION CHARACTERISTICS ========== #}
+      <div class="form-section-header">
+        <i class="fas fa-virus mr-2"></i>{% trans "Infection Characteristics" %}
+      </div>
+      
+      {# 27. Infection Focus - FIX TÊN BIẾN #}
+      <div class="numbered-item" data-number="27">
+        <label for="{{ clinical_form.INFECTFOCUS48H.id_for_label }}">
+          {% trans "Source of Infection (within 48h)" %}
+        </label>
+        {{ clinical_form.INFECTFOCUS48H }}
+        
+        {# Conditional: Other Infection Source #}
+        <div id="infectfocus-other-section" 
+             class="conditional-section {% if clinical_form.INFECTFOCUS48H.value == 'Other' %}show{% endif %}">
+          <label for="{{ clinical_form.SPECIFYOTHERINFECT48H.id_for_label }}">
+            {% trans "Please specify other infection source" %}
+          </label>
+          {{ clinical_form.SPECIFYOTHERINFECT48H }}
+        </div>
+      </div>
+      
+      {# 28. Bloodstream Infection (Sepsis) #}
+      <div class="numbered-item" data-number="28">
+        <label>{% trans "Bloodstream Infection (Sepsis)?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="BLOODINFECT" 
+                   value="yes" 
+                   id="id_BLOODINFECT_yes"
+                   {% if clinical_form.BLOODINFECT.value == 'yes' %}checked{% endif %}>
+            <label class="form-check-label" for="id_BLOODINFECT_yes">
+              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="BLOODINFECT" 
+                   value="no" 
+                   id="id_BLOODINFECT_no"
+                   {% if clinical_form.BLOODINFECT.value == 'no' %}checked{% endif %}>
+            <label class="form-check-label" for="id_BLOODINFECT_no">
+              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="BLOODINFECT" 
+                   value="unknown" 
+                   id="id_BLOODINFECT_unknown"
+                   {% if clinical_form.BLOODINFECT.value == 'unknown' %}checked{% endif %}>
+            <label class="form-check-label" for="id_BLOODINFECT_unknown">
+              <i class="fas fa-question-circle text-warning mr-1"></i>{% trans "Unknown" %}
+            </label>
+          </div>
+        </div>
+        
+        {# SOFA Scores #}
+        <div id="sepsis-scores-section" 
+             class="conditional-section {% if clinical_form.BLOODINFECT.value == 'yes' %}show{% endif %}">
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ clinical_form.SOFABASELINE.id_for_label }}">
+                  <i class="fas fa-chart-bar text-primary mr-1"></i>{% trans "Baseline SOFA Score" %}
+                </label>
+                {{ clinical_form.SOFABASELINE }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ clinical_form.DIAGSOFA.id_for_label }}">
+                  <i class="fas fa-chart-line text-info mr-1"></i>{% trans "SOFA Score at Diagnosis" %}
+                </label>
+                {{ clinical_form.DIAGSOFA }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {# 29. Septic Shock #}
+      <div class="numbered-item" data-number="29">
+        <label>{% trans "Septic Shock?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="SEPTICSHOCK" 
+                   value="yes" 
+                   id="id_SEPTICSHOCK_yes"
+                   {% if clinical_form.SEPTICSHOCK.value == 'yes' %}checked{% endif %}>
+            <label class="form-check-label" for="id_SEPTICSHOCK_yes">
+              <i class="fas fa-exclamation-triangle text-danger mr-1"></i>{% trans "Yes" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="SEPTICSHOCK" 
+                   value="no" 
+                   id="id_SEPTICSHOCK_no"
+                   {% if form.SEPTICSHOCK.value == 'no' %}checked{% endif %}>
+            <label class="form-check-label" for="id_SEPTICSHOCK_no">
+              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "No" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="SEPTICSHOCK" 
+                   value="unknown" 
+                   id="id_SEPTICSHOCK_unknown"
+                   {% if form.SEPTICSHOCK.value == 'unknown' %}checked{% endif %}>
+            <label class="form-check-label" for="id_SEPTICSHOCK_unknown">
+              <i class="fas fa-question-circle text-warning mr-1"></i>{% trans "Unknown" %}
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      {# 30. Infection Origin #}
+      <div class="numbered-item" data-number="30">
+        <label>{% trans "Infection Origin?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="INFECTSRC" 
+                   value="Community" 
+                   id="id_INFECTSRC_community"
+                   {% if form.INFECTSRC.value == 'Community' %}checked{% endif %}>
+            <label class="form-check-label" for="id_INFECTSRC_community">
+              <i class="fas fa-home text-primary mr-1"></i>{% trans "Community" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="INFECTSRC" 
+                   value="HealthcareAssociated" 
+                   id="id_INFECTSRC_healthcare"
+                   {% if form.INFECTSRC.value == 'HealthcareAssociated' %}checked{% endif %}>
+            <label class="form-check-label" for="id_INFECTSRC_healthcare">
+              <i class="fas fa-hospital text-danger mr-1"></i>{% trans "Healthcare-Associated" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="INFECTSRC" 
+                   value="Unknown" 
+                   id="id_INFECTSRC_unknown"
+                   {% if form.INFECTSRC.value == 'Unknown' %}checked{% endif %}>
+            <label class="form-check-label" for="id_INFECTSRC_unknown">
+              <i class="fas fa-question-circle text-warning mr-1"></i>{% trans "Unclassified" %}
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      {# ========== INTERVENTIONS ========== #}
+      <div class="form-section-header">
+        <i class="fas fa-hands-helping mr-2"></i>{% trans "Interventions During Hospitalization" %}
+      </div>
+      
+      {# 31. Respiratory Support - FIX TÊN BIẾN #}
+      <div class="numbered-item" data-number="31">
+        <label>{% trans "Respiratory Support?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="RESPISUPPORT" 
+                   value="true" 
+                   id="id_RESPISUPPORT_yes"
+                   {% if clinical_form.RESPISUPPORT.value %}checked{% endif %}>
+            <label class="form-check-label" for="id_RESPISUPPORT_yes">
+              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="RESPISUPPORT" 
+                   value="false" 
+                   id="id_RESPISUPPORT_no"
+                   {% if clinical_form.RESPISUPPORT.value == False %}checked{% endif %}>
+            <label class="form-check-label" for="id_RESPISUPPORT_no">
+              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+            </label>
+          </div>
+        </div>
+        
+        {# Conditional: Respiratory Support Details #}
+        <div id="respi-support-section" 
+             class="conditional-section {% if clinical_form.RESPISUPPORT.value %}show{% endif %}">
+          <h6 class="text-primary mb-3 mt-3">
+            <i class="fas fa-lungs mr-2"></i>{% trans "Support Type & Duration" %}
+          </h6>
+          
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.OXYMASKDURATION.id_for_label }}">
+                  {% trans "Oxygen Mask Duration (days)" %}
+                </label>
+                {{ clinical_form.OXYMASKDURATION }}
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.HFNCNIVDURATION.id_for_label }}">
+                  {% trans "HFNC/NIV Duration (days)" %}
+                </label>
+                {{ clinical_form.HFNCNIVDURATION }}
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.VENTILATORDURATION.id_for_label }}">
+                  {% trans "Ventilator Duration (days)" %}
+                </label>
+                {{ clinical_form.VENTILATORDURATION }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {# 32. Resuscitation Fluids #}
+      <div class="numbered-item" data-number="32">
+        <label>{% trans "Resuscitation Fluids?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                  class="form-check-input" 
+                  name="RESUSFLUID" 
+                  value="true" 
+                  id="id_RESUSFLUID_yes"
+                  {% if clinical_form.RESUSFLUID.value %}checked{% endif %}>
+            <label class="form-check-label" for="id_RESUSFLUID_yes">
+              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                  class="form-check-input" 
+                  name="RESUSFLUID" 
+                  value="false" 
+                  id="id_RESUSFLUID_no"
+                  {% if clinical_form.RESUSFLUID.value == False %}checked{% endif %}>
+            <label class="form-check-label" for="id_RESUSFLUID_no">
+              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+            </label>
+          </div>
+        </div>
+        
+        {# Conditional: Fluid Details #}
+        <div id="resus-fluid-section" 
+            class="conditional-section {% if clinical_form.RESUSFLUID.value %}show{% endif %}">
+          <h6 class="text-primary mb-3 mt-3">
+            <i class="fas fa-tint mr-2"></i>{% trans "Fluid Volume Details" %}
+          </h6>
+          
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.FLUID6HOURS.id_for_label }}">
+                  {% trans "Total Fluid in 6 Hours (mL)" %}
+                </label>
+                {{ clinical_form.FLUID6HOURS }}
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.CRYSTAL6HRS.id_for_label }}">
+                  {% trans "Crystalloid in 6 Hours (mL)" %}
+                </label>
+                {{ clinical_form.CRYSTAL6HRS }}
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.COL6HRS.id_for_label }}">
+                  {% trans "Colloid in 6 Hours (mL)" %}
+                </label>
+                {{ clinical_form.COL6HRS }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.FLUID24HOURS.id_for_label }}">
+                  {% trans "Total Fluid in 24 Hours (mL)" %}
+                </label>
+                {{ clinical_form.FLUID24HOURS }}
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.CRYSTAL24HRS.id_for_label }}">
+                  {% trans "Crystalloid in 24 Hours (mL)" %}
+                </label>
+                {{ clinical_form.CRYSTAL24HRS }}
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ clinical_form.COL24HRS.id_for_label }}">
+                  {% trans "Colloid in 24 Hours (mL)" %}
+                </label>
+                {{ clinical_form.COL24HRS }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {# 33. Vasopressors/Inotropes #}
+      <div class="numbered-item" data-number="33">
+        <label>{% trans "Vasopressors/Inotropes Used?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="VASOINOTROPES" 
+                   value="true" 
+                   id="id_VASOINOTROPES_yes"
+                   {% if clinical_form.VASOINOTROPES.value %}checked{% endif %}>
+            <label class="form-check-label" for="id_VASOINOTROPES_yes">
+              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" 
+                   class="form-check-input" 
+                   name="VASOINOTROPES" 
+                   value="false" 
+                   id="id_VASOINOTROPES_no"
+                   {% if clinical_form.VASOINOTROPES.value == False %}checked{% endif %}>
+            <label class="form-check-label" for="id_VASOINOTROPES_no">
+              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+            </label>
+          </div>
+        </div>
+        
+        {# Conditional: Vasopressor Formset #}
+        <div id="vasodrug-section" 
+             class="conditional-section {% if clinical_form.VASOINOTROPES.value %}show{% endif %}">
+          <h6 class="text-primary mb-3 mt-3">
+            <i class="fas fa-syringe mr-2"></i>{% trans "Vasopressor Details" %}
+          </h6>
+          
+          {#  CRITICAL FIX: ADD MANAGEMENT FORM #}
+          {{ vaso_drug_formset.management_form }}
+          
+          <div class="table-responsive formset-table">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans "Drug Name" %}</th>
+                  <th>{% trans "Total Dose (µg/kg/min)" %}</th>
+                  <th>{% trans "Duration (days)" %}</th>
+                </tr>
+              </thead>
+              <tbody id="vasodrug-formset-body">
+                {% for vform in vaso_drug_formset %}
+                <tr class="formset-row">
+                  <td style="display:none;">
+                    {{ vform.id }}
+                    {{ vform.DELETE }}
+                    {{ vform.SEQUENCE }}
+                  </td>
+                  <td>{{ vform.VASOIDRUGNAME }}</td>
+                  <td>{{ vform.VASOIDOSE }}</td>
+                  <td>{{ vform.VASOIDURATION }}</td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                  <td colspan="3" class="text-center text-muted">{% trans "No vasopressors/inotropes" %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          {% if not is_readonly %}
+          <button type="button" 
+                  class="btn btn-success btn-sm mt-3" 
+                  id="add-vasodrug-btn">
+            <i class="fas fa-plus mr-1"></i>{% trans "Add Vasopressor" %}
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      
+      {# 34. Dialysis #}
+      <div class="numbered-item" data-number="34">
+        <label>{% trans "Dialysis?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="dialysis_radio" value="yes" id="id_DIALYSIS_yes"
+                   {% if clinical_form.DIALYSIS.value %}checked{% endif %}>
+            <label class="form-check-label" for="id_DIALYSIS_yes">
+              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="dialysis_radio" value="no" id="id_DIALYSIS_no"
+                   {% if not clinical_form.DIALYSIS.value %}checked{% endif %}>
+            <label class="form-check-label" for="id_DIALYSIS_no">
+              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+            </label>
+          </div>
+        </div>
+        <div class="d-none">
+          {{ clinical_form.DIALYSIS }}
+        </div>
+      </div>
+
+      {# 35. Drainage #}
+      <div class="numbered-item" data-number="35">
+        <label>{% trans "Drainage?" %}</label>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mt-2">
+              <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" name="drainage_radio" value="yes" id="id_DRAINAGE_yes"
+                       {% if clinical_form.DRAINAGE.value %}checked{% endif %}>
+                <label class="form-check-label" for="id_DRAINAGE_yes">{% trans "Yes" %}</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" name="drainage_radio" value="no" id="id_DRAINAGE_no"
+                       {% if not clinical_form.DRAINAGE.value %}checked{% endif %}>
+                <label class="form-check-label" for="id_DRAINAGE_no">{% trans "No" %}</label>
+              </div>
+            </div>
+            <div class="d-none">
+              {{ clinical_form.DRAINAGE }}
+            </div>
+          </div>
+          
+          <div class="col-md-6" id="drainage_type_section" style="display:none;">
+            <label>{% trans "Drainage Type:" %}</label>
+            <div class="mt-2">
+              <div class="form-check">
+                <input type="radio" class="form-check-input" name="drainage_type_radio" value="Empyema" id="id_DRAINAGETYPE_1"
+                       {% if clinical_form.DRAINAGETYPE.value == "Empyema" %}checked{% endif %}>
+                <label class="form-check-label" for="id_DRAINAGETYPE_1">{% trans "Empyema" %}</label>
+              </div>
+              <div class="form-check">
+                <input type="radio" class="form-check-input" name="drainage_type_radio" value="Abscess" id="id_DRAINAGETYPE_2"
+                       {% if clinical_form.DRAINAGETYPE.value == "Abscess" %}checked{% endif %}>
+                <label class="form-check-label" for="id_DRAINAGETYPE_2">{% trans "Abscess" %}</label>
+              </div>
+              <div class="form-check">
+                <input type="radio" class="form-check-input" name="drainage_type_radio" value="Other" id="id_DRAINAGETYPE_3"
+                       {% if clinical_form.DRAINAGETYPE.value == "Other" %}checked{% endif %}>
+                <label class="form-check-label" for="id_DRAINAGETYPE_3">{% trans "Other:" %}</label>
+                {{ clinical_form.SPECIFYOTHERDRAINAGE }}
+              </div>
+            </div>
+            <div class="d-none">
+              {{ clinical_form.DRAINAGETYPE }}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {# ========== ADVERSE EVENTS - CRITICAL FIX ========== #}
+      <div class="numbered-item" data-number="38">
+        <label>{% trans "Adverse Events During Hospitalization?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="has_aehospevent" value="yes" id="id_has_aehospevent_yes">
+            <label class="form-check-label" for="id_has_aehospevent_yes">{% trans "Yes" %}</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="has_aehospevent" value="no" id="id_has_aehospevent_no" checked>
+            <label class="form-check-label" for="id_has_aehospevent_no">{% trans "No" %}</label>
+          </div>
+        </div>
+        
+        {#  CRITICAL: Management form MUST be outside display:none div! #}
+        {# Force render management form with explicit visibility #}
+        <div style="position:absolute; left:-9999px;">
+          {{ ae_hosp_event_formset.management_form }}
+        </div>
+        
+        <div id="aehospevent-formset" class="conditional-section" style="display:none;">
+          <div class="table-responsive formset-table mt-3">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans "Event Name" %}</th>
+                  <th>{% trans "Event Details" %}</th>
+                  <th>{% trans "Date" %}</th>
+                </tr>
+              </thead>
+              <tbody id="aehospevent-formset-body">
+                {% for aeform in ae_hosp_event_formset %}
+                <tr class="formset-row">
+                  {{ aeform.id }}
+                  <div style="display:none;">
+                    {{ aeform.DELETE }}
+                    {{ aeform.USUBJID }}
+                    {{ aeform.SEQUENCE }}
+                  </div>
+                  
+                  <td>{{ aeform.AENAME }}</td>
+                  <td>{{ aeform.AEDETAILS }}</td>
+                  <td>
+                    <input type="text" 
+                          name="{{ aeform.AEDTC.html_name }}" 
+                          class="form-control datepicker"
+                          value="{% if aeform.AEDTC.value %}{% if aeform.AEDTC.value|date:'Y-m-d' %}{{ aeform.AEDTC.value|date:'Y-m-d' }}{% else %}{{ aeform.AEDTC.value }}{% endif %}{% endif %}">
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          {% if not is_readonly %}
+          <button type="button" 
+                  class="btn btn-success btn-sm mt-3 add-formset-row" 
+                  data-formset="aehospevent_set"
+                  data-tbody="#aehospevent-formset-body">
+            <i class="fas fa-plus mr-1"></i>{% trans "Add Adverse Event" %}
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      {# ========== SYMPTOM IMPROVEMENT - CRITICAL FIX ========== #}
+      <div class="numbered-item" data-number="39">
+        <label>{% trans "Symptom Improvement?" %}</label>
+        <div class="mt-2">
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="has_improvesympt" value="yes" id="id_has_improvesympt_yes">
+            <label class="form-check-label" for="id_has_improvesympt_yes">{% trans "Yes" %}</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input type="radio" class="form-check-input" name="has_improvesympt" value="no" id="id_has_improvesympt_no" checked>
+            <label class="form-check-label" for="id_has_improvesympt_no">{% trans "No" %}</label>
+          </div>
+        </div>
+        
+        <div style="position:absolute; left:-9999px;">
+          {{ improve_sympt_formset.management_form }}
+        </div>
+        
+        <div id="improvesympt-formset" class="conditional-section" style="display:none;">
+          <div class="table-responsive formset-table mt-3">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans "Symptom" %}</th>
+                  <th>{% trans "Condition" %}</th>
+                  <th>{% trans "Date" %}</th>
+                </tr>
+              </thead>
+              <tbody id="improvesympt-formset-body">
+                {% for iform in improve_sympt_formset %}
+                <tr class="formset-row">
+                  <div style="display:none;">
+                    {{ iform.id }}
+                    {{ iform.DELETE }}
+                    {{ iform.USUBJID }}
+                    {{ iform.SEQUENCE }}
+                  </div>
+                  
+                  <td>{{ iform.SYMPTS }}</td>
+                  <td>{{ iform.IMPROVE_CONDITIONS }}</td>
+                  <td>
+                    <input type="text" 
+                          name="{{ iform.SYMPTSDTC.html_name }}" 
+                          class="form-control datepicker"
+                          value="{% if iform.SYMPTSDTC.value %}{% if iform.SYMPTSDTC.value|date:'Y-m-d' %}{{ iform.SYMPTSDTC.value|date:'Y-m-d' }}{% else %}{{ iform.SYMPTSDTC.value }}{% endif %}{% endif %}">
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          {% if not is_readonly %}
+          <button type="button" 
+                  class="btn btn-success btn-sm mt-3 add-formset-row" 
+                  data-formset="improvesympt_set"
+                  data-tbody="#improvesympt-formset-body">
+            <i class="fas fa-plus mr-1"></i>{% trans "Add Improvement" %}
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      {# 36. Hospitalization Process #}
+      <div class="numbered-item" data-number="36">
+        <label>{% trans "Hospitalization Process" %}</label>
+        
+        {#  ALREADY HAS MANAGEMENT FORM - GOOD #}
+        {{ hospi_process_formset.management_form }}
+        
+        <div class="table-responsive formset-table mt-3">
+          <table class="table table-bordered mb-0">
+            <thead>
+              <tr>
+                <th>{% trans "Department" %}</th>
+                <th>{% trans "From Date" %}</th>
+                <th>{% trans "To Date" %}</th>
+                <th>{% trans "Transfer Reason" %}</th>
+              </tr>
+            </thead>
+            <tbody id="hospiprocess-formset-body">
+              {% for hform in hospi_process_formset %}
+              <tr class="formset-row">
+                {{ hform.id }}
+                <div style="display:none;">
+                  {{ hform.DELETE }}
+                  {{ hform.USUBJID }}
+                  {{ hform.SEQUENCE }}
+                </div>
+                <td>{{ hform.DEPTNAME }}</td>
+                <td>
+                  <input type="text" 
+                        name="{{ hform.STARTDTC.html_name }}" 
+                        class="form-control datepicker" 
+                        value="{% if hform.STARTDTC.value %}{% if hform.STARTDTC.value|date:'Y-m-d' %}{{ hform.STARTDTC.value|date:'Y-m-d' }}{% else %}{{ hform.STARTDTC.value }}{% endif %}{% endif %}">
+                </td>
+                <td>
+                  <input type="text" 
+                        name="{{ hform.ENDDTC.html_name }}" 
+                        class="form-control datepicker" 
+                        value="{% if hform.ENDDTC.value %}{% if hform.ENDDTC.value|date:'Y-m-d' %}{{ hform.ENDDTC.value|date:'Y-m-d' }}{% else %}{{ hform.ENDDTC.value }}{% endif %}{% endif %}">
+                </td>
+                <td>{{ hform.TRANSFER_REASON }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        {% if not is_readonly %}
+        <button type="button" 
+                class="btn btn-success btn-sm mt-3 add-formset-row" 
+                data-formset="hospiprocess_set"
+                data-tbody="#hospiprocess-formset-body">
+          <i class="fas fa-plus mr-1"></i>{% trans "Add Department Transfer" %}
+        </button>
+        {% endif %}
+      </div>
+      
+      {# ========== ANTIBIOTIC TREATMENT ========== #}
+      <div class="form-section-header">
+        <i class="fas fa-pills mr-2"></i>{% trans "Antibiotic Treatment" %}
+      </div>
+      
+      {# 37. Main Antibiotics #}
+      <div class="numbered-item" data-number="37">
+        <label>{% trans "Main Antibiotics" %}</label>
+        
+        {#  ALREADY HAS MANAGEMENT FORM - GOOD #}
+        {{ main_antibiotic_formset.management_form }}
+        
+        <div class="table-responsive formset-table mt-3">
+          <table class="table table-bordered mb-0">
+            <thead>
+              <tr>
+                <th>{% trans "Antibiotic Name" %}</th>
+                <th>{% trans "Dosage" %}</th>
+                <th>{% trans "Start Date" %}</th>
+                <th>{% trans "End Date" %}</th>
+              </tr>
+            </thead>
+            <tbody id="main-antibiotic-formset-body">
+              {% for mform in main_antibiotic_formset %}
+              <tr class="formset-row">
+                <td style="display:none;">
+                  {{ mform.id }}
+                  {{ mform.DELETE }}
+                  {{ mform.SEQUENCE }}
+                </td>
+                <td>{{ mform.MAINANTIBIONAME }}</td>
+                <td>{{ mform.MAINANTIBIODOSAGE }}</td>
+                <td>
+                  <input type="text" 
+                         name="{{ mform.MAINANTIBIOSTARTDTC.html_name }}" 
+                         class="form-control datepicker" 
+                         value="{% if mform.MAINANTIBIOSTARTDTC.value %}{% if mform.MAINANTIBIOSTARTDTC.value|date:'Y-m-d' %}{{ mform.MAINANTIBIOSTARTDTC.value|date:'Y-m-d' }}{% else %}{{ mform.MAINANTIBIOSTARTDTC.value }}{% endif %}{% endif %}">
+                </td>
+                <td>
+                  <input type="text" 
+                         name="{{ mform.MAINANTIBIOENDDTC.html_name }}" 
+                         class="form-control datepicker" 
+                         value="{% if mform.MAINANTIBIOENDDTC.value %}{% if mform.MAINANTIBIOENDDTC.value|date:'Y-m-d' %}{{ mform.MAINANTIBIOENDDTC.value|date:'Y-m-d' }}{% else %}{{ mform.MAINANTIBIOENDDTC.value }}{% endif %}{% endif %}">
+                </td>
+              </tr>
+              {% empty %}
+              <tr class="empty-row">
+                <td colspan="4" class="text-center text-muted">{% trans "No main antibiotics" %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        {% if not is_readonly %}
+        <button type="button" 
+                class="btn btn-success btn-sm mt-3" 
+                id="add-main-antibiotic-btn">
+          <i class="fas fa-plus mr-1"></i>{% trans "Add Antibiotic" %}
+        </button>
+        {% endif %}
+      </div>
+
+
+
+
+
+      {# 40. Prior Antibiotics #}
+      <div class="numbered-item" data-number="40">
+        <label>{% trans "Prior Antibiotics (Before Admission)?" %}</label>
+        <div class="mt-2">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="id_PRIORANTIBIOTIC" name="PRIORANTIBIOTIC" 
+                  {% if clinical_form.PRIORANTIBIOTIC.value %}checked{% endif %}>
+            <label class="form-check-label" for="id_PRIORANTIBIOTIC">{% trans "Prior Antibiotics" %}</label>
+          </div>
+        </div>
+        
+        <div id="prior-antibiotic-section" class="conditional-section" style="display:none;">
+          {#  CRITICAL FIX: ADD MANAGEMENT FORM #}
+          {{ prior_antibiotic_formset.management_form }}
+          
+          <div class="table-responsive formset-table mt-3">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans "Antibiotic" %}</th>
+                  <th>{% trans "Dosage" %}</th>
+                  <th>{% trans "Start" %}</th>
+                  <th>{% trans "End" %}</th>
+                </tr>
+              </thead>
+              <tbody id="prior-antibiotic-formset-body">
+                {% for pform in prior_antibiotic_formset %}
+                <tr class="formset-row">
+                  <td style="display:none;">
+                    {{ pform.id }}
+                    {{ pform.DELETE }}
+                    {{ pform.SEQUENCE }}
+                  </td>
+                  <td>{{ pform.PRIORANTIBIONAME }}</td>
+                  <td>{{ pform.PRIORANTIBIODOSAGE }}</td>
+                  <td>
+                    <input type="text" name="{{ pform.PRIORANTIBIOSTARTDTC.html_name }}" class="form-control datepicker"
+                          value="{% if pform.PRIORANTIBIOSTARTDTC.value %}{% if pform.PRIORANTIBIOSTARTDTC.value|date:'Y-m-d' %}{{ pform.PRIORANTIBIOSTARTDTC.value|date:'Y-m-d' }}{% else %}{{ pform.PRIORANTIBIOSTARTDTC.value }}{% endif %}{% endif %}">
+                  </td>
+                  <td>
+                    <input type="text" name="{{ pform.PRIORANTIBIOENDDTC.html_name }}" class="form-control datepicker"
+                          value="{% if pform.PRIORANTIBIOENDDTC.value %}{% if pform.PRIORANTIBIOENDDTC.value|date:'Y-m-d' %}{{ pform.PRIORANTIBIOENDDTC.value|date:'Y-m-d' }}{% else %}{{ pform.PRIORANTIBIOENDDTC.value }}{% endif %}{% endif %}">
+                  </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                  <td colspan="4" class="text-center text-muted">{% trans "No prior antibiotics" %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if not is_readonly %}
+          <button type="button" class="btn btn-success btn-sm mt-3" id="add-prior-antibiotic-btn">
+            <i class="fas fa-plus mr-1"></i>{% trans "Add Antibiotic" %}
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      {# 41. Initial Antibiotics #}
+      <div class="numbered-item" data-number="41">
+        <label>{% trans "Initial Antibiotics (At Admission)?" %}</label>
+        <div class="mt-2">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="id_INITIALANTIBIOTIC" name="INITIALANTIBIOTIC"
+                  {% if clinical_form.INITIALANTIBIOTIC.value %}checked{% endif %}>
+            <label class="form-check-label" for="id_INITIALANTIBIOTIC">{% trans "Initial Antibiotics" %}</label>
+          </div>
+        </div>
+        
+        <div id="initial-antibiotic-section" class="conditional-section" style="display:none;">
+          {#  CRITICAL FIX: ADD MANAGEMENT FORM #}
+          {{ initial_antibiotic_formset.management_form }}
+          
+          <div class="table-responsive formset-table mt-3">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans "Antibiotic" %}</th>
+                  <th>{% trans "Dosage" %}</th>
+                  <th>{% trans "Start" %}</th>
+                  <th>{% trans "End" %}</th>
+                </tr>
+              </thead>
+              <tbody id="initial-antibiotic-formset-body">
+                {% for iform in initial_antibiotic_formset %}
+                <tr class="formset-row">
+                  <td style="display:none;">
+                    {{ iform.id }}
+                    {{ iform.DELETE }}
+                    {{ iform.SEQUENCE }}
+                  </td>
+                  <td>{{ iform.INITIALANTIBIONAME }}</td>
+                  <td>{{ iform.INITIALANTIBIODOSAGE }}</td>
+                  <td>
+                    <input type="text" name="{{ iform.INITIALANTIBIOSTARTDTC.html_name }}" class="form-control datepicker"
+                          value="{% if iform.INITIALANTIBIOSTARTDTC.value %}{% if iform.INITIALANTIBIOSTARTDTC.value|date:'Y-m-d' %}{{ iform.INITIALANTIBIOSTARTDTC.value|date:'Y-m-d' }}{% else %}{{ iform.INITIALANTIBIOSTARTDTC.value }}{% endif %}{% endif %}">
+                  </td>
+                  <td>
+                    <input type="text" name="{{ iform.INITIALANTIBIOENDDTC.html_name }}" class="form-control datepicker"
+                          value="{% if iform.INITIALANTIBIOENDDTC.value %}{% if iform.INITIALANTIBIOENDDTC.value|date:'Y-m-d' %}{{ iform.INITIALANTIBIOENDDTC.value|date:'Y-m-d' }}{% else %}{{ iform.INITIALANTIBIOENDDTC.value }}{% endif %}{% endif %}">
+                  </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                  <td colspan="4" class="text-center text-muted">{% trans "No initial antibiotics" %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if not is_readonly %}
+          <button type="button" class="btn btn-success btn-sm mt-3" id="add-initial-antibiotic-btn">
+            <i class="fas fa-plus mr-1"></i>{% trans "Add Antibiotic" %}
+          </button>
+          {% endif %}
+          
+          {# Appropriate Initial Antibiotic? - Use Django form field #}
+          <div class="mt-3">
+            <label>{% trans "Appropriate initial antibiotic treatment?" %}</label>
+            <div class="mt-2">
+              <div class="form-check">
+                {{ clinical_form.INITIALABXAPPROP }}
+                <label class="form-check-label" for="{{ clinical_form.INITIALABXAPPROP.id_for_label }}">
+                  {% trans "Yes (check if appropriate)" %}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {# Navigation #}
+      <div class="d-flex justify-content-between mt-4">
+        <button type="button" 
+                class="btn btn-secondary" 
+                data-tab-action="prev">
+          <i class="fas fa-arrow-left mr-1"></i>{% trans "Previous" %}
+        </button>
+        
+        {% if not is_readonly %}
+        <button type="submit" class="btn btn-success btn-lg">
+          <i class="fas fa-save mr-1"></i>{% trans "Save Clinical Data" %}
+        </button>
+        {% else %}
+        <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID %}" 
+           class="btn btn-primary">
+          <i class="fas fa-arrow-right mr-1"></i>{% trans "Back to Patient" %}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script nonce="{{ request.csp_nonce }}">
+// Page 3 specific initialization is now handled in clinical_form.js
+// All conditional sections and radio sync logic moved to initPage3Conditionals() method
+console.log('📋 Clinical Page 3 template loaded - initialization handled by clinical_form.js');
+</script>

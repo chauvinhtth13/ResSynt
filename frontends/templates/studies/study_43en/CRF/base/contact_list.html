@@ -1,0 +1,147 @@
+{% extends 'default/dashboard.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Contact List" %}{% endblock %}
+{% block page_title %}{% trans "Contact List" %}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Contact List" %}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card">
+    <div class="card-header bg-enrolled-contact">
+        <h3 class="card-title text-white">
+            <i class="fas fa-user-friends"></i>
+            {% trans "CONTACT LIST" %}
+        </h3>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+        <div class="table-outline-wrapper">
+            <div class="table-responsive">
+                <table class="table table-bordered table-enrolled-contact">
+                <thead>
+                    <tr>
+                        <th class="text-center">{% trans "Contact ID" %}</th>
+                        <th class="text-center">{% trans "Initials" %}</th>
+                        <th class="text-center">{% trans "Related Patient" %}</th>
+                        <th class="text-center">{% trans "Enrollment Date" %}</th>
+                        <th class="text-center">{% trans "Study Process" %}</th>
+                        <th class="text-center" width="180">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in page_obj %}
+                    <tr>
+                        <td class ="text-center"><strong>{{ contact.USUBJID }}</strong></td>
+                        <td class ="text-center">{{ contact.INITIAL|default:"-" }}</td>
+                        <td class ="text-center">
+                            {% if contact.SUBJIDENROLLSTUDY %}
+                                <a href="{% url 'study_43en:patient_detail' usubjid=contact.SUBJIDENROLLSTUDY.USUBJID %}" class="text-primary">
+                                    {{ contact.SUBJIDENROLLSTUDY.USUBJID }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class ="text-center">
+                            {{ contact.enrollment_date|date:"d/m/Y"|default:"-" }}
+                        </td>
+                        <td class ="text-center">
+                            {% if contact.process_status == 'completed' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle-fill"></i> {{ contact.process_label }}
+                                </span>
+                            {% elif contact.process_status == 'ongoing' %}
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-arrow-repeat"></i> {{ contact.process_label }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-hourglass-split"></i> {{ contact.process_label }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class ="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'study_43en:contact_detail' usubjid=contact.USUBJID%}" 
+                                   class="btn btn-info btn-view-contact"
+                                   data-usubjid="{{ contact.USUBJID }}"
+                                   title="{% trans 'View Details' %}">
+                                    <i class="fas fa-eye"></i> {% trans "View" %}
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">
+                    {% trans "First" %}
+                </a>
+                </li>
+                <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">
+                    {{ num }}
+                    </a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                </li>
+                <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
+                    {% trans "Last" %}
+                </a>
+                </li>
+            {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <!-- No Data -->
+        <div class="alert alert-info text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">{% trans "No contacts enrolled yet!" %}</h4>
+            <p class="text-muted mb-4">{% trans "There are currently no contacts who are eligible and consented to participate in the study." %}</p>
+            <p class="text-muted mb-4">{% trans "Please check the contact screening list or create a new contact." %}</p>
+            <a href="{% url 'study_43en:screening_contact_create' %}" class="btn btn-success btn-lg">
+                <i class="fas fa-plus"></i>
+                {% trans "Create New Contact" %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

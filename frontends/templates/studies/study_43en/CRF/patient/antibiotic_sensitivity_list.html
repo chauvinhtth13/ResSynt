@@ -1,0 +1,672 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block title %}{% trans "Antibiotic Sensitivity Tests" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:patient_list' %}">{% trans "Patients" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}">{{ usubjid }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:microbiology_list' usubjid=usubjid %}">{% trans "Cultures" %}</a></li>
+<li class="breadcrumb-item active">{% trans "Antibiotic Tests" %} - {{ culture.LAB_CULTURE_ID }}</li>
+{% endblock %}
+
+{% block extra_head_dashboard %}
+{% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="{% static 'css/studies/study_43en/antibiotic_sensitivity.css' %}">
+
+<style>
+  /* Page-specific styles only - base styles in crf-forms.css */
+  .tier-header[data-tier="Tier1"] { 
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .tier-header[data-tier="Tier2"] { 
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  .tier-header[data-tier="Tier3"] { 
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .tier-header[data-tier="Tier4"] { 
+    background-color: #6f42c1;
+    color: white;
+  }
+  
+  .tier-header[data-tier="UrineOnly"] { 
+    background-color: #17a2b8;
+    color: white;
+  }
+  
+  .tier-header[data-tier="Colistin"] { 
+    background-color: #dc3545;
+    color: white;
+    border: 2px solid #bd2130;
+  }
+  
+  .tier-toggle {
+    transition: transform 0.3s ease;
+  }
+  
+  .tier-header.collapsed .tier-toggle {
+    transform: rotate(-90deg);
+  }
+  
+  .test-table {
+    margin: 0;
+  }
+  
+  .test-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    padding: 10px;
+  }
+  
+  .test-table td {
+    vertical-align: middle;
+    padding: 8px 10px;
+  }
+  
+  /* Sensitivity Badges - Bootstrap chuẩn */
+  .sensitivity-S { 
+    background-color: #28a745; 
+    color: white; 
+  }
+  
+  .sensitivity-I { 
+    background-color: #ffc107; 
+    color: #212529; 
+  }
+  
+  .sensitivity-R { 
+    background-color: #dc3545; 
+    color: white; 
+  }
+  
+  .sensitivity-U { 
+    background-color: #6c757d; 
+    color: white; 
+  }
+  
+  .sensitivity-ND { 
+    background-color: #e9ecef; 
+    color: #495057; 
+  }
+  
+  .whonet-badge {
+    background-color: #0d6efd;
+    color: white;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 0.8rem;
+  }
+  
+  .mic-value {
+    font-family: monospace;
+    font-weight: 500;
+  }
+  
+  .empty-tier {
+    text-align: center;
+    padding: 30px 20px;
+    color: #6c757d;
+  }
+  
+  .empty-tier i {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    opacity: 0.3;
+  }
+  
+  .summary-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-item {
+    text-align: center;
+    padding: 10px;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: block;
+  }
+  
+  .stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+  
+  /* Sensitivity select options with colors */
+  .sensitivity-input option[value="S"] {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .sensitivity-input option[value="I"] {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  .sensitivity-input option[value="R"] {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .sensitivity-input option[value="U"] {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .sensitivity-input option[value="ND"] {
+    background-color: #e9ecef;
+    color: #495057;
+  }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<input type="hidden" id="usubjid" value="{{ usubjid }}">
+<input type="hidden" id="culture-id" value="{{ culture.id }}">
+<input type="hidden" id="culture-lab-id" value="{{ culture.LAB_CULTURE_ID }}">
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title">
+              <i class="fas fa-pills mr-2"></i>
+              {% trans "Antibiotic Sensitivity Tests" %}
+            </h3>
+            <div class="btn-group" role="group">
+              {# Back button #}
+              <a href="{% url 'study_43en:microbiology_list' usubjid=usubjid %}" 
+                class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+              </a>
+              
+              {#  NEW: Statistics button #}
+              <a href="{% url 'study_43en:antibiotic_statistics' usubjid=usubjid %}"
+                class="btn btn-info btn-sm">
+                <i class="fas fa-chart-bar"></i> {% trans "Statistics" %}
+              </a>
+              
+              {# Add OTHER antibiotic button #}
+              {% if has_change_permission %}
+              <button type="button" 
+                      class="btn btn-success btn-sm"
+                      data-bs-toggle="modal"
+                      data-bs-target="#addOtherAntibioticModal">
+                <i class="fas fa-plus"></i> {% trans "Add Other" %}
+              </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          {# ... culture info header ... #}
+          {# ... summary statistics ... #}
+          
+          <!-- ============================================
+                EDITABLE ANTIBIOTIC TESTS TABLE
+               ============================================ -->
+          <form method="post" id="antibioticForm">
+            {% csrf_token %}
+            
+            {% if profile and profile.tests_by_tier %}
+            <div class="accordion" id="tiersAccordion">
+              {% for tier_code, tier_data in profile.tests_by_tier.items %}
+              <div class="tier-card">
+                <div class="tier-header {% if not forloop.first %}collapsed{% endif %}" 
+                     data-tier="{{ tier_code }}"
+                     data-bs-toggle="collapse" 
+                     data-bs-target="#collapse-{{ tier_code }}">
+                  <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                      <strong>{{ tier_data.label }}</strong>
+                      <span class="badge bg-light text-dark ms-2">{{ tier_data.tests|length }}</span>
+                    </div>
+                    <i class="fas fa-chevron-down tier-toggle"></i>
+                  </div>
+                </div>
+                
+                <div id="collapse-{{ tier_code }}" 
+                     class="collapse {% if forloop.first %}show{% endif %}">
+                  <div class="card-body p-0">
+                    <table class="table table-hover test-table mb-0">
+                      <thead>
+                        <tr>
+                          <th style="width: 40px;">#</th>
+                          <th>{% trans "Antibiotic" %}</th>
+                          <th style="width: 150px;">{% trans "Sensitivity" %} *</th>
+                          <th style="width: 120px;">{% trans "MIC" %}</th>
+                          <th style="width: 100px;">{% trans "Zone (mm)" %}</th>
+                          <!-- <th style="width: 120px;">{% trans "Method" %}</th> -->
+                          <th style="width: 200px;">{% trans "Notes" %}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for test in tier_data.tests %}
+                        <tr {% if test.is_resistant %}class="table-danger"{% elif test.SENSITIVITY_LEVEL == 'ND' %}class="table-light"{% endif %}>
+                          <td>{{ forloop.counter }}</td>
+                          <td>
+                            <strong>{{ test.get_antibiotic_display_name }}</strong>
+                            {% if test.OTHER_ANTIBIOTIC_NAME %}
+                            <br><small class="text-info">
+                              <i class="fas fa-star"></i> {% trans "Custom" %}
+                            </small>
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">{{ test.WHONET_CODE }}</small>
+                          </td>
+                          <td>
+                            {#  Editable sensitivity select #}
+                            {% if has_change_permission %}
+                              {% if test.id %}
+                                {# Existing test - use test.id #}
+                                <select name="sensitivity_{{ test.id }}" 
+                                        class="form-select form-select-sm sensitivity-input"
+                                        data-test-id="{{ test.id }}">
+                                  <option value="ND" {% if test.SENSITIVITY_LEVEL == 'ND' %}selected{% endif %}>{% trans "Not Done" %}</option>
+                                  <option value="S" {% if test.SENSITIVITY_LEVEL == 'S' %}selected{% endif %}>{% trans "Sensitive" %}</option>
+                                  <option value="I" {% if test.SENSITIVITY_LEVEL == 'I' %}selected{% endif %}>{% trans "Intermediate" %}</option>
+                                  <option value="R" {% if test.SENSITIVITY_LEVEL == 'R' %}selected{% endif %}>{% trans "Resistant" %}</option>
+                                  <option value="U" {% if test.SENSITIVITY_LEVEL == 'U' %}selected{% endif %}>{% trans "Unknown" %}</option>
+                                </select>
+                              {% else %}
+                                {# Placeholder test - use new_{antibiotic}_{tier} #}
+                                <select name="sensitivity_new_{{ test.ANTIBIOTIC_NAME }}_{{ test.TIER }}" 
+                                        class="form-select form-select-sm sensitivity-input"
+                                        data-antibiotic="{{ test.ANTIBIOTIC_NAME }}">
+                                  <option value="ND" selected>{% trans "Not Done" %}</option>
+                                  <option value="S">{% trans "Sensitive" %}</option>
+                                  <option value="I">{% trans "Intermediate" %}</option>
+                                  <option value="R">{% trans "Resistant" %}</option>
+                                  <option value="U">{% trans "Unknown" %}</option>
+                                </select>
+                              {% endif %}
+                            {% else %}
+                            <span class="sensitivity-badge sensitivity-{{ test.SENSITIVITY_LEVEL }}">
+                              {{ test.get_SENSITIVITY_LEVEL_display }}
+                            </span>
+                            {% endif %}
+                          </td>
+                          <td>
+                            {#  Editable MIC input #}
+                            {% if has_change_permission %}
+                              {% if test.id %}
+                                <input type="text" 
+                                       name="mic_{{ test.id }}" 
+                                       class="form-control form-control-sm"
+                                       value="{{ test.MIC|default:'' }}"
+                                       placeholder="e.g., <=0.25">
+                              {% else %}
+                                <input type="text" 
+                                       name="mic_new_{{ test.ANTIBIOTIC_NAME }}_{{ test.TIER }}" 
+                                       class="form-control form-control-sm"
+                                       placeholder="e.g., <=0.25">
+                              {% endif %}
+                            {% else %}
+                            {% if test.MIC %}
+                              <span class="mic-value">{{ test.MIC }}</span>
+                            {% else %}
+                              <span class="text-muted">-</span>
+                            {% endif %}
+                            {% endif %}
+                          </td>
+                          <td>
+                            {#  Editable zone diameter #}
+                            {% if has_change_permission %}
+                              {% if test.id %}
+                                <input type="number" 
+                                       name="izdiam_{{ test.id }}" 
+                                       class="form-control form-control-sm"
+                                       value="{{ test.IZDIAM|default:'' }}"
+                                       step="0.1" min="0" max="100"
+                                       placeholder="mm">
+                              {% else %}
+                                <input type="number" 
+                                       name="izdiam_new_{{ test.ANTIBIOTIC_NAME }}_{{ test.TIER }}" 
+                                       class="form-control form-control-sm"
+                                       step="0.1" min="0" max="100"
+                                       placeholder="mm">
+                              {% endif %}
+                            {% else %}
+                            {% if test.IZDIAM %}
+                              {{ test.IZDIAM }} mm
+                            {% else %}
+                              <span class="text-muted">-</span>
+                            {% endif %}
+                            {% endif %}
+                          </td>
+                          <td>
+                            {#  Editable notes #}
+                            {% if has_change_permission %}
+                              {% if test.id %}
+                                <input type="text" 
+                                       name="notes_{{ test.id }}" 
+                                       class="form-control form-control-sm"
+                                       value="{{ test.NOTES|default:'' }}"
+                                       placeholder="{% trans 'Notes' %}">
+                              {% else %}
+                                <input type="text" 
+                                       name="notes_new_{{ test.ANTIBIOTIC_NAME }}_{{ test.TIER }}" 
+                                       class="form-control form-control-sm"
+                                       placeholder="{% trans 'Notes' %}">
+                              {% endif %}
+                            {% else %}
+                            {% if test.NOTES %}
+                              <small>{{ test.NOTES }}</small>
+                            {% else %}
+                              <span class="text-muted">-</span>
+                            {% endif %}
+                            {% endif %}
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle mr-2"></i>
+              {% trans "Creating standard antibiotic panel..." %}
+            </div>
+            {% endif %}
+            
+            {#  Save Button #}
+            {% if has_change_permission %}
+            <div class="card-footer bg-light mt-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i>
+                  {% trans "Fill in results and click Save. Tests marked as 'Not Tested' will remain unchanged." %}
+                </small>
+                <button type="submit" class="btn btn-success btn-lg">
+                  <i class="fas fa-save"></i> {% trans "Save All Results" %}
+                </button>
+              </div>
+            </div>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+      ADD OTHER ANTIBIOTIC MODAL
+     ============================================ -->
+<div class="modal fade" id="addOtherAntibioticModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-plus-circle mr-2"></i>
+          {% trans "Add Other Antibiotic" %}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addOtherAntibioticForm">
+          {% csrf_token %}
+          
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i>
+            {% trans "Use this form to add antibiotics not in the standard list." %}
+          </div>
+          
+          <div class="row g-3">
+            <!-- Antibiotic Name -->
+            <div class="col-12">
+              <label class="form-label">
+                {% trans "Antibiotic Name" %} *
+              </label>
+              <input type="text" 
+                     name="other_antibiotic_name" 
+                     id="otherAntibioticName"
+                     class="form-control" 
+                     required
+                     placeholder="{% trans 'e.g., Vancomycin, Azithromycin' %}">
+            </div>
+            
+            <!-- Tier -->
+            <div class="col-md-6">
+              <label class="form-label">
+                {% trans "WHO AWaRe Tier" %} *
+              </label>
+              <select name="tier" id="otherTier" class="form-select" required>
+                <option value="">{% trans "Select tier" %}</option>
+                <option value="Tier1">{% trans "Tier 1 - Access Group" %}</option>
+                <option value="Tier2">{% trans "Tier 2 - Watch Group" %}</option>
+                <option value="Tier3">{% trans "Tier 3 - Reserve Group" %}</option>
+                <option value="Tier4">{% trans "Tier 4 - Specialized" %}</option>
+                <option value="Colistin">{% trans "Colistin (Last Resort)" %}</option>
+                <option value="UrineOnly">{% trans "Urine-Specific" %}</option>
+                <option value="Other">{% trans "Other" %}</option>
+              </select>
+            </div>
+            
+            <!-- Sensitivity Level -->
+            <div class="col-md-6">
+              <label class="form-label">
+                {% trans "Sensitivity Result" %} *
+              </label>
+              <select name="sensitivity_level" id="otherSensitivity" class="form-select" required>
+                <option value="">{% trans "Select result" %}</option>
+                <option value="S">{% trans "Sensitive (S)" %}</option>
+                <option value="I">{% trans "Intermediate (I)" %}</option>
+                <option value="R">{% trans "Resistant (R)" %}</option>
+                <option value="U">{% trans "Unknown (U)" %}</option>
+                <option value="ND">{% trans "Not Determined (ND)" %}</option>
+              </select>
+            </div>
+            
+            <!-- MIC -->
+            <div class="col-md-6">
+              <label class="form-label">
+                {% trans "MIC (µg/mL)" %}
+              </label>
+              <input type="text" 
+                     name="mic" 
+                     id="otherMIC"
+                     class="form-control" 
+                     placeholder="e.g., <=0.25, 2, >64">
+            </div>
+            
+            <!-- Zone Diameter -->
+            <div class="col-md-6">
+              <label class="form-label">
+                {% trans "Zone Diameter (mm)" %}
+              </label>
+              <input type="number" 
+                     name="izdiam" 
+                     id="otherIZDIAM"
+                     class="form-control" 
+                     step="0.1" 
+                     min="0" 
+                     max="100"
+                     placeholder="e.g., 25.5">
+            </div>
+            
+            <!-- Method - REMOVED per user request -->
+            
+            <!-- Notes -->
+            <div class="col-12">
+              <label class="form-label">
+                {% trans "Notes" %}
+              </label>
+              <textarea name="notes" 
+                        id="otherNotes"
+                        class="form-control" 
+                        rows="2"
+                        placeholder="{% trans 'QC notes, technical issues, etc.' %}"></textarea>
+            </div>
+          </div>
+          
+          <!-- Form Buttons -->
+          <div class="mt-4 d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times"></i> {% trans "Cancel" %}
+            </button>
+            <button type="submit" class="btn btn-success" id="btnSaveOtherAntibiotic">
+              <i class="fas fa-save"></i> {% trans "Add Antibiotic" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Alert -->
+<div id="saveIndicator" class="alert alert-success alert-dismissible fade position-fixed" 
+     role="alert" style="display: none; top: 80px; right: 20px; z-index: 1050; min-width: 300px;">
+  <i class="fas fa-check-circle me-2"></i>
+  <span class="message">{% trans "Changes saved successfully!" %}</span>
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+
+{# ========== CHANGE REASON MODAL ========== #}
+{% if show_reason_form and detected_changes %}
+  {# Create hidden form with all POST data for re-submission #}
+  <form id="hiddenAntibioticForm" method="post" style="display: none;">
+    {% csrf_token %}
+    {% if edit_post_data %}
+      {% for key, value in edit_post_data.items %}
+        {% if key != 'csrfmiddlewaretoken' %}
+          <input type="hidden" name="{{ key }}" value="{{ value }}">
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    {# Reason fields will be added by JavaScript #}
+  </form>
+  
+  {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
+
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function() {
+  const usubjid = '{{ usubjid }}';
+  const cultureId = '{{ culture.id }}';
+  const labCultureId = '{{ culture.LAB_CULTURE_ID }}';
+  
+  console.log(' Antibiotic Sensitivity Page Loaded');
+  console.log('  Culture:', labCultureId);
+  console.log('  Tests:', {{ profile.total_tests|default:0 }});
+  
+  // ============================================
+  // TIER ACCORDION
+  // ============================================
+  $('.tier-header').on('click', function() {
+    $(this).toggleClass('collapsed');
+  });
+  
+  // ============================================
+  //  ADD OTHER ANTIBIOTIC FORM SUBMISSION
+  // ============================================
+  $('#addOtherAntibioticForm').on('submit', function(e) {
+    e.preventDefault();
+    console.log('📤 Submitting other antibiotic...');
+    
+    const form = $(this);
+    const btn = $('#btnSaveOtherAntibiotic');
+    const formData = form.serialize();
+    
+    // Disable button
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> {% trans "Saving..." %}');
+    
+    $.ajax({
+      url: `{% url 'study_43en:antibiotic_create_other' usubjid=usubjid culture_id=culture.id %}`,
+      method: 'POST',
+      data: formData,
+      success: function(response) {
+        console.log(' Other antibiotic added:', response);
+        
+        if (response.success) {
+          // Show success message
+          Swal.fire({
+            icon: 'success',
+            title: '{% trans "Success" %}!',
+            text: response.message,
+            timer: 2000,
+            showConfirmButton: false
+          }).then(() => {
+            // Reload page to show new antibiotic
+            window.location.reload();
+          });
+          
+          // Close modal
+          $('#addOtherAntibioticModal').modal('hide');
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: '{% trans "Error" %}',
+            text: response.message
+          });
+          
+          btn.prop('disabled', false).html('<i class="fas fa-save"></i> {% trans "Add Antibiotic" %}');
+        }
+      },
+      error: function(xhr) {
+        console.error(' Error adding other antibiotic:', xhr);
+        
+        let errorMsg = '{% trans "Failed to add antibiotic" %}';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        
+        Swal.fire({
+          icon: 'error',
+          title: '{% trans "Error" %}',
+          text: errorMsg
+        });
+        
+        btn.prop('disabled', false).html('<i class="fas fa-save"></i> {% trans "Add Antibiotic" %}');
+      }
+    });
+  });
+  
+  // ============================================
+  // RESET FORM WHEN MODAL CLOSES
+  // ============================================
+  $('#addOtherAntibioticModal').on('hidden.bs.modal', function() {
+    $('#addOtherAntibioticForm')[0].reset();
+    $('#btnSaveOtherAntibiotic').prop('disabled', false)
+      .html('<i class="fas fa-save"></i> {% trans "Add Antibiotic" %}');
+  });
+  
+  console.log(' All handlers initialized');
+});
+</script>
+
+{% endblock %}

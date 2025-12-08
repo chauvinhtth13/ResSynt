@@ -9,17 +9,19 @@
     <title>{% block title %}ResSync Platform{% endblock %}</title>
     <link rel="icon" href="{% static 'images/default/favicon.ico' %}" type="image/x-icon">
 
-    <link rel="stylesheet" href="{% static 'css/bootstrap/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
     <link rel="stylesheet" href="{% static 'font/bootstrap-icons/bootstrap-icons.css' %}">
-    <link rel="stylesheet" href="{% static 'css/default/base.css' %}">
+    <link rel="stylesheet" href="{% static 'base/css/base.css' %}">
 
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    {% block header %}{% endblock %}
     {% block main %}{% endblock %}
+    {% block footer %}{% endblock %}
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="{% static 'js/bootstrap/bootstrap.bundle.js' %}"></script>
+    <script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/jquery-3.7.1.min.js' %}"></script>
+    <script nonce="{{ request.csp_nonce }}" src="{% static 'bootstrap/js/bootstrap.bundle.js' %}"></script>
     
     {% block extra_js %}{% endblock %}
 </body>

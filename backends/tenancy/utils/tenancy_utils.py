@@ -3,6 +3,7 @@
 Optimized utility functions for tenancy operations
 Uses Django's default permission system with triple-layer caching
 """
+from collections import OrderedDict
 from typing import Set, List, Dict, Any, Optional
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -36,7 +37,8 @@ class TenancyUtils:
     CACHE_TTL = 300  # 5 minutes
     
     # Request-level cache (cleared periodically)
-    _request_cache: Dict[str, Any] = {}
+    _MAX_CACHE_SIZE = 1000  # Maximum number of cached items
+    _request_cache: OrderedDict = OrderedDict()
     _cache_timestamp: Optional[float] = None
     _CACHE_CLEAR_INTERVAL = 60  # Clear every 60 seconds
     
@@ -47,25 +49,101 @@ class TenancyUtils:
     @classmethod
     def _get_request_cache(cls, key: str) -> Optional[Any]:
         """
-        Fast in-memory cache for current request cycle
-        Automatically clears after interval
+        Fast in-memory cache with automatic cleanup
         """
         now = time.time()
         
-        # Clear cache if too old
-        if cls._cache_timestamp and (now - cls._cache_timestamp) > cls._CACHE_CLEAR_INTERVAL:
-            cls._request_cache.clear()
+        # Clear cache if too old or too large
+        if cls._cache_timestamp:
+            should_clear = (
+                (now - cls._cache_timestamp) > cls._CACHE_CLEAR_INTERVAL or
+                len(cls._request_cache) > cls._MAX_CACHE_SIZE * 1.5  # Emergency clear at 150%
+            )
+            if should_clear:
+                cls._clear_old_cache_entries()
+                cls._cache_timestamp = now
+        else:
             cls._cache_timestamp = now
-            logger.debug("Request cache cleared")
         
-        return cls._request_cache.get(key)
+        # Move to end for LRU behavior
+        if key in cls._request_cache:
+            cls._request_cache.move_to_end(key)
+            return cls._request_cache[key]
+        
+        return None
     
     @classmethod
     def _set_request_cache(cls, key: str, value: Any):
-        """Set request-level cache"""
+        """
+        Set request-level cache with LRU eviction
+        """
         if cls._cache_timestamp is None:
             cls._cache_timestamp = time.time()
+        
+        # Check size limit
+        if len(cls._request_cache) >= cls._MAX_CACHE_SIZE:
+            # Remove oldest item (LRU)
+            cls._request_cache.popitem(last=False)
+            logger.debug(f"Request cache evicted oldest item (size: {len(cls._request_cache)})")
+        
+        # Add new item
         cls._request_cache[key] = value
+        cls._request_cache.move_to_end(key)
+
+    @classmethod
+    def _clear_old_cache_entries(cls):
+        """
+        Clear old cache entries to prevent memory leak
+        Keep only the most recent half of entries
+        """
+        if len(cls._request_cache) > cls._MAX_CACHE_SIZE // 2:
+            # Keep only the most recent half
+            items_to_remove = len(cls._request_cache) - (cls._MAX_CACHE_SIZE // 2)
+            for _ in range(items_to_remove):
+                cls._request_cache.popitem(last=False)
+            
+            logger.debug(f"Cleared {items_to_remove} old cache entries")
+
+    @classmethod
+    def get_cache_statistics(cls) -> Dict[str, Any]:
+        """
+        Get cache statistics for monitoring
+        """
+        return {
+            'request_cache_size': len(cls._request_cache),
+            'request_cache_max_size': cls._MAX_CACHE_SIZE,
+            'cache_timestamp': cls._cache_timestamp,
+            'cache_ttl': cls.CACHE_TTL,
+            'clear_interval': cls._CACHE_CLEAR_INTERVAL,
+            'memory_usage_estimate': cls._estimate_cache_memory(),}
+    
+    @classmethod
+    def _estimate_cache_memory(cls) -> str:
+        """
+        Estimate memory usage of cache
+        """
+        import sys
+        
+        total_size = sys.getsizeof(cls._request_cache)
+        for key, value in cls._request_cache.items():
+            total_size += sys.getsizeof(key) + sys.getsizeof(value)
+        
+        # Convert to human readable
+        if total_size < 1024:
+            return f"{total_size} B"
+        elif total_size < 1024 * 1024:
+            return f"{total_size / 1024:.2f} KB"
+        else:
+            return f"{total_size / (1024 * 1024):.2f} MB"
+    
+    @classmethod
+    def clear_request_cache(cls):
+        """
+        Manually clear request cache
+        """
+        cls._request_cache.clear()
+        cls._cache_timestamp = None
+        logger.debug("Request cache manually cleared")
     
     @classmethod
     def get_cache_key(cls, prefix: str, *args) -> str:
@@ -303,6 +381,8 @@ class TenancyUtils:
         OPTIMIZED: Throttled study access tracking
         Only updates database every 5 minutes to reduce writes
         
+         FIXED: Use correct field names (last_study_accessed_id)
+        
         Args:
             user: User instance
             study: Study instance
@@ -330,9 +410,9 @@ class TenancyUtils:
         
         if should_update:
             try:
-                # Efficient bulk update
+                #  FIXED: Sử dụng field _id để lưu ID của study
                 User.objects.filter(pk=user.pk).update(
-                    last_study_accessed=study,
+                    last_study_accessed_id=study.pk,  #  Đúng field name
                     last_study_accessed_at=now
                 )
                 
@@ -341,7 +421,7 @@ class TenancyUtils:
                 logger.debug(f"Updated study access: user {user.pk} -> study {study.code}")
                 
             except Exception as e:
-                logger.error(f"Error tracking study access: {e}")
+                logger.error(f"Error tracking study access: {e}", exc_info=True)
     
     # ==========================================
     # USER STUDY MANAGEMENT
@@ -450,7 +530,7 @@ class TenancyUtils:
                 # Get study codes for app labels
                 studies = Study.objects.filter(id__in=uncached_ids)
                 study_app_labels = {
-                    s.id: f'study_{s.code.lower()}' for s in studies
+                    s.pk: f'study_{s.code.lower()}' for s in studies
                 }
                 
                 # Single optimized query
@@ -463,7 +543,7 @@ class TenancyUtils:
                 # Group by study
                 study_perms = {}
                 for membership in memberships:
-                    study_id = membership.study_id
+                    study_id = membership.study.pk
                     app_label = study_app_labels.get(study_id)
                     
                     if study_id not in study_perms:
@@ -543,9 +623,14 @@ class TenancyUtils:
         
         # Pattern-based deletion (Redis only)
         if hasattr(cache, 'delete_pattern'):
-            pattern_keys = [k for k in specific_keys if '*' in k]
-            for pattern in pattern_keys:
-                cleared += cache.delete_pattern(pattern)
+            delete_pattern = getattr(cache, 'delete_pattern')
+            patterns = ['perms_*', 'sites_*', 'user_studies_*', 'last_access_*', 'mw_*']
+            for pattern in patterns:
+                try:
+
+                    cleared += delete_pattern(pattern)
+                except Exception as e:
+                    logger.error(f"Error clearing pattern {pattern}: {e}")
         
         logger.debug(f"Cleared {cleared} cache keys for user {user.pk}")
         return cleared
@@ -580,10 +665,10 @@ class TenancyUtils:
                 f"perms_*_{study.pk}",
                 f"sites_*_{study.pk}",
             ]
-            
+            delete_pattern = getattr(cache, 'delete_pattern')
             for pattern in patterns:
                 try:
-                    cleared += cache.delete_pattern(pattern)
+                    cleared += delete_pattern(pattern)
                 except Exception as e:
                     logger.error(f"Error deleting pattern {pattern}: {e}")
         
@@ -604,9 +689,10 @@ class TenancyUtils:
         
         if hasattr(cache, 'delete_pattern'):
             patterns = ['perms_*', 'sites_*', 'user_studies_*', 'last_access_*', 'mw_*']
+            delete_pattern = getattr(cache, 'delete_pattern')
             for pattern in patterns:
                 try:
-                    cleared += cache.delete_pattern(pattern)
+                    cleared += delete_pattern(pattern)
                 except Exception as e:
                     logger.error(f"Error clearing pattern {pattern}: {e}")
         else:
@@ -713,6 +799,57 @@ class TenancyUtils:
         if len(parts) == 2:
             return parts[0], parts[1]
         return perm_code, ''
+    
+    @classmethod
+    def sync_user_groups(cls, user) -> Dict[str, int]:
+        """
+        Sync user's Django groups based on active memberships
+        
+        Returns:
+            Dict with sync statistics
+        """
+        from backends.tenancy.models import StudyMembership
+        from backends.tenancy.utils.role_manager import StudyRoleManager
+        
+        try:
+            # Get active memberships
+            memberships = StudyMembership.objects.filter(
+                user=user,
+                is_active=True
+            ).select_related('group')
+            
+            # Groups user should have
+            should_have = set(m.group for m in memberships if m.group)
+            
+            # Current study groups
+            current = set()
+            for group in user.groups.all():
+                if StudyRoleManager.is_study_group(group.name):
+                    current.add(group)
+            
+            # Calculate changes
+            to_add = should_have - current
+            to_remove = current - should_have
+            
+            # Apply changes
+            for group in to_add:
+                user.groups.add(group)
+            
+            for group in to_remove:
+                user.groups.remove(group)
+            
+            # Clear cache
+            cls.clear_user_cache(user)
+            
+            return {
+                'added': len(to_add),
+                'removed': len(to_remove),
+                'total': len(should_have)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error syncing groups for {user.username}: {e}")
+            return {'added': 0, 'removed': 0, 'total': 0}
 
 
 # ==========================================
