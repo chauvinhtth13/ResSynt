@@ -155,17 +155,11 @@ class User(AbstractUser):
         return sites
         
     def get_total_permissions_count(self) -> int:
-        """Count total permissions across all studies"""
-        cache_key = f'user_perms_count_{self.pk}'
-        count = cache.get(cache_key)
-        
-        if count is None:
-            count = 0
-            for study in self.get_accessible_studies():
-                count += len(self.get_study_permissions(study))
-            cache.set(cache_key, count, 300)
-        
-        return count
+        from django.contrib.auth.models import Permission
+        return Permission.objects.filter(
+            group__studymembership__user=self,
+            group__studymembership__is_active=True
+        ).distinct().count()
     
     @property
     def studies_count(self) -> int:

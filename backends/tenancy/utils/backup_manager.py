@@ -1,228 +1,137 @@
 """
-Secure Database Backup Manager
+Secure Database Backup Manager.
+
 Features:
 - PostgreSQL custom format (compressed)
-- SHA-256 checksum
-- Automatic cleanup
-- Support multiple databases
-- ✅ CROSS-PLATFORM: Windows + Linux support
+- SHA-256 checksum verification
+- Automatic cleanup with retention policy
+- Cross-platform support (Windows/Linux)
+- Secure encryption via GPG
 """
-import os
-import sys
-import subprocess
 import hashlib
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, Optional, List
-from django.conf import settings
 import logging
+import os
+import subprocess
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Optional, Any
+
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 
+def format_size(size_bytes: int) -> str:
+    """Format bytes to human-readable size."""
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_bytes < 1024.0:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024.0
+    return f"{size_bytes:.1f} PB"
+
+
 class BackupManager:
     """
-    Manage database backups with compression
+    Database backup manager with compression and encryption.
     
-    ✅ NEW: Auto-detect PostgreSQL on Windows/Linux
+    Security notes:
+    - Passwords passed via environment variables (not command line)
+    - GPG encryption uses stdin for passphrase
+    - Backup files have restricted permissions
     """
     
     def __init__(self):
-        """Initialize backup manager"""
-        # Backup directory
         self.backup_dir = Path(settings.BASE_DIR) / 'backups'
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         
-        # Retention policy
+        # Set restrictive permissions on backup directory
+        if sys.platform != 'win32':
+            os.chmod(self.backup_dir, 0o700)
+        
         self.retention_days = getattr(settings, 'BACKUP_RETENTION_DAYS', 90)
-        
-        # ✅ NEW: Find PostgreSQL binaries
         self.pg_dump_path = self._find_pg_dump()
-        
-        logger.info(f"BackupManager initialized: {self.backup_dir}")
-        logger.info(f"pg_dump path: {self.pg_dump_path}")
     
     def _find_pg_dump(self) -> str:
-        """
-        ✅ NEW: Auto-detect pg_dump location
-        
-        Returns:
-            Full path to pg_dump executable
-        """
+        """Find pg_dump executable."""
         # Check settings first
         custom_path = getattr(settings, 'POSTGRESQL_BIN_PATH', None)
         if custom_path:
-            pg_dump = Path(custom_path) / ('pg_dump.exe' if sys.platform == 'win32' else 'pg_dump')
+            exe = 'pg_dump.exe' if sys.platform == 'win32' else 'pg_dump'
+            pg_dump = Path(custom_path) / exe
             if pg_dump.exists():
-                logger.info(f"Using pg_dump from settings: {pg_dump}")
                 return str(pg_dump)
         
-        # Try to find in PATH
+        # Try PATH
         try:
-            if sys.platform == 'win32':
-                result = subprocess.run(
-                    ['where', 'pg_dump'],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
-                )
-            else:
-                result = subprocess.run(
-                    ['which', 'pg_dump'],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
-                )
-            
+            cmd = ['where', 'pg_dump'] if sys.platform == 'win32' else ['which', 'pg_dump']
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
-                path = result.stdout.strip().split('\n')[0]
-                logger.info(f"Found pg_dump in PATH: {path}")
-                return path
-                
-        except Exception as e:
-            logger.debug(f"Could not find pg_dump in PATH: {e}")
+                return result.stdout.strip().split('\n')[0]
+        except Exception:
+            pass
         
-        # Windows: Search common PostgreSQL installation directories
+        # Platform-specific search
         if sys.platform == 'win32':
-            possible_paths = self._get_windows_postgres_paths()
-            
-            for path in possible_paths:
-                pg_dump = Path(path) / 'pg_dump.exe'
-                if pg_dump.exists():
-                    logger.info(f"Found pg_dump at: {pg_dump}")
-                    return str(pg_dump)
-        
-        # Linux: Try common paths
+            for base in [r'C:\Program Files\PostgreSQL', r'C:\PostgreSQL']:
+                base_path = Path(base)
+                if base_path.exists():
+                    for ver_dir in sorted(base_path.iterdir(), reverse=True):
+                        pg_dump = ver_dir / 'bin' / 'pg_dump.exe'
+                        if pg_dump.exists():
+                            return str(pg_dump)
         else:
-            possible_paths = [
-                '/usr/bin/pg_dump',
-                '/usr/local/bin/pg_dump',
-                '/opt/postgresql/bin/pg_dump',
-            ]
-            
-            for path in possible_paths:
+            for path in ['/usr/bin/pg_dump', '/usr/local/bin/pg_dump']:
                 if Path(path).exists():
-                    logger.info(f"Found pg_dump at: {path}")
                     return path
         
-        # Not found - return default and let it fail with helpful error
-        logger.error("Could not find pg_dump. Please set POSTGRESQL_BIN_PATH in settings.")
+        logger.warning("pg_dump not found. Set POSTGRESQL_BIN_PATH in settings.")
         return 'pg_dump'
     
-    def _get_windows_postgres_paths(self) -> List[str]:
+    def create_backup(self, database: str = 'default', compress: bool = True) -> Dict[str, Any]:
         """
-        ✅ NEW: Get possible PostgreSQL paths on Windows
-        
-        Returns:
-            List of possible bin directories
-        """
-        paths = []
-        
-        # Common installation directories
-        base_paths = [
-            r'C:\Program Files\PostgreSQL',
-            r'C:\PostgreSQL',
-            r'C:\Program Files (x86)\PostgreSQL',
-        ]
-        
-        for base_path in base_paths:
-            base = Path(base_path)
-            if base.exists():
-                # Find all version directories (16, 15, 14, etc.)
-                for version_dir in base.iterdir():
-                    if version_dir.is_dir():
-                        bin_dir = version_dir / 'bin'
-                        if bin_dir.exists():
-                            paths.append(str(bin_dir))
-        
-        # Sort by version (newest first)
-        paths.sort(reverse=True)
-        
-        return paths
-    
-    def create_backup(
-        self, 
-        database: str = 'default',
-        compress: bool = True
-    ) -> Dict[str, any]:
-        """
-        Create database backup
+        Create database backup.
         
         Args:
             database: Database alias from settings.DATABASES
             compress: Use compression (recommended)
             
         Returns:
-            {
-                'status': 'success' | 'failed',
-                'path': '/path/to/backup.sql.gz',
-                'size': 12345678,
-                'checksum': 'abc123...',
-                'database': 'db_study_43en',
-                'timestamp': '20250105_143022'
-            }
+            Result dictionary with status, path, size, checksum
         """
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Get database config
         if database not in settings.DATABASES:
-            return {
-                'status': 'failed',
-                'error': f"Database '{database}' not found in settings"
-            }
+            return {'status': 'failed', 'error': f"Database '{database}' not found"}
         
         db_config = settings.DATABASES[database]
-        
-        # Backup filename
-        if compress:
-            backup_file = f"{database}_{timestamp}.backup"
-        else:
-            backup_file = f"{database}_{timestamp}.sql"
-        
-        backup_path = self.backup_dir / backup_file
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        ext = '.backup' if compress else '.sql'
+        backup_path = self.backup_dir / f"{database}_{timestamp}{ext}"
         
         try:
-            logger.info(f"Creating backup: {database}")
+            cmd = self._build_dump_command(db_config, str(backup_path), compress)
             
-            # Build pg_dump command
-            cmd = self._build_dump_command(
-                db_config=db_config,
-                output_file=str(backup_path),
-                compress=compress
-            )
-            
-            # Set password via environment
+            # Pass password via environment (secure)
             env = os.environ.copy()
             env['PGPASSWORD'] = db_config['PASSWORD']
             
-            # Execute pg_dump
-            logger.debug(f"Running: {cmd[0]} ... (password hidden)")
             result = subprocess.run(
-                cmd,
-                env=env,
-                capture_output=True,
-                text=True,
-                timeout=1800  # 30 minutes max
+                cmd, env=env, capture_output=True, text=True, timeout=1800
             )
             
             if result.returncode != 0:
-                raise Exception(f"pg_dump failed: {result.stderr}")
+                raise Exception(f"pg_dump failed: {result.stderr[:200]}")
             
-            # Verify file created
             if not backup_path.exists():
                 raise Exception("Backup file not created")
             
-            # Get file size
-            file_size = backup_path.stat().st_size
+            # Set restrictive permissions
+            if sys.platform != 'win32':
+                os.chmod(backup_path, 0o600)
             
-            # Calculate checksum
+            file_size = backup_path.stat().st_size
             checksum = self._calculate_checksum(backup_path)
             
-            logger.info(
-                f"✓ Backup created: {backup_file}\n"
-                f"  Size: {self._format_size(file_size)}\n"
-                f"  Checksum: {checksum[:16]}..."
-            )
+            logger.info(f"Backup created: {backup_path.name} ({format_size(file_size)})")
             
             # Cleanup old backups
             self._cleanup_old_backups(database)
@@ -234,44 +143,20 @@ class BackupManager:
                 'checksum': checksum,
                 'database': database,
                 'timestamp': timestamp,
-                'compressed': compress
             }
             
         except subprocess.TimeoutExpired:
-            logger.error(f"Backup timeout for {database}")
-            return {
-                'status': 'failed',
-                'error': 'Backup timeout (>30 minutes)'
-            }
-            
+            return {'status': 'failed', 'error': 'Backup timeout (>30 minutes)'}
         except Exception as e:
-            logger.error(f"Backup failed for {database}: {e}", exc_info=True)
-            
-            # Cleanup partial file
             if backup_path.exists():
                 backup_path.unlink()
-            
-            return {
-                'status': 'failed',
-                'error': str(e)
-            }
+            logger.error(f"Backup failed: {type(e).__name__}")
+            return {'status': 'failed', 'error': str(e)}
     
-    def _build_dump_command(
-        self,
-        db_config: Dict,
-        output_file: str,
-        compress: bool
-    ) -> list:
-        """
-        Build pg_dump command
-        
-        ✅ UPDATED: Use full path to pg_dump
-        
-        Returns:
-            ['C:/Program Files/PostgreSQL/16/bin/pg_dump.exe', '-h', 'localhost', ...]
-        """
+    def _build_dump_command(self, db_config: Dict, output_file: str, compress: bool) -> List[str]:
+        """Build pg_dump command."""
         cmd = [
-            self.pg_dump_path,  # ✅ Use detected path
+            self.pg_dump_path,
             '-h', db_config['HOST'],
             '-p', str(db_config['PORT']),
             '-U', db_config['USER'],
@@ -279,367 +164,199 @@ class BackupManager:
         ]
         
         if compress:
-            # Custom format (compressed, portable)
-            cmd.extend([
-                '-F', 'c',  # Format: custom
-                '-Z', '9',  # Compression level: 9 (max)
-            ])
+            cmd.extend(['-F', 'c', '-Z', '9'])
         else:
-            # Plain SQL format
-            cmd.extend([
-                '-F', 'p',  # Format: plain
-            ])
+            cmd.extend(['-F', 'p'])
         
-        # Output file
         cmd.extend(['-f', output_file])
-        
         return cmd
     
     def _calculate_checksum(self, file_path: Path) -> str:
-        """
-        Calculate SHA-256 checksum
-        
-        Args:
-            file_path: Path to file
-            
-        Returns:
-            Hex string (64 characters)
-        """
+        """Calculate SHA-256 checksum."""
         sha256 = hashlib.sha256()
-        
         with open(file_path, 'rb') as f:
-            # Read in chunks to handle large files
             for chunk in iter(lambda: f.read(8192), b''):
                 sha256.update(chunk)
-        
         return sha256.hexdigest()
     
-    def _cleanup_old_backups(self, database: str):
-        """
-        Remove backups older than retention period
-        
-        Args:
-            database: Database name
-        """
-        cutoff_date = datetime.now() - timedelta(days=self.retention_days)
-        
-        # Pattern: database_YYYYMMDD_HHMMSS.*
-        pattern = f"{database}_*.backup"
+    def _cleanup_old_backups(self, database: str) -> None:
+        """Remove backups older than retention period."""
+        cutoff = datetime.now() - timedelta(days=self.retention_days)
         removed = 0
         
-        for backup_file in self.backup_dir.glob(pattern):
+        for backup_file in self.backup_dir.glob(f"{database}_*.backup"):
             try:
                 # Parse timestamp from filename
-                # Format: db_study_43en_20250105_143022.backup
                 parts = backup_file.stem.split('_')
-                
-                # Find date and time parts
-                date_str = None
-                time_str = None
-                
                 for i, part in enumerate(parts):
-                    if len(part) == 8 and part.isdigit():
-                        date_str = part
-                        if i + 1 < len(parts):
-                            time_str = parts[i + 1]
+                    if len(part) == 8 and part.isdigit() and i + 1 < len(parts):
+                        backup_dt = datetime.strptime(f"{part}_{parts[i+1]}", '%Y%m%d_%H%M%S')
+                        if backup_dt < cutoff:
+                            backup_file.unlink()
+                            removed += 1
                         break
-                
-                if not date_str or not time_str:
-                    continue
-                
-                # Parse datetime
-                backup_datetime = datetime.strptime(
-                    f"{date_str}_{time_str}",
-                    '%Y%m%d_%H%M%S'
-                )
-                
-                # Check if old
-                if backup_datetime < cutoff_date:
-                    backup_file.unlink()
-                    removed += 1
-                    logger.debug(f"Removed old backup: {backup_file.name}")
-                    
-            except Exception as e:
-                logger.warning(f"Error processing {backup_file}: {e}")
+            except Exception:
+                pass
         
         if removed > 0:
             logger.info(f"Cleaned up {removed} old backup(s)")
     
-    def _format_size(self, size_bytes: int) -> str:
-        """
-        Format size in human-readable format
-        
-        Args:
-            size_bytes: Size in bytes
-            
-        Returns:
-            Formatted string (e.g., "2.3 GB")
-        """
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.1f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.1f} PB"
-    
-    def list_backups(self, database: Optional[str] = None) -> list:
-        """
-        List all backups
-        
-        Args:
-            database: Filter by database (optional)
-            
-        Returns:
-            List of backup info dictionaries
-        """
-        backups = []
-        
+    def list_backups(self, database: Optional[str] = None) -> List[Dict[str, Any]]:
+        """List all backups."""
         pattern = f"{database}_*.backup" if database else "*.backup"
+        backups = []
         
         for backup_file in sorted(self.backup_dir.glob(pattern)):
             try:
+                stat = backup_file.stat()
                 backups.append({
                     'filename': backup_file.name,
                     'path': str(backup_file),
-                    'size': backup_file.stat().st_size,
-                    'size_human': self._format_size(backup_file.stat().st_size),
-                    'modified': datetime.fromtimestamp(backup_file.stat().st_mtime),
+                    'size': stat.st_size,
+                    'size_human': format_size(stat.st_size),
+                    'modified': datetime.fromtimestamp(stat.st_mtime),
                 })
-            except Exception as e:
-                logger.warning(f"Error reading {backup_file}: {e}")
+            except Exception:
+                pass
         
         return backups
     
-    def verify_backup(self, backup_path: str) -> Dict[str, any]:
-        """
-        Verify backup integrity
-        
-        Args:
-            backup_path: Path to backup file
-            
-        Returns:
-            {
-                'valid': True/False,
-                'checksum': 'abc123...',
-                'size': 12345678
-            }
-        """
+    def verify_backup(self, backup_path: str) -> Dict[str, Any]:
+        """Verify backup integrity."""
         backup_file = Path(backup_path)
         
         if not backup_file.exists():
-            return {
-                'valid': False,
-                'error': 'File not found'
-            }
+            return {'valid': False, 'error': 'File not found'}
         
         try:
-            checksum = self._calculate_checksum(backup_file)
-            size = backup_file.stat().st_size
-            
-            # Basic validation: check if it's a PostgreSQL backup
             with open(backup_file, 'rb') as f:
                 header = f.read(5)
-                is_pg_backup = header == b'PGDMP'  # PostgreSQL custom format magic bytes
+                is_pg_backup = header == b'PGDMP'
             
             return {
                 'valid': is_pg_backup,
-                'checksum': checksum,
-                'size': size,
-                'is_postgresql_backup': is_pg_backup
+                'checksum': self._calculate_checksum(backup_file),
+                'size': backup_file.stat().st_size,
+            }
+        except Exception as e:
+            return {'valid': False, 'error': str(e)}
+    
+    def encrypt_backup(
+        self, 
+        backup_path: str, 
+        password: Optional[str] = None,
+        remove_original: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Encrypt backup with GPG (AES-256).
+        
+        Security: Password passed via stdin, not command line.
+        """
+        backup_file = Path(backup_path)
+        if not backup_file.exists():
+            return {'status': 'failed', 'error': 'Backup file not found'}
+        
+        password = password or getattr(settings, 'BACKUP_ENCRYPTION_PASSWORD', None)
+        if not password:
+            return {'status': 'failed', 'error': 'No encryption password provided'}
+        
+        encrypted_path = Path(f"{backup_path}.gpg")
+        
+        try:
+            # Use --passphrase-fd 0 to read password from stdin (more secure)
+            cmd = [
+                'gpg', '--batch', '--yes',
+                '--passphrase-fd', '0',
+                '--symmetric', '--cipher-algo', 'AES256',
+                '-o', str(encrypted_path),
+                str(backup_path)
+            ]
+            
+            result = subprocess.run(
+                cmd,
+                input=password,
+                capture_output=True,
+                text=True,
+                timeout=300
+            )
+            
+            if result.returncode != 0:
+                raise Exception(f"GPG failed: {result.stderr[:100]}")
+            
+            if not encrypted_path.exists():
+                raise Exception("Encrypted file not created")
+            
+            # Set restrictive permissions
+            if sys.platform != 'win32':
+                os.chmod(encrypted_path, 0o600)
+            
+            file_size = encrypted_path.stat().st_size
+            
+            if remove_original:
+                backup_file.unlink()
+            
+            return {
+                'status': 'success',
+                'encrypted_path': str(encrypted_path),
+                'size': file_size,
             }
             
         except Exception as e:
-            return {
-                'valid': False,
-                'error': str(e)
-            }
-
-
-
-    def encrypt_backup(
-            self, 
-            backup_path: str, 
-            password: str = None,
-            remove_original: bool = False
-        ) -> Dict[str, any]:
-            """
-            Encrypt backup with GPG (AES-256)
-            
-            Args:
-                backup_path: Path to backup file
-                password: Encryption password (or use BACKUP_ENCRYPTION_PASSWORD from settings)
-                remove_original: Delete original file after encryption
-                
-            Returns:
-                {
-                    'status': 'success' | 'failed',
-                    'encrypted_path': '/path/to/backup.backup.gpg',
-                    'size': 12345678
-                }
-            """
-            backup_file = Path(backup_path)
-            
-            if not backup_file.exists():
-                return {
-                    'status': 'failed',
-                    'error': 'Backup file not found'
-                }
-            
-            # Get password
-            if password is None:
-                password = getattr(settings, 'BACKUP_ENCRYPTION_PASSWORD', None)
-                if not password:
-                    return {
-                        'status': 'failed',
-                        'error': 'No encryption password. Set BACKUP_ENCRYPTION_PASSWORD in settings or use --password'
-                    }
-            
-            encrypted_path = Path(f"{backup_path}.gpg")
-            
-            try:
-                logger.info(f"Encrypting: {backup_file.name}")
-                
-                # GPG command
-                cmd = [
-                    'gpg',
-                    '--batch',
-                    '--yes',
-                    '--passphrase', password,
-                    '--symmetric',
-                    '--cipher-algo', 'AES256',
-                    '-o', str(encrypted_path),
-                    str(backup_path)
-                ]
-                
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=300
-                )
-                
-                if result.returncode != 0:
-                    raise Exception(f"GPG failed: {result.stderr}")
-                
-                if not encrypted_path.exists():
-                    raise Exception("Encrypted file not created")
-                
-                file_size = encrypted_path.stat().st_size
-                
-                logger.info(f"✓ Encrypted: {encrypted_path.name} ({self._format_size(file_size)})")
-                
-                # Remove original if requested
-                if remove_original:
-                    backup_file.unlink()
-                    logger.info(f"✓ Removed original: {backup_file.name}")
-                
-                return {
-                    'status': 'success',
-                    'encrypted_path': str(encrypted_path),
-                    'size': file_size,
-                    'removed_original': remove_original
-                }
-                
-            except Exception as e:
-                logger.error(f"Encryption failed: {e}")
-                if encrypted_path.exists():
-                    encrypted_path.unlink()
-                return {
-                    'status': 'failed',
-                    'error': str(e)
-                }
-        
+            if encrypted_path.exists():
+                encrypted_path.unlink()
+            return {'status': 'failed', 'error': str(e)}
+    
     def decrypt_backup(
-            self, 
-            encrypted_path: str, 
-            password: str,
-            output_path: str = None
-        ) -> Dict[str, any]:
-            """
-            Decrypt GPG-encrypted backup
+        self,
+        encrypted_path: str,
+        password: str,
+        output_path: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Decrypt GPG-encrypted backup."""
+        encrypted_file = Path(encrypted_path)
+        if not encrypted_file.exists():
+            return {'status': 'failed', 'error': 'Encrypted file not found'}
+        
+        output_file = Path(output_path or str(encrypted_file).replace('.gpg', ''))
+        
+        try:
+            cmd = [
+                'gpg', '--batch', '--yes',
+                '--passphrase-fd', '0',
+                '--decrypt',
+                '-o', str(output_file),
+                str(encrypted_file)
+            ]
             
-            Args:
-                encrypted_path: Path to .gpg file
-                password: Decryption password
-                output_path: Output path (optional)
-                
-            Returns:
-                {
-                    'status': 'success' | 'failed',
-                    'decrypted_path': '/path/to/backup.backup',
-                    'size': 12345678
-                }
-            """
-            encrypted_file = Path(encrypted_path)
+            result = subprocess.run(
+                cmd,
+                input=password,
+                capture_output=True,
+                text=True,
+                timeout=300
+            )
             
-            if not encrypted_file.exists():
-                return {
-                    'status': 'failed',
-                    'error': 'Encrypted file not found'
-                }
+            if result.returncode != 0:
+                raise Exception(f"GPG decrypt failed: {result.stderr[:100]}")
             
-            if output_path is None:
-                output_path = str(encrypted_file).replace('.gpg', '')
+            return {
+                'status': 'success',
+                'decrypted_path': str(output_file),
+                'size': output_file.stat().st_size,
+            }
             
-            output_file = Path(output_path)
-            
-            try:
-                logger.info(f"Decrypting: {encrypted_file.name}")
-                
-                cmd = [
-                    'gpg',
-                    '--batch',
-                    '--yes',
-                    '--passphrase', password,
-                    '--decrypt',
-                    '-o', str(output_file),
-                    str(encrypted_file)
-                ]
-                
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=300
-                )
-                
-                if result.returncode != 0:
-                    raise Exception(f"GPG decrypt failed: {result.stderr}")
-                
-                if not output_file.exists():
-                    raise Exception("Decrypted file not created")
-                
-                file_size = output_file.stat().st_size
-                
-                logger.info(f"✓ Decrypted: {output_file.name} ({self._format_size(file_size)})")
-                
-                return {
-                    'status': 'success',
-                    'decrypted_path': str(output_file),
-                    'size': file_size
-                }
-                
-            except Exception as e:
-                logger.error(f"Decryption failed: {e}")
-                if output_file.exists():
-                    output_file.unlink()
-                return {
-                    'status': 'failed',
-                    'error': str(e)
-                }
+        except Exception as e:
+            if output_file.exists():
+                output_file.unlink()
+            return {'status': 'failed', 'error': str(e)}
 
-# ==========================================
-# GLOBAL INSTANCE
-# ==========================================
 
-_backup_manager = None
+# Global instance
+_backup_manager: Optional[BackupManager] = None
+
 
 def get_backup_manager() -> BackupManager:
-    """
-    Get global backup manager instance
-    
-    Returns:
-        BackupManager instance
-    """
+    """Get global backup manager instance."""
     global _backup_manager
     if _backup_manager is None:
         _backup_manager = BackupManager()

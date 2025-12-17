@@ -1,34 +1,31 @@
 #!/usr/bin/env python
-# manage.py
+"""Django management script."""
 import os
 import sys
 from pathlib import Path
+import environ
+from django.core.management import execute_from_command_line
+
 
 def main():
-    ROOT = Path(__file__).resolve().parent
-    if str(ROOT) not in sys.path:
-        sys.path.insert(0, str(ROOT))  # Ensures root is first in path for imports like 'config.settings'
+    root = Path(__file__).resolve().parent
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
 
+    # Load .env file
     try:
-        import environ
-        environ.Env.read_env(ROOT / ".env")  # Load .env into os.environ
+        environ.Env.read_env(root / ".env")
     except ImportError:
-        print("Warning: 'django-environ' not installed; skipping .env load. Install it for better env management.")
-    except Exception as e:
-        print(f"Error loading .env: {e}")  # Basic error feedback
+        pass
+    except (OSError, ValueError, environ.ImproperlyConfigured) as e:
+        print(f"Warning: Failed to load .env: {e}")
 
-    # Set default settings module; can override via env var
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", os.getenv("DJANGO_SETTINGS_MODULE", "config.settings"))
-
-    try:
-        from django.core.management import execute_from_command_line
-    except ImportError as exc:
-        raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and available on your PYTHONPATH? "
-            "Did you forget to activate a virtual environment?"
-        ) from exc
+    # Set defaults for Django settings
+    os.environ.setdefault("DJANGO_ENV", "dev")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
     execute_from_command_line(sys.argv)
+
 
 if __name__ == "__main__":
     main()
