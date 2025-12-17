@@ -20,7 +20,7 @@
 }
 
 @media (min-width: 576px) {
-  .container-sm, .container {
+  .container-sm, .container {z
     max-width: 540px;
   }
 }

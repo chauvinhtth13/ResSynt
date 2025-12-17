@@ -183,9 +183,9 @@ class Individual_WaterSource(AuditFieldsMixin):
     SOURCE_TYPE_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
     # PURPOSES
-    FOR_DRINKING = models.BooleanField(default=False)
-    FOR_LIVING = models.BooleanField(default=False)
-    FOR_IRRIGATION = models.BooleanField(default=False)
+    DRINKING = models.BooleanField(default=False)
+    LIVING = models.BooleanField(default=False)
+    IRRIGATION = models.BooleanField(default=False)
     FOR_OTHER = models.BooleanField(default=False)
     OTHER_PURPOSE = models.CharField(max_length=200, null=True, blank=True)
     

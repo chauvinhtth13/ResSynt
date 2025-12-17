@@ -41,6 +41,24 @@ class User(AbstractUser):
     
     last_study_accessed_at= models.DateTimeField(null=True, blank=True)    
     last_study_accessed_id= models.IntegerField(null=True, blank=True) 
+    
+    # ✨ RSA PUBLIC KEY (for backup signature verification)
+    public_key_pem = models.TextField(
+        blank=True,
+        null=True,
+        help_text="User's RSA public key (PEM format) for backup signature verification"
+    )
+    key_generated_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Timestamp when RSA key pair was generated"
+    )
+    key_last_rotated = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Timestamp of last key rotation"
+    )
+    
     # Metadata
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

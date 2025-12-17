@@ -137,7 +137,7 @@ def handle_failed_login(sender, credentials, request, **kwargs):
 def handle_axes_lockout(request, username, ip_address, **kwargs):
     """
     Handle axes lockout event
-    ✅ ENHANCED: Added comprehensive email alerting
+    ✅ ENHANCED: Using Celery for async email alerts
     """
     try:
         timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -148,7 +148,7 @@ def handle_axes_lockout(request, username, ip_address, **kwargs):
         
         # Update user record to track lockout
         from backends.tenancy.models import User
-        from django.core.mail import mail_admins
+        from backends.tenancy.tasks import send_security_alert
         
         try:
             user = User.objects.get(username=username)
@@ -158,62 +158,31 @@ def handle_axes_lockout(request, username, ip_address, **kwargs):
             ).strip()
             user.save(update_fields=['notes'])
             
-            # ✅ NEW: Send detailed email alert
-            try:
-                server_name = getattr(settings, 'SERVER_NAME', 'ReSYNC')
-                mail_admins(
-                    subject=f'🚨 SECURITY ALERT: User Locked Out',
-                    message=(
-                        f"A user has been locked out after multiple failed login attempts.\n"
-                        f"\n"
-                        f"Details:\n"
-                        f"  User:       {username}\n"
-                        f"  IP Address: {ip_address}\n"
-                        f"  Time:       {timestamp}\n"
-                        f"  Server:     {server_name}\n"
-                        f"\n"
-                        f"Action Required:\n"
-                        f"  1. Review the lockout reason\n"
-                        f"  2. Check if this is a legitimate user\n"
-                        f"  3. Unlock user if needed: python manage.py axes_reset {username}\n"
-                        f"\n"
-                        f"To view axes logs:\n"
-                    ),
-                    fail_silently=True
-                )
-                logger.info(f"✓ Alert email sent for lockout: {username}")
-            except Exception as e:
-                logger.error(f"Failed to send alert email: {e}")
+            # ✅ Send async email alert via Celery
+            send_security_alert.delay(
+                alert_type='user_lockout',
+                details={
+                    'username': username,
+                    'ip_address': ip_address,
+                    'timestamp': timestamp,
+                }
+            )
+            logger.info(f"✓ Queued alert email for lockout: {username}")
                 
         except User.DoesNotExist:
             # Log attempt for non-existent user
             logger.info(f"Lockout attempt for non-existent user: {username}")
             
-            # ✅ NEW: Alert for non-existent user (potential attack)
-            try:
-                server_name = getattr(settings, 'SERVER_NAME', 'ReSYNC')
-                mail_admins(
-                    subject=f'🚨 SECURITY ALERT: Invalid User Login Attempts',
-                    message=(
-                        f"Multiple login attempts for NON-EXISTENT user.\n"
-                        f"This may indicate a brute-force attack or user enumeration attempt.\n"
-                        f"\n"
-                        f"Details:\n"
-                        f"  Username:   {username} (DOES NOT EXIST)\n"
-                        f"  IP Address: {ip_address}\n"
-                        f"  Time:       {timestamp}\n"
-                        f"  Server:     {server_name}\n"
-                        f"\n"
-                        f"Recommended Actions:\n"
-                        f"  1. Consider blocking IP: {ip_address}\n"
-                        f"  2. Review firewall rules\n"
-                        f"  3. Check for similar attempts from this IP\n"
-                    ),
-                    fail_silently=True
-                )
-                logger.info(f"✓ Alert email sent for non-existent user: {username}")
-            except Exception as e:
-                logger.error(f"Failed to send alert email: {e}")
+            # ✅ Send async alert for non-existent user (potential attack)
+            send_security_alert.delay(
+                alert_type='invalid_user_attempt',
+                details={
+                    'username': username,
+                    'ip_address': ip_address,
+                    'timestamp': timestamp,
+                }
+            )
+            logger.info(f"✓ Queued alert email for non-existent user: {username}")
             
     except Exception as e:
         logger.error(f"Error handling axes lockout: {e}")

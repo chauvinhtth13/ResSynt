@@ -6,6 +6,7 @@ Features:
 - Automatic cleanup
 - Support multiple databases
 - ✅ CROSS-PLATFORM: Windows + Linux support
+- ✅ AES-256-GCM encryption (no GPG needed)
 """
 import os
 import sys
@@ -143,14 +144,17 @@ class BackupManager:
     def create_backup(
         self, 
         database: str = 'default',
-        compress: bool = True
+        compress: bool = True,
+        schemas: list = None
     ) -> Dict[str, any]:
         """
         Create database backup
         
         Args:
-            database: Database alias from settings.DATABASES
+            database: Database alias from settings.DATABASES OR database name on PostgreSQL server
             compress: Use compression (recommended)
+            schemas: List of schema names to backup (default: all schemas)
+                     Example: ['data', 'log'] or ['public', 'data', 'log']
             
         Returns:
             {
@@ -159,19 +163,22 @@ class BackupManager:
                 'size': 12345678,
                 'checksum': 'abc123...',
                 'database': 'db_study_43en',
-                'timestamp': '20250105_143022'
+                'timestamp': '20250105_143022',
+                'schemas': ['data', 'log']
             }
         """
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
         # Get database config
-        if database not in settings.DATABASES:
-            return {
-                'status': 'failed',
-                'error': f"Database '{database}' not found in settings"
-            }
-        
-        db_config = settings.DATABASES[database]
+        if database in settings.DATABASES:
+            # Use config from settings
+            db_config = settings.DATABASES[database]
+        else:
+            # Database not in settings - use default connection with different dbname
+            logger.info(f"Database '{database}' not in settings, using default connection")
+            default_config = settings.DATABASES.get('default', {})
+            db_config = default_config.copy()
+            db_config['NAME'] = database  # Override database name
         
         # Backup filename
         if compress:
@@ -188,7 +195,8 @@ class BackupManager:
             cmd = self._build_dump_command(
                 db_config=db_config,
                 output_file=str(backup_path),
-                compress=compress
+                compress=compress,
+                schemas=schemas
             )
             
             # Set password via environment
@@ -234,7 +242,8 @@ class BackupManager:
                 'checksum': checksum,
                 'database': database,
                 'timestamp': timestamp,
-                'compressed': compress
+                'compressed': compress,
+                'schemas': schemas if schemas else 'all'
             }
             
         except subprocess.TimeoutExpired:
@@ -260,12 +269,16 @@ class BackupManager:
         self,
         db_config: Dict,
         output_file: str,
-        compress: bool
+        compress: bool,
+        schemas: list = None
     ) -> list:
         """
         Build pg_dump command
         
-        ✅ UPDATED: Use full path to pg_dump
+        ✅ UPDATED: Use full path to pg_dump + support schema filtering
+        
+        Args:
+            schemas: List of schema names to backup (default: all schemas)
         
         Returns:
             ['C:/Program Files/PostgreSQL/16/bin/pg_dump.exe', '-h', 'localhost', ...]
@@ -277,6 +290,15 @@ class BackupManager:
             '-U', db_config['USER'],
             '-d', db_config['NAME'],
         ]
+        
+        # Add schema filters if specified
+        if schemas:
+            for schema in schemas:
+                cmd.extend(['-n', schema])
+            logger.info(f"Backing up schemas: {', '.join(schemas)}")
+        else:
+            # Backup ALL schemas (pg_dump default behavior)
+            logger.info("Backing up all schemas")
         
         if compress:
             # Custom format (compressed, portable)
@@ -314,12 +336,15 @@ class BackupManager:
         
         return sha256.hexdigest()
     
-    def _cleanup_old_backups(self, database: str):
+    def _cleanup_old_backups(self, database: str) -> int:
         """
         Remove backups older than retention period
         
         Args:
             database: Database name
+            
+        Returns:
+            Number of files removed
         """
         cutoff_date = datetime.now() - timedelta(days=self.retention_days)
         
@@ -364,6 +389,8 @@ class BackupManager:
         
         if removed > 0:
             logger.info(f"Cleaned up {removed} old backup(s)")
+        
+        return removed
     
     def _format_size(self, size_bytes: int) -> str:
         """
@@ -462,7 +489,7 @@ class BackupManager:
             remove_original: bool = False
         ) -> Dict[str, any]:
             """
-            Encrypt backup with GPG (AES-256)
+            Encrypt backup with AES-256-GCM (Python native - no GPG needed)
             
             Args:
                 backup_path: Path to backup file
@@ -472,10 +499,12 @@ class BackupManager:
             Returns:
                 {
                     'status': 'success' | 'failed',
-                    'encrypted_path': '/path/to/backup.backup.gpg',
+                    'encrypted_path': '/path/to/backup.backup.encrypted',
                     'size': 12345678
                 }
             """
+            from backends.tenancy.utils.backup_encryption import BackupEncryption
+            
             backup_file = Path(backup_path)
             
             if not backup_file.exists():
@@ -493,39 +522,22 @@ class BackupManager:
                         'error': 'No encryption password. Set BACKUP_ENCRYPTION_PASSWORD in settings or use --password'
                     }
             
-            encrypted_path = Path(f"{backup_path}.gpg")
+            encrypted_path = f"{backup_path}.encrypted"
             
             try:
                 logger.info(f"Encrypting: {backup_file.name}")
                 
-                # GPG command
-                cmd = [
-                    'gpg',
-                    '--batch',
-                    '--yes',
-                    '--passphrase', password,
-                    '--symmetric',
-                    '--cipher-algo', 'AES256',
-                    '-o', str(encrypted_path),
-                    str(backup_path)
-                ]
-                
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=300
+                # Use Python cryptography library
+                result = BackupEncryption.encrypt_file(
+                    input_path=str(backup_path),
+                    output_path=encrypted_path,
+                    password=password
                 )
                 
-                if result.returncode != 0:
-                    raise Exception(f"GPG failed: {result.stderr}")
+                if result['status'] != 'success':
+                    raise Exception(result.get('error', 'Unknown encryption error'))
                 
-                if not encrypted_path.exists():
-                    raise Exception("Encrypted file not created")
-                
-                file_size = encrypted_path.stat().st_size
-                
-                logger.info(f"✓ Encrypted: {encrypted_path.name} ({self._format_size(file_size)})")
+                logger.info(f"✓ Encrypted: {Path(encrypted_path).name} ({self._format_size(result['size'])})")
                 
                 # Remove original if requested
                 if remove_original:
@@ -534,15 +546,17 @@ class BackupManager:
                 
                 return {
                     'status': 'success',
-                    'encrypted_path': str(encrypted_path),
-                    'size': file_size,
-                    'removed_original': remove_original
+                    'encrypted_path': encrypted_path,
+                    'size': result['size'],
+                    'removed_original': remove_original,
+                    'algorithm': 'AES-256-GCM'
                 }
                 
             except Exception as e:
                 logger.error(f"Encryption failed: {e}")
-                if encrypted_path.exists():
-                    encrypted_path.unlink()
+                encrypted_file = Path(encrypted_path)
+                if encrypted_file.exists():
+                    encrypted_file.unlink()
                 return {
                     'status': 'failed',
                     'error': str(e)

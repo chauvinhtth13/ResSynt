@@ -90,20 +90,20 @@ class HH_CASE(AuditFieldsMixin):
     ROOF_MATERIAL_OTHER = models.CharField(max_length=200, null=True, blank=True, verbose_name=_('Other Roof Material'))
     
     # ASSETS
-    HAS_TV = models.BooleanField(default=False, verbose_name=_('Television'))
-    HAS_AC = models.BooleanField(default=False, verbose_name=_('Air Conditioner'))
-    HAS_COMPUTER = models.BooleanField(default=False, verbose_name=_('Desktop/Laptop'))
-    HAS_REFRIGERATOR = models.BooleanField(default=False, verbose_name=_('Refrigerator'))
-    HAS_INTERNET = models.BooleanField(default=False, verbose_name=_('Internet Access'))
-    HAS_WASHING_MACHINE = models.BooleanField(default=False, verbose_name=_('Washing Machine'))
-    HAS_MOBILE_PHONE = models.BooleanField(default=False, verbose_name=_('Mobile Phone'))
-    HAS_WATER_HEATER = models.BooleanField(default=False, verbose_name=_('Water Heater'))
-    HAS_BICYCLE = models.BooleanField(default=False, verbose_name=_('Bicycle'))
-    HAS_GAS_STOVE = models.BooleanField(default=False, verbose_name=_('Gas Stove'))
-    HAS_MOTORCYCLE = models.BooleanField(default=False, verbose_name=_('Motorcycle'))
-    HAS_INDUCTION_COOKER = models.BooleanField(default=False, verbose_name=_('Induction Cooker'))
-    HAS_CAR = models.BooleanField(default=False, verbose_name=_('Car'))
-    HAS_RICE_COOKER = models.BooleanField(default=False, verbose_name=_('Rice Cooker'))
+    TV = models.BooleanField(default=False, verbose_name=_('Television'))
+    AC = models.BooleanField(default=False, verbose_name=_('Air Conditioner'))
+    COMPUTER = models.BooleanField(default=False, verbose_name=_('Desktop/Laptop'))
+    REFRIGERATOR = models.BooleanField(default=False, verbose_name=_('Refrigerator'))
+    INTERNET = models.BooleanField(default=False, verbose_name=_('Internet Access'))
+    WASHING_MACHINE = models.BooleanField(default=False, verbose_name=_('Washing Machine'))
+    MOBILE_PHONE = models.BooleanField(default=False, verbose_name=_('Mobile Phone'))
+    WATER_HEATER = models.BooleanField(default=False, verbose_name=_('Water Heater'))
+    BICYCLE = models.BooleanField(default=False, verbose_name=_('Bicycle'))
+    GAS_STOVE = models.BooleanField(default=False, verbose_name=_('Gas Stove'))
+    MOTORCYCLE = models.BooleanField(default=False, verbose_name=_('Motorcycle'))
+    INDUCTION_COOKER = models.BooleanField(default=False, verbose_name=_('Induction Cooker'))
+    CAR = models.BooleanField(default=False, verbose_name=_('Car'))
+    RICE_COOKER = models.BooleanField(default=False, verbose_name=_('Rice Cooker'))
     
     class Meta:
         db_table = 'HH_CASE'
@@ -262,10 +262,10 @@ class HH_WaterSource(AuditFieldsMixin):
     SOURCE_TYPE_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
     # PURPOSES
-    FOR_DRINKING = models.BooleanField(default=False)
-    FOR_LIVING = models.BooleanField(default=False)
-    FOR_IRRIGATION = models.BooleanField(default=False)
-    FOR_OTHER = models.BooleanField(default=False)
+    DRINKING = models.BooleanField(default=False)
+    LIVING = models.BooleanField(default=False)
+    IRRIGATION = models.BooleanField(default=False)
+    OTHER = models.BooleanField(default=False)
     OTHER_PURPOSE = models.CharField(max_length=200, null=True, blank=True)
     
     class Meta:
@@ -276,7 +276,7 @@ class HH_WaterSource(AuditFieldsMixin):
         unique_together = [['HHID', 'SOURCE_TYPE']]
         indexes = [
             models.Index(fields=['HHID', 'SOURCE_TYPE'], name='idx_water_hh_type'),
-            models.Index(fields=['FOR_DRINKING'], name='idx_water_drinking'),
+            models.Index(fields=['DRINKING'], name='idx_water_drinking'),
         ]
     
     def __str__(self):
@@ -461,8 +461,8 @@ class HH_MemberQuerySet(models.QuerySet):
 
 
 class HH_WaterSourceQuerySet(models.QuerySet):
-    def for_drinking(self):
-        return self.filter(FOR_DRINKING=True)
+    def drinking(self):
+        return self.filter(DRINKING=True)
     
     def safe_sources(self):
         return self.filter(SOURCE_TYPE__in=['tap', 'bottled'])

@@ -105,7 +105,6 @@ THIRD_PARTY_APPS = [
     "csp",
     "parler",
     "django_extensions",
-    "django_bootstrap5",
     'encrypted_model_fields',
 ]
 
@@ -891,14 +890,45 @@ PASSWORD_HASHERS = [
 
 
 # ============================================
-# FIELD ENCRYPTION CONFIGURATION
+# ENCRYPTION CONFIGURATION
 # ============================================
-# 🔒 PASSWORD_RESET_TIMEOUT already defined at line 361 (900s = 15 minutes)
-# Removed duplicate 24-hour timeout for security compliance
 
+# Field-level encryption (existing)
 FIELD_ENCRYPTION_KEY = env(
     'FIELD_ENCRYPTION_KEY',
     default=''
 )
 
+# ✨ NEW: RSA + AES Hybrid Backup Encryption
+# RSA Key Configuration
+RSA_KEY_SIZE = env.int('RSA_KEY_SIZE', default=4096)
+RSA_SIGNATURE_ALGORITHM = 'RSA-PSS'  # Digital signature algorithm
+RSA_ENCRYPTION_PADDING = 'OAEP'  # Session key encryption padding
+
+# AES Configuration (for backup data)
+AES_KEY_SIZE = 256
+AES_MODE = 'GCM'  # Authenticated encryption
+
+# Backup Encryption Method
+BACKUP_ENCRYPTION_METHOD = env(
+    'BACKUP_ENCRYPTION_METHOD',
+    default='HYBRID'  # 'HYBRID' (RSA+AES) or 'SYMMETRIC' (AES only - deprecated)
+)
+
+# Signature Verification
+BACKUP_SIGNATURE_REQUIRED = env.bool('BACKUP_SIGNATURE_REQUIRED', default=True)
+
+# Server RSA Key Password
+SERVER_KEY_PASSWORD = env('SERVER_KEY_PASSWORD', default=None)
+
+# Legacy symmetric encryption password (deprecated, kept for backward compatibility)
 BACKUP_ENCRYPTION_PASSWORD = env('BACKUP_ENCRYPTION_PASSWORD', default=None)
+
+# Key Storage
+SERVER_KEYS_DIR = BASE_DIR / 'keys' / 'server'
+USER_KEYS_DIR = BASE_DIR / 'keys' / 'users'
+
+# Ensure directories exist
+SERVER_KEYS_DIR.mkdir(parents=True, exist_ok=True)
+USER_KEYS_DIR.mkdir(parents=True, exist_ok=True)
+

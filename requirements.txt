@@ -13,9 +13,14 @@ psycopg[pool]==3.2.3    # Optional: connection pooling support
 django-axes==6.1.1
 
 
-# Caching
+# Caching & Task Queue
 django-redis==5.4.0
 redis==5.0.1
+celery[redis]==5.4.0  # Task queue with Redis support
+vine==5.1.0  # Required by celery
+kombu==5.3.5  # Messaging library
+amqp==5.2.0  # AMQP protocol
+billiard==4.2.0  # Process pool
 
 # Utilities
 python-dateutil==2.8.2
