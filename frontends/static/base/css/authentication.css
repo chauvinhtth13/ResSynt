@@ -1,17 +1,7 @@
 /* ========================================================================== 
-   MAIN LAYOUT 
-   ========================================================================== */
-main {
-    flex-grow: 1;
-    display: flex;
-}
-
-
-/* ========================================================================== 
    EFFECTS
    ========================================================================== */
 .left-side {
-    background: var(--app-linear-gradient) !important;
     color: white;
     padding: clamp(1rem, 3vw, 3.5rem);
     justify-content: center;
@@ -19,11 +9,9 @@ main {
 
 .right-side {
     display: flex;
-    padding: auto;
+    padding: 20px clamp(1rem, 3vw, 3.5rem);
     flex-direction: column;
     justify-content: space-between;
-    min-height: 100vh !important;
-    background-color: var(--app-bg-body);
 }
 
 .glass-effect {

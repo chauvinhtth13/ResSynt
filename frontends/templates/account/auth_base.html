@@ -1,45 +1,50 @@
 <!-- frontends\templates\account\auth_base.html -->
 {% extends 'base.html' %}
-{% load static %}
-{% load i18n %}
+{% load static i18n %}
 
 {% block title %}Sign In - ResSync Platform{% endblock %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'base/css/authentication.css' %}" />
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'base/css/authentication.css' %}">
+<style>
+    html, body {
+        background: linear-gradient(rgba(10, 20, 35, 0.8), rgba(10, 20, 35, 0.8)), 
+                url("{% static 'base/images/bg.jpg' %}") no-repeat center center fixed !important;
+        background-size: cover !important;
+    }
+</style>
 {% endblock %}
 
-{% block main %}
-<main class="container-fluid row">
+{% block base_main %}
+<main class="container-fluid row p-0 m-0">
 
     <!-- Features Section - Hidden on mobile, visible from lg -->
-    <section class="col-lg-7 d-none d-lg-flex flex-column left-side">
+    <section class="col-lg-7 d-none d-lg-flex flex-column min-vh-100 p-5 align-items-center justify-content-center">
         {% include 'includes/misc/features_list.html' %}
     </section>
 
     <!-- Login Section -->
-    <section class="col-12 col-lg-5 right-side justify-content-between">
+    <section class="col-12 col-lg-5 d-flex flex-column min-vh-100 p-5">
+
         <!-- Header with Language Selector -->
-        <div class="d-flex justify-content-end align-items-stretch p-3 flex-shrink-0">
-            {% include 'includes/dropdown_header/language_selector.html' %}
+        <div class="d-flex justify-content-end"> 
+        {% include 'includes/component/language_style_1.html' %}
         </div>
+        
+        <div class="flex-grow-1 d-flex justify-content-center align-items-center">
+        
+            <div class="card shadow" style="width: 20rem;">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Card Trung Tâm</h5>
+                    <p class="card-text text-center">Nội dung nằm giữa màn hình, tách biệt hoàn toàn với nút bên trên.</p>
+                    <button class="btn btn-success w-100">Đồng ý</button>
+                </div>
+            </div>
 
+        </div>
         <!-- Login Content -->
-        {% block auth_content %}
-        {% endblock %}
-
-        <!-- Footer -->
-        <footer class="text-center mt-auto pb-3 flex-shrink-0">
-            <p class="small text-muted mb-1">
-                {% trans 'Need help? Contact our support team at:' %}
-                <a href="mailto:ressync@oucru.org" class="link-royal-blue fw-medium">
-                    ressync@oucru.org
-                </a>
-            </p>
-            <p class="small text-muted mb-0">
-                {% trans 'Designed by Chau Vinh & Pham Tuong Duy' %}
-            </p>
-        </footer>
+        {% comment %} {% block auth_content %}
+        {% endblock %} {% endcomment %}
     </section>
 </main>
 {% endblock %}
