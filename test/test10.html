@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRF Survey 44EN - Follow-up Day 28</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<body class="bg-white">
+
+    <!-- Navbar Component -->
+    <div id="navbar-placeholder"></div>
+
+    <main class="container py-4" style="max-width: 1100px;">
+
+        <form method="post" action="">
+            
+            <h4 class="text-center fw-bold mb-4">FOLLOW-UP VISITS (FU 3/3) - DAY 90</h4>
+
+            <!-- Header Information Component -->
+            <div id="header-info-placeholder"></div>
+
+            <!-- Sample Collection Table -->
+            <div class="mb-5">
+                <h5 class="fw-bold mb-3">Sample Collection Schedule</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm align-middle">
+                        <thead class="table-success text-white">
+                            <tr>
+                                <th style="width: 15%;">Visit Time</th>
+                                <th style="width: 20%;" class="text-center">Sample Collected?</th>
+                                <th style="width: 18%;" class="text-center">Stool Sample Date</th>
+                                <th style="width: 18%;" class="text-center">Throat Swab Date</th>
+                                <th style="width: 29%;">Reason if NO sample (if applicable)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Enrollment + 3 days -->
+                            <tr>
+                                <td class="fw-bold">Enrollment + 3 days</td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_enrollment" id="sample_enr_yes" value="yes">
+                                            <label class="form-check-label small" for="sample_enr_yes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_enrollment" id="sample_enr_no" value="no">
+                                            <label class="form-check-label small" for="sample_enr_no">No</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_enrollment" id="sample_enr_na" value="na">
+                                            <label class="form-check-label small" for="sample_enr_na">N/A</label>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <input type="date" class="form-control form-control-sm" name="stool_date_enrollment">
+                                </td>
+                                <td class="text-center">
+                                    <input type="date" class="form-control form-control-sm" name="throat_date_enrollment">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" name="reason_enrollment" placeholder="Reason if no sample...">
+                                </td>
+                            </tr>
+
+                            <!-- Day 14 ± 3 -->
+                            <tr>
+                                <td class="fw-bold">Day 14 ± 3</td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day14" id="sample_d14_yes" value="yes">
+                                            <label class="form-check-label small" for="sample_d14_yes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day14" id="sample_d14_no" value="no">
+                                            <label class="form-check-label small" for="sample_d14_no">No</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day14" id="sample_d14_na" value="na">
+                                            <label class="form-check-label small" for="sample_d14_na">N/A</label>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <input type="date" class="form-control form-control-sm" name="stool_date_day14">
+                                </td>
+                                <td class="text-center">
+                                    <input type="date" class="form-control form-control-sm" name="throat_date_day14">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" name="reason_day14" placeholder="Reason if no sample...">
+                                </td>
+                            </tr>
+
+                            <!-- Day 28 ± 3 -->
+                            <tr>
+                                <td class="fw-bold">Day 28 ± 3</td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day28" id="sample_d28_yes" value="yes">
+                                            <label class="form-check-label small" for="sample_d28_yes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day28" id="sample_d28_no" value="no">
+                                            <label class="form-check-label small" for="sample_d28_no">No</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day28" id="sample_d28_na" value="na">
+                                            <label class="form-check-label small" for="sample_d28_na">N/A</label>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <input type="date" class="form-control form-control-sm" name="stool_date_day28">
+                                </td>
+                                <td class="text-center">
+                                    <input type="date" class="form-control form-control-sm" name="throat_date_day28">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" name="reason_day28" placeholder="Reason if no sample...">
+                                </td>
+                            </tr>
+
+                            <!-- Day 90 ± 3 -->
+                            <tr>
+                                <td class="fw-bold">Day 90 ± 3</td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day90" id="sample_d90_yes" value="yes">
+                                            <label class="form-check-label small" for="sample_d90_yes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day90" id="sample_d90_no" value="no">
+                                            <label class="form-check-label small" for="sample_d90_no">No</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="sample_day90" id="sample_d90_na" value="na">
+                                            <label class="form-check-label small" for="sample_d90_na">N/A</label>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <input type="date" class="form-control form-control-sm" name="stool_date_day90">
+                                </td>
+                                <td class="text-center">
+                                    <input type="date" class="form-control form-control-sm" name="throat_date_day90">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" name="reason_day90" placeholder="Reason if no sample...">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Additional Notes -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">Additional Notes/Comments:</label>
+                <textarea class="form-control" name="additional_notes" rows="4" placeholder="Any additional information about sample collection..."></textarea>
+            </div>
+
+            <!-- Completion Information -->
+            <div class="row mt-5">
+                <div class="col-6 text-center">
+                    <label class="fw-bold d-block">Completed by:</label>
+                    <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completed_by">
+                    <div class="fst-italic small text-muted mt-1">(Signature and Initials)</div>
+                </div>
+                <div class="col-6 text-center">
+                    <label class="fw-bold d-block">Date of completion:</label>
+                    <input type="date" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completion_date">
+                    <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-5 text-center">
+                <button type="submit" class="btn btn-success btn-lg px-5">Submit Form</button>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- Footer Component -->
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/components.js"></script>
+
+</body>
+</html>

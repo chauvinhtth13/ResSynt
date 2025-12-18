@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRF Survey 44EN - Follow-up Day 28</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-white">
+
+    <!-- Navbar Component -->
+    <div id="navbar-placeholder"></div>
+
+    <main class="container py-4" style="max-width: 1000px;">
+
+        <form method="post" action="">
+            
+            <h4 class="text-center fw-bold mb-4">EXPOSURE FACTORS (EXP  1/3)</h4>
+
+            <!-- Header Information Component -->
+            <div id="header-info-placeholder"></div>
+
+            <hr class="my-4">
+
+            <!-- Question 1: Shared Toilet -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">1. Do you share your toilet with others?</p>
+                <div class="ms-md-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="shared_toilet" id="shared_yes" value="yes">
+                        <label class="form-check-label" for="shared_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="shared_toilet" id="shared_no" value="no">
+                        <label class="form-check-label" for="shared_no">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 2: Water Sources -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">2. Which water sources do you usually use? For what purposes?</p>
+                <div class="table-responsive ms-md-3">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-start" style="width: 25%;">Water Source</th>
+                                <th class="text-center">Drinking/Eating</th>
+                                <th class="text-center">Domestic Use</th>
+                                <th class="text-center">Irrigation</th>
+                                <th class="text-center">Other (Specify)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold">Tap water</td>
+                                <td class="text-center"><input type="checkbox" name="water_tap_drink"></td>
+                                <td class="text-center"><input type="checkbox" name="water_tap_domestic"></td>
+                                <td class="text-center"><input type="checkbox" name="water_tap_irrigation"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0" name="water_tap_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Bottled water</td>
+                                <td class="text-center"><input type="checkbox" name="water_bottled_drink"></td>
+                                <td class="text-center"><input type="checkbox" name="water_bottled_domestic"></td>
+                                <td class="text-center"><input type="checkbox" name="water_bottled_irrigation"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0" name="water_bottled_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Well water</td>
+                                <td class="text-center"><input type="checkbox" name="water_well_drink"></td>
+                                <td class="text-center"><input type="checkbox" name="water_well_domestic"></td>
+                                <td class="text-center"><input type="checkbox" name="water_well_irrigation"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0" name="water_well_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Rainwater</td>
+                                <td class="text-center"><input type="checkbox" name="water_rain_drink"></td>
+                                <td class="text-center"><input type="checkbox" name="water_rain_domestic"></td>
+                                <td class="text-center"><input type="checkbox" name="water_rain_irrigation"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0" name="water_rain_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">River water</td>
+                                <td class="text-center"><input type="checkbox" name="water_river_drink"></td>
+                                <td class="text-center"><input type="checkbox" name="water_river_domestic"></td>
+                                <td class="text-center"><input type="checkbox" name="water_river_irrigation"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0" name="water_river_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Pond/Lake water</td>
+                                <td class="text-center"><input type="checkbox" name="water_pond_drink"></td>
+                                <td class="text-center"><input type="checkbox" name="water_pond_domestic"></td>
+                                <td class="text-center"><input type="checkbox" name="water_pond_irrigation"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0" name="water_pond_other"></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-bold me-2">Other:</span>
+                                        <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 w-50" name="water_other_name">
+                                    </div>
+                                </td>
+                                <td class="text-center"><input type="checkbox" name="water_other_drink"></td>
+                                <td class="text-center"><input type="checkbox" name="water_other_domestic"></td>
+                                <td class="text-center"><input type="checkbox" name="water_other_irrigation"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0" name="water_other_specify"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Question 3: Water Treatment -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">3. Do you treat water before drinking?</p>
+                <div class="ms-md-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="water_treatment" id="treatment_yes" value="yes" data-bs-toggle="collapse" data-bs-target="#treatmentMethods" aria-expanded="false" aria-controls="treatmentMethods">
+                        <label class="form-check-label" for="treatment_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="water_treatment" id="treatment_no" value="no" onclick="document.getElementById('treatmentMethods').classList.remove('show')">
+                        <label class="form-check-label" for="treatment_no">No</label>
+                    </div>
+                </div>
+
+                <div class="collapse ms-md-4 mt-3" id="treatmentMethods">
+                    <div class="card card-body">
+                        <p class="fw-bold mb-2">If Yes, which methods do you usually use?</p>
+                        <div class="ms-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="treatment_boil" id="treatment_boil">
+                                <label class="form-check-label" for="treatment_boil">Boiling then cooling</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="treatment_filter" id="treatment_filter">
+                                <label class="form-check-label" for="treatment_filter">Using water filter machine</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="treatment_pitcher" id="treatment_pitcher">
+                                <label class="form-check-label" for="treatment_pitcher">Using handheld/table water filter</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="treatment_chemical" id="treatment_chemical">
+                                <label class="form-check-label" for="treatment_chemical">Using disinfectant chemicals (Chlorine tablets/solution, Aquatabs)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="treatment_sodis" id="treatment_sodis">
+                                <label class="form-check-label" for="treatment_sodis">Solar water disinfection method (SODIS)</label>
+                            </div>
+                            <div class="d-flex align-items-center mt-2">
+                                <div class="form-check mb-0 me-2">
+                                    <input class="form-check-input" type="checkbox" name="treatment_other" id="treatment_other">
+                                    <label class="form-check-label" for="treatment_other">Other, specify:</label>
+                                </div>
+                                <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 w-50" name="treatment_other_text">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 4: Underlying Conditions -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">4. Do you have any underlying medical conditions?</p>
+                <div class="ms-md-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="has_conditions" id="conditions_yes" value="yes" data-bs-toggle="collapse" data-bs-target="#conditionsList" aria-expanded="false" aria-controls="conditionsList">
+                        <label class="form-check-label" for="conditions_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="has_conditions" id="conditions_no" value="no" onclick="document.getElementById('conditionsList').classList.remove('show')">
+                        <label class="form-check-label" for="conditions_no">No</label>
+                    </div>
+                </div>
+
+                <div class="collapse ms-md-4 mt-3" id="conditionsList">
+                        <p class="fw-bold mb-2">If Yes, please select all that apply:</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40%;">Condition</th>
+                                        <th class="text-center" style="width: 30%;">Currently Treated</th>
+                                        <th class="text-center" style="width: 30%;">Not Treated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_hypertension" id="cond_hypertension">
+                                                <label class="form-check-label" for="cond_hypertension">Hypertension</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="hypertension_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="hypertension_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_diabetes" id="cond_diabetes">
+                                                <label class="form-check-label" for="cond_diabetes">Diabetes</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="diabetes_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="diabetes_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_dyslipidemia" id="cond_dyslipidemia">
+                                                <label class="form-check-label" for="cond_dyslipidemia">Dyslipidemia</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="dyslipidemia_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="dyslipidemia_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_cardiovascular" id="cond_cardiovascular">
+                                                <label class="form-check-label" for="cond_cardiovascular">Cardiovascular disease</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="cardiovascular_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="cardiovascular_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_asthma" id="cond_asthma">
+                                                <label class="form-check-label" for="cond_asthma">Asthma</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="asthma_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="asthma_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_copd" id="cond_copd">
+                                                <label class="form-check-label" for="cond_copd">COPD</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="copd_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="copd_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_arthritis" id="cond_arthritis">
+                                                <label class="form-check-label" for="cond_arthritis">Osteoarthritis</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="arthritis_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="arthritis_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_osteoporosis" id="cond_osteoporosis">
+                                                <label class="form-check-label" for="cond_osteoporosis">Osteoporosis</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="osteoporosis_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="osteoporosis_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_dementia" id="cond_dementia">
+                                                <label class="form-check-label" for="cond_dementia">Dementia</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="dementia_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="dementia_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_stroke" id="cond_stroke">
+                                                <label class="form-check-label" for="cond_stroke">Stroke</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="stroke_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="stroke_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_depression" id="cond_depression">
+                                                <label class="form-check-label" for="cond_depression">Depression</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="depression_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="depression_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_ckd" id="cond_ckd">
+                                                <label class="form-check-label" for="cond_ckd">Chronic kidney disease</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="ckd_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="ckd_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_hepatitis" id="cond_hepatitis">
+                                                <label class="form-check-label" for="cond_hepatitis">Chronic hepatitis</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="hepatitis_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="hepatitis_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_gerd" id="cond_gerd">
+                                                <label class="form-check-label" for="cond_gerd">GERD (Gastroesophageal reflux disease)</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="gerd_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="gerd_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_chronic_infection" id="cond_chronic_infection">
+                                                <label class="form-check-label" for="cond_chronic_infection">Chronic infection</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="chronic_infection_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="chronic_infection_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_obesity" id="cond_obesity">
+                                                <label class="form-check-label" for="cond_obesity">Obesity</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="obesity_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="obesity_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_alcohol" id="cond_alcohol">
+                                                <label class="form-check-label" for="cond_alcohol">Alcohol addiction</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="alcohol_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="alcohol_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="condition_smoking" id="cond_smoking">
+                                                <label class="form-check-label" for="cond_smoking">Smoking addiction</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="smoking_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="smoking_treatment" value="not_treated"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="form-check mb-0 me-2">
+                                                    <input class="form-check-input" type="checkbox" name="condition_other" id="cond_other">
+                                                    <label class="form-check-label" for="cond_other">Other:</label>
+                                                </div>
+                                                <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 w-50" name="condition_other_text">
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="other_treatment" value="treated"></td>
+                                        <td class="text-center"><input type="radio" name="other_treatment" value="not_treated"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Information -->
+            <div class="row mt-5">
+                <div class="col-6 text-center">
+                    <label class="fw-bold d-block">Completed by:</label>
+                    <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completed_by">
+                    <div class="fst-italic small text-muted mt-1">(Signature and Initials)</div>
+                </div>
+                <div class="col-6 text-center">
+                    <label class="fw-bold d-block">Date of completion:</label>
+                    <input type="date" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completion_date">
+                    <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-5 text-center">
+                <button type="submit" class="btn btn-success btn-lg px-5">Submit Form</button>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- Footer Component -->
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/components.js"></script>
+
+</body>
+</html>

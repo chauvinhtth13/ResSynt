@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRF Survey 44EN - Follow-up Day 28</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-white">
+
+    <!-- Navbar Component -->
+    <div id="navbar-placeholder"></div>
+
+    <main class="container py-4" style="max-width: 1000px;">
+
+        <form method="post" action="">
+            
+            <h4 class="text-center fw-bold mb-4">EXPOSURE FACTORS (EXP 2/3)</h4>
+
+            <!-- Header Information Component -->
+            <div id="header-info-placeholder"></div>
+
+            <hr class="my-4">
+
+            <!-- Question 1: Vaccination History -->
+            <div class="mb-5">
+                <p class="fw-bold mb-2">1. Have you ever been vaccinated before?</p>
+                <div class="ms-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="vaccination_history" id="vax_never" value="never">
+                        <label class="form-check-label" for="vax_never">I have never been vaccinated</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="vaccination_history" id="vax_unsure" value="unsure">
+                        <label class="form-check-label" for="vax_unsure">I'm not sure if I have been vaccinated</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="vaccination_history" id="vax_unknown" value="unknown_type">
+                        <label class="form-check-label" for="vax_unknown">I have been vaccinated but don't remember which vaccines</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="vaccination_history" id="vax_known" value="known" data-bs-toggle="collapse" data-bs-target="#vaccineList" aria-expanded="false" aria-controls="vaccineList">
+                        <label class="form-check-label" for="vax_known">I have been vaccinated for some diseases (check below):</label>
+                    </div>
+                </div>
+
+                <div class="collapse ms-md-4 mt-3" id="vaccineList">
+                    <div class="card card-body">
+                        <p class="fw-bold mb-3">Please select all vaccines you have received:</p>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_bcg" id="vax_bcg">
+                                    <label class="form-check-label" for="vax_bcg">BCG (Tuberculosis)</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_hepa" id="vax_hepa">
+                                    <label class="form-check-label" for="vax_hepa">Hepatitis A</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_hepb" id="vax_hepb">
+                                    <label class="form-check-label" for="vax_hepb">Hepatitis B</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_diphtheria" id="vax_diphtheria">
+                                    <label class="form-check-label" for="vax_diphtheria">Diphtheria</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_tetanus" id="vax_tetanus">
+                                    <label class="form-check-label" for="vax_tetanus">Tetanus</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_pertussis" id="vax_pertussis">
+                                    <label class="form-check-label" for="vax_pertussis">Pertussis (Whooping cough)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_flu" id="vax_flu">
+                                    <label class="form-check-label" for="vax_flu">Influenza</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_hib" id="vax_hib">
+                                    <label class="form-check-label" for="vax_hib">Haemophilus influenzae type B</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_polio" id="vax_polio">
+                                    <label class="form-check-label" for="vax_polio">Polio</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_measles" id="vax_measles">
+                                    <label class="form-check-label" for="vax_measles">Measles</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_mumps" id="vax_mumps">
+                                    <label class="form-check-label" for="vax_mumps">Mumps</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_rabies" id="vax_rabies">
+                                    <label class="form-check-label" for="vax_rabies">Rabies</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_rubella" id="vax_rubella">
+                                    <label class="form-check-label" for="vax_rubella">Rubella</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_chickenpox" id="vax_chickenpox">
+                                    <label class="form-check-label" for="vax_chickenpox">Chickenpox (Varicella)</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_je" id="vax_je">
+                                    <label class="form-check-label" for="vax_je">Japanese Encephalitis</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_meningitis" id="vax_meningitis">
+                                    <label class="form-check-label" for="vax_meningitis">Meningitis</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_rotavirus" id="vax_rotavirus">
+                                    <label class="form-check-label" for="vax_rotavirus">Rotavirus</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_pneumococcal" id="vax_pneumococcal">
+                                    <label class="form-check-label" for="vax_pneumococcal">Pneumococcal</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="d-flex align-items-center">
+                                <div class="form-check mb-0 me-2">
+                                    <input class="form-check-input" type="checkbox" name="vaccine_other" id="vax_other">
+                                    <label class="form-check-label" for="vax_other">Other, specify:</label>
+                                </div>
+                                <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 w-50" name="vaccine_other_text">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 2: Hospitalization History -->
+            <div class="mb-5">
+                <p class="fw-bold mb-2">2. Have you been hospitalized at any medical facility in the past 3 months?</p>
+                <div class="ms-md-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="has_hospitalization" id="hosp_yes" value="yes" data-bs-toggle="collapse" data-bs-target="#hospitalizationDetails" aria-expanded="false" aria-controls="hospitalizationDetails">
+                        <label class="form-check-label" for="hosp_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="has_hospitalization" id="hosp_no" value="no">
+                        <label class="form-check-label" for="hosp_no">No</label>
+                    </div>
+                </div>
+
+                <div class="collapse ms-md-4 mt-3" id="hospitalizationDetails">
+                    <div class="card card-body">
+                        <p class="fw-bold mb-3">If Yes, please select all that apply:</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 30%;">Facility Type</th>
+                                        <th class="text-center">1-3 days</th>
+                                        <th class="text-center">3-5 days</th>
+                                        <th class="text-center">5-7 days</th>
+                                        <th class="text-center">Over 7 days</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="hosp_central" id="hosp_central">
+                                                <label class="form-check-label" for="hosp_central">Central hospital</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="hosp_central_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_central_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_central_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_central_duration" value="7+"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="hosp_city" id="hosp_city">
+                                                <label class="form-check-label" for="hosp_city">City hospital</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="hosp_city_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_city_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_city_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_city_duration" value="7+"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="hosp_district" id="hosp_district">
+                                                <label class="form-check-label" for="hosp_district">District hospital</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="hosp_district_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_district_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_district_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_district_duration" value="7+"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="hosp_private" id="hosp_private">
+                                                <label class="form-check-label" for="hosp_private">Private hospital</label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="hosp_private_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_private_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_private_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_private_duration" value="7+"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="form-check mb-0 me-2">
+                                                    <input class="form-check-input" type="checkbox" name="hosp_other" id="hosp_other">
+                                                    <label class="form-check-label" for="hosp_other">Other:</label>
+                                                </div>
+                                                <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 w-50" name="hosp_other_text">
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="hosp_other_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_other_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_other_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="hosp_other_duration" value="7+"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3: Medication Use -->
+            <div class="mb-5">
+                <p class="fw-bold mb-2">3. Have you used any of the following medications in the past 3 months?</p>
+                <div class="ms-md-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="has_medication" id="med_yes" value="yes" data-bs-toggle="collapse" data-bs-target="#medicationDetails" aria-expanded="false" aria-controls="medicationDetails">
+                        <label class="form-check-label" for="med_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="has_medication" id="med_no" value="no">
+                        <label class="form-check-label" for="med_no">No</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="has_medication" id="med_unknown" value="unknown">
+                        <label class="form-check-label" for="med_unknown">Don't know</label>
+                    </div>
+                </div>
+
+                <div class="collapse ms-md-4 mt-3" id="medicationDetails">
+                    <div class="card card-body">
+                        <p class="fw-bold mb-3">If Yes, please select all that apply:</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40%;">Medication Type</th>
+                                        <th class="text-center">1-3 days</th>
+                                        <th class="text-center">3-5 days</th>
+                                        <th class="text-center">5-7 days</th>
+                                        <th class="text-center">7-14 days</th>
+                                        <th class="text-center">>14 days</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="med_antibiotics" id="med_antibiotics">
+                                                <label class="form-check-label" for="med_antibiotics">
+                                                    <strong>Antibiotics</strong><br>
+                                                    <small class="text-muted">(Penicillin, Amoxicillin, Ampicillin, Cephalosporin, Cefixime, Ceftriaxone, Azithromycin, Clarithromycin, Ciprofloxacin, Levofloxacin, Meropenem, Imipenem, Metronidazole, etc.)</small>
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="7-14"></td>
+                                        <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="14+"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="med_ppi" id="med_ppi">
+                                                <label class="form-check-label" for="med_ppi">
+                                                    <strong>Acid-suppressing drugs</strong><br>
+                                                    <small class="text-muted">(Omeprazole, Pantoprazole, Ranitidine)</small>
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="med_ppi_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="med_ppi_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="med_ppi_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="med_ppi_duration" value="7-14"></td>
+                                        <td class="text-center"><input type="radio" name="med_ppi_duration" value="14+"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="med_chronic" id="med_chronic">
+                                                <label class="form-check-label" for="med_chronic">
+                                                    <strong>Chronic disease medications</strong><br>
+                                                    <small class="text-muted">(Metformin, Statin, Corticosteroid, NSAIDs, Chemotherapy/Immunosuppressants)</small>
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="med_chronic_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="med_chronic_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="med_chronic_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="med_chronic_duration" value="7-14"></td>
+                                        <td class="text-center"><input type="radio" name="med_chronic_duration" value="14+"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="med_probiotics" id="med_probiotics">
+                                                <label class="form-check-label" for="med_probiotics">
+                                                    <strong>Probiotics and prebiotics</strong><br>
+                                                    <small class="text-muted">(Probiotics, digestive enzymes, yogurt products)</small>
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="med_probiotics_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="med_probiotics_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="med_probiotics_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="med_probiotics_duration" value="7-14"></td>
+                                        <td class="text-center"><input type="radio" name="med_probiotics_duration" value="14+"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" name="med_herbal" id="med_herbal">
+                                                <label class="form-check-label" for="med_herbal">
+                                                    <strong>Herbal/Traditional medicine</strong>
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><input type="radio" name="med_herbal_duration" value="1-3"></td>
+                                        <td class="text-center"><input type="radio" name="med_herbal_duration" value="3-5"></td>
+                                        <td class="text-center"><input type="radio" name="med_herbal_duration" value="5-7"></td>
+                                        <td class="text-center"><input type="radio" name="med_herbal_duration" value="7-14"></td>
+                                        <td class="text-center"><input type="radio" name="med_herbal_duration" value="14+"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Information -->
+            <div class="row mt-5">
+                <div class="col-6 text-center">
+                    <label class="fw-bold d-block">Completed by:</label>
+                    <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completed_by">
+                    <div class="fst-italic small text-muted mt-1">(Signature and Initials)</div>
+                </div>
+                <div class="col-6 text-center">
+                    <label class="fw-bold d-block">Date of completion:</label>
+                    <input type="date" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completion_date">
+                    <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-5 text-center">
+                <button type="submit" class="btn btn-success btn-lg px-5">Submit Form</button>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- Footer Component -->
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/components.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRF Survey 44EN - Household</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-white">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">CRF Survey 44EN</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test1.html">Part A (Household)</a> 
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test2.html">Part B (Exposure - Household)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test3.html">Part C (Individual - ENR)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test4.html">Part C (Individual - EXP 1/3)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test5.html">Part C (Individual - EXP 2/3)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test6.html">Part C (Individual - EXP 3/3)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test7.html">Part D (Follow-up Day 14)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test8.html">Part E (Follow-up Day 28)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test9.html">Part F (Follow-up Day 90)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test10.html">Part G (Sample Collection)</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4" style="max-width: 1000px;">
+
+
+        <form method="post" action="">
+            
+            <h4 class="text-center fw-bold mb-4">B – EXPOSURE FACTORS (EXP)</h4>
+
+            <div class="mb-4 d-flex align-items-center">
+                <span class="fw-bold me-2">Household ID: 44EN – </span>
+                <input type="text" class="form-control text-center d-inline-block" name="household_id" style="width: 150px;">
+            </div>
+            
+            <hr class="my-4">
+
+            <div class="mb-4">
+                <p class="fw-bold mb-2">1. What type of toilet does your family use?</p>
+                <div class="ms-md-3">
+                    <div class="form-check"><input class="form-check-input" type="radio" name="toilet_type" value="septic"> <label>Flush toilet with septic tank</label></div>
+                    <div class="form-check"><input class="form-check-input" type="radio" name="toilet_type" value="direct"> <label>Toilet without septic tank (discharges directly into sewer/environment)</label></div>
+                    <div class="form-check"><input class="form-check-input" type="radio" name="toilet_type" value="outdoor"> <label>Outdoor latrine (fishpond latrine, double vault...)</label></div>
+                    <div class="form-check"><input class="form-check-input" type="radio" name="toilet_type" value="none"> <label>No toilet at home</label></div>
+                    <div class="d-flex align-items-end mt-1">
+                        <div class="form-check mb-0 me-2">
+                            <input class="form-check-input" type="radio" name="toilet_type" value="other">
+                            <label>Other, specify:</label>
+                        </div>
+                        <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-50" name="toilet_other_text">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex mt-3 align-items-center">
+                    <p class="fw-bold mb-0 me-3">2. Number of toilets</p>
+                            <input type="number" class="form-control text-center d-inline-block" name="total_members" style="width: 90px;">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <p class="fw-bold mb-2">3. Which energy source does your family usually use for cooking? (Select the most used)</p>
+                <div class="ms-md-3 row 2">
+                    <div class="col-md-4">
+                        <div class="form-check"><input class="form-check-input" type="radio" name="cooking_fuel" value="gas"> <label>Gas</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="cooking_fuel" value="wood"> <label>Wood/Firewood</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="cooking_fuel" value="electric"> <label>Electricity</label></div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-check"><input class="form-check-input" type="radio" name="cooking_fuel" value="coal"> <label>Coal</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="cooking_fuel" value="oil"> <label>Oil</label></div>
+                        <div class="d-flex align-items">
+                            <div class="form-check mb-0 me-2">
+                                <input class="form-check-input" type="radio" name="cooking_fuel" value="other">
+                                <label>Other, specify:</label>
+                            </div>
+                            <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-50" name="fuel_other_text">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <p class="fw-bold mb-2">4. Which water source does your family usually use? For what purposes?</p>
+                <div class="table-responsive ms-md-3">
+                    <table class="table table-bordered align-middle text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-start" style="width: 25%;">Water Source</th>
+                                <th>Drinking/Eating</th>
+                                <th>Domestic Use</th>
+                                <th>Irrigation</th>
+                                <th style="width: 25%;">Other (Specify)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-start fw-bold">Tap water</td>
+                                <td><input type="checkbox" class="form-check-input" name="water_tap_drink"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_tap_use"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_tap_irrigate"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_tap_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Bottled water</td>
+                                <td><input type="checkbox" class="form-check-input" name="water_bottle_drink"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_bottle_use"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_bottle_irrigate"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_bottle_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Well water</td>
+                                <td><input type="checkbox" class="form-check-input" name="water_well_drink"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_well_use"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_well_irrigate"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_well_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Rain water</td>
+                                <td><input type="checkbox" class="form-check-input" name="water_rain_drink"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_rain_use"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_rain_irrigate"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_rain_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">River water</td>
+                                <td><input type="checkbox" class="form-check-input" name="water_river_drink"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_river_use"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_river_irrigate"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_river_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Pond/Lake water</td>
+                                <td><input type="checkbox" class="form-check-input" name="water_pond_drink"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_pond_use"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_pond_irrigate"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_pond_other"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start">
+                                    <div class="d-flex align-items-end">
+                                        <span class="fw-bold me-1">Other:</span>
+                                        <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 px-1 w-75" name="water_other_src_name">
+                                    </div>
+                                </td>
+                                <td><input type="checkbox" class="form-check-input" name="water_other_drink"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_other_use"></td>
+                                <td><input type="checkbox" class="form-check-input" name="water_other_irrigate"></td>
+                                <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_other_other"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-2">
+                    <p class="fw-bold mb-0 me-3">5. Does your family treat water before drinking?</p>
+                    <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="radio" name="water_treatment" value="yes" data-bs-toggle="collapse" data-bs-target="#treatmentOptions"> <label>Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="radio" name="water_treatment" value="no"> <label>No</label>
+                    </div>
+                </div>
+
+                <div class="collapse ms-md-3 mt-2 ps-3 border-start border-3 border-primary" id="treatmentOptions">
+                    <p class="fst-italic mb-2 text-primary">If Yes, which method is used?</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="treat_boil"> <label>Boil and let cool</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="treat_machine"> <label>Use water purifier machine</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="treat_filter"> <label>Use portable/desktop filter</label></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="treat_chemical"> <label>Use chemicals (Chlorine, Aquatabs)</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="treat_solar"> <label>Solar disinfection (SODIS)</label></div>
+                            <div class="d-flex align-items-end">
+                                <div class="form-check mb-0 me-2">
+                                    <input class="form-check-input" type="checkbox" name="treat_other">
+                                    <label>Other:</label>
+                                </div>
+                                <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-50" name="treat_other_text">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-2">
+                    <p class="fw-bold mb-0 me-3">6. Does your family raise any animals?</p>
+                    <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="radio" name="raise_animal" value="yes" data-bs-toggle="collapse" data-bs-target="#animalOptions"> <label>Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="radio" name="raise_animal" value="no"> <label>No</label>
+                    </div>
+                </div>
+
+                <div class="collapse ms-md-3 mt-2 ps-3 border-start border-3 border-primary" id="animalOptions">
+                    <p class="fst-italic mb-2 text-primary">If Yes, please select all that apply:</p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="animal_dog"> <label>Dog</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="animal_cat"> <label>Cat</label></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="animal_bird"> <label>Bird</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="animal_poultry"> <label>Chicken/Duck</label></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="animal_cow"> <label>Cow</label></div>
+                            <div class="d-flex align-items-end">
+                                <div class="form-check mb-0 me-2">
+                                    <input class="form-check-input" type="checkbox" name="animal_other">
+                                    <label>Other:</label>
+                                </div>
+                                <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-50" name="animal_other_text">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <p class="fw-bold mb-2">7. Food consumption frequency and sources:</p>
+                
+
+                <div class="table-responsive ms-md-3 mb-4">
+                    <table class="table table-bordered table-striped text-center align-middle">
+                        <thead class="table-dark text-white">
+                            <tr>
+                                <th class="text-start">Food Item</th>
+                                <th>Never</th>
+                                <th>1-3 times<br>/month</th>
+                                <th>1-2 times<br>/week</th>
+                                <th>3-5 times<br>/week</th>
+                                <th>1 time<br>/day</th>
+                                <th>+2 times<br>/day</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-start fw-bold">Rice, vermicelli, pho, noodles</td>
+                                <td><input type="radio" name="freq_rice" value="0"></td><td><input type="radio" name="freq_rice" value="1"></td><td><input type="radio" name="freq_rice" value="2"></td><td><input type="radio" name="freq_rice" value="3"></td><td><input type="radio" name="freq_rice" value="4"></td><td><input type="radio" name="freq_rice" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Red meat</td>
+                                <td><input type="radio" name="freq_meat" value="0"></td><td><input type="radio" name="freq_meat" value="1"></td><td><input type="radio" name="freq_meat" value="2"></td><td><input type="radio" name="freq_meat" value="3"></td><td><input type="radio" name="freq_meat" value="4"></td><td><input type="radio" name="freq_meat" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Poultry meat</td>
+                                <td><input type="radio" name="freq_poultry" value="0"></td><td><input type="radio" name="freq_poultry" value="1"></td><td><input type="radio" name="freq_poultry" value="2"></td><td><input type="radio" name="freq_poultry" value="3"></td><td><input type="radio" name="freq_poultry" value="4"></td><td><input type="radio" name="freq_poultry" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Fish, seafood</td>
+                                <td><input type="radio" name="freq_seafood" value="0"></td><td><input type="radio" name="freq_seafood" value="1"></td><td><input type="radio" name="freq_seafood" value="2"></td><td><input type="radio" name="freq_seafood" value="3"></td><td><input type="radio" name="freq_seafood" value="4"></td><td><input type="radio" name="freq_seafood" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Eggs</td>
+                                <td><input type="radio" name="freq_eggs" value="0"></td><td><input type="radio" name="freq_eggs" value="1"></td><td><input type="radio" name="freq_eggs" value="2"></td><td><input type="radio" name="freq_eggs" value="3"></td><td><input type="radio" name="freq_eggs" value="4"></td><td><input type="radio" name="freq_eggs" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Raw vegetables</td>
+                                <td><input type="radio" name="freq_raw_veg" value="0"></td><td><input type="radio" name="freq_raw_veg" value="1"></td><td><input type="radio" name="freq_raw_veg" value="2"></td><td><input type="radio" name="freq_raw_veg" value="3"></td><td><input type="radio" name="freq_raw_veg" value="4"></td><td><input type="radio" name="freq_raw_veg" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Cooked vegetables</td>
+                                <td><input type="radio" name="freq_cooked_veg" value="0"></td><td><input type="radio" name="freq_cooked_veg" value="1"></td><td><input type="radio" name="freq_cooked_veg" value="2"></td><td><input type="radio" name="freq_cooked_veg" value="3"></td><td><input type="radio" name="freq_cooked_veg" value="4"></td><td><input type="radio" name="freq_cooked_veg" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Dairy products</td>
+                                <td><input type="radio" name="freq_dairy" value="0"></td><td><input type="radio" name="freq_dairy" value="1"></td><td><input type="radio" name="freq_dairy" value="2"></td><td><input type="radio" name="freq_dairy" value="3"></td><td><input type="radio" name="freq_dairy" value="4"></td><td><input type="radio" name="freq_dairy" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Fermented foods</td>
+                                <td><input type="radio" name="freq_fermented" value="0"></td><td><input type="radio" name="freq_fermented" value="1"></td><td><input type="radio" name="freq_fermented" value="2"></td><td><input type="radio" name="freq_fermented" value="3"></td><td><input type="radio" name="freq_fermented" value="4"></td><td><input type="radio" name="freq_fermented" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Beer</td>
+                                <td><input type="radio" name="freq_beer" value="0"></td><td><input type="radio" name="freq_beer" value="1"></td><td><input type="radio" name="freq_beer" value="2"></td><td><input type="radio" name="freq_beer" value="3"></td><td><input type="radio" name="freq_beer" value="4"></td><td><input type="radio" name="freq_beer" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Alcohol/Liquor</td>
+                                <td><input type="radio" name="freq_alcohol" value="0"></td><td><input type="radio" name="freq_alcohol" value="1"></td><td><input type="radio" name="freq_alcohol" value="2"></td><td><input type="radio" name="freq_alcohol" value="3"></td><td><input type="radio" name="freq_alcohol" value="4"></td><td><input type="radio" name="freq_alcohol" value="5"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <div class="mb-5">
+                <p class="fw-bold mb-2">7. Food consumption frequency and sources:</p>
+                <div class="table-responsive ms-md-3">
+                    <table class="table table-bordered table-striped text-center align-middle">
+                        <thead class="table-dark text-white">
+                            <tr>
+                                <th class="text-start">Source</th>
+                                <th>Never</th>
+                                <th>1-3 times<br>/month</th>
+                                <th>1-2 times<br>/week</th>
+                                <th>3-5 times<br>/week</th>
+                                <th>1 time<br>/day</th>
+                                <th>+2 times<br>/day</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-start fw-bold">Traditional market</td>
+                                <td><input type="radio" name="src_market" value="0"></td><td><input type="radio" name="src_market" value="1"></td><td><input type="radio" name="src_market" value="2"></td><td><input type="radio" name="src_market" value="3"></td><td><input type="radio" name="src_market" value="4"></td><td><input type="radio" name="src_market" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Supermarket</td>
+                                <td><input type="radio" name="src_super" value="0"></td><td><input type="radio" name="src_super" value="1"></td><td><input type="radio" name="src_super" value="2"></td><td><input type="radio" name="src_super" value="3"></td><td><input type="radio" name="src_super" value="4"></td><td><input type="radio" name="src_super" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Convenience store</td>
+                                <td><input type="radio" name="src_convenience" value="0"></td><td><input type="radio" name="src_convenience" value="1"></td><td><input type="radio" name="src_convenience" value="2"></td><td><input type="radio" name="src_convenience" value="3"></td><td><input type="radio" name="src_convenience" value="4"></td><td><input type="radio" name="src_convenience" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Eatery, restaurant</td>
+                                <td><input type="radio" name="src_restaurant" value="0"></td><td><input type="radio" name="src_restaurant" value="1"></td><td><input type="radio" name="src_restaurant" value="2"></td><td><input type="radio" name="src_restaurant" value="3"></td><td><input type="radio" name="src_restaurant" value="4"></td><td><input type="radio" name="src_restaurant" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Online shopping</td>
+                                <td><input type="radio" name="src_online" value="0"></td><td><input type="radio" name="src_online" value="1"></td><td><input type="radio" name="src_online" value="2"></td><td><input type="radio" name="src_online" value="3"></td><td><input type="radio" name="src_online" value="4"></td><td><input type="radio" name="src_online" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Self-grown, livestock</td>
+                                <td><input type="radio" name="src_self" value="0"></td><td><input type="radio" name="src_self" value="1"></td><td><input type="radio" name="src_self" value="2"></td><td><input type="radio" name="src_self" value="3"></td><td><input type="radio" name="src_self" value="4"></td><td><input type="radio" name="src_self" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold">Given, gifted</td>
+                                <td><input type="radio" name="src_gift" value="0"></td><td><input type="radio" name="src_gift" value="1"></td><td><input type="radio" name="src_gift" value="2"></td><td><input type="radio" name="src_gift" value="3"></td><td><input type="radio" name="src_gift" value="4"></td><td><input type="radio" name="src_gift" value="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-start">
+                                    <div class="d-flex align-items-end">
+                                        <span class="fw-bold me-1">Other:</span>
+                                        <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 px-1 w-50 bg-transparent" name="src_other_name">
+                                    </div>
+                                </td>
+                                <td><input type="radio" name="src_other" value="0"></td><td><input type="radio" name="src_other" value="1"></td><td><input type="radio" name="src_other" value="2"></td><td><input type="radio" name="src_other" value="3"></td><td><input type="radio" name="src_other" value="4"></td><td><input type="radio" name="src_other" value="5"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-6 text-center">
+                    <label class="fw-bold d-block">Completed by:</label>
+                    <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completed_by_exp">
+                    <div class="fst-italic small text-muted mt-1">(Signature and Initials)</div>
+                </div>
+                <div class="col-6 text-center">
+                    <label class="fw-bold d-block">Date of completion:</label>
+                    <input type="date" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completion_date_exp">
+                    <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
+                </div>
+            </div>
+
+            <div class="mt-5 text-center">
+                <button type="submit" class="btn btn-success btn-lg px-5">Submit Survey</button>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- Footer Component -->
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/components.js"></script>
+
+</body>
+</html>
