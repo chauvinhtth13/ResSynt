@@ -1,8 +1,18 @@
 <!-- frontends\templates\includes\features_list.html -->
 {% load static i18n %}
 <!-- Features List Template -->
-<div class="mb-4">
-    <img src="{% static 'base/images/logo_metalistic.png' %}" alt="ResSync Logo" height="60" class="d-block mx-auto mb-3">
+<div class="d-flex align-items-center mb-5 gap-3">
+    <img src="{% static 'base/images/logo_metalistic.png' %}" 
+         alt="Logo" 
+         class="img-fluid" 
+         style="width: 70px; height: 70px;">
+
+    <div class="text-white">
+        <h1 class="fw-bold fs-2 mb-0 title">RESSYNT</h1>
+        <small class="text-secondary text-uppercase font-monospace fw-bold">
+            Research Management Platform
+        </small>
+    </div>
 </div>
 
 <!-- Features List -->

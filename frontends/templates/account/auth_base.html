@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'base/css/authentication.css' %}">
+<link rel="stylesheet" href="{% static 'fonts/chakra-petch/chakra-petch.css' %}">
 <style>
     html, body {
         background: linear-gradient(rgba(10, 20, 35, 0.8), rgba(10, 20, 35, 0.8)), 
@@ -19,7 +20,7 @@
 <main class="container-fluid row p-0 m-0">
 
     <!-- Features Section - Hidden on mobile, visible from lg -->
-    <section class="col-lg-7 d-none d-lg-flex flex-column min-vh-100 p-5 align-items-center justify-content-center">
+    <section class="col-lg-7 d-none d-lg-flex flex-column min-vh-100 p-5 justify-content-center">
         {% include 'includes/misc/features_list.html' %}
     </section>
 

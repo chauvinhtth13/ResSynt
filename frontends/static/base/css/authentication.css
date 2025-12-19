@@ -1,23 +1,10 @@
-/* ========================================================================== 
-   EFFECTS
-   ========================================================================== */
-.left-side {
-    color: white;
-    padding: clamp(1rem, 3vw, 3.5rem);
-    justify-content: center;
+:root {
+    --font-primary: 'Chakra Petch', sans-serif;
 }
 
-.right-side {
-    display: flex;
-    padding: 20px clamp(1rem, 3vw, 3.5rem);
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.glass-effect {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(var(--blur-lg));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+title {
+    font-family: var(--font-primary);
+    font-weight: 700;
 }
 
 /* ========================================================================== 
