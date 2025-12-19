@@ -28,6 +28,33 @@ function setActiveNavLink() {
     });
 }
 
+// Auto-close collapse sections when non-toggle radio is selected
+function setupCollapseHandlers() {
+    // Find all radios that trigger collapse
+    const collapseRadios = document.querySelectorAll('input[type="radio"][data-bs-toggle="collapse"]');
+    
+    collapseRadios.forEach(radio => {
+        const targetId = radio.getAttribute('data-bs-target')?.substring(1); // Remove '#'
+        if (!targetId) return;
+        
+        const radioName = radio.name;
+        // Find all other radios in same group
+        const allRadiosInGroup = document.querySelectorAll(`input[type="radio"][name="${radioName}"]`);
+        
+        allRadiosInGroup.forEach(otherRadio => {
+            if (!otherRadio.hasAttribute('data-bs-toggle')) {
+                // This radio doesn't open collapse, so it should close it
+                otherRadio.addEventListener('change', function() {
+                    const collapseEl = document.getElementById(targetId);
+                    if (collapseEl && collapseEl.classList.contains('show')) {
+                        collapseEl.classList.remove('show');
+                    }
+                });
+            }
+        });
+    });
+}
+
 // Convenience: load multiple components when DOM ready
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('navbar-placeholder')) {
@@ -39,6 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('header-info-placeholder')) {
         loadComponent('header-info-placeholder', 'components/header-info.html');
     }
+    
+    // Setup collapse handlers after page loads
+    setupCollapseHandlers();
 });
 
 // Helpful dev message if file:// is used
