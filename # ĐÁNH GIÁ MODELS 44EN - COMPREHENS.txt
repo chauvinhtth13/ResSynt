@@ -1,0 +1,1298 @@
+# ĐÁNH GIÁ MODELS 44EN - COMPREHENSIVE EVALUATION
+
+**Ngày đánh giá:** 2025-12-22  
+**Người đánh giá:** Claude  
+**Tài liệu tham khảo:**
+- 43EN Models (SCR_CASE, ENR_CASE)
+- 44EN CRF Documents (Household & Individual)
+- Project Development Rules (GUIDE.txt)
+
+---
+
+## EXECUTIVE SUMMARY
+
+### ✅ ĐIỂM MẠNH (Strengths)
+
+1. **Normalized Design Excellence** - Thiết kế chuẩn hóa tốt cho các bảng phụ
+2. **Comprehensive Field Coverage** - Bao phủ đầy đủ các trường từ CRF
+3. **Good Relationship Structure** - Cấu trúc quan hệ giữa các bảng rõ ràng
+4. **Proper Use of Choices** - Sử dụng TextChoices đúng cách
+
+### ⚠️ VẤN ĐỀ QUAN TRỌNG (Critical Issues)
+
+1. **Primary Key Strategy** - Thiếu tính nhất quán so với 43EN pattern
+2. **Missing Auto-generation Logic** - Chưa có logic tự động tạo ID
+3. **Validation Gaps** - Thiếu validation cơ bản
+4. **No QuerySet Optimization** - Thiếu custom queryset managers
+5. **Missing Cached Properties** - Không có computed properties
+6. **Inconsistent Naming** - Tên trường chưa nhất quán với 43EN
+
+---
+
+## PHẦN 1: PHÂN TÍCH CHI TIẾT PRIMARY KEY & ID GENERATION
+
+### 1.1. Pattern từ 43EN (Reference Standard)
+
+```python
+# SCR_CASE - Screening
+SCRID = models.CharField(max_length=50, primary_key=True)  # PS-SITEID-0001
+USUBJID = models.CharField(max_length=50, unique=True)     # SITEID-SUBJID
+
+def save(self, *args, **kwargs):
+    # Auto-generate SCRID: PS-SITEID-0001
+    if not self.SCRID:
+        site_cases = SCR_CASE.objects.filter(
+            SCRID__startswith=f'PS-{self.SITEID}-'
+        ).values_list('SCRID', flat=True)
+        
+        max_num = 0
+        for sid in site_cases:
+            m = re.match(rf'PS-{self.SITEID}-(\d+)', str(sid))
+            if m:
+                num = int(m.group(1))
+                if num > max_num:
+                    max_num = num
+        
+        self.SCRID = f"PS-{self.SITEID}-{max_num + 1:04d}"
+    
+    # Auto-generate USUBJID if eligible
+    if is_eligible:
+        if not self.SUBJID:
+            # Logic to generate A-001, A-002...
+            ...
+        if not self.USUBJID:
+            self.USUBJID = f"{self.SITEID}-{self.SUBJID}"
+```
+
+```python
+# ENR_CASE - Enrollment
+USUBJID = models.OneToOneField(
+    'SCR_CASE',
+    on_delete=models.CASCADE,
+    primary_key=True,
+    to_field='USUBJID',
+    db_column='USUBJID'
+)
+```
+
+**Key Insights từ 43EN:**
+1. ✅ Screening ID (SCRID) được tạo tự động theo pattern `PS-SITEID-0001`
+2. ✅ Subject ID (USUBJID) được tạo sau khi eligible: `SITEID-A-001`
+3. ✅ Enrollment dùng USUBJID làm PK (OneToOneField)
+4. ✅ Có validation logic trong `save()`
+5. ✅ Có error handling cho duplicate IDs
+
+### 1.2. Pattern hiện tại của 44EN
+
+```python
+# HH_CASE - Household
+HHID = models.CharField(max_length=50, primary_key=True)  # Manual assignment
+
+def save(self, *args, **kwargs):
+    # Auto-generate HHID
+    if not self.HHID:
+        last_hh = HH_CASE.objects.filter(
+            HHID__startswith='44EN-'
+        ).order_by('-HHID').first()
+        if last_hh:
+            match = re.match(r'44EN-(\d+)', last_hh.HHID)
+            last_num = int(match.group(1)) if match else 0
+            self.HHID = f"44EN-{last_num + 1:03d}"
+        else:
+            self.HHID = "44EN-001"
+    super().save(*args, **kwargs)
+```
+
+```python
+# HH_Member
+MEMBER_id = models.CharField(max_length=50, primary_key=True, editable=False)
+HHID = models.ForeignKey('HH_CASE', ...)
+MEMBER_NUM = models.IntegerField(...)
+
+def save(self, *args, **kwargs):
+    if not self.MEMBER_id:
+        self.MEMBER_id = f"{self.HHID_id}-{self.MEMBER_NUM}"
+    super().save(*args, **kwargs)
+```
+
+```python
+# Individual
+MEMBER = models.OneToOneField(
+    'HH_Member',
+    primary_key=True,
+    to_field='MEMBER_id',
+    db_column='MEMBER_id'
+)
+```
+
+### 1.3. SO SÁNH VÀ ĐÁNH GIÁ
+
+| Aspect | 43EN Pattern | 44EN Current | Assessment |
+|--------|--------------|--------------|------------|
+| **ID Format** | `PS-SITEID-0001` | `44EN-001` | ⚠️ 44EN thiếu SITEID component |
+| **Auto-generation** | ✅ Robust logic | ⚠️ Basic logic | Cần cải thiện |
+| **Validation** | ✅ Comprehensive | ❌ Minimal | Critical gap |
+| **Error Handling** | ✅ While loop for duplicates | ❌ None | Missing |
+| **Pattern Consistency** | ✅ Consistent | ⚠️ Varies by table | Needs standardization |
+
+### 1.4. KHUYẾN NGHỊ CHO 44EN
+
+#### Option A: Follow 43EN Pattern (RECOMMENDED)
+
+**Nếu study 44EN có multiple sites:**
+
+```python
+class HH_CASE(AuditFieldsMixin):
+    HHID = models.CharField(max_length=50, primary_key=True)
+    STUDYID = models.CharField(max_length=50, default='44EN')
+    SITEID = models.CharField(max_length=20)  # ADD THIS
+    HH_NUM = models.CharField(max_length=10, null=True, blank=True)  # ADD THIS
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate HHID: 44EN-SITEID-001
+        if not self.HHID:
+            if not self.SITEID:
+                raise ValueError("SITEID is required to generate HHID")
+            
+            site_households = HH_CASE.objects.filter(
+                HHID__startswith=f'44EN-{self.SITEID}-'
+            ).values_list('HHID', flat=True)
+            
+            max_num = 0
+            for hid in site_households:
+                m = re.match(rf'44EN-{self.SITEID}-(\d+)', str(hid))
+                if m:
+                    num = int(m.group(1))
+                    if num > max_num:
+                        max_num = num
+            
+            next_num = max_num + 1
+            self.HHID = f"44EN-{self.SITEID}-{next_num:03d}"
+            self.HH_NUM = f"{next_num:03d}"
+        
+        super().save(*args, **kwargs)
+```
+
+**Benefits:**
+- ✅ Consistent với 43EN pattern
+- ✅ Supports multi-site từ đầu
+- ✅ Dễ scale khi thêm sites
+- ✅ Clear traceability
+
+#### Option B: Keep Current but Improve
+
+**Nếu study 44EN chỉ có 1 site:**
+
+```python
+class HH_CASE(AuditFieldsMixin):
+    HHID = models.CharField(max_length=50, primary_key=True)
+    STUDYID = models.CharField(max_length=50, default='44EN')
+    
+    def save(self, *args, **kwargs):
+        if not self.HHID:
+            # Get max number with better error handling
+            last_hh = (
+                HH_CASE.objects
+                .filter(HHID__startswith='44EN-')
+                .order_by('-HHID')
+                .first()
+            )
+            
+            if last_hh and last_hh.HHID:
+                try:
+                    match = re.match(r'44EN-(\d+)', last_hh.HHID)
+                    last_num = int(match.group(1)) if match else 0
+                except (ValueError, AttributeError):
+                    last_num = 0
+            else:
+                last_num = 0
+            
+            next_num = last_num + 1
+            self.HHID = f"44EN-{next_num:03d}"
+            
+            # Check for duplicate (race condition protection)
+            max_attempts = 10
+            attempt = 0
+            while HH_CASE.objects.filter(HHID=self.HHID).exists():
+                attempt += 1
+                if attempt >= max_attempts:
+                    raise ValueError(f"Could not generate unique HHID after {max_attempts} attempts")
+                next_num += 1
+                self.HHID = f"44EN-{next_num:03d}"
+        
+        super().save(*args, **kwargs)
+```
+
+---
+
+## PHẦN 2: VALIDATION ANALYSIS
+
+### 2.1. Validation trong 43EN (Reference)
+
+```python
+# ENR_CASE
+class ENR_CASE(AuditFieldsMixin):
+    @cached_property
+    def calculated_age(self):
+        """Calculate age with validation"""
+        if all([self.DAYOFBIRTH, self.MONTHOFBIRTH, self.YEAROFBIRTH]):
+            try:
+                birth_date = date(self.YEAROFBIRTH, self.MONTHOFBIRTH, self.DAYOFBIRTH)
+                reference_date = self.ENRDATE or date.today()
+                age = relativedelta(reference_date, birth_date)
+                return (age.years + age.months/12 + age.days/365, True)
+            except ValueError:
+                return (self.AGEIFDOBUNKNOWN, False) if self.AGEIFDOBUNKNOWN else (None, False)
+        return (self.AGEIFDOBUNKNOWN, False) if self.AGEIFDOBUNKNOWN else (None, False)
+    
+    def clean(self):
+        """Enhanced validation"""
+        errors = {}
+        
+        # Validate birth date
+        if all([self.DAYOFBIRTH, self.MONTHOFBIRTH, self.YEAROFBIRTH]):
+            try:
+                birth_date = date(self.YEAROFBIRTH, self.MONTHOFBIRTH, self.DAYOFBIRTH)
+                
+                if birth_date > date.today():
+                    errors['YEAROFBIRTH'] = _('Date of birth cannot be in the future')
+                
+                if self.ENRDATE:
+                    age = relativedelta(self.ENRDATE, birth_date).years
+                    if age < 16:
+                        errors['YEAROFBIRTH'] = _('Patient must be at least 16 years old')
+                    elif age > 150:
+                        errors['YEAROFBIRTH'] = _('Unrealistic age (>150 years)')
+            except ValueError:
+                errors['DAYOFBIRTH'] = _('Invalid date combination')
+        
+        # Ensure either DOB or age provided
+        has_dob = all([self.DAYOFBIRTH, self.MONTHOFBIRTH, self.YEAROFBIRTH])
+        has_age = self.AGEIFDOBUNKNOWN is not None
+        if not has_dob and not has_age:
+            errors['AGEIFDOBUNKNOWN'] = _('Either DOB or Age must be provided')
+        
+        # Validate transfer info
+        if self.FROMOTHERHOSPITAL and not self.PRIORHOSPIADMISDATE:
+            errors['PRIORHOSPIADMISDATE'] = _('Required when transferred')
+        
+        if errors:
+            raise ValidationError(errors)
+```
+
+### 2.2. Validation trong 44EN (Current)
+
+```python
+# HH_CASE - NO clean() method
+# Individual - NO clean() method
+# HH_Member - Has constraint but no clean()
+
+class HH_Member(AuditFieldsMixin):
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['HHID'], 
+                condition=Q(IS_RESPONDENT=True), 
+                name='unique_respondent'
+            ),
+            models.UniqueConstraint(
+                fields=['HHID', 'CHILD_ORDER'], 
+                condition=Q(RELATIONSHIP='D'), 
+                name='unique_child_order'
+            ),
+        ]
+```
+
+### 2.3. VALIDATION GAPS trong 44EN
+
+| Model | Missing Validations | Priority |
+|-------|-------------------|----------|
+| **HH_CASE** | - Address completeness<br>- Income vs members validation<br>- Asset consistency | HIGH |
+| **HH_Member** | - Birth year < current year<br>- Gender consistency<br>- Relationship logic | HIGH |
+| **Individual** | - DOB validation<br>- Age calculation<br>- DOB vs age mutual exclusivity | CRITICAL |
+| **Individual_Exposure** | - Water source vs treatment consistency<br>- Animal vs raises_animals flag | MEDIUM |
+| **Individual_FollowUp** | - Assessment date within window<br>- Visit time sequence | HIGH |
+
+### 2.4. KHUYẾN NGHỊ VALIDATION cho 44EN
+
+#### Individual Model - Critical
+
+```python
+class Individual(AuditFieldsMixin):
+    @cached_property
+    def calculated_age(self):
+        """Calculate age from DOB or return provided age"""
+        if self.DATE_OF_BIRTH:
+            from datetime import date
+            from dateutil.relativedelta import relativedelta
+            today = date.today()
+            age = relativedelta(today, self.DATE_OF_BIRTH)
+            return age.years + age.months/12 + age.days/365
+        return self.AGE
+    
+    def clean(self):
+        errors = {}
+        
+        # Validate DOB
+        if self.DATE_OF_BIRTH:
+            if self.DATE_OF_BIRTH > date.today():
+                errors['DATE_OF_BIRTH'] = _('Date of birth cannot be in the future')
+            
+            # Check age reasonableness
+            age = relativedelta(date.today(), self.DATE_OF_BIRTH).years
+            if age > 150:
+                errors['DATE_OF_BIRTH'] = _('Unrealistic age (>150 years)')
+        
+        # Ensure either DOB or AGE provided
+        if not self.DATE_OF_BIRTH and self.AGE is None:
+            errors['AGE'] = _('Either Date of Birth or Age must be provided')
+        
+        # Validate AGE if provided
+        if self.AGE is not None:
+            if self.AGE < 0:
+                errors['AGE'] = _('Age cannot be negative')
+            if self.AGE > 150:
+                errors['AGE'] = _('Unrealistic age (>150 years)')
+        
+        # Validate occupation vs age
+        if self.AGE is not None:
+            if self.AGE < 6 and self.OCCUPATION not in ['student', None]:
+                errors['OCCUPATION'] = _('Occupation not suitable for age')
+        
+        if errors:
+            raise ValidationError(errors)
+```
+
+#### HH_Member Model
+
+```python
+class HH_Member(AuditFieldsMixin):
+    def clean(self):
+        errors = {}
+        
+        # Validate birth year
+        if self.BIRTH_YEAR:
+            current_year = date.today().year
+            if self.BIRTH_YEAR > current_year:
+                errors['BIRTH_YEAR'] = _('Birth year cannot be in the future')
+            if self.BIRTH_YEAR < 1900:
+                errors['BIRTH_YEAR'] = _('Birth year seems too old')
+            if current_year - self.BIRTH_YEAR > 150:
+                errors['BIRTH_YEAR'] = _('Unrealistic age (>150 years)')
+        
+        # Validate CHILD_ORDER only for children
+        if self.CHILD_ORDER and self.RELATIONSHIP != 'D':
+            errors['CHILD_ORDER'] = _('Child order only applicable for children')
+        
+        # Validate CHILD_ORDER required for children
+        if self.RELATIONSHIP == 'D' and not self.CHILD_ORDER:
+            errors['CHILD_ORDER'] = _('Child order is required for children')
+        
+        # Validate IS_RESPONDENT logic
+        if self.IS_RESPONDENT:
+            # Check if already has respondent
+            existing = HH_Member.objects.filter(
+                HHID=self.HHID,
+                IS_RESPONDENT=True
+            ).exclude(pk=self.pk).exists()
+            
+            if existing:
+                errors['IS_RESPONDENT'] = _('Household already has a respondent')
+        
+        if errors:
+            raise ValidationError(errors)
+```
+
+#### Individual_FollowUp Model
+
+```python
+class Individual_FollowUp(AuditFieldsMixin):
+    def clean(self):
+        errors = {}
+        
+        # Validate assessment date within window
+        if self.ASSESSMENT_DATE and self.MEMBER.individual_info:
+            individual = self.MEMBER.individual_info
+            # Assuming there's an enrollment date somewhere
+            # This is placeholder logic - adjust to actual enrollment date source
+            
+            if self.VISIT_TIME == 'day_14':
+                # Should be between day 11-17
+                pass  # Add date range validation
+            elif self.VISIT_TIME == 'day_28':
+                # Should be between day 25-31
+                pass
+            elif self.VISIT_TIME == 'day_90':
+                # Should be between day 87-93
+                pass
+        
+        # Validate symptoms only if HAS_SYMPTOMS = yes
+        if self.HAS_SYMPTOMS == 'no':
+            symptom_count = self.symptoms.count()
+            if symptom_count > 0:
+                errors['HAS_SYMPTOMS'] = _(
+                    f'Marked "No symptoms" but has {symptom_count} symptoms recorded'
+                )
+        
+        # Validate hospitalization data
+        if self.HOSPITALIZED == 'no':
+            hosp_count = self.hospitalizations.count()
+            if hosp_count > 0:
+                errors['HOSPITALIZED'] = _(
+                    f'Marked "Not hospitalized" but has {hosp_count} hospitalization records'
+                )
+        
+        # Validate medication data
+        if self.USED_MEDICATION == 'no':
+            if self.ANTIBIOTIC_TYPE or self.STEROID_TYPE or self.OTHER_MEDICATION:
+                errors['USED_MEDICATION'] = _(
+                    'Marked "No medication" but medication details are filled'
+                )
+        
+        if errors:
+            raise ValidationError(errors)
+```
+
+---
+
+## PHẦN 3: QUERYSET OPTIMIZATION
+
+### 3.1. QuerySets trong 43EN (Reference)
+
+```python
+# SCR_CASE doesn't have custom queryset (simple model)
+
+# ENR_CASE has cached properties but no custom queryset
+@cached_property
+def SITEID(self):
+    return self.USUBJID.SITEID if self.USUBJID else None
+```
+
+### 3.2. QuerySets trong 44EN (Current)
+
+```python
+class HH_CASEQuerySet(models.QuerySet):
+    def with_relations(self):
+        return self.select_related(
+            'exposure', 'food_frequency', 'food_source'
+        ).prefetch_related(
+            'members', 
+            'exposure__water_sources', 
+            'exposure__animals'
+        )
+    
+    def by_ward(self, ward):
+        return self.filter(WARD__iexact=ward)
+    
+    def recent(self, days=30):
+        from datetime import date, timedelta
+        return self.filter(
+            last_modified_at__gte=date.today() - timedelta(days=days)
+        )
+
+class HH_MemberQuerySet(models.QuerySet):
+    def respondents(self):
+        return self.filter(IS_RESPONDENT=True)
+    
+    def by_household(self, hhid):
+        return self.filter(HHID=hhid).order_by('MEMBER_NUM')
+    
+    def children_only(self):
+        return self.filter(RELATIONSHIP='D').order_by('HHID', 'CHILD_ORDER')
+```
+
+### 3.3. ĐÁNH GIÁ QUERYSET
+
+| Aspect | Status | Assessment |
+|--------|--------|------------|
+| **HH_CASE queryset** | ✅ Good | Has useful methods |
+| **HH_Member queryset** | ✅ Good | Has useful methods |
+| **Individual queryset** | ❌ Missing | Should have |
+| **Exposure querysets** | ❌ Missing | Should have |
+| **FollowUp queryset** | ❌ Missing | Critical for reporting |
+
+### 3.4. KHUYẾN NGHỊ QUERYSET cho 44EN
+
+#### Individual QuerySet
+
+```python
+class IndividualQuerySet(models.QuerySet):
+    def with_full_data(self):
+        """Load all related data for comprehensive view"""
+        return self.select_related(
+            'MEMBER',
+            'MEMBER__HHID',
+            'exposure',
+            'food_frequency'
+        ).prefetch_related(
+            'exposure__water_sources',
+            'exposure__treatment_methods',
+            'exposure__comorbidities',
+            'exposure__vaccines',
+            'exposure__hospitalizations',
+            'exposure__medications',
+            'travel_history',
+            'follow_ups',
+            'follow_ups__symptoms',
+            'follow_ups__hospitalizations',
+            'samples'
+        )
+    
+    def by_household(self, hhid):
+        """Get all individuals in a household"""
+        return self.filter(MEMBER__HHID=hhid)
+    
+    def by_age_range(self, min_age=None, max_age=None):
+        """Filter by age range"""
+        qs = self
+        if min_age is not None:
+            qs = qs.filter(
+                models.Q(AGE__gte=min_age) |
+                models.Q(
+                    DATE_OF_BIRTH__lte=date.today() - timedelta(days=min_age*365)
+                )
+            )
+        if max_age is not None:
+            qs = qs.filter(
+                models.Q(AGE__lte=max_age) |
+                models.Q(
+                    DATE_OF_BIRTH__gte=date.today() - timedelta(days=max_age*365)
+                )
+            )
+        return qs
+    
+    def with_health_insurance(self):
+        """Filter individuals with health insurance"""
+        return self.filter(HAS_HEALTH_INSURANCE='yes')
+    
+    def by_education_level(self, level):
+        """Filter by education level"""
+        return self.filter(EDUCATION=level)
+    
+    def by_occupation(self, occupation):
+        """Filter by occupation"""
+        return self.filter(OCCUPATION=occupation)
+
+# Attach to model
+Individual.add_to_class('objects', IndividualQuerySet.as_manager())
+```
+
+#### Individual_FollowUp QuerySet
+
+```python
+class IndividualFollowUpQuerySet(models.QuerySet):
+    def with_details(self):
+        """Load all related data"""
+        return self.select_related('MEMBER').prefetch_related(
+            'symptoms',
+            'hospitalizations'
+        )
+    
+    def by_visit_time(self, visit_time):
+        """Filter by visit time"""
+        return self.filter(VISIT_TIME=visit_time)
+    
+    def assessed(self):
+        """Get only assessed follow-ups"""
+        return self.filter(ASSESSED='yes')
+    
+    def with_symptoms(self):
+        """Get follow-ups where patient had symptoms"""
+        return self.filter(HAS_SYMPTOMS='yes')
+    
+    def hospitalized(self):
+        """Get follow-ups where patient was hospitalized"""
+        return self.filter(HOSPITALIZED='yes')
+    
+    def by_date_range(self, start_date, end_date):
+        """Filter by assessment date range"""
+        return self.filter(
+            ASSESSMENT_DATE__gte=start_date,
+            ASSESSMENT_DATE__lte=end_date
+        )
+    
+    def completion_stats(self):
+        """Get completion statistics"""
+        from django.db.models import Count, Q
+        return self.aggregate(
+            total=Count('id'),
+            assessed=Count('id', filter=Q(ASSESSED='yes')),
+            with_symptoms=Count('id', filter=Q(HAS_SYMPTOMS='yes')),
+            hospitalized=Count('id', filter=Q(HOSPITALIZED='yes'))
+        )
+
+Individual_FollowUp.add_to_class('objects', IndividualFollowUpQuerySet.as_manager())
+```
+
+#### Individual_Exposure QuerySet
+
+```python
+class IndividualExposureQuerySet(models.QuerySet):
+    def with_risk_factors(self):
+        """Load all risk factor related data"""
+        return self.prefetch_related(
+            'water_sources',
+            'treatment_methods',
+            'comorbidities',
+            'vaccines',
+            'hospitalizations',
+            'medications'
+        )
+    
+    def with_comorbidities(self):
+        """Get exposures where individual has comorbidities"""
+        return self.filter(HAS_COMORBIDITY='yes')
+    
+    def hospitalized_recently(self):
+        """Get those hospitalized in last 3 months"""
+        return self.filter(HOSPITALIZED_3M='yes')
+    
+    def on_medication(self):
+        """Get those on medication"""
+        return self.filter(MEDICATION_3M='yes')
+    
+    def treats_water(self):
+        """Get those who treat water"""
+        return self.filter(WATER_TREATMENT='yes')
+    
+    def uses_shared_toilet(self):
+        """Get those using shared toilets"""
+        return self.filter(SHARED_TOILET='yes')
+
+Individual_Exposure.add_to_class('objects', IndividualExposureQuerySet.as_manager())
+```
+
+---
+
+## PHẦN 4: FIELD NAMING & CONSISTENCY
+
+### 4.1. Naming Patterns từ 43EN
+
+```python
+# 43EN uses UPPERCASE for all field names (CDISC standard)
+USUBJID = ...
+SCRID = ...
+ENRDATE = ...
+DAYOFBIRTH = ...
+MONTHOFBIRTH = ...
+YEAROFBIRTH = ...
+FROMOTHERHOSPITAL = ...
+```
+
+### 4.2. Naming trong 44EN
+
+```python
+# 44EN uses UPPERCASE for main fields but mixed for some
+HHID = ...
+MEMBER_id = ...  # ⚠️ Mixed case in suffix
+MEMBER_NUM = ...
+IS_RESPONDENT = ...  # ⚠️ Underscore pattern
+HAS_HEALTH_INSURANCE = ...  # ⚠️ Underscore pattern
+```
+
+### 4.3. INCONSISTENCIES
+
+| Issue | Examples | Recommendation |
+|-------|----------|----------------|
+| **Mixed case in IDs** | `MEMBER_id` vs `HHID` | Use `MEMBER_ID` |
+| **Underscore usage** | `IS_RESPONDENT` vs `ISRESPONDENT` | Choose one pattern |
+| **Boolean naming** | `IS_RESPONDENT`, `HAS_HEALTH_INSURANCE` | Keep "HAS/IS" prefix consistent |
+| **Nested model naming** | `Individual_Exposure` vs `IndividualExposure` | Use underscore for table names |
+
+### 4.4. KHUYẾN NGHỊ NAMING CONVENTION
+
+**Follow 43EN pattern strictly:**
+
+```python
+# PRIMARY KEYS - UPPERCASE
+HHID = models.CharField(...)
+MEMBERID = models.CharField(...)  # NOT MEMBER_id
+FOLLOWUPID = models.CharField(...)  # NOT FOLLOW_UP_id
+
+# FOREIGN KEYS - UPPERCASE
+HHID = models.ForeignKey(...)
+USUBJID = models.ForeignKey(...)
+
+# BOOLEAN FIELDS - Use verb prefix
+ISRESPONDENT = models.BooleanField(...)  # NOT IS_RESPONDENT
+HASCOMORBIDITY = models.BooleanField(...)  # NOT HAS_COMORBIDITY
+
+# DATE FIELDS - Use ...DATE suffix
+ASSESSMENTDATE = models.DateField(...)  # NOT ASSESSMENT_DATE
+ENROLLDATE = models.DateField(...)
+
+# CHOICE FIELDS - Descriptive names
+TOILETTYPE = models.CharField(...)  # NOT TOILET_TYPE
+EDUCATIONLEVEL = models.CharField(...)
+
+# TABLE NAMES - Use underscores
+db_table = 'Individual_Exposure'  # This is OK
+db_table = 'Individual_FollowUp'  # This is OK
+```
+
+**Rationale:**
+- ✅ Consistency with CDISC standards
+- ✅ Compatibility with 43EN codebase
+- ✅ Easier migration/comparison
+- ✅ Standard in clinical research databases
+
+---
+
+## PHẦN 5: MISSING FEATURES vs 43EN
+
+### 5.1. Features trong 43EN nhưng thiếu trong 44EN
+
+| Feature | 43EN | 44EN | Priority |
+|---------|------|------|----------|
+| **Cached Properties** | ✅ `calculated_age`, `SITEID` | ❌ None | HIGH |
+| **Complex Validation** | ✅ `clean()` method | ❌ Minimal | CRITICAL |
+| **Auto-generation Logic** | ✅ Robust with error handling | ⚠️ Basic | HIGH |
+| **Encrypted Fields** | ✅ `FULLNAME`, `PHONE`, `MEDRECORDID` | ❌ None | MEDIUM |
+| **Dual Address System** | ✅ Old/New administrative | ❌ Single system | LOW |
+| **Database Constraints** | ✅ CheckConstraint | ⚠️ UniqueConstraint only | MEDIUM |
+
+### 5.2. KHUYẾN NGHỊ THÊM FEATURES
+
+#### Add Cached Properties
+
+```python
+class Individual(AuditFieldsMixin):
+    @cached_property
+    def calculated_age(self):
+        """Calculate age from DOB or return provided age"""
+        if self.DATE_OF_BIRTH:
+            from dateutil.relativedelta import relativedelta
+            age = relativedelta(date.today(), self.DATE_OF_BIRTH)
+            return age.years + age.months/12 + age.days/365
+        return self.AGE
+    
+    @cached_property
+    def age_category(self):
+        """Get age category"""
+        age = self.calculated_age
+        if age is None:
+            return 'unknown'
+        if age < 18:
+            return 'child'
+        elif age < 65:
+            return 'adult'
+        else:
+            return 'elderly'
+    
+    @property
+    def household_id(self):
+        """Get household ID"""
+        return self.MEMBER.HHID_id if self.MEMBER else None
+    
+    @property
+    def full_id(self):
+        """44EN-001-1"""
+        return self.MEMBER_id
+```
+
+#### Add Database Constraints
+
+```python
+class Individual(AuditFieldsMixin):
+    class Meta:
+        db_table = 'Individual'
+        constraints = [
+            # Ensure either DOB or AGE provided
+            models.CheckConstraint(
+                check=models.Q(DATE_OF_BIRTH__isnull=False) | models.Q(AGE__isnull=False),
+                name='individual_dob_or_age_required'
+            ),
+            # Age must be reasonable
+            models.CheckConstraint(
+                check=models.Q(AGE__isnull=True) | models.Q(AGE__gte=0, AGE__lte=150),
+                name='individual_age_reasonable'
+            ),
+        ]
+```
+
+#### Add Encrypted Fields (if needed)
+
+```python
+from encrypted_model_fields.fields import EncryptedCharField
+
+class Individual(AuditFieldsMixin):
+    FULLNAME = EncryptedCharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        verbose_name=_('Full Name'),
+        help_text=_('Individual full name (confidential)')
+    )
+    
+    PHONE = EncryptedCharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_('Phone Number')
+    )
+    
+    NATIONALID = EncryptedCharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name=_('National ID Number')
+    )
+```
+
+---
+
+## PHẦN 6: CRF MAPPING VERIFICATION
+
+### 6.1. Household CRF Mapping
+
+| CRF Section | CRF Field | Model | Field | Status |
+|-------------|-----------|-------|-------|--------|
+| **THÔNG TIN CHUNG** | Mã hộ gia đình | HH_CASE | HHID | ✅ |
+| | Mã thành viên người trả lời | HH_CASE | RESPONDENT_MEMBER_NUM | ✅ |
+| | Địa chỉ (Số nhà, đường) | HH_CASE | STREET | ✅ |
+| | Phường/Xã | HH_CASE | WARD | ✅ |
+| | Số thành viên | HH_CASE | TOTAL_MEMBERS | ✅ |
+| | Mối quan hệ với chủ hộ | HH_Member | RELATIONSHIP | ✅ |
+| | Năm sinh | HH_Member | BIRTH_YEAR | ✅ |
+| | Giới tính | HH_Member | GENDER | ✅ |
+| | Thu nhập hộ | HH_CASE | MONTHLY_INCOME | ✅ |
+| | Nhà thuê/riêng | HH_CASE | OWNERSHIP | ✅ |
+| | Diện tích đất | HH_CASE | LAND_AREA | ✅ |
+| | Số tầng | HH_CASE | NUM_FLOORS | ✅ |
+| | Số phòng | HH_CASE | NUM_ROOMS | ✅ |
+| | Loại hình nhà | HH_CASE | HOUSING_TYPE | ✅ |
+| | Vật liệu nền | HH_CASE | FLOOR_MATERIAL | ✅ |
+| | Vật liệu mái | HH_CASE | ROOF_MATERIAL | ✅ |
+| | Đồ dùng (13 items) | HH_CASE | TV, AC, COMPUTER... | ✅ |
+| **YẾU TỐ PHƠI NHIỄM** | Loại nhà vệ sinh | HH_Exposure | TOILET_TYPE | ✅ |
+| | Số nhà vệ sinh | HH_Exposure | NUM_TOILETS | ✅ |
+| | Năng lượng nấu ăn | HH_Exposure | COOKING_FUEL | ✅ |
+| | Nguồn nước | HH_WaterSource | SOURCE_TYPE, purposes | ✅ |
+| | Xử lý nước | HH_Exposure | WATER_TREATMENT | ✅ |
+| | Phương pháp xử lý | HH_WaterTreatment | TREATMENT_TYPE | ✅ |
+| | Nuôi động vật | HH_Exposure | RAISES_ANIMALS | ✅ |
+| | Loại động vật | HH_Animal | ANIMAL_TYPE | ✅ |
+| | Tần suất thực phẩm | HH_FoodFrequency | All food fields | ✅ |
+| | Nguồn thực phẩm | HH_FoodSource | All source fields | ✅ |
+
+**Household CRF Coverage: 100% ✅**
+
+### 6.2. Individual CRF Mapping
+
+| CRF Section | CRF Field | Model | Field | Status |
+|-------------|-----------|-------|-------|--------|
+| **THÔNG TIN CHUNG** | Mã thành viên | Individual | MEMBER (PK) | ✅ |
+| | Họ tên viết tắt | Individual | INITIALS | ✅ |
+| | Mối quan hệ | HH_Member | RELATIONSHIP | ✅ |
+| | Ngày sinh | Individual | DATE_OF_BIRTH | ✅ |
+| | Tuổi (nếu không biết) | Individual | AGE | ✅ |
+| | Giới tính | HH_Member | GENDER | ✅ |
+| | Dân tộc | Individual | ETHNICITY | ✅ |
+| | Trình độ học vấn | Individual | EDUCATION | ✅ |
+| | Nghề nghiệp | Individual | OCCUPATION | ✅ |
+| | Thu nhập cá nhân | Individual | INDIVIDUAL_INCOME | ✅ |
+| | Bảo hiểm y tế | Individual | HAS_HEALTH_INSURANCE | ✅ |
+| **YẾU TỐ PHƠI NHIỄM** | Dùng chung nhà vệ sinh | Individual_Exposure | SHARED_TOILET | ✅ |
+| | Nguồn nước cá nhân | Individual_WaterSource | SOURCE_TYPE, purposes | ✅ |
+| | Xử lý nước | Individual_Exposure | WATER_TREATMENT | ✅ |
+| | Phương pháp xử lý | Individual_WaterTreatment | TREATMENT_TYPE | ✅ |
+| | Bệnh kèm theo | Individual_Exposure | HAS_COMORBIDITY | ✅ |
+| | Chi tiết bệnh | Individual_Comorbidity | COMORBIDITY_TYPE, TREATMENT_STATUS | ✅ |
+| | Tình trạng tiêm chủng | Individual_Exposure | VACCINATION_STATUS | ✅ |
+| | Loại vaccine | Individual_Vaccine | VACCINE_TYPE | ✅ |
+| | Nhập viện 3 tháng | Individual_Exposure | HOSPITALIZED_3M | ✅ |
+| | Chi tiết nhập viện | Individual_Hospitalization | HOSPITAL_TYPE, DURATION | ✅ |
+| | Dùng thuốc 3 tháng | Individual_Exposure | MEDICATION_3M | ✅ |
+| | Chi tiết thuốc | Individual_Medication | MEDICATION_TYPE, DURATION | ✅ |
+| | Tần suất thực phẩm | Individual_FoodFrequency | All food fields | ✅ |
+| | Lịch sử đi lại | Individual_Travel | TRAVEL_TYPE, FREQUENCY | ✅ |
+| **FOLLOW-UP** | Ngày 14: Đánh giá | Individual_FollowUp | ASSESSED, ASSESSMENT_DATE | ✅ |
+| | Ngày 14: Triệu chứng | Individual_FollowUp | HAS_SYMPTOMS | ✅ |
+| | Ngày 14: Chi tiết triệu chứng | Individual_Symptom | SYMPTOM_TYPE | ✅ |
+| | Ngày 14: Nhập viện | Individual_FollowUp | HOSPITALIZED | ✅ |
+| | Ngày 14: Chi tiết nhập viện | Individual_FollowUp_Hospitalization | HOSPITAL_TYPE, DURATION | ✅ |
+| | Ngày 14: Dùng thuốc | Individual_FollowUp | USED_MEDICATION, ANTIBIOTIC_TYPE... | ✅ |
+| | Ngày 28: [Same as Day 14] | Individual_FollowUp | [Same fields] | ✅ |
+| | Ngày 90: [Same as Day 14] | Individual_FollowUp | [Same fields] | ✅ |
+| **MẪU NGHIÊN CỨU** | Baseline: Thu nhận mẫu | Individual_Sample | SAMPLE_COLLECTED | ✅ |
+| | Baseline: Ngày lấy phân | Individual_Sample | STOOL_DATE | ✅ |
+| | Baseline: Ngày phết họng | Individual_Sample | THROAT_SWAB_DATE | ✅ |
+| | Day 14: [Same] | Individual_Sample | [Same fields] | ✅ |
+| | Day 28: [Same] | Individual_Sample | [Same fields] | ✅ |
+| | Day 90: [Same] | Individual_Sample | [Same fields] | ✅ |
+| | Lý do không thu | Individual_Sample | NOT_COLLECTED_REASON | ✅ |
+
+**Individual CRF Coverage: 100% ✅**
+
+---
+
+## PHẦN 7: DATABASE INDEXES & PERFORMANCE
+
+### 7.1. Indexes trong 43EN
+
+```python
+class SCR_CASE(AuditFieldsMixin):
+    class Meta:
+        indexes = [
+            models.Index(fields=['SITEID', '-SCREENINGFORMDATE'], name='idx_scr_site_date'),
+            models.Index(fields=['is_confirmed', 'SITEID'], name='idx_scr_confirmed'),
+            models.Index(fields=['last_modified_by_id', '-last_modified_at'], name='idx_scr_modified'),
+        ]
+
+class ENR_CASE(AuditFieldsMixin):
+    class Meta:
+        indexes = [
+            models.Index(fields=['ENRDATE'], name='idx_enr_date'),
+            models.Index(fields=['last_modified_by_id', '-last_modified_at'], name='idx_enr_modified'),
+            models.Index(fields=['SEX', 'ENRDATE'], name='idx_enr_sex_date'),
+            models.Index(fields=['PROVINCECITY', 'DISTRICT'], name='idx_enr_location'),
+            models.Index(fields=['UNDERLYINGCONDS', 'ENRDATE'], name='idx_enr_conds_date'),
+        ]
+```
+
+### 7.2. Indexes trong 44EN (Current)
+
+```python
+# HH_CASE
+class Meta:
+    indexes = [
+        models.Index(fields=['WARD', 'CITY'], name='idx_hh_location'),
+        models.Index(fields=['TOTAL_MEMBERS'], name='idx_hh_members'),
+        models.Index(fields=['MONTHLY_INCOME'], name='idx_hh_income'),
+    ]
+
+# HH_Member
+class Meta:
+    indexes = [
+        models.Index(fields=['HHID', 'MEMBER_NUM'], name='idx_hhmem_hh_num'),
+        models.Index(fields=['RELATIONSHIP', 'CHILD_ORDER'], name='idx_hhmem_child'),
+    ]
+
+# Individual - NO INDEXES ❌
+# Individual_Exposure - NO INDEXES ❌
+# Individual_FollowUp - NO INDEXES ❌
+```
+
+### 7.3. KHUYẾN NGHỊ INDEXES
+
+#### Individual Model
+
+```python
+class Individual(AuditFieldsMixin):
+    class Meta:
+        db_table = 'Individual'
+        indexes = [
+            # Core identifiers
+            models.Index(fields=['MEMBER'], name='idx_ind_member'),
+            
+            # Demographics for reporting
+            models.Index(fields=['ETHNICITY'], name='idx_ind_ethnicity'),
+            models.Index(fields=['EDUCATION'], name='idx_ind_education'),
+            models.Index(fields=['OCCUPATION'], name='idx_ind_occupation'),
+            
+            # Age-related queries
+            models.Index(fields=['DATE_OF_BIRTH'], name='idx_ind_dob'),
+            models.Index(fields=['AGE'], name='idx_ind_age'),
+            
+            # Economic indicators
+            models.Index(fields=['INDIVIDUAL_INCOME'], name='idx_ind_income'),
+            models.Index(fields=['HAS_HEALTH_INSURANCE'], name='idx_ind_insurance'),
+            
+            # Audit trail
+            models.Index(fields=['last_modified_by_id', '-last_modified_at'], name='idx_ind_modified'),
+        ]
+```
+
+#### Individual_Exposure Model
+
+```python
+class Individual_Exposure(AuditFieldsMixin):
+    class Meta:
+        db_table = 'Individual_Exposure'
+        indexes = [
+            # Risk factor queries
+            models.Index(fields=['SHARED_TOILET'], name='idx_exp_toilet'),
+            models.Index(fields=['WATER_TREATMENT'], name='idx_exp_water'),
+            models.Index(fields=['HAS_COMORBIDITY'], name='idx_exp_comorb'),
+            models.Index(fields=['HOSPITALIZED_3M'], name='idx_exp_hosp'),
+            models.Index(fields=['MEDICATION_3M'], name='idx_exp_med'),
+            
+            # Vaccination queries
+            models.Index(fields=['VACCINATION_STATUS'], name='idx_exp_vacc'),
+            
+            # Composite for complex queries
+            models.Index(
+                fields=['HAS_COMORBIDITY', 'HOSPITALIZED_3M'], 
+                name='idx_exp_risk'
+            ),
+        ]
+```
+
+#### Individual_FollowUp Model
+
+```python
+class Individual_FollowUp(AuditFieldsMixin):
+    class Meta:
+        db_table = 'Individual_FollowUp'
+        indexes = [
+            # Visit queries
+            models.Index(fields=['VISIT_TIME'], name='idx_fu_visit'),
+            models.Index(fields=['ASSESSMENT_DATE'], name='idx_fu_date'),
+            
+            # Outcome queries
+            models.Index(fields=['ASSESSED'], name='idx_fu_assessed'),
+            models.Index(fields=['HAS_SYMPTOMS'], name='idx_fu_symptoms'),
+            models.Index(fields=['HOSPITALIZED'], name='idx_fu_hosp'),
+            models.Index(fields=['USED_MEDICATION'], name='idx_fu_med'),
+            
+            # Composite for reporting
+            models.Index(
+                fields=['VISIT_TIME', 'ASSESSED'], 
+                name='idx_fu_visit_assessed'
+            ),
+            models.Index(
+                fields=['VISIT_TIME', 'HAS_SYMPTOMS'], 
+                name='idx_fu_visit_symptoms'
+            ),
+        ]
+```
+
+#### Individual_Sample Model
+
+```python
+class Individual_Sample(AuditFieldsMixin):
+    class Meta:
+        db_table = 'Individual_Sample'
+        indexes = [
+            # Sample collection tracking
+            models.Index(fields=['SAMPLE_TIME'], name='idx_sam_time'),
+            models.Index(fields=['SAMPLE_COLLECTED'], name='idx_sam_collected'),
+            models.Index(fields=['STOOL_DATE'], name='idx_sam_stool'),
+            models.Index(fields=['THROAT_SWAB_DATE'], name='idx_sam_throat'),
+            
+            # Composite for completion tracking
+            models.Index(
+                fields=['SAMPLE_TIME', 'SAMPLE_COLLECTED'], 
+                name='idx_sam_time_collected'
+            ),
+        ]
+```
+
+---
+
+## PHẦN 8: CODE STRUCTURE & ORGANIZATION
+
+### 8.1. File Organization trong 43EN
+
+```
+backends/studies/study_43en/models/
+├── base_models.py          # AuditFieldsMixin
+├── patient/
+│   ├── Screening.py        # SCR_CASE
+│   ├── Enrollment.py       # ENR_CASE
+│   └── ...
+```
+
+### 8.2. File Organization trong 44EN (Current)
+
+```
+backends/studies/study_44en/models/
+├── base_models.py          # AuditFieldsMixin
+├── household.py            # All household models
+└── individual.py           # All individual models
+```
+
+### 8.3. ĐÁNH GIÁ STRUCTURE
+
+| Aspect | 43EN | 44EN | Assessment |
+|--------|------|------|------------|
+| **File count** | Multiple small files | 2 large files | ⚠️ 44EN files too large |
+| **Separation** | By concept | By entity type | ⚠️ Could be better |
+| **Maintainability** | ✅ Good | ⚠️ OK but could improve | Need refactoring |
+
+### 8.4. KHUYẾN NGHỊ STRUCTURE
+
+**Option 1: Keep current structure** (if files manageable)
+
+```
+backends/studies/study_44en/models/
+├── base_models.py
+├── household.py            # ~400 lines - OK
+└── individual.py           # ~800 lines - Consider splitting
+```
+
+**Option 2: Split by logical groups** (RECOMMENDED)
+
+```
+backends/studies/study_44en/models/
+├── __init__.py
+├── base_models.py
+├── household/
+│   ├── __init__.py
+│   ├── core.py             # HH_CASE, HH_Member
+│   ├── exposure.py         # HH_Exposure, Water, Animal
+│   └── food.py             # Food frequency & source
+└── individual/
+    ├── __init__.py
+    ├── core.py             # Individual
+    ├── exposure.py         # Individual_Exposure + related
+    ├── followup.py         # Follow-up models
+    └── sample.py           # Sample collection
+```
+
+**Benefits:**
+- ✅ Easier to find specific models
+- ✅ Clearer separation of concerns
+- ✅ Better for team collaboration
+- ✅ Aligns with 43EN pattern
+
+---
+
+## PHẦN 9: SUMMARY OF RECOMMENDATIONS
+
+### 9.1. CRITICAL (Must Fix)
+
+1. **Add comprehensive validation** to Individual, HH_Member, Individual_FollowUp
+   - DOB validation
+   - Age calculation
+   - Date range validation for follow-ups
+   - Cross-field validation
+
+2. **Fix ID generation** to include error handling
+   - Add duplicate checking
+   - Add max attempts protection
+   - Consistent pattern across all models
+
+3. **Add missing indexes** to Individual, Individual_Exposure, Individual_FollowUp
+   - Essential for query performance
+   - Critical for reporting
+
+### 9.2. HIGH (Should Fix)
+
+4. **Add cached properties** to Individual model
+   - `calculated_age`
+   - `age_category`
+   - `household_id`
+
+5. **Add custom QuerySets** for Individual, Individual_Exposure, Individual_FollowUp
+   - Essential for efficient data access
+   - Prevents N+1 queries
+
+6. **Standardize naming convention**
+   - Use UPPERCASE for all field names
+   - Remove underscores in field names (IS_RESPONDENT → ISRESPONDENT)
+   - Consistent PK naming (MEMBER_id → MEMBERID)
+
+### 9.3. MEDIUM (Good to Have)
+
+7. **Add database constraints** for data integrity
+   - CheckConstraints for age ranges
+   - CheckConstraints for date validations
+
+8. **Refactor file structure** if files grow larger
+   - Split into logical modules
+   - Easier maintenance
+
+9. **Consider encrypted fields** for sensitive data
+   - FULLNAME
+   - PHONE
+   - NATIONALID (if applicable)
+
+### 9.4. LOW (Optional)
+
+10. **Add dual address system** like 43EN
+    - Only if administrative changes are expected
+    - Can wait until needed
+
+---
+
+## PHẦN 10: ACTION PLAN
+
+### Phase 1: Critical Fixes (Week 1)
+
+```
+[ ] Add validation to Individual model
+    [ ] clean() method
+    [ ] DOB validation
+    [ ] Age calculation
+    [ ] cached_property for calculated_age
+
+[ ] Add validation to HH_Member model
+    [ ] clean() method
+    [ ] Birth year validation
+    [ ] Relationship logic
+
+[ ] Add validation to Individual_FollowUp model
+    [ ] clean() method
+    [ ] Date window validation
+    [ ] Symptom consistency
+
+[ ] Fix ID generation in all models
+    [ ] Add duplicate checking
+    [ ] Add error handling
+    [ ] Add max attempts
+```
+
+### Phase 2: Performance Optimization (Week 2)
+
+```
+[ ] Add indexes to Individual model
+[ ] Add indexes to Individual_Exposure model
+[ ] Add indexes to Individual_FollowUp model
+[ ] Add indexes to Individual_Sample model
+
+[ ] Create QuerySet for Individual
+[ ] Create QuerySet for Individual_Exposure
+[ ] Create QuerySet for Individual_FollowUp
+```
+
+### Phase 3: Code Quality (Week 3)
+
+```
+[ ] Standardize naming convention
+    [ ] Rename MEMBER_id → MEMBERID
+    [ ] Rename IS_RESPONDENT → ISRESPONDENT
+    [ ] Rename all underscore fields
+
+[ ] Add database constraints
+[ ] Consider file structure refactoring
+```
+
+### Phase 4: Optional Enhancements (Week 4+)
+
+```
+[ ] Add encrypted fields if needed
+[ ] Add dual address system if needed
+[ ] Optimize querysets further
+[ ] Add more comprehensive tests
+```
+
+---
+
+## CONCLUSION
+
+**Overall Assessment: 7/10**
+
+44EN models show good understanding of normalized design and cover all CRF requirements comprehensively. However, they lack the production-ready features found in 43EN:
+
+**Strengths:**
+- ✅ Complete CRF coverage (100%)
+- ✅ Good normalization
+- ✅ Clear relationships
+- ✅ Some optimization (QuerySets for household)
+
+**Critical Gaps:**
+- ❌ Missing comprehensive validation
+- ❌ Incomplete ID generation logic
+- ❌ Missing indexes on key models
+- ❌ No cached properties
+- ❌ Inconsistent naming
+
+**Recommendation:**
+Follow the action plan above to bring 44EN models to production quality matching 43EN standards. Priority should be given to Phase 1 (Critical Fixes) and Phase 2 (Performance).
+
+---
+
+*Document prepared by Claude*
+*Date: 2025-12-22*
+*Based on: 43EN patterns, 44EN CRF documents, Django best practices*

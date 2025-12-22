@@ -251,6 +251,8 @@ class StudyAdmin(admin.ModelAdmin):
         'initialize_roles',
     ]
     
+    ordering = ['code']  # Fix pagination warning
+    
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('created_by').annotate(

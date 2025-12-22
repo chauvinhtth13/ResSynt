@@ -1,0 +1,62 @@
+{% load static %}
+
+<!-- Datepicker Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Initialize date inputs with proper format
+  document.addEventListener('DOMContentLoaded', function() {
+    // Find all date inputs
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    
+    dateInputs.forEach(input => {
+      // Set max date to today (prevent future dates)
+      const today = new Date().toISOString().split('T')[0];
+      if (!input.hasAttribute('data-allow-future')) {
+        input.setAttribute('max', today);
+      }
+    });
+
+    // Handle text date inputs with dd/mm/yyyy format
+    const textDateInputs = document.querySelectorAll('input[name*="dob"], input[name*="date"]');
+    
+    textDateInputs.forEach(input => {
+      if (input.type === 'text') {
+        // Add placeholder
+        input.setAttribute('placeholder', 'dd/mm/yyyy');
+        
+        // Add validation on blur
+        input.addEventListener('blur', function() {
+          const value = this.value.trim();
+          if (value && !isValidDate(value)) {
+            this.classList.add('is-invalid');
+          } else {
+            this.classList.remove('is-invalid');
+          }
+        });
+      }
+    });
+  });
+
+  // Validate dd/mm/yyyy format
+  function isValidDate(dateString) {
+    const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    const match = dateString.match(regex);
+    
+    if (!match) return false;
+    
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+    
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+    if (year < 1900 || year > new Date().getFullYear()) return false;
+    
+    // Check day validity for the month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day > daysInMonth) return false;
+    
+    return true;
+  }
+</script>

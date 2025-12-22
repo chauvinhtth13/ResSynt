@@ -7,6 +7,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.functional import cached_property
 from backends.studies.study_44en.models.base_models import AuditFieldsMixin
 from django.db.models import Q
+from datetime import date
 import re
 
 
@@ -151,31 +152,105 @@ class HH_Member(AuditFieldsMixin):
         MALE = 'Male', _('Male')
         FEMALE = 'Female', _('Female')
     
+    # PRIMARY KEY: HHID-MEMBER_NUM (e.g., "44EN-001-1")
+    MEMBERID = models.CharField(max_length=50, primary_key=True, editable=False, verbose_name=_('Member ID'))
     HHID = models.ForeignKey('HH_CASE', on_delete=models.CASCADE, to_field='HHID', db_column='HHID', related_name='members')
     MEMBER_NUM = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)], verbose_name=_('Member Number'))
     RELATIONSHIP = models.CharField(max_length=5, choices=RelationshipChoices.choices, null=True, blank=True, verbose_name=_('Relationship'))
     CHILD_ORDER = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(1)], verbose_name=_('Child Order'))
     BIRTH_YEAR = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(1900)], verbose_name=_('Birth Year'))
     GENDER = models.CharField(max_length=10, choices=GenderChoices.choices, null=True, blank=True, verbose_name=_('Gender'))
-    IS_RESPONDENT = models.BooleanField(default=False, verbose_name=_('Is Respondent'))
+    ISRESPONDENT = models.BooleanField(default=False, verbose_name=_('Is Respondent'))
     
     class Meta:
         db_table = 'HH_Member'
         verbose_name = _('Household Member')
         verbose_name_plural = _('Household Members')
         ordering = ['HHID', 'MEMBER_NUM']
-        unique_together = [['HHID', 'MEMBER_NUM']]
         indexes = [
             models.Index(fields=['HHID', 'MEMBER_NUM'], name='idx_hhmem_hh_num'),
             models.Index(fields=['RELATIONSHIP', 'CHILD_ORDER'], name='idx_hhmem_child'),
         ]
         constraints = [
-            models.UniqueConstraint(fields=['HHID'], condition=Q(IS_RESPONDENT=True), name='unique_respondent'),
+            models.UniqueConstraint(fields=['HHID'], condition=Q(ISRESPONDENT=True), name='unique_respondent'),
             models.UniqueConstraint(fields=['HHID', 'CHILD_ORDER'], condition=Q(RELATIONSHIP='D'), name='unique_child_order'),
+            # MEMBER_NUM range
+            models.CheckConstraint(
+                condition=models.Q(MEMBER_NUM__gte=1, MEMBER_NUM__lte=10),
+                name='hh_member_num_range',
+                violation_error_message='Member number must be between 1 and 10'
+            ),
+            # Birth year reasonable
+            models.CheckConstraint(
+                condition=models.Q(BIRTH_YEAR__isnull=True) | models.Q(BIRTH_YEAR__gte=1900, BIRTH_YEAR__lte=2025),
+                name='hh_member_birth_year_range',
+                violation_error_message='Birth year must be between 1900 and current year'
+            ),
         ]
     
+    def clean(self):
+        """Validate HH_Member data."""
+        errors = {}
+        
+        # Validate MEMBER_NUM range
+        if self.MEMBER_NUM:
+            if self.MEMBER_NUM < 1 or self.MEMBER_NUM > 10:
+                errors['MEMBER_NUM'] = _('Member number must be between 1 and 10')
+            
+            # Check for duplicate MEMBER_NUM in household
+            if self.HHID:
+                existing = HH_Member.objects.filter(
+                    HHID=self.HHID,
+                    MEMBER_NUM=self.MEMBER_NUM
+                ).exclude(MEMBERID=self.MEMBERID).exists()
+                
+                if existing:
+                    errors['MEMBER_NUM'] = _(f'Member number {self.MEMBER_NUM} already exists in household')
+        
+        # Validate birth year
+        if self.BIRTH_YEAR:
+            current_year = date.today().year
+            if self.BIRTH_YEAR > current_year:
+                errors['BIRTH_YEAR'] = _('Birth year cannot be in the future')
+            if self.BIRTH_YEAR < 1900:
+                errors['BIRTH_YEAR'] = _('Birth year seems unrealistic (<1900)')
+            if current_year - self.BIRTH_YEAR > 150:
+                errors['BIRTH_YEAR'] = _('Unrealistic age (>150 years)')
+        
+        # Validate CHILD_ORDER only for children
+        if self.CHILD_ORDER and self.RELATIONSHIP != 'D':
+            errors['CHILD_ORDER'] = _('Child order only applicable for children (relationship D)')
+        
+        # Validate CHILD_ORDER required for children
+        if self.RELATIONSHIP == 'D' and not self.CHILD_ORDER:
+            errors['CHILD_ORDER'] = _('Child order is required for children')
+        
+        # Validate ISRESPONDENT logic (constraint handles uniqueness)
+        if self.ISRESPONDENT:
+            if self.HHID:
+                existing = HH_Member.objects.filter(
+                    HHID=self.HHID,
+                    ISRESPONDENT=True
+                ).exclude(MEMBERID=self.MEMBERID).exists()
+                
+                if existing:
+                    errors['ISRESPONDENT'] = _('Household already has a respondent')
+        
+        # Validate gender provided
+        if not self.GENDER:
+            errors['GENDER'] = _('Gender is required')
+        
+        if errors:
+            raise ValidationError(errors)
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate MEMBERID from HHID + MEMBER_NUM
+        if not self.MEMBERID:
+            self.MEMBERID = f"{self.HHID_id}-{self.MEMBER_NUM}"
+        super().save(*args, **kwargs)
+    
     def __str__(self):
-        return f"{self.HHID_id} - Member {self.MEMBER_NUM}"
+        return f"{self.MEMBERID}"
     
     @property
     def crf_code(self):
@@ -236,6 +311,26 @@ class HH_Exposure(AuditFieldsMixin):
             models.Index(fields=['COOKING_FUEL'], name='idx_exp_fuel'),
             models.Index(fields=['WATER_TREATMENT'], name='idx_exp_water'),
             models.Index(fields=['RAISES_ANIMALS'], name='idx_exp_animals'),
+        ]
+        constraints = [
+            # Toilet type OTHER must have detail
+            models.CheckConstraint(
+                condition=~models.Q(TOILET_TYPE='other') | models.Q(TOILET_TYPE_OTHER__isnull=False),
+                name='hh_toilet_type_other_detail',
+                violation_error_message='Please specify other toilet type'
+            ),
+            # Cooking fuel OTHER must have detail
+            models.CheckConstraint(
+                condition=~models.Q(COOKING_FUEL='other') | models.Q(COOKING_FUEL_OTHER__isnull=False),
+                name='hh_cooking_fuel_other_detail',
+                violation_error_message='Please specify other cooking fuel'
+            ),
+            # Number of toilets must be reasonable
+            models.CheckConstraint(
+                condition=models.Q(NUM_TOILETS__isnull=True) | models.Q(NUM_TOILETS__gte=0, NUM_TOILETS__lte=10),
+                name='hh_num_toilets_range',
+                violation_error_message='Number of toilets must be between 0 and 10'
+            ),
         ]
     
     def __str__(self):
@@ -451,7 +546,7 @@ class HH_CASEQuerySet(models.QuerySet):
 
 class HH_MemberQuerySet(models.QuerySet):
     def respondents(self):
-        return self.filter(IS_RESPONDENT=True)
+        return self.filter(ISRESPONDENT=True)
     
     def by_household(self, hhid):
         return self.filter(HHID=hhid).order_by('MEMBER_NUM')

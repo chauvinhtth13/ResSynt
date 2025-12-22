@@ -69,7 +69,7 @@ class Study(models.Model):
         db_table = 'study_information'
         verbose_name = "Studies Information"
         verbose_name_plural = "Studies Information"
-        ordering = ['-created_at', 'code']
+        ordering = ['code']  # Simple consistent ordering
 
     def clean(self):
         """Validate and generate db_name"""

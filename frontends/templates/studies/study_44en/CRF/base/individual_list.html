@@ -1,0 +1,109 @@
+{% extends 'default/dashboard.html' %}
+{% load static i18n  %}
+
+{% block title %}{% trans "Individual List" %} - 44EN Study{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2 class="mb-3">{% trans "Individual List" %}</h2>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'study_44en:individual:create' %}" class="btn btn-primary">
+          <i class="bi bi-person-plus"></i> {% trans "New Individual" %}
+        </a>
+        <form method="get" class="d-flex gap-2">
+          <input type="search" name="search" class="form-control" placeholder="{% trans 'Search individuals...' %}" value="{{ search_query }}">
+          <button type="submit" class="btn btn-secondary">{% trans "Search" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>{% trans "Member ID" %}</th>
+                  <th>{% trans "Household ID" %}</th>
+                  <th>{% trans "Initials" %}</th>
+                  <th>{% trans "Gender" %}</th>
+                  <th>{% trans "Date of Birth" %}</th>
+                  <th>{% trans "Education" %}</th>
+                  <th>{% trans "Occupation" %}</th>
+                  <th>{% trans "Actions" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for individual in individuals %}
+                <tr>
+                  <td><a href="{% url 'study_44en:individual:detail' subjectid=individual.MEMBER_id %}">{{ individual.MEMBER.MEMBERID }}</a></td>
+                  <td>
+                    <a href="{% url 'study_44en:household:detail' hhid=individual.MEMBER.HHID_id %}">{{ individual.MEMBER.HHID.HHID }}</a>
+                  </td>
+                  <td>{{ individual.INITIALS|default:"-" }}</td>
+                  <td>{{ individual.MEMBER.GENDER|default:"-" }}</td>
+                  <td>{{ individual.DATE_OF_BIRTH|date:"Y-m-d"|default:individual.MEMBER.BIRTH_YEAR|default:"-" }}</td>
+                  <td>{{ individual.get_EDUCATION_display|default:"-" }}</td>
+                  <td>{{ individual.get_OCCUPATION_display|default:"-" }}</td>
+                  <td>
+                    <a href="{% url 'study_44en:individual:update' subjectid=individual.MEMBER_id %}" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-pencil"></i> {% trans "Edit" %}
+                    </a>
+                    <a href="{% url 'study_44en:individual:detail' subjectid=individual.MEMBER_id %}" class="btn btn-sm btn-outline-info">
+                      <i class="bi bi-eye"></i> {% trans "View" %}
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">
+                    {% trans "No individuals found." %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% if individuals.has_other_pages %}
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+              {% if individuals.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">{% trans "First" %}</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ individuals.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">{% trans "Previous" %}</a>
+              </li>
+              {% endif %}
+
+              {% for num in individuals.paginator.page_range %}
+                {% if individuals.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > individuals.number|add:'-3' and num < individuals.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+
+              {% if individuals.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ individuals.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">{% trans "Next" %}</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ individuals.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">{% trans "Last" %}</a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

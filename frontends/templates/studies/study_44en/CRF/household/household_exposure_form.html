@@ -1,0 +1,569 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0 text-center">B – EXPOSURE FACTORS (EXP)</h4>
+        </div>
+        <div class="card-body">
+            <!-- Error Display -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if exposure_form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Form Errors:</strong>
+                    <ul class="mb-0">
+                        {% for field, errors in exposure_form.errors.items %}
+                            <li>{{ field }}: {{ errors|join:", " }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Header Information -->
+            <div class="mb-4 d-flex align-items-center">
+                <span class="fw-bold me-2">Household ID:</span>
+                <span class="badge bg-info text-dark fs-5">{{ household.HHID }}</span>
+            </div>
+
+            <form method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="HHID" value="{{ household.HHID }}">
+    
+                <hr class="my-4">
+
+                <!-- 1. Toilet Type -->
+                <div class="mb-4">
+                    <p class="fw-bold mb-2">1. Loại nhà vệ sinh gia đình bạn sử dụng?</p>
+                    <div class="ms-md-3">
+                        <div class="form-check">
+                            <input type="radio" name="TOILET_TYPE" value="septic_flush" class="form-check-input" id="toilet1" {% if exposure_form.TOILET_TYPE.value == 'septic_flush' %}checked{% endif %}>
+                            <label class="form-check-label" for="toilet1">Toilet với bể phốt</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" name="TOILET_TYPE" value="no_septic" class="form-check-input" id="toilet2" {% if exposure_form.TOILET_TYPE.value == 'no_septic' %}checked{% endif %}>
+                            <label class="form-check-label" for="toilet2">Toilet không bể phốt (xả thẳng ra cống/môi trường)</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" name="TOILET_TYPE" value="outdoor" class="form-check-input" id="toilet3" {% if exposure_form.TOILET_TYPE.value == 'outdoor' %}checked{% endif %}>
+                            <label class="form-check-label" for="toilet3">Cầu tiêu ngoài trời (ao cá, hai ngăn...)</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" name="TOILET_TYPE" value="no_toilet" class="form-check-input" id="toilet4" {% if exposure_form.TOILET_TYPE.value == 'no_toilet' %}checked{% endif %}>
+                            <label class="form-check-label" for="toilet4">Không có nhà vệ sinh</label>
+                        </div>
+                        <div class="d-flex align-items-end mt-1">
+                            <div class="form-check mb-0 me-2">
+                                <input type="radio" name="TOILET_TYPE" value="other" class="form-check-input" id="toilet5" {% if exposure_form.TOILET_TYPE.value == 'other' %}checked{% endif %}>
+                                <label class="form-check-label" for="toilet5">Khác, ghi rõ:</label>
+                            </div>
+                            <input type="text" name="TOILET_TYPE_OTHER" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-50" value="{{ exposure_form.TOILET_TYPE_OTHER.value|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Number of Toilets -->
+                <div class="mb-4">
+                    <div class="d-flex mt-3 align-items-center">
+                        <p class="fw-bold mb-0 me-3">2. Số lượng nhà vệ sinh</p>
+                        <input type="number" name="NUM_TOILETS" class="form-control text-center d-inline-block" style="width: 90px;" value="{{ exposure_form.NUM_TOILETS.value|default:'' }}" min="0" max="10">
+                    </div>
+                </div>
+
+                <!-- 3. Cooking Fuel -->
+                <div class="mb-4">
+                    <p class="fw-bold mb-2">3. Nguồn năng lượng nào gia đình bạn thường dùng để nấu ăn? (Chọn nguồn dùng nhiều nhất)</p>
+                    <div class="ms-md-3 row">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input type="radio" name="COOKING_FUEL" value="gas" class="form-check-input" id="fuel1" {% if exposure_form.COOKING_FUEL.value == 'gas' %}checked{% endif %}>
+                                <label class="form-check-label" for="fuel1">Gas</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" name="COOKING_FUEL" value="wood" class="form-check-input" id="fuel2" {% if exposure_form.COOKING_FUEL.value == 'wood' %}checked{% endif %}>
+                                <label class="form-check-label" for="fuel2">Củi/Gỗ</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" name="COOKING_FUEL" value="electricity" class="form-check-input" id="fuel3" {% if exposure_form.COOKING_FUEL.value == 'electricity' %}checked{% endif %}>
+                                <label class="form-check-label" for="fuel3">Điện</label>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-check">
+                                <input type="radio" name="COOKING_FUEL" value="coal" class="form-check-input" id="fuel4" {% if exposure_form.COOKING_FUEL.value == 'coal' %}checked{% endif %}>
+                                <label class="form-check-label" for="fuel4">Than</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" name="COOKING_FUEL" value="oil" class="form-check-input" id="fuel5" {% if exposure_form.COOKING_FUEL.value == 'oil' %}checked{% endif %}>
+                                <label class="form-check-label" for="fuel5">Dầu</label>
+                            </div>
+                            <div class="d-flex align-items-end">
+                                <div class="form-check mb-0 me-2">
+                                    <input type="radio" name="COOKING_FUEL" value="other" class="form-check-input" id="fuel6" {% if exposure_form.COOKING_FUEL.value == 'other' %}checked{% endif %}>
+                                    <label class="form-check-label" for="fuel6">Khác, ghi rõ:</label>
+                                </div>
+                                <input type="text" name="COOKING_FUEL_OTHER" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-50" value="{{ exposure_form.COOKING_FUEL_OTHER.value|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Water Sources -->
+                <div class="mb-4">
+                    <p class="fw-bold mb-2">4. Nguồn nước nào gia đình bạn thường sử dụng? Cho mục đích gì?</p>
+                    <div class="table-responsive ms-md-3">
+                        <table class="table table-bordered align-middle text-center">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-start" style="width: 25%;">Nguồn nước</th>
+                                    <th>Uống/Ăn</th>
+                                    <th>Sinh hoạt</th>
+                                    <th>Tưới tiêu</th>
+                                    <th style="width: 25%;">Khác (Ghi rõ)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-start fw-bold">Nước máy</td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_tap_drink" {% if water_data.water_tap_drink %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_tap_use" {% if water_data.water_tap_use %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_tap_irrigate" {% if water_data.water_tap_irrigate %}checked{% endif %}></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_tap_other" value="{{ water_data.water_tap_other|default:'' }}"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Nước đóng chai</td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_bottle_drink" {% if water_data.water_bottle_drink %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_bottle_use" {% if water_data.water_bottle_use %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_bottle_irrigate" {% if water_data.water_bottle_irrigate %}checked{% endif %}></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_bottle_other" value="{{ water_data.water_bottle_other|default:'' }}"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Nước giếng</td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_well_drink" {% if water_data.water_well_drink %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_well_use" {% if water_data.water_well_use %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_well_irrigate" {% if water_data.water_well_irrigate %}checked{% endif %}></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_well_other" value="{{ water_data.water_well_other|default:'' }}"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Nước mưa</td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_rain_drink" {% if water_data.water_rain_drink %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_rain_use" {% if water_data.water_rain_use %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_rain_irrigate" {% if water_data.water_rain_irrigate %}checked{% endif %}></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_rain_other" value="{{ water_data.water_rain_other|default:'' }}"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Nước sông</td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_river_drink" {% if water_data.water_river_drink %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_river_use" {% if water_data.water_river_use %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_river_irrigate" {% if water_data.water_river_irrigate %}checked{% endif %}></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_river_other" value="{{ water_data.water_river_other|default:'' }}"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Nước ao/hồ</td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_pond_drink" {% if water_data.water_pond_drink %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_pond_use" {% if water_data.water_pond_use %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_pond_irrigate" {% if water_data.water_pond_irrigate %}checked{% endif %}></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_pond_other" value="{{ water_data.water_pond_other|default:'' }}"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start">
+                                        <div class="d-flex align-items-end">
+                                            <span class="fw-bold me-1">Khác:</span>
+                                            <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 px-1 w-75" name="water_other_src_name">
+                                        </div>
+                                    </td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_other_drink" {% if water_data.water_other_drink %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_other_use" {% if water_data.water_other_use %}checked{% endif %}></td>
+                                    <td><input type="checkbox" class="form-check-input" name="water_other_irrigate" {% if water_data.water_other_irrigate %}checked{% endif %}></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0 bg-transparent border-bottom rounded-0" name="water_other_other" value="{{ water_data.water_other_other|default:'' }}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 5. Water Treatment -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <p class="fw-bold mb-0 me-3">5. Gia đình bạn có xử lý nước trước khi uống không?</p>
+                        <div class="form-check form-check-inline mb-0">
+                            <input type="radio" name="WATER_TREATMENT" value="yes" class="form-check-input" id="treatment_yes" {% if exposure_form.WATER_TREATMENT.value == 'yes' %}checked{% endif %}>
+                            <label class="form-check-label" for="treatment_yes">Có</label>
+                        </div>
+                        <div class="form-check form-check-inline mb-0">
+                            <input type="radio" name="WATER_TREATMENT" value="no" class="form-check-input" id="treatment_no" {% if exposure_form.WATER_TREATMENT.value == 'no' %}checked{% endif %}>
+                            <label class="form-check-label" for="treatment_no">Không</label>
+                        </div>
+                    </div>
+
+                    <div id="treatmentOptions" class="collapse ms-md-3 mt-2 ps-3 border-start border-3 border-primary {% if exposure_form.WATER_TREATMENT.value == 'yes' %}show{% endif %}">
+                        <p class="fst-italic mb-2 text-primary">Nếu Có, phương pháp nào được sử dụng? (Chọn 1 phương pháp chính)</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input type="radio" name="TREATMENT_METHOD" value="boiling" class="form-check-input" id="treat1" {% if treatment_method == 'boiling' %}checked{% endif %}>
+                                    <label class="form-check-label" for="treat1">Đun sôi</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input type="radio" name="TREATMENT_METHOD" value="filter_machine" class="form-check-input" id="treat2" {% if treatment_method == 'filter_machine' %}checked{% endif %}>
+                                    <label class="form-check-label" for="treat2">Máy lọc nước</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input type="radio" name="TREATMENT_METHOD" value="filter_portable" class="form-check-input" id="treat3" {% if treatment_method == 'filter_portable' %}checked{% endif %}>
+                                    <label class="form-check-label" for="treat3">Bình lọc di động</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input type="radio" name="TREATMENT_METHOD" value="chemical" class="form-check-input" id="treat4" {% if treatment_method == 'chemical' %}checked{% endif %}>
+                                    <label class="form-check-label" for="treat4">Hóa chất (Chlorine, Aquatabs)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input type="radio" name="TREATMENT_METHOD" value="sodis" class="form-check-input" id="treat5" {% if treatment_method == 'sodis' %}checked{% endif %}>
+                                    <label class="form-check-label" for="treat5">Phơi nắng (SODIS)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="d-flex align-items-end">
+                                    <div class="form-check mb-0 me-2">
+                                        <input type="radio" name="TREATMENT_METHOD" value="other" class="form-check-input" id="treat6" {% if treatment_method == 'other' %}checked{% endif %}>
+                                        <label class="form-check-label" for="treat6">Khác:</label>
+                                    </div>
+                                    <input type="text" name="TREATMENT_METHOD_OTHER" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-50" value="{{ treatment_other|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Animals -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <p class="fw-bold mb-0 me-3">6. Gia đình bạn có nuôi động vật nào không?</p>
+                        <div class="form-check form-check-inline mb-0">
+                            <input type="radio" name="RAISES_ANIMALS" value="yes" class="form-check-input" id="animals_yes" {% if exposure_form.RAISES_ANIMALS.value == 'yes' %}checked{% endif %}>
+                            <label class="form-check-label" for="animals_yes">Có</label>
+                        </div>
+                        <div class="form-check form-check-inline mb-0">
+                            <input type="radio" name="RAISES_ANIMALS" value="no" class="form-check-input" id="animals_no" {% if exposure_form.RAISES_ANIMALS.value == 'no' %}checked{% endif %}>
+                            <label class="form-check-label" for="animals_no">Không</label>
+                        </div>
+                    </div>
+
+                    <div id="animalOptions" class="collapse ms-md-3 mt-2 ps-3 border-start border-3 border-primary {% if exposure_form.RAISES_ANIMALS.value == 'yes' %}show{% endif %}">
+                        <p class="fst-italic mb-2 text-primary">Nếu Có, chọn tất cả loại phù hợp:</p>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="animal_dog" value="on" class="form-check-input" id="animal_dog" {% if animal_data.dog %}checked{% endif %}>
+                                    <label class="form-check-label" for="animal_dog">Chó</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="animal_cat" value="on" class="form-check-input" id="animal_cat" {% if animal_data.cat %}checked{% endif %}>
+                                    <label class="form-check-label" for="animal_cat">Mèo</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="animal_bird" value="on" class="form-check-input" id="animal_bird" {% if animal_data.bird %}checked{% endif %}>
+                                    <label class="form-check-label" for="animal_bird">Chim</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="animal_poultry" value="on" class="form-check-input" id="animal_poultry" {% if animal_data.poultry %}checked{% endif %}>
+                                    <label class="form-check-label" for="animal_poultry">Gà/Vịt</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="animal_cow" value="on" class="form-check-input" id="animal_cow" {% if animal_data.cow %}checked{% endif %}>
+                                    <label class="form-check-label" for="animal_cow">Bò</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-end">
+                                    <div class="form-check mb-0 me-2">
+                                        <input type="checkbox" name="animal_other" value="on" class="form-check-input" id="animal_other" {% if animal_data.other %}checked{% endif %}>
+                                        <label class="form-check-label" for="animal_other">Khác:</label>
+                                    </div>
+                                    <input type="text" name="animal_other_text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-50" value="{{ animal_data.other_text|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. Food Frequency & Sources -->
+                <div class="mb-5">
+                    <p class="fw-bold mb-2">7. Tần suất tiêu thụ thực phẩm và nguồn gốc:</p>
+                    
+                    <!-- Food Frequency Table -->
+                    <div class="table-responsive ms-md-3 mb-4">
+                        <table class="table table-bordered table-striped text-center align-middle">
+                            <thead class="table-dark text-white">
+                                <tr>
+                                    <th class="text-start">Loại thực phẩm</th>
+                                    <th>Không bao giờ</th>
+                                    <th>1-3 lần<br>/tháng</th>
+                                    <th>1-2 lần<br>/tuần</th>
+                                    <th>3-5 lần<br>/tuần</th>
+                                    <th>1 lần<br>/ngày</th>
+                                    <th>2+ lần<br>/ngày</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-start fw-bold">Cơm, bún, phở, mì</td>
+                                    <td><input type="radio" name="RICE_NOODLES" value="never" {% if food_freq_form.RICE_NOODLES.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RICE_NOODLES" value="1-3/month" {% if food_freq_form.RICE_NOODLES.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RICE_NOODLES" value="1-2/week" {% if food_freq_form.RICE_NOODLES.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RICE_NOODLES" value="3-5/week" {% if food_freq_form.RICE_NOODLES.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RICE_NOODLES" value="1/day" {% if food_freq_form.RICE_NOODLES.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RICE_NOODLES" value="2+/day" {% if food_freq_form.RICE_NOODLES.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Thịt đỏ</td>
+                                    <td><input type="radio" name="RED_MEAT" value="never" {% if food_freq_form.RED_MEAT.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RED_MEAT" value="1-3/month" {% if food_freq_form.RED_MEAT.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RED_MEAT" value="1-2/week" {% if food_freq_form.RED_MEAT.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RED_MEAT" value="3-5/week" {% if food_freq_form.RED_MEAT.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RED_MEAT" value="1/day" {% if food_freq_form.RED_MEAT.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RED_MEAT" value="2+/day" {% if food_freq_form.RED_MEAT.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Thịt gia cầm</td>
+                                    <td><input type="radio" name="POULTRY" value="never" {% if food_freq_form.POULTRY.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="POULTRY" value="1-3/month" {% if food_freq_form.POULTRY.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="POULTRY" value="1-2/week" {% if food_freq_form.POULTRY.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="POULTRY" value="3-5/week" {% if food_freq_form.POULTRY.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="POULTRY" value="1/day" {% if food_freq_form.POULTRY.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="POULTRY" value="2+/day" {% if food_freq_form.POULTRY.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Cá, hải sản</td>
+                                    <td><input type="radio" name="FISH_SEAFOOD" value="never" {% if food_freq_form.FISH_SEAFOOD.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FISH_SEAFOOD" value="1-3/month" {% if food_freq_form.FISH_SEAFOOD.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FISH_SEAFOOD" value="1-2/week" {% if food_freq_form.FISH_SEAFOOD.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FISH_SEAFOOD" value="3-5/week" {% if food_freq_form.FISH_SEAFOOD.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FISH_SEAFOOD" value="1/day" {% if food_freq_form.FISH_SEAFOOD.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FISH_SEAFOOD" value="2+/day" {% if food_freq_form.FISH_SEAFOOD.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Trứng</td>
+                                    <td><input type="radio" name="EGGS" value="never" {% if food_freq_form.EGGS.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="EGGS" value="1-3/month" {% if food_freq_form.EGGS.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="EGGS" value="1-2/week" {% if food_freq_form.EGGS.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="EGGS" value="3-5/week" {% if food_freq_form.EGGS.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="EGGS" value="1/day" {% if food_freq_form.EGGS.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="EGGS" value="2+/day" {% if food_freq_form.EGGS.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Rau sống</td>
+                                    <td><input type="radio" name="RAW_VEGETABLES" value="never" {% if food_freq_form.RAW_VEGETABLES.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RAW_VEGETABLES" value="1-3/month" {% if food_freq_form.RAW_VEGETABLES.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RAW_VEGETABLES" value="1-2/week" {% if food_freq_form.RAW_VEGETABLES.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RAW_VEGETABLES" value="3-5/week" {% if food_freq_form.RAW_VEGETABLES.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RAW_VEGETABLES" value="1/day" {% if food_freq_form.RAW_VEGETABLES.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RAW_VEGETABLES" value="2+/day" {% if food_freq_form.RAW_VEGETABLES.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Rau nấu chín</td>
+                                    <td><input type="radio" name="COOKED_VEGETABLES" value="never" {% if food_freq_form.COOKED_VEGETABLES.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="COOKED_VEGETABLES" value="1-3/month" {% if food_freq_form.COOKED_VEGETABLES.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="COOKED_VEGETABLES" value="1-2/week" {% if food_freq_form.COOKED_VEGETABLES.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="COOKED_VEGETABLES" value="3-5/week" {% if food_freq_form.COOKED_VEGETABLES.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="COOKED_VEGETABLES" value="1/day" {% if food_freq_form.COOKED_VEGETABLES.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="COOKED_VEGETABLES" value="2+/day" {% if food_freq_form.COOKED_VEGETABLES.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Sản phẩm từ sữa</td>
+                                    <td><input type="radio" name="DAIRY" value="never" {% if food_freq_form.DAIRY.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="DAIRY" value="1-3/month" {% if food_freq_form.DAIRY.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="DAIRY" value="1-2/week" {% if food_freq_form.DAIRY.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="DAIRY" value="3-5/week" {% if food_freq_form.DAIRY.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="DAIRY" value="1/day" {% if food_freq_form.DAIRY.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="DAIRY" value="2+/day" {% if food_freq_form.DAIRY.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Thực phẩm lên men</td>
+                                    <td><input type="radio" name="FERMENTED" value="never" {% if food_freq_form.FERMENTED.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FERMENTED" value="1-3/month" {% if food_freq_form.FERMENTED.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FERMENTED" value="1-2/week" {% if food_freq_form.FERMENTED.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FERMENTED" value="3-5/week" {% if food_freq_form.FERMENTED.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FERMENTED" value="1/day" {% if food_freq_form.FERMENTED.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="FERMENTED" value="2+/day" {% if food_freq_form.FERMENTED.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Bia</td>
+                                    <td><input type="radio" name="BEER" value="never" {% if food_freq_form.BEER.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="BEER" value="1-3/month" {% if food_freq_form.BEER.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="BEER" value="1-2/week" {% if food_freq_form.BEER.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="BEER" value="3-5/week" {% if food_freq_form.BEER.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="BEER" value="1/day" {% if food_freq_form.BEER.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="BEER" value="2+/day" {% if food_freq_form.BEER.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Rượu</td>
+                                    <td><input type="radio" name="ALCOHOL" value="never" {% if food_freq_form.ALCOHOL.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ALCOHOL" value="1-3/month" {% if food_freq_form.ALCOHOL.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ALCOHOL" value="1-2/week" {% if food_freq_form.ALCOHOL.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ALCOHOL" value="3-5/week" {% if food_freq_form.ALCOHOL.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ALCOHOL" value="1/day" {% if food_freq_form.ALCOHOL.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ALCOHOL" value="2+/day" {% if food_freq_form.ALCOHOL.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Food Source Table -->
+                    <div class="table-responsive ms-md-3">
+                        <table class="table table-bordered table-striped text-center align-middle">
+                            <thead class="table-dark text-white">
+                                <tr>
+                                    <th class="text-start">Nguồn gốc</th>
+                                    <th>Không bao giờ</th>
+                                    <th>1-3 lần<br>/tháng</th>
+                                    <th>1-2 lần<br>/tuần</th>
+                                    <th>3-5 lần<br>/tuần</th>
+                                    <th>1 lần<br>/ngày</th>
+                                    <th>2+ lần<br>/ngày</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-start fw-bold">Chợ truyền thống</td>
+                                    <td><input type="radio" name="TRADITIONAL_MARKET" value="never" {% if food_source_form.TRADITIONAL_MARKET.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="TRADITIONAL_MARKET" value="1-3/month" {% if food_source_form.TRADITIONAL_MARKET.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="TRADITIONAL_MARKET" value="1-2/week" {% if food_source_form.TRADITIONAL_MARKET.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="TRADITIONAL_MARKET" value="3-5/week" {% if food_source_form.TRADITIONAL_MARKET.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="TRADITIONAL_MARKET" value="1/day" {% if food_source_form.TRADITIONAL_MARKET.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="TRADITIONAL_MARKET" value="2+/day" {% if food_source_form.TRADITIONAL_MARKET.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Siêu thị</td>
+                                    <td><input type="radio" name="SUPERMARKET" value="never" {% if food_source_form.SUPERMARKET.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SUPERMARKET" value="1-3/month" {% if food_source_form.SUPERMARKET.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SUPERMARKET" value="1-2/week" {% if food_source_form.SUPERMARKET.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SUPERMARKET" value="3-5/week" {% if food_source_form.SUPERMARKET.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SUPERMARKET" value="1/day" {% if food_source_form.SUPERMARKET.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SUPERMARKET" value="2+/day" {% if food_source_form.SUPERMARKET.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Cửa hàng tiện lợi</td>
+                                    <td><input type="radio" name="CONVENIENCE_STORE" value="never" {% if food_source_form.CONVENIENCE_STORE.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="CONVENIENCE_STORE" value="1-3/month" {% if food_source_form.CONVENIENCE_STORE.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="CONVENIENCE_STORE" value="1-2/week" {% if food_source_form.CONVENIENCE_STORE.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="CONVENIENCE_STORE" value="3-5/week" {% if food_source_form.CONVENIENCE_STORE.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="CONVENIENCE_STORE" value="1/day" {% if food_source_form.CONVENIENCE_STORE.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="CONVENIENCE_STORE" value="2+/day" {% if food_source_form.CONVENIENCE_STORE.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Quán ăn, nhà hàng</td>
+                                    <td><input type="radio" name="RESTAURANT" value="never" {% if food_source_form.RESTAURANT.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RESTAURANT" value="1-3/month" {% if food_source_form.RESTAURANT.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RESTAURANT" value="1-2/week" {% if food_source_form.RESTAURANT.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RESTAURANT" value="3-5/week" {% if food_source_form.RESTAURANT.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RESTAURANT" value="1/day" {% if food_source_form.RESTAURANT.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="RESTAURANT" value="2+/day" {% if food_source_form.RESTAURANT.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Mua hàng online</td>
+                                    <td><input type="radio" name="ONLINE" value="never" {% if food_source_form.ONLINE.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ONLINE" value="1-3/month" {% if food_source_form.ONLINE.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ONLINE" value="1-2/week" {% if food_source_form.ONLINE.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ONLINE" value="3-5/week" {% if food_source_form.ONLINE.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ONLINE" value="1/day" {% if food_source_form.ONLINE.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="ONLINE" value="2+/day" {% if food_source_form.ONLINE.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Tự trồng, chăn nuôi</td>
+                                    <td><input type="radio" name="SELF_GROWN" value="never" {% if food_source_form.SELF_GROWN.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SELF_GROWN" value="1-3/month" {% if food_source_form.SELF_GROWN.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SELF_GROWN" value="1-2/week" {% if food_source_form.SELF_GROWN.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SELF_GROWN" value="3-5/week" {% if food_source_form.SELF_GROWN.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SELF_GROWN" value="1/day" {% if food_source_form.SELF_GROWN.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="SELF_GROWN" value="2+/day" {% if food_source_form.SELF_GROWN.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Được cho, tặng</td>
+                                    <td><input type="radio" name="GIFTED" value="never" {% if food_source_form.GIFTED.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="GIFTED" value="1-3/month" {% if food_source_form.GIFTED.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="GIFTED" value="1-2/week" {% if food_source_form.GIFTED.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="GIFTED" value="3-5/week" {% if food_source_form.GIFTED.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="GIFTED" value="1/day" {% if food_source_form.GIFTED.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="GIFTED" value="2+/day" {% if food_source_form.GIFTED.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-bold">Khác</td>
+                                    <td><input type="radio" name="OTHER" value="never" {% if food_source_form.OTHER.value == 'never' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="OTHER" value="1-3/month" {% if food_source_form.OTHER.value == '1-3/month' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="OTHER" value="1-2/week" {% if food_source_form.OTHER.value == '1-2/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="OTHER" value="3-5/week" {% if food_source_form.OTHER.value == '3-5/week' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="OTHER" value="1/day" {% if food_source_form.OTHER.value == '1/day' %}checked{% endif %}></td>
+                                    <td><input type="radio" name="OTHER" value="2+/day" {% if food_source_form.OTHER.value == '2+/day' %}checked{% endif %}></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="mt-5 text-center">
+                    <button type="submit" class="btn btn-success btn-lg px-5 me-2">Lưu Phần B</button>
+                    <a href="{% url 'study_44en:household:detail' hhid=household.HHID %}" class="btn btn-secondary btn-lg px-5">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle water treatment options
+    const treatmentRadios = document.querySelectorAll('input[name="WATER_TREATMENT"]');
+    const treatmentOptions = document.getElementById('treatmentOptions');
+    
+    treatmentRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'yes') {
+                treatmentOptions.classList.add('show');
+            } else {
+                treatmentOptions.classList.remove('show');
+            }
+        });
+    });
+    
+    // Toggle animal options
+    const animalRadios = document.querySelectorAll('input[name="RAISES_ANIMALS"]');
+    const animalOptions = document.getElementById('animalOptions');
+    
+    animalRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'yes') {
+                animalOptions.classList.add('show');
+            } else {
+                animalOptions.classList.remove('show');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

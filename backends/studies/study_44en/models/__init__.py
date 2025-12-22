@@ -43,6 +43,7 @@ from .individual import (
     Individual_FollowUp,
     Individual_Symptom,
     Individual_Sample,
+    FollowUp_Hospitalization,
 )
 
 from .base_models import (

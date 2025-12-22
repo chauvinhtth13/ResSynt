@@ -3,8 +3,11 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
+from django.utils.functional import cached_property
 from backends.studies.study_44en.models.base_models import AuditFieldsMixin
 from datetime import date
+from dateutil.relativedelta import relativedelta
 
 
 # ==========================================
@@ -58,6 +61,8 @@ class Individual(AuditFieldsMixin):
         'HH_Member',
         on_delete=models.CASCADE,
         primary_key=True,
+        to_field='MEMBERID',
+        db_column='MEMBERID',
         related_name='individual_info',
         verbose_name=_('Household Member')
     )
@@ -90,14 +95,137 @@ class Individual(AuditFieldsMixin):
         db_table = 'Individual'
         verbose_name = _('Individual')
         verbose_name_plural = _('Individuals')
+        constraints = [
+            # Ensure either DOB or AGE provided
+            models.CheckConstraint(
+                condition=models.Q(DATE_OF_BIRTH__isnull=False) | models.Q(AGE__isnull=False),
+                name='individual_dob_or_age_required',
+                violation_error_message='Either Date of Birth or Age must be provided'
+            ),
+            # Age must be reasonable if provided
+            models.CheckConstraint(
+                condition=models.Q(AGE__isnull=True) | models.Q(AGE__gte=0, AGE__lte=150),
+                name='individual_age_reasonable',
+                violation_error_message='Age must be between 0 and 150'
+            ),
+            # Ethnicity OTHER must have detail
+            models.CheckConstraint(
+                condition=~models.Q(ETHNICITY='other') | models.Q(ETHNICITY_OTHER__isnull=False),
+                name='individual_ethnicity_other_detail',
+                violation_error_message='Please specify other ethnicity'
+            ),
+        ]
     
-    def __str__(self):
-        return f"{self.MEMBER.HHID_id} - Member {self.MEMBER.MEMBER_NUM}"
+    @cached_property
+    def calculated_age(self):
+        """Calculate precise age from DOB or return provided age.
+        
+        Returns:
+            float: Age in years (decimal), or None if neither DOB nor AGE available
+        """
+        if self.DATE_OF_BIRTH:
+            today = date.today()
+            delta = relativedelta(today, self.DATE_OF_BIRTH)
+            # More accurate: years + months/12 + days/365
+            return delta.years + delta.months/12 + delta.days/365.25
+        return self.AGE
+    
+    @cached_property
+    def age_category(self):
+        """Categorize individual by age group.
+        
+        Returns:
+            str: 'child' (<18), 'adult' (18-64), 'elderly' (65+), 'unknown'
+        """
+        age = self.calculated_age
+        if age is None:
+            return 'unknown'
+        if age < 18:
+            return 'child'
+        elif age < 65:
+            return 'adult'
+        else:
+            return 'elderly'
+    
+    @cached_property
+    def age_in_years(self):
+        """Get age as integer years (rounded down)."""
+        age = self.calculated_age
+        return int(age) if age is not None else None
+    
+    @property
+    def household_id(self):
+        """Get household ID from member relationship."""
+        if hasattr(self, 'MEMBER') and self.MEMBER:
+            return self.MEMBER.HHID_id
+        return None
     
     @property
     def full_id(self):
         """44EN-001-1"""
-        return f"{self.MEMBER.HHID_id}-{self.MEMBER.MEMBER_NUM}"
+        return self.MEMBERID
+    
+    @cached_property
+    def has_follow_up_data(self):
+        """Check if individual has any follow-up visits."""
+        return self.follow_ups.exists()
+    
+    @cached_property
+    def completed_follow_ups(self):
+        """Get list of completed follow-up visit times."""
+        return list(
+            self.follow_ups.filter(ASSESSED='yes')
+            .values_list('VISIT_TIME', flat=True)
+        )
+    
+    def clean(self):
+        """Validate Individual data."""
+        errors = {}
+        
+        # Validate DOB
+        if self.DATE_OF_BIRTH:
+            if self.DATE_OF_BIRTH > date.today():
+                errors['DATE_OF_BIRTH'] = _('Date of birth cannot be in the future')
+            
+            age_years = relativedelta(date.today(), self.DATE_OF_BIRTH).years
+            if age_years > 150:
+                errors['DATE_OF_BIRTH'] = _('Unrealistic age (>150 years)')
+            if age_years < 0:
+                errors['DATE_OF_BIRTH'] = _('Invalid birth date')
+        
+        # Ensure either DOB or AGE provided
+        if not self.DATE_OF_BIRTH and self.AGE is None:
+            errors['AGE'] = _('Either Date of Birth or Age must be provided')
+        
+        # Validate AGE if provided
+        if self.AGE is not None:
+            if self.AGE < 0:
+                errors['AGE'] = _('Age cannot be negative')
+            if self.AGE > 150:
+                errors['AGE'] = _('Unrealistic age (>150 years)')
+        
+        # Validate education vs age
+        age = self.calculated_age
+        if age is not None:
+            if age < 3 and self.EDUCATION not in ['not_school_age', None]:
+                errors['EDUCATION'] = _('Education level not suitable for age < 3')
+            if age >= 18 and self.EDUCATION == 'not_school_age':
+                errors['EDUCATION'] = _('Education level not suitable for adult')
+        
+        # Validate occupation vs age
+        if age is not None:
+            if age < 15 and self.OCCUPATION not in ['student', None]:
+                errors['OCCUPATION'] = _('Occupation not suitable for age < 15')
+        
+        # Validate ethnicity OTHER
+        if self.ETHNICITY == 'other' and not self.ETHNICITY_OTHER:
+            errors['ETHNICITY_OTHER'] = _('Please specify other ethnicity')
+        
+        if errors:
+            raise ValidationError(errors)
+    
+    def __str__(self):
+        return f"{self.MEMBERID}"
 
 
 # ==========================================
@@ -114,6 +242,7 @@ class Individual_Exposure(AuditFieldsMixin):
         'Individual',
         on_delete=models.CASCADE,
         primary_key=True,
+        db_column='MEMBERID',
         related_name='exposure',
         verbose_name=_('Individual')
     )
@@ -160,7 +289,7 @@ class Individual_Exposure(AuditFieldsMixin):
         verbose_name_plural = _('Individual Exposures')
     
     def __str__(self):
-        return f"Exposure: {self.MEMBER_id}"
+        return f"Exposure: {self.MEMBERID}"
 
 
 # ==========================================
@@ -178,7 +307,7 @@ class Individual_WaterSource(AuditFieldsMixin):
         POND = 'pond', _('Pond/Lake water')
         OTHER = 'other', _('Other')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='water_sources')
+    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='water_sources', db_column='MEMBERID')
     SOURCE_TYPE = models.CharField(max_length=20, choices=SourceTypeChoices.choices, db_index=True)
     SOURCE_TYPE_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
@@ -197,7 +326,7 @@ class Individual_WaterSource(AuditFieldsMixin):
         unique_together = [['MEMBER', 'SOURCE_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_SOURCE_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_SOURCE_TYPE_display()}"
 
 
 # ==========================================
@@ -214,7 +343,7 @@ class Individual_WaterTreatment(AuditFieldsMixin):
         SODIS = 'sodis', _('Solar disinfection (SODIS)')
         OTHER = 'other', _('Other')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='treatment_methods')
+    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='treatment_methods', db_column='MEMBERID')
     TREATMENT_TYPE = models.CharField(max_length=20, choices=TreatmentTypeChoices.choices, db_index=True)
     TREATMENT_TYPE_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
@@ -226,7 +355,7 @@ class Individual_WaterTreatment(AuditFieldsMixin):
         unique_together = [['MEMBER', 'TREATMENT_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_TREATMENT_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_TREATMENT_TYPE_display()}"
 
 
 # ==========================================
@@ -260,7 +389,7 @@ class Individual_Comorbidity(AuditFieldsMixin):
         TREATING = 'treating', _('Đang điều trị')
         NOT_TREATING = 'not_treating', _('Không điều trị')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='comorbidities')
+    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='comorbidities', db_column='MEMBERID')
     COMORBIDITY_TYPE = models.CharField(max_length=30, choices=ComorbidityTypeChoices.choices, db_index=True)
     COMORBIDITY_OTHER = models.CharField(max_length=200, null=True, blank=True)
     TREATMENT_STATUS = models.CharField(max_length=20, choices=TreatmentStatusChoices.choices, null=True, blank=True)
@@ -273,7 +402,7 @@ class Individual_Comorbidity(AuditFieldsMixin):
         unique_together = [['MEMBER', 'COMORBIDITY_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_COMORBIDITY_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_COMORBIDITY_TYPE_display()}"
 
 
 # ==========================================
@@ -303,7 +432,7 @@ class Individual_Vaccine(AuditFieldsMixin):
         PNEUMOCOCCAL = 'pneumococcal', _('Phế cầu khuẩn')
         OTHER = 'other', _('Other')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='vaccines')
+    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='vaccines', db_column='MEMBERID')
     VACCINE_TYPE = models.CharField(max_length=30, choices=VaccineTypeChoices.choices, db_index=True)
     VACCINE_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
@@ -315,7 +444,7 @@ class Individual_Vaccine(AuditFieldsMixin):
         unique_together = [['MEMBER', 'VACCINE_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_VACCINE_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_VACCINE_TYPE_display()}"
 
 
 # ==========================================
@@ -337,7 +466,7 @@ class Individual_Hospitalization(AuditFieldsMixin):
         DAYS_5_7 = '5-7', _('5-7 ngày')
         DAYS_7_PLUS = '>7', _('Trên 7 ngày')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='hospitalizations')
+    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='hospitalizations', db_column='MEMBERID')
     HOSPITAL_TYPE = models.CharField(max_length=20, choices=HospitalTypeChoices.choices, db_index=True)
     HOSPITAL_OTHER = models.CharField(max_length=200, null=True, blank=True)
     DURATION = models.CharField(max_length=10, choices=DurationChoices.choices, null=True, blank=True)
@@ -349,7 +478,7 @@ class Individual_Hospitalization(AuditFieldsMixin):
         ordering = ['MEMBER', 'HOSPITAL_TYPE']
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_HOSPITAL_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_HOSPITAL_TYPE_display()}"
 
 
 # ==========================================
@@ -372,7 +501,7 @@ class Individual_Medication(AuditFieldsMixin):
         DAYS_7_14 = '7-14', _('7-14 ngày')
         DAYS_14_PLUS = '>14', _('> 14 ngày')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='medications')
+    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='medications', db_column='MEMBERID')
     MEDICATION_TYPE = models.CharField(max_length=30, choices=MedicationTypeChoices.choices, db_index=True)
     MEDICATION_DETAIL = models.CharField(max_length=500, null=True, blank=True, verbose_name=_('Medication Detail'))
     DURATION = models.CharField(max_length=10, choices=DurationChoices.choices, null=True, blank=True)
@@ -384,7 +513,7 @@ class Individual_Medication(AuditFieldsMixin):
         ordering = ['MEMBER', 'MEDICATION_TYPE']
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_MEDICATION_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_MEDICATION_TYPE_display()}"
 
 
 # ==========================================
@@ -401,7 +530,7 @@ class Individual_FoodFrequency(AuditFieldsMixin):
         DAILY_1 = '1/day', _('1 time/day')
         DAILY_2_PLUS = '2+/day', _('2+ times/day')
     
-    MEMBER = models.OneToOneField('Individual', on_delete=models.CASCADE, primary_key=True, related_name='food_frequency')
+    MEMBER = models.OneToOneField('Individual', on_delete=models.CASCADE, primary_key=True, db_column='MEMBERID', related_name='food_frequency')
     
     # FOOD CATEGORIES (same as household)
     RICE_NOODLES = models.CharField(max_length=15, choices=FrequencyChoices.choices, null=True, blank=True)
@@ -422,7 +551,7 @@ class Individual_FoodFrequency(AuditFieldsMixin):
         verbose_name_plural = _('Individual Food Frequencies')
     
     def __str__(self):
-        return f"Food Freq: {self.MEMBER_id}"
+        return f"Food Freq: {self.MEMBERID}"
 
 
 # ==========================================
@@ -442,7 +571,7 @@ class Individual_Travel(AuditFieldsMixin):
         INTERNATIONAL = 'international', _('Nước ngoài')
         DOMESTIC = 'domestic', _('Tỉnh thành trong nước')
     
-    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='travel_history')
+    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='travel_history', db_column='MEMBERID')
     TRAVEL_TYPE = models.CharField(max_length=20, choices=TravelTypeChoices.choices, db_index=True)
     FREQUENCY = models.CharField(max_length=15, choices=FrequencyChoices.choices, null=True, blank=True)
     
@@ -454,7 +583,7 @@ class Individual_Travel(AuditFieldsMixin):
         unique_together = [['MEMBER', 'TRAVEL_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_TRAVEL_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_TRAVEL_TYPE_display()}"
 
 
 # ==========================================
@@ -474,8 +603,8 @@ class Individual_FollowUp(AuditFieldsMixin):
         NA = 'na', _('Not applicable')
     
     # Composite PK: MEMBER + VISIT_TIME
-    FOLLOW_UP_id = models.CharField(max_length=50, primary_key=True, editable=False, verbose_name=_('Follow-up ID'))
-    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='follow_ups')
+    FUID = models.CharField(max_length=50, primary_key=True, editable=False, verbose_name=_('Follow-up ID'))
+    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='follow_ups', db_column='MEMBERID')
     VISIT_TIME = models.CharField(max_length=10, choices=VisitTimeChoices.choices, db_index=True)
     
     # VISIT INFO
@@ -499,15 +628,67 @@ class Individual_FollowUp(AuditFieldsMixin):
         verbose_name = _('Follow-up Visit')
         verbose_name_plural = _('Follow-up Visits')
         ordering = ['MEMBER', 'VISIT_TIME']
+        constraints = [
+            # Assessment date required if assessed
+            models.CheckConstraint(
+                condition=~models.Q(ASSESSED='yes') | models.Q(ASSESSMENT_DATE__isnull=False),
+                name='followup_assessed_needs_date',
+                violation_error_message='Assessment date required when assessed=yes'
+            ),
+            # No assessment date if not assessed
+            models.CheckConstraint(
+                condition=~models.Q(ASSESSED='no') | models.Q(ASSESSMENT_DATE__isnull=True),
+                name='followup_not_assessed_no_date',
+                violation_error_message='Assessment date should be empty when assessed=no'
+            ),
+            # Medication details required if used medication
+            models.CheckConstraint(
+                condition=(
+                    ~models.Q(USED_MEDICATION='yes') |
+                    models.Q(ANTIBIOTIC_TYPE__isnull=False) |
+                    models.Q(STEROID_TYPE__isnull=False) |
+                    models.Q(OTHER_MEDICATION__isnull=False)
+                ),
+                name='followup_medication_details',
+                violation_error_message='Please specify medication type when used_medication=yes'
+            ),
+        ]
+    
+    def clean(self):
+        """Validate Individual_FollowUp data."""
+        errors = {}
+        
+        # Validate ASSESSED field consistency
+        if self.ASSESSED == 'no' and self.ASSESSMENT_DATE:
+            errors['ASSESSMENT_DATE'] = _('Assessment date should not be filled if not assessed')
+        
+        if self.ASSESSED == 'yes' and not self.ASSESSMENT_DATE:
+            errors['ASSESSMENT_DATE'] = _('Assessment date is required when assessed')
+        
+        # Validate medication data
+        if self.USED_MEDICATION == 'no':
+            if self.ANTIBIOTIC_TYPE or self.STEROID_TYPE or self.OTHER_MEDICATION:
+                errors['USED_MEDICATION'] = _(
+                    'Marked "No medication" but medication details are filled'
+                )
+        
+        if self.USED_MEDICATION == 'yes':
+            if not any([self.ANTIBIOTIC_TYPE, self.STEROID_TYPE, self.OTHER_MEDICATION]):
+                errors['ANTIBIOTIC_TYPE'] = _(
+                    'Please specify at least one medication type'
+                )
+        
+        if errors:
+            raise ValidationError(errors)
     
     def save(self, *args, **kwargs):
-        # Auto-generate PK from MEMBER_id + VISIT_TIME
-        if not self.FOLLOW_UP_id:
-            self.FOLLOW_UP_id = f"{self.MEMBER_id}-{self.VISIT_TIME}"
+        # Auto-generate PK from MEMBERID + VISIT_TIME
+        if not self.FUID:
+            self.FUID = f"{self.MEMBERID}-{self.VISIT_TIME}"
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_VISIT_TIME_display()}"
+        return f"{self.MEMBERID} - {self.get_VISIT_TIME_display()}"
 
 
 # ==========================================
@@ -537,25 +718,25 @@ class Individual_Symptom(AuditFieldsMixin):
         ABDOMINAL_PAIN = 'abdominal_pain', _('Đau bụng')
         OTHER = 'other', _('Other')
     
-    FOLLOW_UP = models.ForeignKey('Individual_FollowUp', on_delete=models.CASCADE, related_name='symptoms')
+    FOLLOW_UP = models.ForeignKey('Individual_FollowUp', on_delete=models.CASCADE, related_name='symptoms', db_column='FUID')
     SYMPTOM_TYPE = models.CharField(max_length=30, choices=SymptomTypeChoices.choices, db_index=True)
     SYMPTOM_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
     class Meta:
-        db_table = 'Individual_Symptom'
+        db_table = 'FollowUp_Symptom'
         verbose_name = _('Symptom')
         verbose_name_plural = _('Symptoms')
         ordering = ['FOLLOW_UP', 'SYMPTOM_TYPE']
         unique_together = [['FOLLOW_UP', 'SYMPTOM_TYPE']]
     
     def __str__(self):
-        return f"{self.FOLLOW_UP.MEMBER_id} - {self.FOLLOW_UP.get_VISIT_TIME_display()} - {self.get_SYMPTOM_TYPE_display()}"
+        return f"{self.FOLLOW_UP.MEMBERID} - {self.FOLLOW_UP.get_VISIT_TIME_display()} - {self.get_SYMPTOM_TYPE_display()}"
 
 
 # ==========================================
 # 13. FOLLOW-UP HOSPITALIZATION - NORMALIZED
 # ==========================================
-class Individual_FollowUp_Hospitalization(AuditFieldsMixin):
+class FollowUp_Hospitalization(AuditFieldsMixin):
     """Hospitalization records at each follow-up visit"""
     
     class HospitalTypeChoices(models.TextChoices):
@@ -571,20 +752,20 @@ class Individual_FollowUp_Hospitalization(AuditFieldsMixin):
         DAYS_5_7 = '5-7', _('5-7 ngày')
         DAYS_7_PLUS = '>7', _('Trên 7 ngày')
     
-    FOLLOW_UP = models.ForeignKey('Individual_FollowUp', on_delete=models.CASCADE, related_name='hospitalizations')
+    FOLLOW_UP = models.ForeignKey('Individual_FollowUp', on_delete=models.CASCADE, related_name='hospitalizations', db_column='FUID')
     HOSPITAL_TYPE = models.CharField(max_length=20, choices=HospitalTypeChoices.choices, db_index=True)
     HOSPITAL_OTHER = models.CharField(max_length=200, null=True, blank=True)
     DURATION = models.CharField(max_length=10, choices=DurationChoices.choices, null=True, blank=True)
     
     class Meta:
-        db_table = 'Individual_FollowUp_Hospitalization'
+        db_table = 'FollowUp_Hospitalization'
         verbose_name = _('Follow-up Hospitalization')
         verbose_name_plural = _('Follow-up Hospitalizations')
         ordering = ['FOLLOW_UP', 'HOSPITAL_TYPE']
         unique_together = [['FOLLOW_UP', 'HOSPITAL_TYPE']]
     
     def __str__(self):
-        return f"{self.FOLLOW_UP.MEMBER_id} - {self.FOLLOW_UP.get_VISIT_TIME_display()} - {self.get_HOSPITAL_TYPE_display()}"
+        return f"{self.FOLLOW_UP.MEMBERID} - {self.FOLLOW_UP.get_VISIT_TIME_display()} - {self.get_HOSPITAL_TYPE_display()}"
 
 # ==========================================
 # 14. SAMPLE COLLECTION
@@ -604,7 +785,7 @@ class Individual_Sample(AuditFieldsMixin):
         NO = 'no', _('No')
         NA = 'na', _('Not applicable')
     
-    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='samples')
+    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='samples',db_column='MEMBERID')
     SAMPLE_TIME = models.CharField(max_length=10, choices=SampleTimeChoices.choices, db_index=True)
     
     # SAMPLE COLLECTION
@@ -627,4 +808,4 @@ class Individual_Sample(AuditFieldsMixin):
         unique_together = [['MEMBER', 'SAMPLE_TIME']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_SAMPLE_TIME_display()}"
+        return f"{self.MEMBERID} - {self.get_SAMPLE_TIME_display()}"

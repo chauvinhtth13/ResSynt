@@ -194,7 +194,7 @@ class Migration(migrations.Migration):
                 ('CHILD_ORDER', models.IntegerField(blank=True, help_text='1 for first child, 2 for second child, etc. Only used when RELATIONSHIP=Child', null=True, validators=[django.core.validators.MinValueValidator(1)], verbose_name='Child Order')),
                 ('BIRTH_YEAR', models.IntegerField(blank=True, null=True, validators=[django.core.validators.MinValueValidator(1900), django.core.validators.MaxValueValidator(2030)], verbose_name='Birth Year')),
                 ('GENDER', models.CharField(blank=True, choices=[('Male', 'Male'), ('Female', 'Female')], max_length=10, null=True, verbose_name='Gender')),
-                ('IS_RESPONDENT', models.BooleanField(default=False, help_text='Is this member the survey respondent?', verbose_name='Is Respondent')),
+                ('ISRESPONDENT', models.BooleanField(default=False, help_text='Is this member the survey respondent?', verbose_name='Is Respondent')),
                 ('HHID', models.ForeignKey(db_column='HHID', on_delete=django.db.models.deletion.CASCADE, related_name='members', to='study_43en.hh_case', verbose_name='Household ID')),
             ],
             options={
@@ -258,11 +258,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='hh_member',
-            index=models.Index(fields=['IS_RESPONDENT'], name='idx_hhmem_resp'),
+            index=models.Index(fields=['ISRESPONDENT'], name='idx_hhmem_resp'),
         ),
         migrations.AddConstraint(
             model_name='hh_member',
-            constraint=models.UniqueConstraint(condition=models.Q(('IS_RESPONDENT', True)), fields=('HHID',), name='unique_respondent_per_household'),
+            constraint=models.UniqueConstraint(condition=models.Q(('ISRESPONDENT', True)), fields=('HHID',), name='unique_respondent_per_household'),
         ),
         migrations.AddConstraint(
             model_name='hh_member',

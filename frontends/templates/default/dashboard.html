@@ -15,7 +15,11 @@
 <div class="dashboard-wrapper">
   <!-- Sidebar -->
   {% block sidebar %}
-  {% include 'studies/study_43en/sidebar.html' %}
+  {% if request.study_code == '44EN' or request.study_code == '44en' %}
+    {% include 'studies/study_44en/sidebar.html' %}
+  {% else %}
+    {% include 'studies/study_43en/sidebar.html' %}
+  {% endif %}
   {% endblock %}
 
   <!-- Sidebar Overlay for Mobile -->

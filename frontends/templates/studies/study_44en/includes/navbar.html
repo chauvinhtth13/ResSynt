@@ -1,0 +1,48 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'study_44en:dashboard' %}">CRF Survey 44EN</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'household:create' or request.resolver_match.url_name == 'household:list' %}active{% endif %}" 
+                       href="{% url 'study_44en:household:create' %}">Part A (Household)</a> 
+                </li>
+                {% if household and household.HHID %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'exposure' in request.resolver_match.url_name %}active{% endif %}" 
+                       href="{% url 'study_44en:household:exposure' household.HHID %}">Part B (Exposure - Household)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'study_44en:individual:create' %}">Part C (Individual - ENR)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Part C (Individual - EXP)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Part D (Follow-up Day 14)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Part E (Follow-up Day 28)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Part F (Follow-up Day 90)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Part G (Sample Collection)</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <span class="nav-link text-muted">Part B (Exposure - Save Part A first)</span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link text-muted">Parts C-G (Save Part A first)</span>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

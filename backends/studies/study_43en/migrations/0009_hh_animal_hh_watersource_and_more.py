@@ -591,7 +591,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='hh_member',
-            name='IS_RESPONDENT',
+            name='ISRESPONDENT',
             field=models.BooleanField(default=False, verbose_name='Is Respondent'),
         ),
         migrations.AlterField(
@@ -606,7 +606,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='hh_member',
-            constraint=models.UniqueConstraint(condition=models.Q(('IS_RESPONDENT', True)), fields=('HHID',), name='unique_respondent'),
+            constraint=models.UniqueConstraint(condition=models.Q(('ISRESPONDENT', True)), fields=('HHID',), name='unique_respondent'),
         ),
         migrations.AddConstraint(
             model_name='hh_member',
