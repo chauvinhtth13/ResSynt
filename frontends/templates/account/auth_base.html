@@ -9,8 +9,7 @@
 <link rel="stylesheet" href="{% static 'fonts/chakra-petch/chakra-petch.css' %}">
 <style>
     html, body {
-        background: linear-gradient(rgba(10, 20, 35, 0.8), rgba(10, 20, 35, 0.8)), 
-                url("{% static 'base/images/bg.jpg' %}") no-repeat center center fixed !important;
+        background:  url("{% static 'base/images/bg.jpg' %}") no-repeat center center fixed !important;
         background-size: cover !important;
     }
 </style>
@@ -20,7 +19,7 @@
 <main class="container-fluid row p-0 m-0">
 
     <!-- Features Section - Hidden on mobile, visible from lg -->
-    <section class="col-lg-7 d-none d-lg-flex flex-column min-vh-100 p-5 justify-content-center">
+    <section class="col-lg-7 d-none d-lg-flex flex-column min-vh-100 justify-content-center p-5">
         {% include 'includes/misc/features_list.html' %}
     </section>
 

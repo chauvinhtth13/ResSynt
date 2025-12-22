@@ -1,6 +1,8 @@
 :root {
-    /* Midnight Navy Color Palette */
-    --color-midnight-navy-50: #edf1fc;
+    /* -----------------------------------------
+       2. COLOR PALETTE: MIDNIGHT NAVY (BASE)
+       ----------------------------------------- */
+    --color-midnight-navy-50:  #edf1fc;
     --color-midnight-navy-100: #dae2f8;
     --color-midnight-navy-200: #b8c9f2;
     --color-midnight-navy-300: #8faeec;
@@ -10,24 +12,76 @@
     --color-midnight-navy-700: #2b4e82;
     --color-midnight-navy-800: #1d375e;
     --color-midnight-navy-900: #112440;
-    --color-midnight-navy-950: #0a192f;
+    --color-midnight-navy-950: #0a192f; /* Deepest Background */
 
+    /* -----------------------------------------
+       3. ACCENT COLORS (RGB DEFINITIONS)
+       * Định nghĩa RGB riêng để dùng cho alpha/opacity
+       ----------------------------------------- */
+    /* Cyan: #00f5ff -> 0, 245, 255 */
+    --rgb-accent-cyan: 0, 245, 255;
+    /* Teal: #00BFA6 -> 0, 191, 166 */
+    --rgb-accent-teal: 0, 191, 166;
+    /* Purple: #a855f7 -> 168, 85, 247 */
+    --rgb-accent-purple: 168, 85, 247;
+    /* Pink: #ff6ec7 -> 255, 110, 199 */
+    --rgb-accent-pink: 255, 110, 199;
+    
+    /* Variables sử dụng trực tiếp */
+    --color-accent-cyan: rgb(var(--rgb-accent-cyan));
+    --color-accent-teal: rgb(var(--rgb-accent-teal));
+    --color-accent-purple: rgb(var(--rgb-accent-purple));
+    --color-accent-pink: rgb(var(--rgb-accent-pink));
+
+    /* Neutral Accents */
     --color-titanium-silver: #c0c0c0;
+    --color-mclaren-silver: #9BA2B4;
     --color-carbon-fiber: #2c2c2c;
-    --color-tech-teal: #64ffda;
-    --color-electric-cyan: #00ffff;
-    --color-plasma-blue: #4d8dff;
 
-    --rgb-glass-blue: 240, 248, 255;
+    /* -----------------------------------------
+       4. SEMANTIC THEME COLORS (BOOTSTRAP MAPPING)
+       ----------------------------------------- */
+    --body-bg: var(--color-midnight-navy-950);
+    --body-color: var(--color-midnight-navy-50);
+    
+    /* -----------------------------------------
+       5. GRADIENTS
+       ----------------------------------------- */
+    --gradient-metallic: linear-gradient(
+        180deg,        /* Ánh sáng từ trên xuống */
+        var(--color-titanium-silver) 0%,    /* Đỉnh sáng */
+        var(--color-mclaren-silver) 100%   /* Đáy tối hơn chút */
+    );
 
+    --gradient-highlight: linear-gradient(
+        90deg,
+        rgb(var(--rgb-accent-cyan)) 0%,
+        rgb(var(--rgb-accent-purple)) 35%,
+        rgb(var(--rgb-accent-pink)) 65%,
+        rgb(var(--rgb-accent-cyan)) 100%
+    );
 
-    /* Glass Variables */
-    --glass-bg: rgba(var(--rgb-glass-blue), 0.12);
-    --glass-bg-hover: rgba(var(--rgb-glass-blue), 0.18);
-    --glass-bg-active: rgba(var(--rgb-glass-blue), 0.08);
-    --glass-border: rgba(var(--rgb-glass-blue), 0.2);
+    /* -----------------------------------------
+       6. GLASSMORPHISM SYSTEM
+       ----------------------------------------- */
+    /* Base Glass: Dùng AliceBlue pha loãng tạo cảm giác kính sạch */
+    --rgb-glass-base: 240, 248, 255; 
 
-    /* Language Switcher Dimensions */
+    /* Nền kính (Kết hợp cả màu Navy tối và hiệu ứng sáng) */
+    --glass-bg: rgba(var(--rgb-glass-base), 0.05); 
+    --glass-bg-hover: rgba(var(--rgb-glass-base), 0.12);
+    
+    /* Viền kính: Sử dụng màu Cyan chủ đạo để tạo hiệu ứng Tech */
+    --glass-border: rgba(var(--rgb-accent-cyan), 0.2);
+    --glass-border-hover: rgba(var(--rgb-accent-cyan), 0.5);
+    
+    /* Bóng đổ cho kính */
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+
+    /* -----------------------------------------
+       7. COMPONENT VARIABLES
+       ----------------------------------------- */
+    /* Language Switcher */
     --lang-btn-width: 130px;
     --lang-btn-height: 38px;
     --lang-icon-size: 1rem;
@@ -152,3 +206,4 @@ html {
     backdrop-filter: blur(1rem);
     -webkit-backdrop-filter: blur(1rem);
 }
+
