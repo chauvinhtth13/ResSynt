@@ -19,26 +19,24 @@
 <main class="container-fluid row p-0 m-0">
 
     <!-- Features Section - Hidden on mobile, visible from lg -->
-    <section class="col-lg-7 d-none d-lg-flex flex-column min-vh-100 justify-content-center p-5">
+    <section class="col-lg-7 d-none d-lg-flex flex-column min-vh-100 justify-content-center p-4 p-xxl-5">
         {% include 'includes/misc/features_list.html' %}
     </section>
 
     <!-- Login Section -->
-    <section class="col-12 col-lg-5 d-flex flex-column min-vh-100 p-5">
+    <section class="col-12 col-lg-5 d-flex flex-column min-vh-100 p-4 p-xxl-5">
 
         <!-- Header with Language Selector -->
         <div class="d-flex justify-content-end"> 
-        {% include 'includes/component/language_style_1.html' %}
+            {% include 'includes/component/lang_switcher_glass.html' %}
         </div>
         
         <div class="flex-grow-1 d-flex justify-content-center align-items-center">
         
-            <div class="card shadow" style="width: 20rem;">
-                <div class="card-body">
-                    <h5 class="card-title text-center">Card Trung Tâm</h5>
-                    <p class="card-text text-center">Nội dung nằm giữa màn hình, tách biệt hoàn toàn với nút bên trên.</p>
-                    <button class="btn btn-success w-100">Đồng ý</button>
-                </div>
+            <div class="w-100">
+                <!-- Login Content Block -->
+                {% block auth_content %}
+                {% endblock %}
             </div>
 
         </div>

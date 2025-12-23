@@ -3,12 +3,12 @@
 {% load i18n static allauth account %}
 
 {% block title %}Sign In - ResSync Platform{% endblock %}
-{% comment %} {% block auth_content %}
-<div class="p-responsive flex-grow-1 d-flex flex-column justify-content-center">
+{% block auth_content %}
+<div class="glass-prism-top p-4 rounded-5 h-100">
     <!-- Title and Logo -->
     <div class="text-center mb-3">
-        <h1 class="fs-title-2 fw-bold mb-2">{% trans "Welcome back" %}</h1>
-        <img src="{% static 'base/images/logo.svg' %}" alt="ResSync Logo" height="50" class="d-block mx-auto">
+        <h1 class="font-chakra-petch fw-bold text-white h1">{% trans "Welcome back" %}</h1>
+        <p class="font-chakra-petch text-white">{% trans "Sign in to access your research dashboard" %}</p>
     </div>
 
     <!-- Error Messages -->
@@ -70,4 +70,4 @@
         </a>
     </div>
 </div>
-{% endblock %} {% endcomment %}
+{% endblock %}
