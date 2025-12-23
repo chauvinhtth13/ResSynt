@@ -153,7 +153,8 @@ class HH_Member(AuditFieldsMixin):
         FEMALE = 'Female', _('Female')
     
     # PRIMARY KEY: HHID-MEMBER_NUM (e.g., "44EN-001-1")
-    MEMBERID = models.CharField(max_length=50, primary_key=True, editable=False, verbose_name=_('Member ID'))
+    # editable=True allows formset to handle it, blank=True makes it optional (auto-generated in save())
+    MEMBERID = models.CharField(max_length=50, primary_key=True, editable=True, blank=True, verbose_name=_('Member ID'))
     HHID = models.ForeignKey('HH_CASE', on_delete=models.CASCADE, to_field='HHID', db_column='HHID', related_name='members')
     MEMBER_NUM = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)], verbose_name=_('Member Number'))
     RELATIONSHIP = models.CharField(max_length=5, choices=RelationshipChoices.choices, null=True, blank=True, verbose_name=_('Relationship'))
@@ -199,12 +200,17 @@ class HH_Member(AuditFieldsMixin):
             
             # Check for duplicate MEMBER_NUM in household
             if self.HHID:
-                existing = HH_Member.objects.filter(
+                # Build exclude filter - use pk to avoid issues with editable=False fields
+                existing_query = HH_Member.objects.filter(
                     HHID=self.HHID,
                     MEMBER_NUM=self.MEMBER_NUM
-                ).exclude(MEMBERID=self.MEMBERID).exists()
+                )
                 
-                if existing:
+                # Exclude current instance if it already exists (update scenario)
+                if self.pk:  # Use pk instead of MEMBERID for reliability
+                    existing_query = existing_query.exclude(pk=self.pk)
+                
+                if existing_query.exists():
                     errors['MEMBER_NUM'] = _(f'Member number {self.MEMBER_NUM} already exists in household')
         
         # Validate birth year
@@ -228,12 +234,17 @@ class HH_Member(AuditFieldsMixin):
         # Validate ISRESPONDENT logic (constraint handles uniqueness)
         if self.ISRESPONDENT:
             if self.HHID:
-                existing = HH_Member.objects.filter(
+                # Build exclude filter - use pk to avoid issues with editable=False fields
+                existing_query = HH_Member.objects.filter(
                     HHID=self.HHID,
                     ISRESPONDENT=True
-                ).exclude(MEMBERID=self.MEMBERID).exists()
+                )
                 
-                if existing:
+                # Exclude current instance if it already exists (update scenario)
+                if self.pk:  # Use pk instead of MEMBERID for reliability
+                    existing_query = existing_query.exclude(pk=self.pk)
+                
+                if existing_query.exists():
                     errors['ISRESPONDENT'] = _('Household already has a respondent')
         
         # Validate gender provided

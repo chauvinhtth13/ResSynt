@@ -512,7 +512,12 @@
                                     <td><input type="radio" name="GIFTED" value="2+/day" {% if food_source_form.GIFTED.value == '2+/day' %}checked{% endif %}></td>
                                 </tr>
                                 <tr>
-                                    <td class="text-start fw-bold">Khác</td>
+                                    <td class="text-start">
+                                        <div class="d-flex align-items-end">
+                                            <span class="fw-bold me-1">Khác:</span>
+                                            <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 px-1 w-75" name="OTHER_SPECIFY" value="{{ food_source_form.OTHER_SPECIFY.value|default:'' }}" >
+                                        </div>
+                                    </td>
                                     <td><input type="radio" name="OTHER" value="never" {% if food_source_form.OTHER.value == 'never' %}checked{% endif %}></td>
                                     <td><input type="radio" name="OTHER" value="1-3/month" {% if food_source_form.OTHER.value == '1-3/month' %}checked{% endif %}></td>
                                     <td><input type="radio" name="OTHER" value="1-2/week" {% if food_source_form.OTHER.value == '1-2/week' %}checked{% endif %}></td>
@@ -522,6 +527,11 @@
                                 </tr>
                             </tbody>
                         </table>
+                        
+                        <!-- Other Specify Input -->
+                        {% if food_source_form.OTHER_SPECIFY.errors %}
+                            <div class="text-danger small mt-1 ms-md-3">{{ food_source_form.OTHER_SPECIFY.errors.0 }}</div>
+                        {% endif %}
                     </div>
                 </div>
 

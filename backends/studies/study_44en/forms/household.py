@@ -132,14 +132,9 @@ class HH_MemberForm(forms.ModelForm):
     
     class Meta:
         model = HH_Member
-        fields = '__all__'
+        fields = '__all__'  # Include all fields including MEMBERID
         widgets = {
-            'MEMBERID': forms.TextInput(attrs={
-                'class': 'form-control',
-                'readonly': 'readonly',
-                'placeholder': 'Auto-generated'
-            }),
-            'HHID': forms.Select(attrs={'class': 'form-select'}),
+            'MEMBERID': forms.HiddenInput(),  # Hidden field, auto-generated if empty
             'MEMBER_NUM': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': 1,
@@ -151,10 +146,11 @@ class HH_MemberForm(forms.ModelForm):
                 'min': 1,
                 'max': 10
             }),
-            'BIRTH_YEAR': forms.NumberInput(attrs={
+            'BIRTH_YEAR': forms.TextInput(attrs={
                 'class': 'form-control',
-                'min': 1900,
-                'max': date.today().year
+                'placeholder': 'YYYY',
+                'pattern': '[0-9]{4}',
+                'maxlength': 4
             }),
             'GENDER': forms.Select(attrs={'class': 'form-select'}),
             'ISRESPONDENT': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -162,8 +158,51 @@ class HH_MemberForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Make CHILD_ORDER optional
+        # MEMBERID is auto-generated, not required from user (if field exists)
+        if 'MEMBERID' in self.fields:
+            self.fields['MEMBERID'].required = False
+        # Make other fields optional for empty forms
         self.fields['CHILD_ORDER'].required = False
+        self.fields['RELATIONSHIP'].required = False
+        self.fields['BIRTH_YEAR'].required = False
+        self.fields['GENDER'].required = False
+        self.fields['ISRESPONDENT'].required = False
+    
+    def has_changed(self):
+        """Check if form has any meaningful data"""
+        if not self.is_bound:
+            return False
+        
+        # Check significant fields
+        significant_fields = ['RELATIONSHIP', 'BIRTH_YEAR', 'GENDER']
+        for field in significant_fields:
+            if self.data.get(self.add_prefix(field)):
+                return True
+        return False
+    
+    def clean_MEMBERID(self):
+        """Allow blank MEMBERID - will be auto-generated"""
+        return self.cleaned_data.get('MEMBERID', '')
+    
+    def clean(self):
+        """Only validate if form has data"""
+        cleaned_data = super().clean()
+        
+        # Check if form has any significant data
+        has_data = any([
+            cleaned_data.get('RELATIONSHIP'),
+            cleaned_data.get('BIRTH_YEAR'),
+            cleaned_data.get('GENDER')
+        ])
+        
+        # If form has some data, require all fields
+        if has_data:
+            required_fields = ['RELATIONSHIP', 'GENDER']
+            for field in required_fields:
+                if not cleaned_data.get(field):
+                    self.add_error(field, f'{field.replace("_", " ").title()} is required when adding a member')
+        
+        return cleaned_data
 
 
 # ==========================================
@@ -178,19 +217,107 @@ class BaseHH_MemberFormSet(BaseInlineFormSet):
         if any(self.errors):
             return
         
-        # Check for duplicate member numbers
-        member_nums = []
+        # Track member numbers to check for duplicates
+        # Key: member_num, Value: list of form instances with that number
+        member_num_tracking = {}
+        respondent_count = 0
+        respondent_forms = []
+        
         for form in self.forms:
-            if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
-                member_num = form.cleaned_data.get('MEMBER_NUM')
-                if member_num:
-                    if member_num in member_nums:
-                        raise ValidationError(
-                            _('Duplicate member number: %(num)s'),
-                            params={'num': member_num},
-                            code='duplicate_member_num'
-                        )
-                    member_nums.append(member_num)
+            # Skip empty forms
+            if not self._has_data(form):
+                continue
+            
+            if not form.cleaned_data or form.cleaned_data.get('DELETE', False):
+                continue
+            
+            member_num = form.cleaned_data.get('MEMBER_NUM')
+            is_respondent = form.cleaned_data.get('ISRESPONDENT')
+            
+            # Track member numbers
+            if member_num:
+                if member_num not in member_num_tracking:
+                    member_num_tracking[member_num] = []
+                member_num_tracking[member_num].append(form)
+            
+            # Track respondents
+            if is_respondent:
+                respondent_count += 1
+                respondent_forms.append(form)
+        
+        # Check for duplicate member numbers (excluding same instance)
+        for member_num, forms in member_num_tracking.items():
+            if len(forms) > 1:
+                # Multiple forms with same member_num - check if they're different instances
+                unique_instances = set()
+                for f in forms:
+                    if f.instance.pk:
+                        unique_instances.add(f.instance.pk)
+                    else:
+                        unique_instances.add(id(f))  # Use form object id for new forms
+                
+                # If more than 1 unique instance has same member_num, it's duplicate
+                if len(unique_instances) > 1:
+                    raise ValidationError(
+                        _('Member number %(num)s is used multiple times'),
+                        params={'num': member_num},
+                        code='duplicate_member_num'
+                    )
+        
+        # Check for multiple respondents (excluding same instance)
+        if respondent_count > 1:
+            # Check if they're different instances
+            unique_respondents = set()
+            for f in respondent_forms:
+                if f.instance.pk:
+                    unique_respondents.add(f.instance.pk)
+                else:
+                    unique_respondents.add(id(f))
+            
+            if len(unique_respondents) > 1:
+                raise ValidationError(
+                    _('Only one member can be marked as respondent'),
+                    code='multiple_respondents'
+                )
+    
+    def _has_data(self, form):
+        """Check if form has any significant data"""
+        if not form.is_bound:
+            return bool(form.instance.pk)
+        
+        # For bound forms, check if any significant field has data
+        significant_fields = ['RELATIONSHIP', 'BIRTH_YEAR', 'GENDER']
+        for field in significant_fields:
+            value = form.data.get(form.add_prefix(field))
+            if value:
+                return True
+        return False
+    
+    def save(self, commit=True):
+        """Save only forms with data"""
+        # Filter out empty forms before saving
+        saved_instances = []
+        
+        for form in self.forms:
+            # Skip empty forms (but keep existing instances)
+            if not self._has_data(form):
+                continue
+            
+            # Skip deleted forms
+            if form.cleaned_data.get('DELETE', False):
+                if form.instance.pk:
+                    form.instance.delete()
+                continue
+            
+            # Save form with data (both new and existing)
+            if form.is_valid():
+                # For existing instances, always save even if not changed
+                # For new instances, only save if has data
+                if form.instance.pk or form.has_changed():
+                    instance = form.save(commit=commit)
+                    saved_instances.append(instance)
+        
+        return saved_instances
 
 HH_MemberFormSet = inlineformset_factory(
     parent_model=HH_CASE,

@@ -114,7 +114,7 @@
                             <td>{{ member.get_GENDER_display|default:member.GENDER }}</td>
                             <td>{{ member.DOB|date:"Y-m-d"|default:"-" }}</td>
                             <td>{{ member.AGE|default:"-" }}</td>
-                            <td>{{ member.get_RELATION_display|default:member.RELATION }}</td>
+                            <td>{{ member.get_RELATIONSHIP_display|default:member.RELATIONSHIP }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

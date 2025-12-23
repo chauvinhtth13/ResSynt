@@ -1,14 +1,34 @@
-# backend/studies/study_44en/urls.py
+# backends/studies/study_44en/urls.py
+"""
+Study 44EN URL Configuration - Following 43EN pattern
+"""
 
-from django.urls import path
-from backends.api.studies.study_44en.services import dashboard
+from django.urls import path, include
+
+# Import views from API layer
+from backends.api.studies.study_44en.views import views_dashboard
+from backends.api.studies.study_44en.views.household import (
+    views_household_case,
+    views_household_exposure,
+    views_household_food,
+)
+from backends.api.studies.study_44en.views.individual import (
+    views_individual_case,
+    views_individual_exposure,
+    views_individual_followup,
+    views_individual_sample,
+)
 
 # App name for namespacing
 app_name = 'study_44en'
 
 urlpatterns = [
-    # Dashboard views will be added here
-    path('dashboard/', 
-         dashboard.home_dashboard, 
-         name='home_dashboard'),
+    # ===== DASHBOARD =====
+    path('dashboard/', views_dashboard.dashboard_44en, name='home_dashboard'),
+    
+    # ===== HOUSEHOLD URLS (namespace: study_44en:household:xxx) =====
+    path('household/', include('backends.api.studies.study_44en.views.household.urls', namespace='household')),
+    
+    # ===== INDIVIDUAL URLS (namespace: study_44en:individual:xxx) =====
+    path('individual/', include('backends.api.studies.study_44en.views.individual.urls', namespace='individual')),
 ]

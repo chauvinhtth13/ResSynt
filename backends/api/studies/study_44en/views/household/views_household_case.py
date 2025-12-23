@@ -1,63 +1,97 @@
 # backends/api/studies/study_44en/views/household/views_household_case.py
-
 """
-Household Case Views for Study 44EN
-Handles HH_CASE CRUD operations with members management
+Household Case CRUD Views - Following study_43en pattern with Universal Audit System
+
+Handles HH_CASE and HH_Member formset
 """
 
 import logging
 from datetime import date
-from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
+from django.db import transaction
 
+# Import models
 from backends.studies.study_44en.models.household import HH_CASE, HH_Member
+
+# Import forms
 from backends.studies.study_44en.forms.household import (
-    HH_CASEForm, HH_MemberForm, HH_MemberFormSet
+    HH_CASEForm,
+    HH_MemberFormSet,
 )
-from backends.api.studies.study_44en.views.views_base import (
-    get_filtered_households, get_household_with_related
+
+# Import utilities (copied from study_43en)
+# NOTE: Audit system DISABLED for study_44en - no audit_log table exists
+# from backends.studies.study_44en.utils.audit.decorators import audit_log
+# from backends.studies.study_44en.utils.audit.processors import process_complex_update
+
+# Import helpers
+from .helpers import (
+    get_household_with_related,
+    save_household_and_related,
+    log_all_form_errors,
+    make_form_readonly,
+    make_formset_readonly,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def set_audit_metadata(instance, user):
-    """Set audit fields for tracking"""
-    if hasattr(instance, 'last_modified_by_id'):
-        instance.last_modified_by_id = user.id
-    if hasattr(instance, 'last_modified_by_username'):
-        instance.last_modified_by_username = user.username
-
+# ==========================================
+# LIST VIEW
+# ==========================================
 
 @login_required
 def household_list(request):
     """
-    List all households with search, filter, and pagination
+    List all households with search and pagination
     """
-    from backends.api.studies.study_44en.views.views_base import household_list
-    return household_list(request)
+    # Get all households
+    households = HH_CASE.objects.all().order_by('-HHID')
+    
+    # Search by HHID or WARD
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        households = households.filter(
+            HHID__icontains=search_query
+        ) | households.filter(
+            WARD__icontains=search_query
+        )
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(households, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'households': page_obj,
+        'search_query': search_query,
+        'total_households': households.count(),
+    }
+    
+    return render(request, 'studies/study_44en/CRF/base/household_list.html', context)
 
+
+# ==========================================
+# DETAIL VIEW
+# ==========================================
 
 @login_required
 def household_detail(request, hhid):
     """
     View household details with all members and exposure data
     """
-    queryset = get_filtered_households(request.user)
-    household = get_object_or_404(queryset, HHID=hhid)
+    household, members = get_household_with_related(request, hhid)
     
-    # Get all members
-    members = HH_Member.objects.filter(HHID=household).order_by('MEMBER_NUM')
-    
-    # Get respondent info (based on RESPONDENT_MEMBER_NUM)
+    # Get respondent info
     respondent = None
     if household.RESPONDENT_MEMBER_NUM:
         respondent = members.filter(MEMBER_NUM=household.RESPONDENT_MEMBER_NUM).first()
     
-    # Get exposure data
+    # Get exposure data (if exists)
     try:
         from backends.studies.study_44en.models.household import (
             HH_Exposure, HH_WaterSource, HH_WaterTreatment, HH_Animal
@@ -86,187 +120,273 @@ def household_detail(request, hhid):
     return render(request, 'studies/study_44en/CRF/household/household_detail.html', context)
 
 
+# ==========================================
+# CREATE VIEW (NO AUDIT)
+# ==========================================
+
 @login_required
+# @audit_log(model_name='HOUSEHOLD', get_patient_id_from='hhid')  # DISABLED - no audit_log table
 def household_create(request):
     """
-    Create or edit household with members (supports ?hhid= for editing)
+    Create new household with members
+    
+    Workflow:
+    1. Show blank household form
+    2. Show 10 member formset rows
+    3. Save household + members in transaction
     """
-    # Check if editing existing household via ?hhid= parameter
-    hhid_param = request.GET.get('hhid')
-    household = None
-    is_create = True
+    logger.info("="*80)
+    logger.info("=== 🏠 HOUSEHOLD CREATE START ===")
+    logger.info("="*80)
+    logger.info(f"👤 User: {request.user.username}, Method: {request.method}")
     
-    if hhid_param:
-        try:
-            queryset = get_filtered_households(request.user)
-            household = get_object_or_404(queryset, HHID=hhid_param)
-            is_create = False
-        except:
-            household = None
-            is_create = True
-    
+    # POST - Process creation
     if request.method == 'POST':
-        # Debug: Log POST data
-        logger.debug(f"POST data keys: {list(request.POST.keys())}")
-        logger.debug(f"POST data: {dict(request.POST)}")
+        logger.info("📨 POST REQUEST - Processing form submission...")
         
-        household_form = HH_CASEForm(request.POST, instance=household)
-        member_formset = HH_MemberFormSet(request.POST, prefix='members', instance=household)
-        
-        # Debug: Log form validation status
-        logger.debug(f"Household form valid: {household_form.is_valid()}")
-        logger.debug(f"Member formset valid: {member_formset.is_valid()}")
-        
-        if household_form.is_valid() and member_formset.is_valid():
-            try:
-                with transaction.atomic():
-                    # Save household
-                    household = household_form.save(commit=False)
-                    set_audit_metadata(household, request.user)
-                    household.save()
-                    
-                    action = "Updated" if not is_create else "Created"
-                    logger.info(f"{action} household: {household.HHID}")
-                    
-                    # Save members
-                    members = member_formset.save(commit=False)
-                    for member in members:
-                        member.HHID = household
-                        set_audit_metadata(member, request.user)
-                        member.save()
-                    
-                    # Handle deleted members
-                    for obj in member_formset.deleted_objects:
-                        obj.delete()
-                    
-                    logger.info(f"Saved {len(members)} members")
-                    
-                    messages.success(
-                        request,
-                        f'Household {household.HHID} {action.lower()} successfully.'
-                    )
-                    return redirect('study_44en:household:detail', hhid=household.HHID)
-                    
-            except Exception as e:
-                logger.error(f"Error saving household: {e}", exc_info=True)
-                messages.error(request, f'Error saving household: {str(e)}')
-        else:
-            # Log validation errors
-            if household_form.errors:
-                logger.warning(f"Household form errors: {household_form.errors}")
-                for field, errors in household_form.errors.items():
-                    logger.warning(f"  Field '{field}': {errors}")
-            else:
-                logger.debug("Household form has no field errors")
-                
-            if member_formset.errors:
-                logger.warning(f"Member formset errors: {member_formset.errors}")
-                for i, form_errors in enumerate(member_formset.errors):
-                    if form_errors:
-                        logger.warning(f"  Member form {i}: {form_errors}")
-            else:
-                logger.debug("Member formset has no errors")
-            
-            if member_formset.non_form_errors():
-                logger.warning(f"Member formset non-form errors: {member_formset.non_form_errors()}")
-            
-            messages.error(request, 'Please check the form for errors.')
-    
-    else:
-        # GET - Load form
-        if household:
-            household_form = HH_CASEForm(instance=household)
-            member_formset = HH_MemberFormSet(prefix='members', instance=household)
-        else:
-            household_form = HH_CASEForm()
-            member_formset = HH_MemberFormSet(prefix='members', instance=None, queryset=HH_Member.objects.none())
-    
-    context = {
-        'household': household,
-        'household_form': household_form,
-        'member_formset': member_formset,
-        'is_create': is_create,
-    }
-    
-    return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
-
-
-@login_required
-def household_edit(request, hhid):
-    """
-    Edit existing household and members
-    """
-    queryset = get_filtered_households(request.user)
-    household = get_object_or_404(queryset, HHID=hhid)
-    
-    if request.method == 'POST':
-        household_form = HH_CASEForm(request.POST, instance=household)
+        # Initialize forms with POST data
+        household_form = HH_CASEForm(request.POST)
         member_formset = HH_MemberFormSet(
-            request.POST, 
-            instance=household, 
+            request.POST,
+            instance=None,
             prefix='members'
         )
         
-        if household_form.is_valid() and member_formset.is_valid():
-            try:
-                with transaction.atomic():
-                    # Update household
-                    household = household_form.save(commit=False)
-                    set_audit_metadata(household, request.user)
-                    household.save()
-                    
-                    logger.info(f"Updated household: {household.HHID}")
-                    
-                    # Save members
-                    members = member_formset.save(commit=False)
-                    for member in members:
-                        member.HHID = household
-                        set_audit_metadata(member, request.user)
-                        member.save()
-                    
-                    # Handle deleted members
-                    for obj in member_formset.deleted_objects:
-                        logger.info(f"Deleting member: {obj.MEMBERID}")
-                        obj.delete()
-                    
-                    logger.info(f"Saved {len(members)} members")
-                    
-                    messages.success(
-                        request,
-                        f'Household {household.HHID} updated successfully.'
-                    )
-                    return redirect('study_44en:household:detail', hhid=household.HHID)
-                    
-            except Exception as e:
-                logger.error(f"Error updating household: {e}", exc_info=True)
-                messages.error(request, f'Error updating household: {str(e)}')
-        else:
-            # Log validation errors
-            if household_form.errors:
-                logger.warning(f"Household form errors: {household_form.errors}")
-            if member_formset.errors:
-                logger.warning(f"Member formset errors: {member_formset.errors}")
+        logger.info("📝 Validating forms...")
+        
+        # Validate both forms
+        household_valid = household_form.is_valid()
+        formset_valid = member_formset.is_valid()
+        
+        logger.info(f"  Household form: {'✅ VALID' if household_valid else '❌ INVALID'}")
+        logger.info(f"  Member formset: {'✅ VALID' if formset_valid else '❌ INVALID'}")
+        
+        if household_valid and formset_valid:
+            logger.info("💾 Calling save_household_and_related...")
             
-            messages.error(request, 'Please check the form for errors.')
+            household = save_household_and_related(
+                request=request,
+                household_form=household_form,
+                member_formset=member_formset,
+                is_create=True
+            )
+            
+            if household:
+                logger.info(f"✅ SUCCESS: Household created: {household.HHID}")
+                messages.success(
+                    request,
+                    f'✅ Đã tạo hộ gia đình {household.HHID} thành công.'
+                )
+                return redirect('study_44en:household:detail', hhid=household.HHID)
+            else:
+                logger.error("❌ FAILED: save_household_and_related returned None")
+                messages.error(request, 'Lỗi khi lưu dữ liệu. Vui lòng thử lại.')
+        else:
+            # Log errors
+            forms_with_errors = log_all_form_errors({
+                'Household Form': household_form,
+                'Member Formset': member_formset,
+            })
+            
+            if forms_with_errors:
+                error_msg = f'❌ Vui lòng kiểm tra lại: {", ".join(forms_with_errors)}'
+                messages.error(request, error_msg)
+                logger.error(f"Forms with errors: {forms_with_errors}")
     
+    # GET - Show blank form
     else:
-        # GET - Show form with data
-        household_form = HH_CASEForm(instance=household)
-        member_formset = HH_MemberFormSet(instance=household, prefix='members')
+        logger.info("📄 GET REQUEST - Showing blank form...")
+        
+        household_form = HH_CASEForm()
+        member_formset = HH_MemberFormSet(
+            instance=None,
+            prefix='members'
+        )
+        
+        logger.info("✅ Blank forms initialized")
     
+    # Build context
     context = {
-        'household_form': household_form,
+        'form': household_form,
+        'household_form': household_form,  # Alias for template compatibility
         'member_formset': member_formset,
-        'household': household,
-        'is_create': False,
+        'is_create': True,
+        'is_readonly': False,
+        'today': date.today(),
     }
+    
+    logger.info("="*80)
+    logger.info("=== 🏠 HOUSEHOLD CREATE END - Rendering template ===")
+    logger.info("="*80)
     
     return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
 
 
-__all__ = [
-    'household_list',
-    'household_detail',
-    'household_create',
-    'household_edit',
-]
+# ==========================================
+# UPDATE VIEW (NO AUDIT - study_44en has no audit_log table)
+# ==========================================
+
+@login_required
+# @audit_log(model_name='HOUSEHOLD', get_patient_id_from='hhid')  # DISABLED - no audit_log table
+def household_update(request, hhid):
+    """
+    Update household WITHOUT audit system (44en has no audit_log table)
+    
+    Architecture:
+    - 1 main form (HH_CASE)
+    - 1 formset (HH_Member - inline to HH_CASE)
+    """
+    logger.info("="*80)
+    logger.info("=== 📝 HOUSEHOLD UPDATE START ===")
+    logger.info("="*80)
+    logger.info(f"👤 User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
+    
+    # Get household with members
+    logger.info("📥 Step 1: Fetching household with members...")
+    household, members = get_household_with_related(request, hhid)
+    logger.info(f"✅ Household found: {household.HHID}, {members.count()} members")
+    
+    # GET - Show current data
+    if request.method == 'GET':
+        logger.info("="*80)
+        logger.info("📄 GET REQUEST - Loading existing data...")
+        logger.info("="*80)
+        
+        household_form = HH_CASEForm(instance=household)
+        member_formset = HH_MemberFormSet(
+            instance=household,
+            prefix='members'
+        )
+        
+        logger.info(f"✅ Forms initialized with existing data")
+        logger.info(f"   Members in formset: {len(member_formset.queryset)}")
+        
+        context = {
+            'form': household_form,
+            'household_form': household_form,  # Alias for template compatibility
+            'household': household,
+            'member_formset': member_formset,
+            'is_create': False,
+            'is_readonly': False,
+            'current_version': household.version if hasattr(household, 'version') else None,
+            'today': date.today(),
+        }
+        
+        logger.info("="*80)
+        logger.info("=== 📝 HOUSEHOLD UPDATE END (GET) - Rendering template ===")
+        logger.info("="*80)
+        
+        return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
+    
+    # POST - Simple save (no audit system)
+    logger.info("="*80)
+    logger.info("💾 POST REQUEST - Processing form submission...")
+    logger.info("="*80)
+    
+    household_form = HH_CASEForm(request.POST, instance=household)
+    member_formset = HH_MemberFormSet(
+        request.POST,
+        instance=household,
+        prefix='members'
+    )
+    
+    logger.info("📝 Step 2: Validating forms...")
+    
+    # Validate both forms
+    form_valid = household_form.is_valid()
+    formset_valid = member_formset.is_valid()
+    
+    if form_valid and formset_valid:
+        logger.info("✅ All forms valid - saving...")
+        
+        # Save using helper
+        saved_household = save_household_and_related(
+            request=request,
+            household_form=household_form,
+            member_formset=member_formset,
+            is_create=False
+        )
+        
+        if saved_household:
+            logger.info(f"✅ SUCCESS - Household {saved_household.HHID} updated")
+            messages.success(request, f'Household {saved_household.HHID} updated successfully')
+            
+            logger.info("="*80)
+            logger.info("=== 📝 HOUSEHOLD UPDATE END (POST) - SUCCESS ===")
+            logger.info("="*80)
+            
+            return redirect('study_44en:household:detail', hhid=saved_household.HHID)
+        else:
+            logger.error("❌ Save failed")
+            messages.error(request, 'Failed to save household')
+    else:
+        logger.error("❌ Form validation failed")
+        log_all_form_errors({
+            'Household Form': household_form,
+            'Member Formset': member_formset,
+        })
+        messages.error(request, 'Please correct the errors below')
+    
+    # Re-render with errors
+    context = {
+        'form': household_form,
+        'household_form': household_form,  # Alias for template compatibility
+        'household': household,
+        'member_formset': member_formset,
+        'is_create': False,
+        'is_readonly': False,
+        'today': date.today(),
+        'current_version': household.version if hasattr(household, 'version') else None,
+    }
+    
+    logger.info("="*80)
+    logger.info("=== 📝 HOUSEHOLD UPDATE END (POST) - Rendering with errors ===")
+    logger.info("="*80)
+    
+    return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
+
+
+# ==========================================
+# VIEW (READ-ONLY)
+# ==========================================
+
+@login_required
+# @audit_log(model_name='HOUSEHOLD', get_patient_id_from='hhid')  # DISABLED - no audit_log table
+def household_view(request, hhid):
+    """
+    View household (read-only mode)
+    """
+    logger.info("="*80)
+    logger.info("=== 👁️ HOUSEHOLD VIEW (READ-ONLY) ===")
+    logger.info("="*80)
+    
+    # Get household with members
+    household, members = get_household_with_related(request, hhid)
+    
+    # Create readonly forms
+    household_form = HH_CASEForm(instance=household)
+    member_formset = HH_MemberFormSet(
+        instance=household,
+        prefix='members'
+    )
+    
+    # Make forms readonly
+    make_form_readonly(household_form)
+    make_formset_readonly(member_formset)
+    
+    context = {
+        'form': household_form,
+        'household_form': household_form,  # Alias for template compatibility
+        'household': household,
+        'member_formset': member_formset,
+        'is_create': False,
+        'is_readonly': True,
+        'today': date.today(),
+    }
+    
+    logger.info("="*80)
+    logger.info("=== 👁️ HOUSEHOLD VIEW END - Rendering template ===")
+    logger.info("="*80)
+    
+    return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
+

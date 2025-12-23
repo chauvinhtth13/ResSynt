@@ -1,5 +1,6 @@
 {% extends 'default/dashboard.html' %}
 {% load static %}
+{% load l10n %}
 
 {% block dashboard_content %}
 <div class="container-fluid">
@@ -127,13 +128,15 @@
                         <tbody id="members-table-body">
                             {% for form in member_formset %}
                             <tr class="member-row" data-form-index="{{ forloop.counter0 }}">
-                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td class="text-center">
+                                    {{ form.id }}  {# Django formset management field #}
+                                    {{ form.MEMBERID }}  {# Hidden field for MEMBERID - will be auto-generated if empty #}
+                                    <input type="hidden" name="{{ form.MEMBER_NUM.html_name }}" value="{{ form.MEMBER_NUM.value|default:forloop.counter }}" class="member-num-input">
+                                    <input type="hidden" name="{{ form.CHILD_ORDER.html_name }}" value="{{ form.CHILD_ORDER.value|default:'' }}" class="child-order-input">
+                                    {{ forloop.counter }}
+                                </td>
                                 <td>
-                                    <!-- Hidden fields -->
-                                    <input type="hidden" name="{{ form.MEMBER_NUM.name }}" value="{{ form.MEMBER_NUM.value|default:forloop.counter }}" class="member-num-input">
-                                    <input type="hidden" name="{{ form.CHILD_ORDER.name }}" value="{{ form.CHILD_ORDER.value|default:'' }}" class="child-order-input">
-                                    
-                                    <select class="form-select form-select-sm relationship-select" name="{{ form.RELATIONSHIP.name }}">
+                                    <select class="form-select form-select-sm relationship-select" name="{{ form.RELATIONSHIP.html_name }}" id="{{ form.RELATIONSHIP.id_for_label }}">
                                         <option value="">Chọn mối quan hệ...</option>
                                         <option value="A" {% if form.RELATIONSHIP.value == 'A' %}selected{% endif %}>A. Chủ hộ</option>
                                         <option value="B" {% if form.RELATIONSHIP.value == 'B' %}selected{% endif %}>B. Vợ</option>
@@ -144,16 +147,16 @@
                                         <option value="G" {% if form.RELATIONSHIP.value == 'G' %}selected{% endif %}>G. Khác</option>
                                     </select>
                                 </td>
-                                <td><input type="number" class="form-control form-control-sm text-center" name="{{ form.BIRTH_YEAR.name }}" value="{{ form.BIRTH_YEAR.value|default:'' }}" min="1900" max="{% now 'Y' %}" placeholder="YYYY"></td>
+                                <td>{% localize off %}<input type="text" class="form-control form-control-sm text-center" name="{{ form.BIRTH_YEAR.html_name }}" id="{{ form.BIRTH_YEAR.id_for_label }}" value="{{ form.BIRTH_YEAR.value|default:'' }}" pattern="[0-9]{4}" maxlength="4" placeholder="YYYY">{% endlocalize %}</td>
                                 <td>
-                                    <select class="form-select form-select-sm" name="{{ form.GENDER.name }}">
+                                    <select class="form-select form-select-sm" name="{{ form.GENDER.html_name }}" id="{{ form.GENDER.id_for_label }}">
                                         <option value="">Chọn...</option>
                                         <option value="Male" {% if form.GENDER.value == 'Male' %}selected{% endif %}>Nam</option>
                                         <option value="Female" {% if form.GENDER.value == 'Female' %}selected{% endif %}>Nữ</option>
                                     </select>
                                 </td>
                                 <td class="text-center">
-                                    <input type="checkbox" class="form-check-input" name="{{ form.ISRESPONDENT.name }}" value="1" {% if form.ISRESPONDENT.value %}checked{% endif %}>
+                                    <input type="checkbox" class="form-check-input" name="{{ form.ISRESPONDENT.html_name }}" id="{{ form.ISRESPONDENT.id_for_label }}" value="1" {% if form.ISRESPONDENT.value %}checked{% endif %}>
                                 </td>
                             </tr>
                             {% endfor %}
