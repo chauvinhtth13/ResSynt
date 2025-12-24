@@ -3,6 +3,8 @@
 """
 Individual Case Views for Study 44EN
 Handles Individual CRUD operations
+
+REFACTORED: Renamed individual_edit → individual_update for consistency
 """
 
 import logging
@@ -30,6 +32,10 @@ def set_audit_metadata(instance, user):
         instance.last_modified_by_username = user.username
 
 
+# ==========================================
+# LIST VIEW
+# ==========================================
+
 @login_required
 def individual_list(request):
     """
@@ -39,17 +45,22 @@ def individual_list(request):
     return individual_list(request)
 
 
+# ==========================================
+# DETAIL VIEW
+# ==========================================
+
 @login_required
 def individual_detail(request, subjectid):
     """
     View individual details with all related data
     """
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
+    # Find by MEMBER.MEMBERID (which is the SUBJECTID)
+    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
     
     # Get related counts
-    exposure_count = individual.exposures.count() if hasattr(individual, 'exposures') else 0
-    followup_count = individual.followups.count() if hasattr(individual, 'followups') else 0
+    exposure_count = 1 if hasattr(individual, 'exposure') and individual.exposure else 0
+    followup_count = individual.follow_ups.count() if hasattr(individual, 'follow_ups') else 0
     sample_count = individual.samples.count() if hasattr(individual, 'samples') else 0
     
     context = {
@@ -59,15 +70,26 @@ def individual_detail(request, subjectid):
         'sample_count': sample_count,
     }
     
-    return render(request, 'studies/study_44en/individual/detail.html', context)
+    return render(request, 'studies/study_44en/CRF/individual/detail.html', context)
 
+
+# ==========================================
+# CREATE VIEW
+# ==========================================
 
 @login_required
 def individual_create(request):
     """
-    Create new individual
+    CREATE new individual
     """
+    logger.info("=" * 80)
+    logger.info("=== 🌱 INDIVIDUAL CREATE START ===")
+    logger.info("=" * 80)
+    logger.info(f"👤 User: {request.user.username}, Method: {request.method}")
+    
     if request.method == 'POST':
+        logger.info("💾 POST REQUEST - Processing creation...")
+        
         individual_form = IndividualForm(request.POST)
         
         if individual_form.is_valid():
@@ -78,46 +100,70 @@ def individual_create(request):
                     set_audit_metadata(individual, request.user)
                     individual.save()
                     
-                    logger.info(f"Created individual: {individual.SUBJECTID}")
+                    subjectid = individual.MEMBER.MEMBERID if individual.MEMBER else 'N/A'
+                    logger.info(f"✅ Created individual: {subjectid}")
+                    logger.info("=" * 80)
+                    logger.info("=== ✅ INDIVIDUAL CREATE SUCCESS ===")
+                    logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'Individual {individual.SUBJECTID} created successfully.'
+                        f'✅ Individual {subjectid} created successfully.'
                     )
-                    return redirect('study_44en:individual:detail', subjectid=individual.SUBJECTID)
+                    return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
-                logger.error(f"Error creating individual: {e}", exc_info=True)
+                logger.error(f"❌ Error creating individual: {e}", exc_info=True)
                 messages.error(request, f'Error saving individual: {str(e)}')
         else:
             # Log validation errors
+            logger.error("❌ Form validation failed")
             if individual_form.errors:
-                logger.warning(f"Individual form errors: {individual_form.errors}")
+                logger.error(f"Individual form errors: {individual_form.errors}")
             
-            messages.error(request, 'Please check the form for errors.')
+            messages.error(request, '❌ Please check the form for errors')
     
     else:
         # GET - Show blank form
+        logger.info("📄 GET REQUEST - Showing blank form...")
         initial_data = {'ENR_DATE': date.today()}
         individual_form = IndividualForm(initial=initial_data)
+        logger.info("✅ Blank form initialized")
     
     context = {
         'individual_form': individual_form,
         'is_create': True,
+        'is_readonly': False,
     }
     
-    return render(request, 'studies/study_44en/individual/form.html', context)
+    logger.info("=" * 80)
+    logger.info("=== 🌱 INDIVIDUAL CREATE END - Rendering template ===")
+    logger.info("=" * 80)
+    
+    return render(request, 'studies/study_44en/CRF/individual/form.html', context)
 
+
+# ==========================================
+# UPDATE VIEW
+# ==========================================
 
 @login_required
-def individual_edit(request, subjectid):
+def individual_update(request, subjectid):
     """
-    Edit existing individual
+    UPDATE existing individual
     """
+    logger.info("=" * 80)
+    logger.info("=== 📝 INDIVIDUAL UPDATE START ===")
+    logger.info("=" * 80)
+    logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
+    
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    logger.info(f"✅ Found individual: {subjectid}")
     
     if request.method == 'POST':
+        logger.info("💾 POST REQUEST - Processing update...")
+        
         individual_form = IndividualForm(request.POST, instance=individual)
         
         if individual_form.is_valid():
@@ -128,40 +174,105 @@ def individual_edit(request, subjectid):
                     set_audit_metadata(individual, request.user)
                     individual.save()
                     
-                    logger.info(f"Updated individual: {individual.SUBJECTID}")
+                    subjectid = individual.MEMBER.MEMBERID if individual.MEMBER else 'N/A'
+                    logger.info(f"✅ Updated individual: {subjectid}")
+                    logger.info("=" * 80)
+                    logger.info("=== ✅ INDIVIDUAL UPDATE SUCCESS ===")
+                    logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'Individual {individual.SUBJECTID} updated successfully.'
+                        f'✅ Individual {subjectid} updated successfully.'
                     )
-                    return redirect('study_44en:individual:detail', subjectid=individual.SUBJECTID)
+                    return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
-                logger.error(f"Error updating individual: {e}", exc_info=True)
+                logger.error(f"❌ Error updating individual: {e}", exc_info=True)
                 messages.error(request, f'Error updating individual: {str(e)}')
         else:
             # Log validation errors
+            logger.error("❌ Form validation failed")
             if individual_form.errors:
-                logger.warning(f"Individual form errors: {individual_form.errors}")
+                logger.error(f"Individual form errors: {individual_form.errors}")
             
-            messages.error(request, 'Please check the form for errors.')
+            messages.error(request, '❌ Please check the form for errors')
     
     else:
         # GET - Show form with data
+        logger.info("📄 GET REQUEST - Loading existing data...")
         individual_form = IndividualForm(instance=individual)
+        logger.info("✅ Form initialized with existing data")
     
     context = {
         'individual_form': individual_form,
         'individual': individual,
         'is_create': False,
+        'is_readonly': False,
     }
     
-    return render(request, 'studies/study_44en/individual/form.html', context)
+    logger.info("=" * 80)
+    logger.info("=== 📝 INDIVIDUAL UPDATE END - Rendering template ===")
+    logger.info("=" * 80)
+    
+    return render(request, 'studies/study_44en/CRF/individual/form.html', context)
+
+
+# ==========================================
+# VIEW (READ-ONLY)
+# ==========================================
+
+@login_required
+def individual_view(request, subjectid):
+    """
+    VIEW individual (read-only)
+    """
+    logger.info("=" * 80)
+    logger.info("=== 👁️ INDIVIDUAL VIEW (READ-ONLY) ===")
+    logger.info("=" * 80)
+    
+    queryset = get_filtered_individuals(request.user)
+    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    
+    # Create readonly form
+    individual_form = IndividualForm(instance=individual)
+    
+    # Make form readonly
+    for field in individual_form.fields.values():
+        field.disabled = True
+    
+    context = {
+        'individual_form': individual_form,
+        'individual': individual,
+        'is_create': False,
+        'is_readonly': True,
+    }
+    
+    logger.info("=" * 80)
+    logger.info("=== 👁️ INDIVIDUAL VIEW END - Rendering template ===")
+    logger.info("=" * 80)
+    
+    return render(request, 'studies/study_44en/CRF/individual/form.html', context)
+
+
+# ==========================================
+# DEPRECATED ALIAS
+# ==========================================
+
+@login_required
+def individual_edit(request, subjectid):
+    """
+    DEPRECATED: Alias for individual_update
+    Kept for backward compatibility
+    """
+    logger.warning(f"⚠️ Using deprecated 'individual_edit' - redirecting to 'individual_update'")
+    return individual_update(request, subjectid)
 
 
 __all__ = [
     'individual_list',
     'individual_detail',
     'individual_create',
-    'individual_edit',
+    'individual_update',  # ✅ NEW: Renamed from individual_edit
+    'individual_view',    # ✅ NEW: Read-only view
+    'individual_edit',    # Deprecated alias
 ]

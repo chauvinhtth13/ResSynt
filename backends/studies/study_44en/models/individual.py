@@ -161,9 +161,16 @@ class Individual(AuditFieldsMixin):
         return None
     
     @property
+    def SUBJECTID(self):
+        """Get Subject ID from member relationship (MEMBERID)."""
+        if hasattr(self, 'MEMBER') and self.MEMBER:
+            return self.MEMBER.MEMBERID
+        return None
+    
+    @property
     def full_id(self):
         """44EN-001-1"""
-        return self.MEMBERID
+        return self.SUBJECTID
     
     @cached_property
     def has_follow_up_data(self):
@@ -225,7 +232,7 @@ class Individual(AuditFieldsMixin):
             raise ValidationError(errors)
     
     def __str__(self):
-        return f"{self.MEMBERID}"
+        return f"{self.MEMBER.MEMBERID}"
 
 
 # ==========================================

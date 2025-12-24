@@ -38,6 +38,35 @@ def get_filtered_individuals(user):
 
 
 @login_required
+def dashboard(request):
+    """
+    Dashboard view for Study 44EN
+    """
+    # Get summary statistics
+    total_households = HH_CASE.objects.count()
+    total_members = HH_Member.objects.count()
+    total_individuals = Individual.objects.count()
+    total_followups = Individual_FollowUp.objects.count()
+    total_samples = Individual_Sample.objects.count()
+    
+    # Get recent data
+    recent_households = HH_CASE.objects.order_by('-last_modified_at')[:5]
+    recent_individuals = Individual.objects.select_related('MEMBER').order_by('-last_modified_at')[:5]
+    
+    context = {
+        'total_households': total_households,
+        'total_members': total_members,
+        'total_individuals': total_individuals,
+        'total_followups': total_followups,
+        'total_samples': total_samples,
+        'recent_households': recent_households,
+        'recent_individuals': recent_individuals,
+    }
+    
+    return render(request, 'studies/study_44en/dashboard.html', context)
+
+
+@login_required
 def household_list(request):
     """
     List all households with search and filter
@@ -82,20 +111,31 @@ def individual_list(request):
     """
     List all individuals with search and filter
     """
-    queryset = get_filtered_individuals(request.user)
+    queryset = get_filtered_individuals(request.user).select_related('MEMBER', 'MEMBER__HHID')
     
     # Search functionality
     search_query = request.GET.get('search', '')
     if search_query:
         queryset = queryset.filter(
-            Q(SUBJECTID__icontains=search_query) |
-            Q(SITEID__icontains=search_query) |
-            Q(HHID__icontains=search_query)
+            Q(MEMBER__MEMBERID__icontains=search_query) |
+            Q(INITIALS__icontains=search_query) |
+            Q(MEMBER__FIRST_NAME__icontains=search_query) |
+            Q(MEMBER__LAST_NAME__icontains=search_query)
         )
     
+    # Annotate with counts
+    queryset = queryset.annotate(
+        followup_count=Count('follow_ups', distinct=True),
+        sample_count=Count('samples', distinct=True)
+    )
+    
     # Ordering
-    order_by = request.GET.get('order_by', '-ENR_DATE')
+    order_by = request.GET.get('order_by', '-last_modified_at')
     queryset = queryset.order_by(order_by)
+    
+    # Calculate summary stats
+    total_count = queryset.count()
+    exposure_count = queryset.filter(exposure__isnull=False).count()
     
     # Pagination
     paginator = Paginator(queryset, 25)
@@ -108,13 +148,20 @@ def individual_list(request):
     except EmptyPage:
         individuals = paginator.page(paginator.num_pages)
     
+    # Add has_exposure to each individual
+    for individual in individuals:
+        individual.has_exposure = hasattr(individual, 'exposure') and individual.exposure is not None
+    
     context = {
         'individuals': individuals,
         'search_query': search_query,
-        'total_count': queryset.count(),
+        'total_count': total_count,
+        'exposure_count': exposure_count,
+        'followup_count': queryset.filter(followup_count__gt=0).count(),
+        'sample_count': queryset.filter(sample_count__gt=0).count(),
     }
     
-    return render(request, 'studies/study_44en/CRF/base/individual_list.html', context)
+    return render(request, 'studies/study_44en/CRF/individual/list.html', context)
 
 def get_household_with_related(household_id):
     """
@@ -146,12 +193,14 @@ def get_individual_with_related(individual_id):
         'travel_history',
         'symptoms',
         'food_frequencies',
-        'followups',
+        'follow_ups',
         'samples'
     ).get(pk=individual_id)
 
 
 __all__ = [
+    'dashboard',
+    'get_filtered_households',
     'get_filtered_individuals',
     'household_list',
     'individual_list',

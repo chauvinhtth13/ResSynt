@@ -1,21 +1,23 @@
 # backends/api/studies/study_44en/urls.py
-
 """
-URL Configuration for Study 44EN
+Main URL Configuration for Study 44EN
 """
 
 from django.urls import path, include
-from django.views.generic import RedirectView
 
+# Import views
+from .views import views_base
+
+# App name for namespacing
 app_name = 'study_44en'
 
 urlpatterns = [
-    # Dashboard
-    path('', include('backends.api.studies.study_44en.views.urls_dashboard')),
+    # ===== DASHBOARD =====
+    path('dashboard/', views_base.dashboard, name='dashboard'),
     
-    # Household views
-    path('household/', include('backends.api.studies.study_44en.views.household.urls')),
+    # ===== HOUSEHOLD MODULE =====
+    path('household/', include(('backends.api.studies.study_44en.views.household.urls', 'household'))),
     
-    # Individual views
-    path('individual/', include('backends.api.studies.study_44en.views.individual.urls')),
+    # ===== INDIVIDUAL MODULE =====
+    path('individual/', include(('backends.api.studies.study_44en.views.individual.urls', 'individual'))),
 ]

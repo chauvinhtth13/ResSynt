@@ -3,6 +3,8 @@
 """
 Individual Follow-up Views for Study 44EN
 Handles follow-up visits with symptoms and hospitalization data
+
+REFACTORED: Separated UPDATE and VIEW (split from detail)
 """
 
 import logging
@@ -34,18 +36,34 @@ def set_audit_metadata(instance, user):
         instance.last_modified_by_username = user.username
 
 
+def make_form_readonly(form):
+    """Make all form fields readonly"""
+    for field in form.fields.values():
+        field.disabled = True
+
+
+# ==========================================
+# LIST VIEW
+# ==========================================
+
 @login_required
 def individual_followup_list(request, subjectid):
     """
     List all follow-ups for an individual
     """
+    logger.info("=" * 80)
+    logger.info("=== 📋 INDIVIDUAL FOLLOW-UP LIST ===")
+    logger.info("=" * 80)
+    
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
     
     # Get all follow-ups
     followups = Individual_FollowUp.objects.filter(
         SUBJECTID=individual
     ).order_by('-ASSESSMENT_DATE')
+    
+    logger.info(f"Found {followups.count()} follow-ups for {subjectid}")
     
     context = {
         'individual': individual,
@@ -53,18 +71,33 @@ def individual_followup_list(request, subjectid):
         'total_followups': followups.count(),
     }
     
-    return render(request, 'studies/study_44en/individual/followup_list.html', context)
+    return render(request, 'studies/study_44en/CRF/individual/followup_list.html', context)
 
+
+# ==========================================
+# CREATE VIEW
+# ==========================================
 
 @login_required
 def individual_followup_create(request, subjectid):
     """
-    Create new follow-up visit
+    CREATE new follow-up visit
     """
-    queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
+    logger.info("=" * 80)
+    logger.info("=== 🌱 INDIVIDUAL FOLLOW-UP CREATE START ===")
+    logger.info("=" * 80)
+    logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     
+    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    queryset = get_filtered_individuals(request.user)
+    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    
+    # POST - Create new follow-up
     if request.method == 'POST':
+        logger.info("=" * 80)
+        logger.info("💾 POST REQUEST - Processing creation...")
+        logger.info("=" * 80)
+        
         followup_form = Individual_FollowUpForm(request.POST)
         symptom_formset = Individual_SymptomFormSet(
             request.POST, 
@@ -84,13 +117,14 @@ def individual_followup_create(request, subjectid):
         ]):
             try:
                 with transaction.atomic():
+                    logger.info("📝 Saving follow-up data...")
+                    
                     # Save follow-up
                     followup = followup_form.save(commit=False)
                     followup.SUBJECTID = individual
                     set_audit_metadata(followup, request.user)
                     followup.save()
-                    
-                    logger.info(f"Created follow-up {followup.id} for {subjectid}")
+                    logger.info(f"✅ Created follow-up {followup.id} for {subjectid}")
                     
                     # Save symptoms
                     symptoms = symptom_formset.save(commit=False)
@@ -98,7 +132,6 @@ def individual_followup_create(request, subjectid):
                         symptom.SUBJECTID = followup
                         set_audit_metadata(symptom, request.user)
                         symptom.save()
-                    
                     logger.info(f"Saved {len(symptoms)} symptoms")
                     
                     # Save hospitalizations
@@ -107,31 +140,39 @@ def individual_followup_create(request, subjectid):
                         hosp.FOLLOWUP_ID = followup
                         set_audit_metadata(hosp, request.user)
                         hosp.save()
-                    
                     logger.info(f"Saved {len(hospitalizations)} hospitalizations")
+                    
+                    logger.info("=" * 80)
+                    logger.info("=== ✅ FOLLOW-UP CREATE SUCCESS ===")
+                    logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'Follow-up visit created successfully.'
+                        f'✅ Follow-up visit created successfully'
                     )
                     return redirect('study_44en:individual:followup_list', subjectid=subjectid)
                     
             except Exception as e:
-                logger.error(f"Error creating follow-up: {e}", exc_info=True)
+                logger.error(f"❌ Error creating follow-up: {e}", exc_info=True)
                 messages.error(request, f'Error saving follow-up: {str(e)}')
         else:
             # Log validation errors
+            logger.error("❌ Form validation failed")
             if followup_form.errors:
-                logger.warning(f"Follow-up form errors: {followup_form.errors}")
+                logger.error(f"Follow-up form errors: {followup_form.errors}")
             if symptom_formset.errors:
-                logger.warning(f"Symptom formset errors: {symptom_formset.errors}")
+                logger.error(f"Symptom formset errors: {symptom_formset.errors}")
             if hospitalization_formset.errors:
-                logger.warning(f"Hospitalization formset errors: {hospitalization_formset.errors}")
+                logger.error(f"Hospitalization formset errors: {hospitalization_formset.errors}")
             
-            messages.error(request, 'Please check the form for errors.')
+            messages.error(request, '❌ Please check the form for errors')
     
+    # GET - Show blank form
     else:
-        # GET - Show blank form
+        logger.info("=" * 80)
+        logger.info("📄 GET REQUEST - Showing blank form...")
+        logger.info("=" * 80)
+        
         initial_data = {'ASSESSMENT_DATE': date.today()}
         followup_form = Individual_FollowUpForm(initial=initial_data)
         symptom_formset = Individual_SymptomFormSet(
@@ -142,6 +183,7 @@ def individual_followup_create(request, subjectid):
             instance=None,
             prefix='hospitalizations'
         )
+        logger.info("✅ Blank forms initialized")
     
     context = {
         'individual': individual,
@@ -149,26 +191,48 @@ def individual_followup_create(request, subjectid):
         'symptom_formset': symptom_formset,
         'hospitalization_formset': hospitalization_formset,
         'is_create': True,
+        'is_readonly': False,
     }
     
-    return render(request, 'studies/study_44en/individual/followup_form.html', context)
+    logger.info("=" * 80)
+    logger.info("=== 🌱 FOLLOW-UP CREATE END - Rendering template ===")
+    logger.info("=" * 80)
+    
+    return render(request, 'studies/study_44en/CRF/individual/followup_form.html', context)
 
+
+# ==========================================
+# UPDATE VIEW
+# ==========================================
 
 @login_required
-def individual_followup_detail(request, subjectid, followup_id):
+def individual_followup_update(request, subjectid, followup_id):
     """
-    View/edit follow-up visit details
+    UPDATE existing follow-up visit
     """
-    queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
+    logger.info("=" * 80)
+    logger.info("=== 📝 INDIVIDUAL FOLLOW-UP UPDATE START ===")
+    logger.info("=" * 80)
+    logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, FU ID: {followup_id}, Method: {request.method}")
     
+    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    queryset = get_filtered_individuals(request.user)
+    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    
+    # Get follow-up (must exist for update)
     followup = get_object_or_404(
         Individual_FollowUp,
         id=followup_id,
         SUBJECTID=individual
     )
+    logger.info(f"✅ Found follow-up {followup_id}")
     
+    # POST - Update follow-up
     if request.method == 'POST':
+        logger.info("=" * 80)
+        logger.info("💾 POST REQUEST - Processing update...")
+        logger.info("=" * 80)
+        
         followup_form = Individual_FollowUpForm(request.POST, instance=followup)
         symptom_formset = Individual_SymptomFormSet(
             request.POST,
@@ -188,12 +252,13 @@ def individual_followup_detail(request, subjectid, followup_id):
         ]):
             try:
                 with transaction.atomic():
+                    logger.info("📝 Updating follow-up data...")
+                    
                     # Update follow-up
                     followup = followup_form.save(commit=False)
                     set_audit_metadata(followup, request.user)
                     followup.save()
-                    
-                    logger.info(f"Updated follow-up {followup.id}")
+                    logger.info(f"✅ Updated follow-up {followup.id}")
                     
                     # Save symptoms
                     symptoms = symptom_formset.save(commit=False)
@@ -221,24 +286,33 @@ def individual_followup_detail(request, subjectid, followup_id):
                     
                     logger.info(f"Saved {len(hospitalizations)} hospitalizations")
                     
+                    logger.info("=" * 80)
+                    logger.info("=== ✅ FOLLOW-UP UPDATE SUCCESS ===")
+                    logger.info("=" * 80)
+                    
                     messages.success(
                         request,
-                        f'Follow-up visit updated successfully.'
+                        f'✅ Follow-up visit updated successfully'
                     )
                     return redirect('study_44en:individual:followup_list', subjectid=subjectid)
                     
             except Exception as e:
-                logger.error(f"Error updating follow-up: {e}", exc_info=True)
+                logger.error(f"❌ Error updating follow-up: {e}", exc_info=True)
                 messages.error(request, f'Error updating follow-up: {str(e)}')
         else:
             # Log validation errors
+            logger.error("❌ Form validation failed")
             if followup_form.errors:
-                logger.warning(f"Follow-up form errors: {followup_form.errors}")
+                logger.error(f"Follow-up form errors: {followup_form.errors}")
             
-            messages.error(request, 'Please check the form for errors.')
+            messages.error(request, '❌ Please check the form for errors')
     
+    # GET - Show form with data
     else:
-        # GET - Show form with data
+        logger.info("=" * 80)
+        logger.info("📄 GET REQUEST - Loading existing data...")
+        logger.info("=" * 80)
+        
         followup_form = Individual_FollowUpForm(instance=followup)
         symptom_formset = Individual_SymptomFormSet(
             instance=followup,
@@ -248,6 +322,7 @@ def individual_followup_detail(request, subjectid, followup_id):
             instance=followup,
             prefix='hospitalizations'
         )
+        logger.info("✅ Forms initialized with existing data")
     
     context = {
         'individual': individual,
@@ -256,13 +331,95 @@ def individual_followup_detail(request, subjectid, followup_id):
         'symptom_formset': symptom_formset,
         'hospitalization_formset': hospitalization_formset,
         'is_create': False,
+        'is_readonly': False,
     }
     
-    return render(request, 'studies/study_44en/individual/followup_form.html', context)
+    logger.info("=" * 80)
+    logger.info("=== 📝 FOLLOW-UP UPDATE END - Rendering template ===")
+    logger.info("=" * 80)
+    
+    return render(request, 'studies/study_44en/CRF/individual/followup_form.html', context)
+
+
+# ==========================================
+# VIEW (READ-ONLY)
+# ==========================================
+
+@login_required
+def individual_followup_view(request, subjectid, followup_id):
+    """
+    VIEW follow-up visit (read-only)
+    """
+    logger.info("=" * 80)
+    logger.info("=== 👁️ INDIVIDUAL FOLLOW-UP VIEW (READ-ONLY) ===")
+    logger.info("=" * 80)
+    
+    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    queryset = get_filtered_individuals(request.user)
+    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    
+    # Get follow-up
+    followup = get_object_or_404(
+        Individual_FollowUp,
+        id=followup_id,
+        SUBJECTID=individual
+    )
+    
+    # Create readonly forms
+    followup_form = Individual_FollowUpForm(instance=followup)
+    symptom_formset = Individual_SymptomFormSet(
+        instance=followup,
+        prefix='symptoms'
+    )
+    hospitalization_formset = Individual_FollowUp_HospitalizationFormSet(
+        instance=followup,
+        prefix='hospitalizations'
+    )
+    
+    # Make all forms readonly
+    make_form_readonly(followup_form)
+    for form in symptom_formset:
+        make_form_readonly(form)
+    for form in hospitalization_formset:
+        make_form_readonly(form)
+    
+    context = {
+        'individual': individual,
+        'followup': followup,
+        'followup_form': followup_form,
+        'symptom_formset': symptom_formset,
+        'hospitalization_formset': hospitalization_formset,
+        'is_create': False,
+        'is_readonly': True,
+    }
+    
+    logger.info("=" * 80)
+    logger.info("=== 👁️ FOLLOW-UP VIEW END - Rendering template ===")
+    logger.info("=" * 80)
+    
+    return render(request, 'studies/study_44en/CRF/individual/followup_form.html', context)
+
+
+# ==========================================
+# DEPRECATED - Keep for backward compatibility
+# ==========================================
+
+@login_required
+def individual_followup_detail(request, subjectid, followup_id):
+    """
+    DEPRECATED: Legacy view that handled both view and update
+    Redirects to update view
+    
+    This is kept for backward compatibility with old URLs
+    """
+    logger.warning(f"⚠️ Using deprecated 'individual_followup_detail' - redirecting to 'individual_followup_update'")
+    return individual_followup_update(request, subjectid, followup_id)
 
 
 __all__ = [
     'individual_followup_list',
     'individual_followup_create',
-    'individual_followup_detail',
+    'individual_followup_update',   # ✅ NEW: Split from detail
+    'individual_followup_view',      # ✅ NEW: Split from detail
+    'individual_followup_detail',    # Deprecated alias
 ]

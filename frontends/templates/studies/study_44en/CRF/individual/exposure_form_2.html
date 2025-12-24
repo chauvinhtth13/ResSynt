@@ -1,0 +1,368 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<main class="container py-4" style="max-width: 1000px;">
+    
+    <h4 class="text-center fw-bold mb-4">EXPOSURE FACTORS (EXP 2/3)</h4>
+
+    {% if individual %}
+    <div class="mb-3 text-center">
+        <span class="badge bg-primary fs-6">Subject ID: {{ individual.SUBJECTID }}</span>
+    </div>
+    {% endif %}
+
+    <hr class="my-4">
+
+    <form method="post" action="">
+        {% csrf_token %}
+        
+        <!-- Question 1: Vaccination History -->
+        <div class="mb-5">
+            <p class="fw-bold mb-2">1. Have you ever been vaccinated before?</p>
+            <div class="ms-md-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="vaccination_history" id="vax_never" value="never" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="vax_never">I have never been vaccinated</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="vaccination_history" id="vax_unsure" value="unsure" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="vax_unsure">I'm not sure if I have been vaccinated</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="vaccination_history" id="vax_unknown" value="unknown_type" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="vax_unknown">I have been vaccinated but don't remember which vaccines</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="vaccination_history" id="vax_known" value="known" data-bs-toggle="collapse" data-bs-target="#vaccineList" aria-expanded="false" aria-controls="vaccineList" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="vax_known">I have been vaccinated for some diseases (check below):</label>
+                </div>
+            </div>
+
+            <div class="collapse ms-md-4 mt-3" id="vaccineList">
+                <div class="card card-body">
+                    <p class="fw-bold mb-3">Please select all vaccines you have received:</p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_bcg" id="vax_bcg" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_bcg">BCG (Tuberculosis)</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_hepa" id="vax_hepa" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_hepa">Hepatitis A</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_hepb" id="vax_hepb" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_hepb">Hepatitis B</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_diphtheria" id="vax_diphtheria" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_diphtheria">Diphtheria</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_tetanus" id="vax_tetanus" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_tetanus">Tetanus</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_pertussis" id="vax_pertussis" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_pertussis">Pertussis (Whooping cough)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_flu" id="vax_flu" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_flu">Influenza</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_hib" id="vax_hib" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_hib">Haemophilus influenzae type B</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_polio" id="vax_polio" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_polio">Polio</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_measles" id="vax_measles" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_measles">Measles</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_mumps" id="vax_mumps" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_mumps">Mumps</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_rabies" id="vax_rabies" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_rabies">Rabies</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_rubella" id="vax_rubella" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_rubella">Rubella</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_chickenpox" id="vax_chickenpox" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_chickenpox">Chickenpox (Varicella)</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_je" id="vax_je" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_je">Japanese Encephalitis</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_meningitis" id="vax_meningitis" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_meningitis">Meningitis</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_rotavirus" id="vax_rotavirus" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_rotavirus">Rotavirus</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_pneumococcal" id="vax_pneumococcal" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_pneumococcal">Pneumococcal</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="d-flex align-items-center">
+                            <div class="form-check mb-0 me-2">
+                                <input class="form-check-input" type="checkbox" name="vaccine_other" id="vax_other" {% if is_readonly %}disabled{% endif %}>
+                                <label class="form-check-label" for="vax_other">Other, specify:</label>
+                            </div>
+                            <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 w-50" name="vaccine_other_text" {% if is_readonly %}disabled{% endif %}>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question 2: Hospitalization History -->
+        <div class="mb-5">
+            <p class="fw-bold mb-2">2. Have you been hospitalized at any medical facility in the past 3 months?</p>
+            <div class="ms-md-3">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="has_hospitalization" id="hosp_yes" value="yes" data-bs-toggle="collapse" data-bs-target="#hospitalizationDetails" aria-expanded="false" aria-controls="hospitalizationDetails" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="hosp_yes">Yes</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="has_hospitalization" id="hosp_no" value="no" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="hosp_no">No</label>
+                </div>
+            </div>
+
+            <div class="collapse ms-md-4 mt-3" id="hospitalizationDetails">
+                <div class="card card-body">
+                    <p class="fw-bold mb-3">If Yes, please select all that apply:</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%;">Facility Type</th>
+                                    <th class="text-center">1-3 days</th>
+                                    <th class="text-center">3-5 days</th>
+                                    <th class="text-center">5-7 days</th>
+                                    <th class="text-center">Over 7 days</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="hosp_central" id="hosp_central" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="hosp_central">Central Hospital</label>
+                                        </div>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="hosp_central_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_central_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_central_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_central_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="hosp_city" id="hosp_city" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="hosp_city">City Hospital</label>
+                                        </div>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="hosp_city_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_city_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_city_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_city_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="hosp_district" id="hosp_district" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="hosp_district">District Hospital</label>
+                                        </div>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="hosp_district_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_district_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_district_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_district_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="hosp_private" id="hosp_private" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="hosp_private">Private Hospital</label>
+                                        </div>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="hosp_private_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_private_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_private_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_private_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="hosp_other" id="hosp_other" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="hosp_other">Other</label>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 mt-1" name="hosp_other_text" placeholder="Specify..." {% if is_readonly %}disabled{% endif %}>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="hosp_other_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_other_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_other_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="hosp_other_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question 3: Medication Use -->
+        <div class="mb-5">
+            <p class="fw-bold mb-2">3. Have you used any of the following medications in the past 3 months?</p>
+            <div class="ms-md-3">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="has_medication" id="med_yes" value="yes" data-bs-toggle="collapse" data-bs-target="#medicationDetails" aria-expanded="false" aria-controls="medicationDetails" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="med_yes">Yes</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="has_medication" id="med_no" value="no" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="med_no">No</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="has_medication" id="med_unknown" value="unknown" {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label" for="med_unknown">Don't know</label>
+                </div>
+            </div>
+
+            <div class="collapse ms-md-4 mt-3" id="medicationDetails">
+                <div class="card card-body">
+                    <p class="fw-bold mb-3">If Yes, please select all that apply:</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 40%;">Medication Type</th>
+                                    <th class="text-center">1-3 days</th>
+                                    <th class="text-center">3-5 days</th>
+                                    <th class="text-center">5-7 days</th>
+                                    <th class="text-center">Over 7 days</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="med_antibiotics_exp2" id="med_antibiotics_exp2" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="med_antibiotics_exp2">Antibiotics</label>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm mt-1" name="med_antibiotics_type_exp2" placeholder="Specify type/name..." {% if is_readonly %}disabled{% endif %}>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_antibiotics_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="med_steroids_exp2" id="med_steroids_exp2" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="med_steroids_exp2">Steroids/Corticosteroids</label>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm mt-1" name="med_steroids_type_exp2" placeholder="Specify type/name..." {% if is_readonly %}disabled{% endif %}>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="med_steroids_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_steroids_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_steroids_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_steroids_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="med_pain_exp2" id="med_pain_exp2" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="med_pain_exp2">Pain relievers (Paracetamol, Ibuprofen, etc.)</label>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm mt-1" name="med_pain_type_exp2" placeholder="Specify type/name..." {% if is_readonly %}disabled{% endif %}>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="med_pain_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_pain_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_pain_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_pain_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="med_traditional_exp2" id="med_traditional_exp2" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="med_traditional_exp2">Traditional medicine/Herbal remedies</label>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm mt-1" name="med_traditional_type_exp2" placeholder="Specify type/name..." {% if is_readonly %}disabled{% endif %}>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="med_traditional_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_traditional_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_traditional_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_traditional_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="med_other_exp2" id="med_other_exp2" {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="med_other_exp2">Other medications</label>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm mt-1" name="med_other_type_exp2" placeholder="Specify type/name..." {% if is_readonly %}disabled{% endif %}>
+                                    </td>
+                                    <td class="text-center"><input type="radio" name="med_other_duration" value="1-3" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_other_duration" value="3-5" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_other_duration" value="5-7" {% if is_readonly %}disabled{% endif %}></td>
+                                    <td class="text-center"><input type="radio" name="med_other_duration" value="7+" {% if is_readonly %}disabled{% endif %}></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Information -->
+        <div class="row mt-5">
+            <div class="col-6 text-center">
+                <label class="fw-bold d-block">Completed by:</label>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completed_by" {% if is_readonly %}disabled{% endif %}>
+                <div class="fst-italic small text-muted mt-1">(Signature and Initials)</div>
+            </div>
+            <div class="col-6 text-center">
+                <label class="fw-bold d-block">Date of completion:</label>
+                <input type="date" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" name="completion_date" {% if is_readonly %}disabled{% endif %}>
+                <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-5 text-center">
+            {% if not is_readonly %}
+            <button type="submit" class="btn btn-success btn-lg px-5">Submit Form</button>
+            {% endif %}
+            <a href="{% url 'study_44en:individual:detail' subjectid=individual.SUBJECTID %}" 
+               class="btn btn-secondary btn-lg px-5 {% if not is_readonly %}ms-3{% endif %}">
+               {% if is_readonly %}Back{% else %}Cancel{% endif %}
+            </a>
+        </div>
+
+    </form>
+
+</main>
+{% endblock %}

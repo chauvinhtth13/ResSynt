@@ -5,7 +5,15 @@
 <div class="container-fluid py-4">
     <div class="card">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0 text-center">B – EXPOSURE FACTORS (EXP)</h4>
+            <h4 class="mb-0 text-center">
+                {% if is_create %}
+                    🌱 TẠO MỚI - B – EXPOSURE FACTORS (EXP)
+                {% elif is_readonly %}
+                    👁️ XEM - B – EXPOSURE FACTORS (EXP)
+                {% else %}
+                    📝 CẬP NHẬT - B – EXPOSURE FACTORS (EXP)
+                {% endif %}
+            </h4>
         </div>
         <div class="card-body">
             <!-- Error Display -->
@@ -35,7 +43,7 @@
                 <span class="badge bg-info text-dark fs-5">{{ household.HHID }}</span>
             </div>
 
-            <form method="post" action="">
+            <form method="post" action="{% if is_create %}{% url 'study_44en:household:exposure_create' hhid=household.HHID %}{% else %}{% url 'study_44en:household:exposure_update' hhid=household.HHID %}{% endif %}">
                 {% csrf_token %}
                 <input type="hidden" name="HHID" value="{{ household.HHID }}">
     
@@ -537,8 +545,24 @@
 
                 <!-- Submit Buttons -->
                 <div class="mt-5 text-center">
-                    <button type="submit" class="btn btn-success btn-lg px-5 me-2">Lưu Phần B</button>
-                    <a href="{% url 'study_44en:household:detail' hhid=household.HHID %}" class="btn btn-secondary btn-lg px-5">Hủy</a>
+                    {% if not is_readonly %}
+                        <button type="submit" class="btn btn-success btn-lg px-5 me-2">
+                            {% if is_create %}
+                                <i class="bi bi-plus-circle"></i> Tạo Mới Phần B
+                            {% else %}
+                                <i class="bi bi-save"></i> Cập Nhật Phần B
+                            {% endif %}
+                        </button>
+                    {% endif %}
+                    
+                    <a href="{% url 'study_44en:household:detail' hhid=household.HHID %}" 
+                       class="btn btn-secondary btn-lg px-5">
+                        {% if is_readonly %}
+                            <i class="bi bi-arrow-left"></i> Quay Lại
+                        {% else %}
+                            Hủy
+                        {% endif %}
+                    </a>
                 </div>
             </form>
         </div>

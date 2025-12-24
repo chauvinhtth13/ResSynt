@@ -1,0 +1,385 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load l10n %}
+
+{% block dashboard_content %}
+<main class="container py-4" style="max-width: 1000px;">
+    <h4 class="text-center fw-bold mb-4">GENERAL INFORMATION (ENR 1/1)</h4>
+    
+    <!-- Display form errors -->
+    {% if individual_form.errors or individual_form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+        <h5>Form Validation Errors:</h5>
+        {% if individual_form.non_field_errors %}
+        <p><strong>General errors:</strong></p>
+        <ul>
+            {% for error in individual_form.non_field_errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        
+        {% if individual_form.errors %}
+        <p><strong>Individual form errors:</strong></p>
+        <ul>
+            {% for field, errors in individual_form.errors.items %}
+            <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="">
+        {% csrf_token %}
+        
+        {% if individual and individual.SUBJECTID %}
+        <div class="mb-3 text-center">
+            <span class="badge bg-primary fs-6">Subject ID: {{ individual.SUBJECTID }}</span>
+        </div>
+        {% endif %}
+
+        <hr class="my-4">
+        
+        <h4 class="text-center fw-bold mb-4">INDIVIDUAL QUESTIONNAIRE (MEMBERS)</h4>
+
+        <!-- 1. Household Member Selection -->
+        <div class="mb-4">
+            <p class="fw-bold mb-2">1. Select Household Member: <span class="text-danger">*</span></p>
+            <div class="ms-md-3">
+                {{ individual_form.MEMBER }}
+                {% if individual_form.MEMBER.errors %}
+                <div class="text-danger small mt-1">{{ individual_form.MEMBER.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 2. Name Initials -->
+        <div class="mb-3">
+            <div class="d-flex align-items-end">
+                <p class="fw-bold mb-0 me-3">2. Name Initials:</p>
+                <input type="text" name="INITIALS" class="form-control text-center border-0 border-bottom rounded-0 px-1 shadow-none" 
+                       style="width: 150px;" value="{{ individual_form.INITIALS.value|default:'' }}" 
+                       {% if is_readonly %}disabled{% endif %}>
+                {% if individual_form.INITIALS.errors %}
+                <div class="text-danger small ms-2">{{ individual_form.INITIALS.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 3. Date of Birth -->
+        <div class="mb-3">
+            <div class="d-flex align-items-end">
+                <p class="fw-bold mb-0 me-3">3. Date of Birth (dd/mm/yyyy):</p>
+                <input type="date" name="DATE_OF_BIRTH" class="form-control text-center border-0 border-bottom rounded-0 px-1 shadow-none" 
+                       style="width: 200px;" value="{{ individual_form.DATE_OF_BIRTH.value|default:'' }}"
+                       {% if is_readonly %}disabled{% endif %}>
+                {% if individual_form.DATE_OF_BIRTH.errors %}
+                <div class="text-danger small ms-2">{{ individual_form.DATE_OF_BIRTH.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 4. Age (if DOB unknown) -->
+        <div class="mb-3">
+            <div class="d-flex align-items-end">
+                <p class="fw-bold mb-0 me-3">4. Age (if DOB unknown):</p>
+                <input type="number" name="AGE" class="form-control text-center border-0 border-bottom rounded-0 px-1 shadow-none" 
+                       style="width: 80px;" value="{{ individual_form.AGE.value|default:'' }}"
+                       {% if is_readonly %}disabled{% endif %}>
+                {% if individual_form.AGE.errors %}
+                <div class="text-danger small ms-2">{{ individual_form.AGE.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 5. Ethnicity -->
+        <div class="mb-4">
+            <div class="d-flex align-items-center flex-wrap">
+                <p class="fw-bold mb-0 me-3">5. Ethnicity:</p>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="ETHNICITY" value="kinh" 
+                           {% if individual_form.ETHNICITY.value == 'kinh' %}checked{% endif %}
+                           {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label">Kinh</label>
+                </div>
+                <div class="d-flex align-items-center ms-3">
+                    <div class="form-check mb-0 me-2">
+                        <input class="form-check-input" type="radio" name="ETHNICITY" value="other"
+                               {% if individual_form.ETHNICITY.value == 'other' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Other:</label>
+                    </div>
+                    <input type="text" name="ETHNICITY_OTHER" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" 
+                           style="width: 150px;" value="{{ individual_form.ETHNICITY_OTHER.value|default:'' }}"
+                           {% if is_readonly %}disabled{% endif %}>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Highest education level -->
+        <div class="mb-4">
+            <p class="fw-bold mb-2">6. Highest education level completed?</p>
+            <div class="ms-md-3 row">
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="EDUCATION" value="illiterate"
+                               {% if individual_form.EDUCATION.value == 'illiterate' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Illiterate</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="EDUCATION" value="primary"
+                               {% if individual_form.EDUCATION.value == 'primary' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Primary School</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="EDUCATION" value="vocational"
+                               {% if individual_form.EDUCATION.value == 'vocational' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Vocational / College</label>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="EDUCATION" value="literate"
+                               {% if individual_form.EDUCATION.value == 'literate' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Can read & write</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="EDUCATION" value="secondary"
+                               {% if individual_form.EDUCATION.value == 'secondary' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Secondary School</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="EDUCATION" value="university"
+                               {% if individual_form.EDUCATION.value == 'university' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">University or higher</label>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="EDUCATION" value="not_school_age"
+                               {% if individual_form.EDUCATION.value == 'not_school_age' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Pre-school / Not in school</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="EDUCATION" value="high_school"
+                               {% if individual_form.EDUCATION.value == 'high_school' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">High School</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Main occupation -->
+        <div class="mb-4">
+            <div class="d-flex align-items-end mb-3">
+                <p class="fw-bold mb-0 me-2 text-nowrap">7. Main occupation?</p>
+                <input type="text" name="OCCUPATION_DETAIL" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-100" 
+                       value="{{ individual_form.OCCUPATION_DETAIL.value|default:'' }}"
+                       {% if is_readonly %}disabled{% endif %}>
+            </div>
+            
+            <div class="ms-md-3 row">
+                <div class="col-md-6">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="leader"
+                               {% if individual_form.OCCUPATION.value == 'leader' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Leader/Manager in sectors/levels/units</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="high_professional"
+                               {% if individual_form.OCCUPATION.value == 'high_professional' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">High-level Professional</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="mid_professional"
+                               {% if individual_form.OCCUPATION.value == 'mid_professional' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Mid-level Professional</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="office_staff"
+                               {% if individual_form.OCCUPATION.value == 'office_staff' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Office Clerk / Assistant</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="service_sales"
+                               {% if individual_form.OCCUPATION.value == 'service_sales' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Service & Sales Worker</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="agriculture"
+                               {% if individual_form.OCCUPATION.value == 'agriculture' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Skilled Agricultural/Forestry/Fishery</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="craft"
+                               {% if individual_form.OCCUPATION.value == 'craft' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Craft & Related Trades</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="machine_operator"
+                               {% if individual_form.OCCUPATION.value == 'machine_operator' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Plant/Machine Operator & Assembler</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="elementary"
+                               {% if individual_form.OCCUPATION.value == 'elementary' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Elementary Occupation (Manual labor)</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="armed_forces"
+                               {% if individual_form.OCCUPATION.value == 'armed_forces' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Armed Forces</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="retired"
+                               {% if individual_form.OCCUPATION.value == 'retired' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Retired / Disabled</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="student"
+                               {% if individual_form.OCCUPATION.value == 'student' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Student / Child</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="OCCUPATION" value="unemployed"
+                               {% if individual_form.OCCUPATION.value == 'unemployed' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">Unemployed</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Average monthly income -->
+        <div class="mb-4">
+            <p class="fw-bold mb-2">8. Average monthly income?</p>
+            <div class="ms-md-3 row">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="INDIVIDUAL_INCOME" value="none"
+                               {% if individual_form.INDIVIDUAL_INCOME.value == 'none' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">No income</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="INDIVIDUAL_INCOME" value="<5"
+                               {% if individual_form.INDIVIDUAL_INCOME.value == '<5' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">&lt; 5 million VND</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="INDIVIDUAL_INCOME" value="5-12"
+                               {% if individual_form.INDIVIDUAL_INCOME.value == '5-12' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">5 - 12 million VND</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="INDIVIDUAL_INCOME" value="13-25"
+                               {% if individual_form.INDIVIDUAL_INCOME.value == '13-25' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">13 - 25 million VND</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="INDIVIDUAL_INCOME" value=">25"
+                               {% if individual_form.INDIVIDUAL_INCOME.value == '>25' %}checked{% endif %}
+                               {% if is_readonly %}disabled{% endif %}>
+                        <label class="form-check-label">&gt; 25 million VND</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 9. Health insurance -->
+        <div class="mb-5">
+            <div class="d-flex align-items-center">
+                <p class="fw-bold mb-0 me-3">9. Do you have health insurance or private insurance?</p>
+                <div class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="radio" name="HAS_HEALTH_INSURANCE" value="yes"
+                           {% if individual_form.HAS_HEALTH_INSURANCE.value == 'yes' %}checked{% endif %}
+                           {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label">Yes</label>
+                </div>
+                <div class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="radio" name="HAS_HEALTH_INSURANCE" value="no"
+                           {% if individual_form.HAS_HEALTH_INSURANCE.value == 'no' %}checked{% endif %}
+                           {% if is_readonly %}disabled{% endif %}>
+                    <label class="form-check-label">No</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Information -->
+        <div class="row mt-5">
+            <div class="col-md-6 mb-3">
+                <label class="fw-bold d-block">Completed by:</label>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-100" 
+                       value="{{ request.user.username }}" disabled>
+                <div class="text-muted small mt-1">(Signature and Initials)</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="fw-bold d-block">Date of completion:</label>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-100" 
+                       value="{% now 'Y-m-d' %}" disabled>
+                <div class="text-muted small mt-1">(dd/mm/yyyy)</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-5 text-center">
+            {% if not is_readonly %}
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+                {% if is_create %}Save & Continue{% else %}Update Individual{% endif %}
+            </button>
+            {% endif %}
+            <a href="{% if individual %}{% url 'study_44en:individual:detail' subjectid=individual.SUBJECTID %}{% else %}{% url 'study_44en:individual:list' %}{% endif %}" 
+               class="btn btn-secondary btn-lg px-5 ms-3">Cancel</a>
+        </div>
+
+    </form>
+
+</main>
+
+{% endblock %}
