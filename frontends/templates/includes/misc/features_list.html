@@ -1,7 +1,7 @@
 <!-- frontends\templates\includes\features_list.html -->
 {% load static i18n %}
 <!-- Brand Section -->
-<div class="d-flex gap-4 align-items-center mb-4">
+<div class="d-flex gap-4 align-items-center mb-5">
     <img src="{% static 'base/images/logo.png' %}" alt="Logo" class="logo">
     <div class="d-flex flex-column justify-content-center">
         <h1 class="title">RESSYNT</h1>
@@ -11,7 +11,7 @@
 
 <!-- Headline Section -->
 <div class="mb-4">
-    <h1 class="headline-title">{% trans "Synchronize your science. Simplify your success." %}</h1>
+    <h1 class="headline-neon">{% trans "Synchronize your science. Simplify your success." %}</h1>
 </div>
 
 <div class="container-fluid p-0 mb-4">
@@ -26,7 +26,7 @@
                     {% trans "Smart Data Capture" %}
                 </h5>
                 <div class="font-chakra-petch text-white" data-i18n="feature1-desc">
-                    {% trans "Electronic Case Report Forms (eCRF) utilizing <strong>AI-assisted</strong> validation logic to support data accuracy and reduce entry errors." %}
+                    {% trans "Electronic Case Report Forms (eCRF) utilizing AI-assisted validation to support data accuracy and reduce entry errors." %}
                 </div>
             </div>
         </div>
@@ -71,12 +71,12 @@
                     {% trans "Data Privacy" %}
                 </h5>
                 <div class="font-chakra-petch text-white" data-i18n="feature4-desc">
-                    {% trans "Secures data using standard <strong>AES-256-GCM</strong> encryption and Role-Based Access Control (RBAC) in accordance with <strong>GDPR</strong>." %}
+                    {% trans "Secures data using standard AES-256-GCM encryption and Role-Based Access Control (RBAC) in accordance with GDPR." %}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<p class="font-chakra-petch text-white mb-1">{% trans "Need help? Contact us at" %} <a href="mailto:ressynt@oucru.org" class="footer-email">ressynt@oucru.org</a></p>
+<p class="font-chakra-petch text-white mb-0">{% trans "Need help? Contact us at" %} <a href="mailto:ressynt@oucru.org" class="footer-email">ressynt@oucru.org</a></p>
 <p class="font-chakra-petch footer-credit">{% trans "Designed by Chau Vinh & Pham Tuong Duy" %}</p>

@@ -1,119 +1,232 @@
 :root {
+    /* ---------- Typography ---------- */
     --font-primary: 'Chakra Petch', sans-serif;
 }
+
+/* ==========================================================================
+   1. TYPOGRAPHY COMPONENTS
+   ========================================================================== */
 
 .font-chakra-petch {
     font-family: var(--font-primary) !important;
 }
 
+/* ---------- Logo ---------- */
 .logo {
-    width: auto; 
+    width: auto;
     height: 100px;
-    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
+    filter: drop-shadow(var(--shadow-text));
 }
 
+/* ---------- Title ---------- */
 .title {
-    font-family: var(--font-primary);
-    letter-spacing: 0.4em;
-    font-weight: 700;
-    font-size: 3rem;
     margin: -8px 0 0 0;
     padding: 0;
+    font-family: var(--font-primary);
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: 0.4em;
     text-transform: uppercase;
-    background: var(--gradient-metallic);
+    background: linear-gradient(180deg,
+            #ffffff 0%,
+            #d4d4d4 25%,
+            #737373 50%,
+            #a3a3a3 75%,
+            #ffffff 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    -webkit-text-stroke: 1px var(--color-titanium-silver);
-    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
+    -webkit-text-stroke: 2px transparent;
+    filter: drop-shadow(var(--shadow-text));
 }
 
-
+/* ---------- Subtitle ---------- */
 .subtitle {
+    margin: 0;
+    padding-left: 0.5rem;
     font-family: var(--font-primary);
     font-size: 0.875rem !important;
-    color: var(--color-accent-cyan);
+    font-weight: 700;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
-    letter-spacing: 0.4em;
-    font-weight: 500;
-    margin: 0;
+    color: var(--color-accent-cyan);
     opacity: 0.9;
     text-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
     border-left: 3px solid var(--color-accent-cyan);
-    padding-left: 0.875rem;
 }
 
 @media (min-width: 1200px) {
-  .subtitle  {
-    font-size: 1rem;
-  }
+    .subtitle {
+        font-size: 1rem !important;
+    }
 }
 
-.headline-title {
+/* ---------- Headline Neon ---------- */
+.headline-neon {
+    position: relative;
+    display: inline-block;
     font-family: var(--font-primary);
     font-size: 2.5rem;
     font-weight: 700;
-    letter-spacing: 0.03em;
     line-height: 1.3;
-    background: linear-gradient(
-        90deg,
-        var(--color-titanium-silver) 0%,
-        var(--color-accent-cyan) 20%,
-        var(--color-accent-teal) 40%,
-        var(--color-accent-purple) 60%,
-        var(--color-accent-pink) 80%,
-        var(--color-titanium-silver) 100%
-    );
+    letter-spacing: 0.03em;
+    background: linear-gradient(90deg,
+            var(--color-accent-cyan) 0%,
+            var(--color-accent-teal) 25%,
+            var(--color-accent-purple) 50%,
+            var(--color-accent-pink) 75%,
+            var(--color-accent-cyan) 100%);
     background-size: 200% 100%;
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: headlineGradient 6s ease-in-out infinite;
-    position: relative;
-    display: inline-block;
+    -webkit-text-fill-color: transparent;
+    animation: headlineGradient 6s linear infinite;
 }
 
-.headline-title::after {
+.headline-neon::after {
     content: '';
     position: absolute;
     bottom: -6px;
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, var(--color-accent-cyan), var(--color-accent-purple), transparent);
+    background: linear-gradient(90deg,
+            var(--color-accent-cyan),
+            var(--color-accent-purple),
+            transparent);
     border-radius: 2px;
-    box-shadow: 0 0 12px rgba(0, 245, 255, 0.5), 0 0 24px rgba(168, 85, 247, 0.3);
+    box-shadow:
+        0 0 12px rgba(0, 245, 255, 0.5),
+        0 0 24px rgba(168, 85, 247, 0.3);
 }
 
-@keyframes headlineGradient {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-}
+/* ==========================================================================
+   2. FOOTER COMPONENTS
+   ========================================================================== */
 
 .footer-email {
     color: var(--color-accent-cyan);
-    text-decoration: none;
     font-weight: 500;
-    transition: all 0.3s ease;
+    text-decoration: none;
+    transition:
+        color var(--transition-slow),
+        text-shadow var(--transition-slow),
+        letter-spacing var(--transition-slow);
 }
 
 .footer-email:hover {
-    /* Chữ chuyển sang trắng để tăng tương phản với vùng sáng */
-    color: #ffffff; 
-    /* Tạo hào quang neon xung quanh chữ */
-    text-shadow: 
+    color: #ffffff;
+    letter-spacing: 1.5px;
+    text-shadow:
         0 0 5px var(--color-accent-cyan),
         0 0 10px var(--color-accent-cyan),
         0 0 20px var(--color-accent-cyan);
-    /* Giãn chữ nhẹ tạo cảm giác thoáng đãng, hiện đại */
-    letter-spacing: 1.5px; 
 }
 
 .footer-credit {
-    font-size: 1rem;
+    font-size: 0.875rem;
     color: #ffffff;
     opacity: 0.6;
 }
+
+/* ==========================================================================
+   3. ANIMATIONS
+   ========================================================================== */
+
+@keyframes headlineGradient {
+    0% {
+        background-position: 0% center;
+    }
+
+    100% {
+        background-position: -200% center;
+    }
+}
+
+
+
+/* Outlined Input Style - giống hình mẫu */
+.form-group {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.form-group input {
+    width: 100%;
+    height: 50px;
+    padding: 14px 16px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #1a73e8;
+}
+
+.form-group label {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    padding: 0 4px;
+    color: #666;
+    font-size: 16px;
+    pointer-events: none;
+    transition: all 0.2s;
+}
+
+/* Label nằm trên border khi focus hoặc có value */
+.form-group input:focus~label,
+.form-group input:not(:placeholder-shown)~label {
+    top: 0;
+    font-size: 12px;
+    color: #1a73e8;
+}
+
+/* Label màu xám khi không focus nhưng có value */
+.form-group input:not(:focus):not(:placeholder-shown)~label {
+    color: #666;
+}
+
+.form-group input::placeholder {
+    color: transparent;
+}
+
+/* Password Toggle */
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover {
+    color: #333;
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Input padding khi có toggle */
+.form-group.has-toggle input {
+    padding-right: 45px;
+}
+
 
 /* ========================================================================== 
    PASSWORD INPUT

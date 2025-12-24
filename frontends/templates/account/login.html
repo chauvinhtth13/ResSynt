@@ -4,11 +4,11 @@
 
 {% block title %}Sign In - ResSync Platform{% endblock %}
 {% block auth_content %}
-<div class="glass-prism-top p-4 rounded-5 h-100">
+<div class="glass-prism-top p-5 rounded-5">
     <!-- Title and Logo -->
     <div class="text-center mb-3">
-        <h1 class="font-chakra-petch fw-bold text-white h1">{% trans "Welcome back" %}</h1>
-        <p class="font-chakra-petch text-white">{% trans "Sign in to access your research dashboard" %}</p>
+        <h3 class="font-chakra-petch fw-bold text-white h3 m-0">{% trans "Welcome back" %}</h3>
+        <p class="font-chakra-petch text-white-50">{% trans "Sign in to access your workspace." %}</p>
     </div>
 
     <!-- Error Messages -->
@@ -30,32 +30,39 @@
         {% csrf_token %}
 
         <!-- Username/Email Input -->
-        <div class="mb-3">
-            <label class="form-label fs-5 fw-semibold mb-2 d-flex align-items-center"
+        <!-- <div class="mb-3">
+            <label class="form-label font-chakra-petch mb-2 d-flex align-items-center text-white"
                 for="{{ form.login.id_for_label }}">
-                <i class="bi bi-person-fill me-2 text-muted"></i> {% trans "Username or Email" %}
+                {% trans "Username or Email" %}
             </label>
             <input type="text" id="{{ form.login.id_for_label }}" name="{{ form.login.html_name }}"
-                class="form-control app-form-control px-4 py-3 fs-5" value="{{ form.login.value|default:'' }}"
+                class="form-control" value="{{ form.login.value|default:'' }}"
                 placeholder="{% trans 'Enter username or email' %}" required autofocus>
-        </div>
+        </div> -->
+
 
         <!-- Password Input -->
-        <div class="mb-4">
-            <label class="form-label fs-5 fw-semibold mb-2 d-flex align-items-center"
+        <!-- <div class="mb-4">
+            <label class="form-label font-chakra-petch mb-2 d-flex align-items-center text-white"
                 for="{{ form.password.id_for_label }}">
-                <i class="bi bi-lock-fill me-2 text-muted"></i> {% trans "Password" %}
+                {% trans "Password" %}
             </label>
             <div class="password-input-container position-relative">
                 <input id="{{ form.password.id_for_label }}" name="{{ form.password.html_name }}" type="password"
-                    class="form-control px-4 py-3 fs-5" placeholder="{% trans 'Enter password' %}" required>
+                    class="form-control" placeholder="{% trans 'Enter password' %}" required>
                 <button type="button"
                     class="password-toggle-icon btn btn-link position-absolute top-50 end-0 translate-middle-y me-3"
                     aria-label="{% trans 'Toggle password visibility' %}" tabindex="-1">
-                    <i class="bi bi-eye-slash fs-4"></i>
+                    <i class="bi bi-eye-slash"></i>
                 </button>
             </div>
+        </div> -->
+
+        <div class="form-group">
+                <input type="email" id="email" placeholder=" ">
+                <label for="email">Email address</label>
         </div>
+
 
         <!-- Submit Button -->
         <button type="submit" class="btn btn-royal-blue w-100 py-3 fw-semibold mb-3 fs-5" id="submitBtn">
