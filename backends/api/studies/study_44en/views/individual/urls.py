@@ -22,8 +22,9 @@ urlpatterns = [
     path('<str:subjectid>/update/', views_individual_case.individual_update, name='update'),
     path('<str:subjectid>/edit/', views_individual_case.individual_update, name='edit'),  # Alias for compatibility
     
-    # ===== INDIVIDUAL EXPOSURE (EXP 1/3) =====
-    path('<str:subjectid>/exposure/', views_individual_exposure.individual_exposure, name='exposure'),
+    # ===== INDIVIDUAL EXPOSURE =====
+    path('<str:subjectid>/exposure-list/', views_individual_exposure.individual_exposure_list, name='exposure_list'),
+    path('<str:subjectid>/exposure/', views_individual_exposure.individual_exposure, name='exposure'),  # Deprecated
     path('<str:subjectid>/exposure/create/', views_individual_exposure.individual_exposure_create, name='exposure_create'),
     path('<str:subjectid>/exposure/update/', views_individual_exposure.individual_exposure_update, name='exposure_update'),
     path('<str:subjectid>/exposure/view/', views_individual_exposure.individual_exposure_view, name='exposure_view'),
@@ -41,9 +42,9 @@ urlpatterns = [
     # ===== INDIVIDUAL FOLLOW-UP =====
     path('<str:subjectid>/followup/', views_individual_followup.individual_followup_list, name='followup_list'),
     path('<str:subjectid>/followup/create/', views_individual_followup.individual_followup_create, name='followup_create'),
-    path('<str:subjectid>/followup/<int:followup_id>/', views_individual_followup.individual_followup_detail, name='followup_detail'),
-    path('<str:subjectid>/followup/<int:followup_id>/update/', views_individual_followup.individual_followup_update, name='followup_update'),
-    path('<str:subjectid>/followup/<int:followup_id>/view/', views_individual_followup.individual_followup_view, name='followup_view'),
+    path('<str:subjectid>/followup/<str:followup_id>/', views_individual_followup.individual_followup_detail, name='followup_detail'),
+    path('<str:subjectid>/followup/<str:followup_id>/update/', views_individual_followup.individual_followup_update, name='followup_update'),
+    path('<str:subjectid>/followup/<str:followup_id>/view/', views_individual_followup.individual_followup_view, name='followup_view'),
     
     # ===== INDIVIDUAL SAMPLE =====
     path('<str:subjectid>/sample/', views_individual_sample.individual_sample, name='sample'),

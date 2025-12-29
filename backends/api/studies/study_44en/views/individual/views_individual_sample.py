@@ -2,9 +2,9 @@
 
 """
 Individual Sample Views for Study 44EN
-Handles sample collection and food frequency data
+Handles sample collection (4 visit times) and food frequency data
 
-REFACTORED: Separated CREATE, UPDATE, and VIEW following household pattern
+REFACTORED: Using helpers pattern for sample collection
 """
 
 import logging
@@ -16,26 +16,16 @@ from django.contrib import messages
 from backends.studies.study_44en.models.individual import (
     Individual, Individual_Sample, Individual_FoodFrequency
 )
-from backends.studies.study_44en.forms.individual import (
-    Individual_SampleForm, Individual_FoodFrequencyForm
-)
+from backends.studies.study_44en.forms.individual import Individual_FoodFrequencyForm
 from backends.api.studies.study_44en.views.views_base import get_filtered_individuals
+from .helpers_sample import (
+    set_audit_metadata,
+    make_form_readonly,
+    save_samples,
+    load_samples,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def set_audit_metadata(instance, user):
-    """Set audit fields for tracking"""
-    if hasattr(instance, 'last_modified_by_id'):
-        instance.last_modified_by_id = user.id
-    if hasattr(instance, 'last_modified_by_username'):
-        instance.last_modified_by_username = user.username
-
-
-def make_form_readonly(form):
-    """Make all form fields readonly"""
-    for field in form.fields.values():
-        field.disabled = True
 
 
 # ==========================================
@@ -74,30 +64,22 @@ def individual_sample_create(request, subjectid):
         logger.info("💾 POST REQUEST - Processing creation...")
         logger.info("=" * 80)
         
-        sample_form = Individual_SampleForm(
-            request.POST,
-            prefix='sample'
-        )
         food_frequency_form = Individual_FoodFrequencyForm(
             request.POST,
             prefix='food'
         )
         
-        if sample_form.is_valid() and food_frequency_form.is_valid():
+        if food_frequency_form.is_valid():
             try:
                 with transaction.atomic():
                     logger.info("📝 Saving sample data...")
                     
-                    # Save sample
-                    sample = sample_form.save(commit=False)
-                    sample.SUBJECTID = individual
-                    set_audit_metadata(sample, request.user)
-                    sample.save()
-                    logger.info(f"✅ Created sample for {subjectid}")
+                    # Save samples using helper (handles 4 visit times)
+                    save_samples(request, individual)
                     
                     # Save food frequency
                     food_frequency = food_frequency_form.save(commit=False)
-                    food_frequency.SUBJECTID = individual
+                    food_frequency.MEMBER = individual
                     set_audit_metadata(food_frequency, request.user)
                     food_frequency.save()
                     logger.info(f"✅ Created food frequency for {subjectid}")
@@ -106,23 +88,15 @@ def individual_sample_create(request, subjectid):
                     logger.info("=== ✅ SAMPLE CREATE SUCCESS ===")
                     logger.info("=" * 80)
                     
-                    messages.success(
-                        request,
-                        f'✅ Created sample data for individual {subjectid}'
-                    )
+                    messages.success(request, f'✅ Created sample data for individual {subjectid}')
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
                 logger.error(f"❌ Error creating sample data: {e}", exc_info=True)
                 messages.error(request, f'Error creating sample data: {str(e)}')
         else:
-            # Log validation errors
             logger.error("❌ Form validation failed")
-            if sample_form.errors:
-                logger.error(f"Sample form errors: {sample_form.errors}")
-            if food_frequency_form.errors:
-                logger.error(f"Food frequency errors: {food_frequency_form.errors}")
-            
+            logger.error(f"Food frequency errors: {food_frequency_form.errors}")
             messages.error(request, '❌ Please check the form for errors')
     
     # GET - Show blank form
@@ -130,14 +104,15 @@ def individual_sample_create(request, subjectid):
         logger.info("=" * 80)
         logger.info("📄 GET REQUEST - Showing blank form...")
         logger.info("=" * 80)
-        
-        sample_form = Individual_SampleForm(prefix='sample')
         food_frequency_form = Individual_FoodFrequencyForm(prefix='food')
-        logger.info("✅ Blank forms initialized")
+    
+    # Load empty sample data
+    sample_data = {}
     
     context = {
         'individual': individual,
-        'sample_form': sample_form,
+        'subjectid': subjectid,
+        'sample_data': sample_data,
         'food_frequency_form': food_frequency_form,
         'is_create': True,
         'is_readonly': False,
@@ -168,15 +143,7 @@ def individual_sample_update(request, subjectid):
     queryset = get_filtered_individuals(request.user)
     individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
     
-    # Get sample (must exist for update)
-    try:
-        sample = Individual_Sample.objects.get(MEMBER=individual)
-        logger.info(f"✅ Found sample for {subjectid}")
-    except Individual_Sample.DoesNotExist:
-        logger.warning(f"⚠️ No sample found for {subjectid}")
-        sample = None
-    
-    # Get food frequency (must exist for update)
+    # Get food frequency (may or may not exist)
     try:
         food_frequency = Individual_FoodFrequency.objects.get(MEMBER=individual)
         logger.info(f"✅ Found food frequency for {subjectid}")
@@ -184,47 +151,29 @@ def individual_sample_update(request, subjectid):
         logger.warning(f"⚠️ No food frequency found for {subjectid}")
         food_frequency = None
     
-    # If neither exists, redirect to create
-    if sample is None and food_frequency is None:
-        logger.warning(f"⚠️ No sample data found for {subjectid} - redirecting to create")
-        messages.error(
-            request,
-            f'No sample data found for individual {subjectid}. Please create first.'
-        )
-        return redirect('study_44en:individual:sample_create', subjectid=subjectid)
-    
     # POST - Update sample data
     if request.method == 'POST':
         logger.info("=" * 80)
         logger.info("💾 POST REQUEST - Processing update...")
         logger.info("=" * 80)
         
-        sample_form = Individual_SampleForm(
-            request.POST,
-            instance=sample,
-            prefix='sample'
-        )
         food_frequency_form = Individual_FoodFrequencyForm(
             request.POST,
             instance=food_frequency,
             prefix='food'
         )
         
-        if sample_form.is_valid() and food_frequency_form.is_valid():
+        if food_frequency_form.is_valid():
             try:
                 with transaction.atomic():
                     logger.info("📝 Updating sample data...")
                     
-                    # Update sample
-                    sample = sample_form.save(commit=False)
-                    sample.SUBJECTID = individual
-                    set_audit_metadata(sample, request.user)
-                    sample.save()
-                    logger.info(f"✅ Updated sample for {subjectid}")
+                    # Update samples using helper (handles 4 visit times)
+                    save_samples(request, individual)
                     
                     # Update food frequency
                     food_frequency = food_frequency_form.save(commit=False)
-                    food_frequency.SUBJECTID = individual
+                    food_frequency.MEMBER = individual
                     set_audit_metadata(food_frequency, request.user)
                     food_frequency.save()
                     logger.info(f"✅ Updated food frequency for {subjectid}")
@@ -233,23 +182,15 @@ def individual_sample_update(request, subjectid):
                     logger.info("=== ✅ SAMPLE UPDATE SUCCESS ===")
                     logger.info("=" * 80)
                     
-                    messages.success(
-                        request,
-                        f'✅ Updated sample data for individual {subjectid}'
-                    )
+                    messages.success(request, f'✅ Updated sample data for individual {subjectid}')
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
                 logger.error(f"❌ Error updating sample data: {e}", exc_info=True)
                 messages.error(request, f'Error updating sample data: {str(e)}')
         else:
-            # Log validation errors
             logger.error("❌ Form validation failed")
-            if sample_form.errors:
-                logger.error(f"Sample form errors: {sample_form.errors}")
-            if food_frequency_form.errors:
-                logger.error(f"Food frequency errors: {food_frequency_form.errors}")
-            
+            logger.error(f"Food frequency errors: {food_frequency_form.errors}")
             messages.error(request, '❌ Please check the form for errors')
     
     # GET - Show form with existing data
@@ -257,22 +198,19 @@ def individual_sample_update(request, subjectid):
         logger.info("=" * 80)
         logger.info("📄 GET REQUEST - Loading existing data...")
         logger.info("=" * 80)
-        
-        sample_form = Individual_SampleForm(
-            instance=sample,
-            prefix='sample'
-        )
         food_frequency_form = Individual_FoodFrequencyForm(
             instance=food_frequency,
             prefix='food'
         )
-        logger.info("✅ Forms initialized with existing data")
+    
+    # Load existing sample data using helper
+    sample_data = load_samples(individual)
     
     context = {
         'individual': individual,
-        'sample': sample,
+        'subjectid': subjectid,
+        'sample_data': sample_data,
         'food_frequency': food_frequency,
-        'sample_form': sample_form,
         'food_frequency_form': food_frequency_form,
         'is_create': False,
         'is_readonly': False,
@@ -302,42 +240,32 @@ def individual_sample_view(request, subjectid):
     queryset = get_filtered_individuals(request.user)
     individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
     
-    # Get sample
-    try:
-        sample = Individual_Sample.objects.get(MEMBER=individual)
-    except Individual_Sample.DoesNotExist:
-        sample = None
-    
     # Get food frequency
     try:
         food_frequency = Individual_FoodFrequency.objects.get(MEMBER=individual)
     except Individual_FoodFrequency.DoesNotExist:
         food_frequency = None
     
-    # If neither exists, redirect to detail
-    if sample is None and food_frequency is None:
+    # Load sample data using helper
+    sample_data = load_samples(individual)
+    
+    # If no data exists, redirect to detail
+    if not sample_data and food_frequency is None:
         messages.error(request, f'No sample data found for individual {subjectid}')
         return redirect('study_44en:individual:detail', subjectid=subjectid)
     
-    # Create readonly forms
-    sample_form = Individual_SampleForm(
-        instance=sample,
-        prefix='sample'
-    )
+    # Create readonly form for food frequency
     food_frequency_form = Individual_FoodFrequencyForm(
         instance=food_frequency,
         prefix='food'
     )
-    
-    # Make all forms readonly
-    make_form_readonly(sample_form)
     make_form_readonly(food_frequency_form)
     
     context = {
         'individual': individual,
-        'sample': sample,
+        'subjectid': subjectid,
+        'sample_data': sample_data,
         'food_frequency': food_frequency,
-        'sample_form': sample_form,
         'food_frequency_form': food_frequency_form,
         'is_create': False,
         'is_readonly': True,

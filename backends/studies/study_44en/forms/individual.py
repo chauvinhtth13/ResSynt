@@ -108,24 +108,29 @@ class IndividualForm(forms.ModelForm):
 
 
 # ==========================================
-# 2. INDIVIDUAL_EXPOSURE FORM
+# 2. INDIVIDUAL_EXPOSURE FORMS - SPLIT BY SECTION
 # ==========================================
 
 class Individual_ExposureForm(forms.ModelForm):
-    """Individual exposure factors form"""
+    """Individual exposure factors form - EXP 1/3 (Water & Comorbidities)"""
     
     class Meta:
         model = Individual_Exposure
-        fields = '__all__'
+        fields = ['SHARED_TOILET', 'WATER_TREATMENT', 'HAS_COMORBIDITY']
         widgets = {
-            'MEMBER': forms.Select(attrs={'class': 'form-select'}),
-            
-            # Toilet & Water
             'SHARED_TOILET': forms.Select(attrs={'class': 'form-select'}),
             'WATER_TREATMENT': forms.Select(attrs={'class': 'form-select'}),
-            
-            # Health History
             'HAS_COMORBIDITY': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+class Individual_Exposure2Form(forms.ModelForm):
+    """Individual exposure factors form - EXP 2/3 (Vaccination & Hospitalization)"""
+    
+    class Meta:
+        model = Individual_Exposure
+        fields = ['VACCINATION_STATUS', 'HOSPITALIZED_3M', 'MEDICATION_3M']
+        widgets = {
             'VACCINATION_STATUS': forms.Select(attrs={'class': 'form-select'}),
             'HOSPITALIZED_3M': forms.Select(attrs={'class': 'form-select'}),
             'MEDICATION_3M': forms.Select(attrs={'class': 'form-select'}),
@@ -238,9 +243,8 @@ class Individual_FoodFrequencyForm(forms.ModelForm):
     
     class Meta:
         model = Individual_FoodFrequency
-        fields = '__all__'
+        exclude = ['MEMBER']  # MEMBER will be set in view
         widgets = {
-            'MEMBER': forms.Select(attrs={'class': 'form-select'}),
             'RICE_NOODLES': forms.Select(attrs={'class': 'form-select'}),
             'RED_MEAT': forms.Select(attrs={'class': 'form-select'}),
             'POULTRY': forms.Select(attrs={'class': 'form-select'}),
@@ -282,14 +286,13 @@ class Individual_FollowUpForm(forms.ModelForm):
     
     class Meta:
         model = Individual_FollowUp
-        fields = '__all__'
+        exclude = ['MEMBER']  # MEMBER will be set in view
         widgets = {
             'FOLLOW_UP_id': forms.TextInput(attrs={
                 'class': 'form-control',
                 'readonly': 'readonly',
                 'placeholder': 'Auto-generated'
             }),
-            'MEMBER': forms.Select(attrs={'class': 'form-select'}),
             'VISIT_TIME': forms.Select(attrs={'class': 'form-select'}),
             
             # Assessment
@@ -392,9 +395,8 @@ class Individual_SampleForm(forms.ModelForm):
     
     class Meta:
         model = Individual_Sample
-        fields = '__all__'
+        exclude = ['MEMBER']  # MEMBER will be set in view
         widgets = {
-            'MEMBER': forms.Select(attrs={'class': 'form-select'}),
             'SAMPLE_TIME': forms.Select(attrs={'class': 'form-select'}),
             'SAMPLE_COLLECTED': forms.Select(attrs={'class': 'form-select'}),
             'STOOL_DATE': forms.DateInput(attrs={

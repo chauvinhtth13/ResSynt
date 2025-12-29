@@ -285,6 +285,7 @@ class Individual_Exposure(AuditFieldsMixin):
         choices=[
             ('yes', _('Yes')),
             ('no', _('No')),
+            ('unknown', _("Don't know")),
         ],
         null=True, blank=True,
         verbose_name=_('Used Medication (3 months)')
@@ -296,7 +297,7 @@ class Individual_Exposure(AuditFieldsMixin):
         verbose_name_plural = _('Individual Exposures')
     
     def __str__(self):
-        return f"Exposure: {self.MEMBERID}"
+        return f"Exposure: {self.MEMBER}"
 
 
 # ==========================================
@@ -333,7 +334,7 @@ class Individual_WaterSource(AuditFieldsMixin):
         unique_together = [['MEMBER', 'SOURCE_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_SOURCE_TYPE_display()}"
+        return f"{self.MEMBER_id} - {self.get_SOURCE_TYPE_display()}"
 
 
 # ==========================================
@@ -362,7 +363,7 @@ class Individual_WaterTreatment(AuditFieldsMixin):
         unique_together = [['MEMBER', 'TREATMENT_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_TREATMENT_TYPE_display()}"
+        return f"{self.MEMBER_id} - {self.get_TREATMENT_TYPE_display()}"
 
 
 # ==========================================
@@ -409,7 +410,7 @@ class Individual_Comorbidity(AuditFieldsMixin):
         unique_together = [['MEMBER', 'COMORBIDITY_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_COMORBIDITY_TYPE_display()}"
+        return f"{self.MEMBER_id} - {self.get_COMORBIDITY_TYPE_display()}"
 
 
 # ==========================================
@@ -451,7 +452,7 @@ class Individual_Vaccine(AuditFieldsMixin):
         unique_together = [['MEMBER', 'VACCINE_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_VACCINE_TYPE_display()}"
+        return f"{self.MEMBER_id} - {self.get_VACCINE_TYPE_display()}"
 
 
 # ==========================================
@@ -485,7 +486,7 @@ class Individual_Hospitalization(AuditFieldsMixin):
         ordering = ['MEMBER', 'HOSPITAL_TYPE']
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_HOSPITAL_TYPE_display()}"
+        return f"{self.MEMBER_id} - {self.get_HOSPITAL_TYPE_display()}"
 
 
 # ==========================================
@@ -520,7 +521,7 @@ class Individual_Medication(AuditFieldsMixin):
         ordering = ['MEMBER', 'MEDICATION_TYPE']
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_MEDICATION_TYPE_display()}"
+        return f"{self.MEMBER_id} - {self.get_MEDICATION_TYPE_display()}"
 
 
 # ==========================================
@@ -558,7 +559,7 @@ class Individual_FoodFrequency(AuditFieldsMixin):
         verbose_name_plural = _('Individual Food Frequencies')
     
     def __str__(self):
-        return f"Food Freq: {self.MEMBERID}"
+        return f"Food Freq: {self.MEMBER_id}"
 
 
 # ==========================================
@@ -590,7 +591,7 @@ class Individual_Travel(AuditFieldsMixin):
         unique_together = [['MEMBER', 'TRAVEL_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_TRAVEL_TYPE_display()}"
+        return f"{self.MEMBER_id} - {self.get_TRAVEL_TYPE_display()}"
 
 
 # ==========================================
@@ -691,11 +692,11 @@ class Individual_FollowUp(AuditFieldsMixin):
     def save(self, *args, **kwargs):
         # Auto-generate PK from MEMBERID + VISIT_TIME
         if not self.FUID:
-            self.FUID = f"{self.MEMBERID}-{self.VISIT_TIME}"
+            self.FUID = f"{self.MEMBER_id}-{self.VISIT_TIME}"
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_VISIT_TIME_display()}"
+        return f"{self.MEMBER_id} - {self.get_VISIT_TIME_display()}"
 
 
 # ==========================================
@@ -737,7 +738,7 @@ class Individual_Symptom(AuditFieldsMixin):
         unique_together = [['FOLLOW_UP', 'SYMPTOM_TYPE']]
     
     def __str__(self):
-        return f"{self.FOLLOW_UP.MEMBERID} - {self.FOLLOW_UP.get_VISIT_TIME_display()} - {self.get_SYMPTOM_TYPE_display()}"
+        return f"{self.FOLLOW_UP.MEMBER_id} - {self.FOLLOW_UP.get_VISIT_TIME_display()} - {self.get_SYMPTOM_TYPE_display()}"
 
 
 # ==========================================
@@ -815,4 +816,4 @@ class Individual_Sample(AuditFieldsMixin):
         unique_together = [['MEMBER', 'SAMPLE_TIME']]
     
     def __str__(self):
-        return f"{self.MEMBERID} - {self.get_SAMPLE_TIME_display()}"
+        return f"{self.MEMBER_id} - {self.get_SAMPLE_TIME_display()}"

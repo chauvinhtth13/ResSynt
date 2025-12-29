@@ -1,0 +1,250 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+  <div class="card shadow-lg mb-4">
+    <!-- Header -->
+    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-shield-virus"></i>
+          Exposure Assessments - {{ individual.MEMBER.MEMBERID }}
+        </h5>
+        <a href="{% url 'study_44en:individual:detail' subjectid=subjectid %}" class="btn btn-light">
+          <i class="fas fa-arrow-left"></i> Back
+        </a>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <!-- Individual Info -->
+      <div class="card mb-4">
+        <div class="card-body bg-light">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label class="font-weight-bold mb-1">Subject ID:</label>
+                <p class="mb-0">{{ subjectid }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label class="font-weight-bold mb-1">Total Exposures Completed:</label>
+                <p class="mb-0">{{ total_exposures }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Exposure List Table -->
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead style="background: linear-gradient(135deg, #374151 0%, #1f2937 100%); color: white;">
+            <tr>
+              <th class="text-center" style="width: 25%;">Exposure Part</th>
+              <th class="text-center" style="width: 15%;">Status</th>
+              <th class="text-center" style="width: 35%;">Content</th>
+              <th class="text-center" style="width: 25%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Exposure 1: Water & Comorbidities -->
+            <tr class="exposure-table-row" style="transition: background-color 0.2s ease;">
+              <td class="text-center" style="font-weight: 600; color: #374151; font-size: 1rem;">
+                <i class="fas fa-water"></i> Exposure 1/3
+              </td>
+              
+              {% with exposure=exposures_by_part.1 %}
+                {% if exposure %}
+                  <!-- Exposure 1 EXISTS -->
+                  <td class="text-center">
+                    <span class="badge" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.875rem;">
+                      <i class="fas fa-check-circle"></i> Created
+                    </span>
+                  </td>
+                  <td style="font-size: 0.9rem;">
+                    <div class="d-flex flex-column gap-1">
+                      <span><i class="fas fa-tint text-info"></i> Water Sources & Treatment</span>
+                      <span><i class="fas fa-heartbeat text-danger"></i> Comorbidities</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                      <a href="{% url 'study_44en:individual:exposure_view' subjectid=subjectid %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none; color: white;">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <a href="{% url 'study_44en:individual:exposure_update' subjectid=subjectid %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); border: none; color: white;">
+                        <i class="fas fa-edit"></i> Edit
+                      </a>
+                    </div>
+                  </td>
+                {% else %}
+                  <!-- Exposure 1 DOES NOT EXIST -->
+                  <td class="text-center">
+                    <span class="badge badge-secondary" style="padding: 6px 12px; font-size: 0.875rem;">
+                      <i class="fas fa-question-circle"></i> Not Created
+                    </span>
+                  </td>
+                  <td style="font-size: 0.9rem;">
+                    <div class="d-flex flex-column gap-1">
+                      <span class="text-muted"><i class="fas fa-tint"></i> Water Sources & Treatment</span>
+                      <span class="text-muted"><i class="fas fa-heartbeat"></i> Comorbidities</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <a href="{% url 'study_44en:individual:exposure_create' subjectid=subjectid %}" 
+                       class="btn btn-sm" 
+                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white;">
+                      <i class="fas fa-plus"></i> Create
+                    </a>
+                  </td>
+                {% endif %}
+              {% endwith %}
+            </tr>
+
+            <!-- Exposure 2: Vaccines & Hospitalizations -->
+            <tr class="exposure-table-row" style="transition: background-color 0.2s ease;">
+              <td class="text-center" style="font-weight: 600; color: #374151; font-size: 1rem;">
+                <i class="fas fa-syringe"></i> Exposure 2/3
+              </td>
+              
+              {% with exposure=exposures_by_part.2 %}
+                {% if exposure %}
+                  <td class="text-center">
+                    <span class="badge" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.875rem;">
+                      <i class="fas fa-check-circle"></i> Created
+                    </span>
+                  </td>
+                  <td style="font-size: 0.9rem;">
+                    <div class="d-flex flex-column gap-1">
+                      <span><i class="fas fa-syringe text-success"></i> Vaccination History</span>
+                      <span><i class="fas fa-hospital text-warning"></i> Hospitalizations (3 months)</span>
+                      <span><i class="fas fa-pills text-primary"></i> Current Medications</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                      <a href="{% url 'study_44en:individual:exposure_2_view' subjectid=subjectid %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none; color: white;">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <a href="{% url 'study_44en:individual:exposure_2_update' subjectid=subjectid %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); border: none; color: white;">
+                        <i class="fas fa-edit"></i> Edit
+                      </a>
+                    </div>
+                  </td>
+                {% else %}
+                  <td class="text-center">
+                    <span class="badge badge-secondary" style="padding: 6px 12px; font-size: 0.875rem;">
+                      <i class="fas fa-question-circle"></i> Not Created
+                    </span>
+                  </td>
+                  <td style="font-size: 0.9rem;">
+                    <div class="d-flex flex-column gap-1">
+                      <span class="text-muted"><i class="fas fa-syringe"></i> Vaccination History</span>
+                      <span class="text-muted"><i class="fas fa-hospital"></i> Hospitalizations (3 months)</span>
+                      <span class="text-muted"><i class="fas fa-pills"></i> Current Medications</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <a href="{% url 'study_44en:individual:exposure_2_create' subjectid=subjectid %}" 
+                       class="btn btn-sm" 
+                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white;">
+                      <i class="fas fa-plus"></i> Create
+                    </a>
+                  </td>
+                {% endif %}
+              {% endwith %}
+            </tr>
+
+            <!-- Exposure 3: Food & Travel -->
+            <tr class="exposure-table-row" style="transition: background-color 0.2s ease;">
+              <td class="text-center" style="font-weight: 600; color: #374151; font-size: 1rem;">
+                <i class="fas fa-utensils"></i> Exposure 3/3
+              </td>
+              
+              {% with exposure=exposures_by_part.3 %}
+                {% if exposure %}
+                  <td class="text-center">
+                    <span class="badge" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.875rem;">
+                      <i class="fas fa-check-circle"></i> Created
+                    </span>
+                  </td>
+                  <td style="font-size: 0.9rem;">
+                    <div class="d-flex flex-column gap-1">
+                      <span><i class="fas fa-utensils text-warning"></i> Food Frequency</span>
+                      <span><i class="fas fa-plane text-info"></i> Travel History</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                      <a href="{% url 'study_44en:individual:exposure_3_view' subjectid=subjectid %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none; color: white;">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <a href="{% url 'study_44en:individual:exposure_3_update' subjectid=subjectid %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); border: none; color: white;">
+                        <i class="fas fa-edit"></i> Edit
+                      </a>
+                    </div>
+                  </td>
+                {% else %}
+                  <td class="text-center">
+                    <span class="badge badge-secondary" style="padding: 6px 12px; font-size: 0.875rem;">
+                      <i class="fas fa-question-circle"></i> Not Created
+                    </span>
+                  </td>
+                  <td style="font-size: 0.9rem;">
+                    <div class="d-flex flex-column gap-1">
+                      <span class="text-muted"><i class="fas fa-utensils"></i> Food Frequency</span>
+                      <span class="text-muted"><i class="fas fa-plane"></i> Travel History</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <a href="{% url 'study_44en:individual:exposure_3_create' subjectid=subjectid %}" 
+                       class="btn btn-sm" 
+                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white;">
+                      <i class="fas fa-plus"></i> Create
+                    </a>
+                  </td>
+                {% endif %}
+              {% endwith %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .exposure-table-row:hover {
+    background-color: rgba(102, 126, 234, 0.03);
+  }
+  
+  .btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  
+  .gap-1 {
+    gap: 0.25rem;
+  }
+  
+  .gap-2 {
+    gap: 0.5rem;
+  }
+</style>
+{% endblock %}
