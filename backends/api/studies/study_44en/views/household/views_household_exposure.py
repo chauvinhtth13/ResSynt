@@ -320,7 +320,7 @@ def household_exposure_create(request, hhid):
     
     return render(
         request,
-        'studies/study_44en/CRF/household/household_exposure_form_1.html',
+        'studies/study_44en/CRF/household/household_exposure_form.html',
         context
     )
 
@@ -474,7 +474,7 @@ def household_exposure_update(request, hhid):
     
     return render(
         request,
-        'studies/study_44en/CRF/household/household_exposure_form_1.html',
+        'studies/study_44en/CRF/household/household_exposure_form.html',
         context
     )
 
@@ -548,7 +548,7 @@ def household_exposure_view(request, hhid):
     
     return render(
         request,
-        'studies/study_44en/CRF/household/household_exposure_form_1.html',
+        'studies/study_44en/CRF/household/household_exposure_form.html',
         context
     )
 
