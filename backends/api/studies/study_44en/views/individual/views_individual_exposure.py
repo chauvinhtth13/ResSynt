@@ -197,7 +197,7 @@ def individual_exposure_update(request, subjectid):
                     save_comorbidities(request, exposure)
                     
                     messages.success(request, f'✅ Updated exposure data for {subjectid}')
-                    return redirect('study_44en:individual:detail', subjectid=subjectid)
+                    return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
                     
             except Exception as e:
                 logger.error(f"❌ Error updating exposure: {e}", exc_info=True)
@@ -423,7 +423,7 @@ def individual_exposure_2_update(request, subjectid):
                     save_medications(request, exposure)
                     
                     messages.success(request, f'✅ Updated exposure 2 data for {subjectid}')
-                    return redirect('study_44en:individual:detail', subjectid=subjectid)
+                    return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
                     
             except Exception as e:
                 logger.error(f"❌ Error updating exposure 2: {e}", exc_info=True)
@@ -583,7 +583,7 @@ def individual_exposure_3_update(request, subjectid):
                 logger.info("=" * 80)
                 
                 messages.success(request, f"✅ Updated exposure 3 data for {subjectid}")
-                return redirect('study_44en:individual:detail', subjectid=subjectid)
+                return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
                 
         except Exception as e:
             logger.error(f"❌ Error updating exposure 3: {e}", exc_info=True)

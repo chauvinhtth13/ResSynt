@@ -336,14 +336,14 @@ class LaboratoryTest(AuditFieldsMixin):
         ]
         constraints = [
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(PERFORMED=True) |
                     models.Q(PERFORMEDDATE__isnull=False)
                 ),
                 name='lab_performed_date_required'
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(PERFORMED=True) |
                     models.Q(RESULT__isnull=False)
                 ),
@@ -795,7 +795,7 @@ class OtherTest(AuditFieldsMixin):
         constraints = [
             # If performed, date must be provided
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(OTHERTESTPERFORMED=True) |
                     models.Q(OTHERTESTDTC__isnull=False)
                 ),
@@ -803,7 +803,7 @@ class OtherTest(AuditFieldsMixin):
             ),
             # If performed, result should be provided
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(OTHERTESTPERFORMED=True) |
                     models.Q(OTHERTESTRESULT__isnull=False)
                 ),
@@ -811,7 +811,7 @@ class OtherTest(AuditFieldsMixin):
             ),
             # Sequence must be positive
             models.CheckConstraint(
-                check=models.Q(SEQUENCE__gte=1),
+                condition=models.Q(SEQUENCE__gte=1),
                 name='ot_sequence_positive'
             ),
         ]

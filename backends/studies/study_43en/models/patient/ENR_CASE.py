@@ -407,7 +407,7 @@ class ENR_CASE(AuditFieldsMixin):
         constraints = [
             # Ensure either DOB or age is provided
             models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     DAYOFBIRTH__lte=31,
                     MONTHOFBIRTH__lte=12,
                     YEAROFBIRTH__gte=1900
@@ -416,7 +416,7 @@ class ENR_CASE(AuditFieldsMixin):
             ),
             # Ensure prior hospital date is provided if transferred
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(FROMOTHERHOSPITAL=True) |
                     models.Q(PRIORHOSPIADMISDATE__isnull=False)
                 ),

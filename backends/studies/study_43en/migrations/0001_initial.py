@@ -1318,11 +1318,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='enr_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('DAYOFBIRTH__lte', 31), ('MONTHOFBIRTH__lte', 12), ('YEAROFBIRTH__gte', 1900)), ('DAYOFBIRTH__isnull', True), _connector='OR'), name='enr_valid_date_components'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('DAYOFBIRTH__lte', 31), ('MONTHOFBIRTH__lte', 12), ('YEAROFBIRTH__gte', 1900)), ('DAYOFBIRTH__isnull', True), _connector='OR'), name='enr_valid_date_components'),
         ),
         migrations.AddConstraint(
             model_name='enr_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('FROMOTHERHOSPITAL', True), _negated=True), ('PRIORHOSPIADMISDATE__isnull', False), _connector='OR'), name='enr_prior_date_if_transferred'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('FROMOTHERHOSPITAL', True), _negated=True), ('PRIORHOSPIADMISDATE__isnull', False), _connector='OR'), name='enr_prior_date_if_transferred'),
         ),
         migrations.AddField(
             model_name='contactexpecteddates',
@@ -1363,15 +1363,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='antibioticsensitivity',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('ANTIBIOTIC_NAME', 'Other'), _negated=True), ('OTHER_ANTIBIOTIC_NAME__isnull', False), _connector='OR'), name='ast_specify_other_antibiotic'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('ANTIBIOTIC_NAME', 'Other'), _negated=True), ('OTHER_ANTIBIOTIC_NAME__isnull', False), _connector='OR'), name='ast_specify_other_antibiotic'),
         ),
         migrations.AddConstraint(
             model_name='antibioticsensitivity',
-            constraint=models.CheckConstraint(check=models.Q(('MIC_NUMERIC__isnull', True), ('MIC_NUMERIC__gt', 0), _connector='OR'), name='ast_mic_positive'),
+            constraint=models.CheckConstraint(condition=models.Q(('MIC_NUMERIC__isnull', True), ('MIC_NUMERIC__gt', 0), _connector='OR'), name='ast_mic_positive'),
         ),
         migrations.AddConstraint(
             model_name='antibioticsensitivity',
-            constraint=models.CheckConstraint(check=models.Q(('TESTDATE__isnull', True), ('TESTDATE__lte', django.db.models.functions.datetime.Now()), _connector='OR'), name='ast_testdate_not_future'),
+            constraint=models.CheckConstraint(condition=models.Q(('TESTDATE__isnull', True), ('TESTDATE__lte', django.db.models.functions.datetime.Now()), _connector='OR'), name='ast_testdate_not_future'),
         ),
         migrations.AlterUniqueTogether(
             name='antibioticsensitivity',
@@ -1485,7 +1485,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='underlyingcondition',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERDISEASE', True), _negated=True), ('OTHERDISEASESPECIFY__isnull', False), _connector='OR'), name='und_specify_other_disease'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERDISEASE', True), _negated=True), ('OTHERDISEASESPECIFY__isnull', False), _connector='OR'), name='und_specify_other_disease'),
         ),
         migrations.AddIndex(
             model_name='sam_contact',
@@ -1533,47 +1533,47 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(('SAMPLE', True), ('REASONIFNO__isnull', False), _connector='OR'), name='csam_reason_if_not_collected'),
+            constraint=models.CheckConstraint(condition=models.Q(('SAMPLE', True), ('REASONIFNO__isnull', False), _connector='OR'), name='csam_reason_if_not_collected'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('STOOL', True), _negated=True), ('STOOLDATE__isnull', False), _connector='OR'), name='csam_stool_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('STOOL', True), _negated=True), ('STOOLDATE__isnull', False), _connector='OR'), name='csam_stool_date_required'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('RECTSWAB', True), _negated=True), ('RECTSWABDATE__isnull', False), _connector='OR'), name='csam_rect_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('RECTSWAB', True), _negated=True), ('RECTSWABDATE__isnull', False), _connector='OR'), name='csam_rect_date_required'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('THROATSWAB', True), _negated=True), ('THROATSWABDATE__isnull', False), _connector='OR'), name='csam_throat_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('THROATSWAB', True), _negated=True), ('THROATSWABDATE__isnull', False), _connector='OR'), name='csam_throat_date_required'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('BLOOD', True), _negated=True), ('BLOODDATE__isnull', False), _connector='OR'), name='csam_blood_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('BLOOD', True), _negated=True), ('BLOODDATE__isnull', False), _connector='OR'), name='csam_blood_date_required'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERRES_1', True), _negated=True), ('OTHERRESSPECIFY_1__isnull', False), _connector='OR'), name='csam_specify_other_stool'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERRES_1', True), _negated=True), ('OTHERRESSPECIFY_1__isnull', False), _connector='OR'), name='csam_specify_other_stool'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERRES_2', True), _negated=True), ('OTHERRESSPECIFY_2__isnull', False), _connector='OR'), name='csam_specify_other_rect'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERRES_2', True), _negated=True), ('OTHERRESSPECIFY_2__isnull', False), _connector='OR'), name='csam_specify_other_rect'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERRES_3', True), _negated=True), ('OTHERRESSPECIFY_3__isnull', False), _connector='OR'), name='csam_specify_other_throat'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERRES_3', True), _negated=True), ('OTHERRESSPECIFY_3__isnull', False), _connector='OR'), name='csam_specify_other_throat'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('KLEBPNEU_1', True), _negated=True), ('CULTRES_1', 'Pos'), _connector='OR'), name='csam_kleb_requires_pos_stool'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('KLEBPNEU_1', True), _negated=True), ('CULTRES_1', 'Pos'), _connector='OR'), name='csam_kleb_requires_pos_stool'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('KLEBPNEU_2', True), _negated=True), ('CULTRES_2', 'Pos'), _connector='OR'), name='csam_kleb_requires_pos_rect'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('KLEBPNEU_2', True), _negated=True), ('CULTRES_2', 'Pos'), _connector='OR'), name='csam_kleb_requires_pos_rect'),
         ),
         migrations.AddConstraint(
             model_name='sam_contact',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('KLEBPNEU_3', True), _negated=True), ('CULTRES_3', 'Pos'), _connector='OR'), name='csam_kleb_requires_pos_throat'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('KLEBPNEU_3', True), _negated=True), ('CULTRES_3', 'Pos'), _connector='OR'), name='csam_kleb_requires_pos_throat'),
         ),
         migrations.AlterUniqueTogether(
             name='sam_contact',
@@ -1625,47 +1625,47 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(('SAMPLE', True), ('REASONIFNO__isnull', False), _connector='OR'), name='sam_reason_if_not_collected'),
+            constraint=models.CheckConstraint(condition=models.Q(('SAMPLE', True), ('REASONIFNO__isnull', False), _connector='OR'), name='sam_reason_if_not_collected'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('STOOL', True), _negated=True), ('STOOLDATE__isnull', False), _connector='OR'), name='sam_stool_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('STOOL', True), _negated=True), ('STOOLDATE__isnull', False), _connector='OR'), name='sam_stool_date_required'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('RECTSWAB', True), _negated=True), ('RECTSWABDATE__isnull', False), _connector='OR'), name='sam_rect_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('RECTSWAB', True), _negated=True), ('RECTSWABDATE__isnull', False), _connector='OR'), name='sam_rect_date_required'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('THROATSWAB', True), _negated=True), ('THROATSWABDATE__isnull', False), _connector='OR'), name='sam_throat_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('THROATSWAB', True), _negated=True), ('THROATSWABDATE__isnull', False), _connector='OR'), name='sam_throat_date_required'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('BLOOD', True), _negated=True), ('BLOODDATE__isnull', False), _connector='OR'), name='sam_blood_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('BLOOD', True), _negated=True), ('BLOODDATE__isnull', False), _connector='OR'), name='sam_blood_date_required'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERRES_1', True), _negated=True), ('OTHERRESSPECIFY_1__isnull', False), _connector='OR'), name='sam_specify_other_stool'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERRES_1', True), _negated=True), ('OTHERRESSPECIFY_1__isnull', False), _connector='OR'), name='sam_specify_other_stool'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERRES_2', True), _negated=True), ('OTHERRESSPECIFY_2__isnull', False), _connector='OR'), name='sam_specify_other_rect'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERRES_2', True), _negated=True), ('OTHERRESSPECIFY_2__isnull', False), _connector='OR'), name='sam_specify_other_rect'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERRES_3', True), _negated=True), ('OTHERRESSPECIFY_3__isnull', False), _connector='OR'), name='sam_specify_other_throat'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERRES_3', True), _negated=True), ('OTHERRESSPECIFY_3__isnull', False), _connector='OR'), name='sam_specify_other_throat'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('KLEBPNEU_1', True), _negated=True), ('CULTRES_1', 'Pos'), _connector='OR'), name='sam_kleb_requires_pos_stool'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('KLEBPNEU_1', True), _negated=True), ('CULTRES_1', 'Pos'), _connector='OR'), name='sam_kleb_requires_pos_stool'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('KLEBPNEU_2', True), _negated=True), ('CULTRES_2', 'Pos'), _connector='OR'), name='sam_kleb_requires_pos_rect'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('KLEBPNEU_2', True), _negated=True), ('CULTRES_2', 'Pos'), _connector='OR'), name='sam_kleb_requires_pos_rect'),
         ),
         migrations.AddConstraint(
             model_name='sam_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('KLEBPNEU_3', True), _negated=True), ('CULTRES_3', 'Pos'), _connector='OR'), name='sam_kleb_requires_pos_throat'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('KLEBPNEU_3', True), _negated=True), ('CULTRES_3', 'Pos'), _connector='OR'), name='sam_kleb_requires_pos_throat'),
         ),
         migrations.AlterUniqueTogether(
             name='sam_case',
@@ -1712,15 +1712,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='othertest',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERTESTPERFORMED', True), _negated=True), ('OTHERTESTDTC__isnull', False), _connector='OR'), name='ot_performed_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERTESTPERFORMED', True), _negated=True), ('OTHERTESTDTC__isnull', False), _connector='OR'), name='ot_performed_date_required'),
         ),
         migrations.AddConstraint(
             model_name='othertest',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERTESTPERFORMED', True), _negated=True), ('OTHERTESTRESULT__isnull', False), _connector='OR'), name='ot_performed_result_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERTESTPERFORMED', True), _negated=True), ('OTHERTESTRESULT__isnull', False), _connector='OR'), name='ot_performed_result_required'),
         ),
         migrations.AddConstraint(
             model_name='othertest',
-            constraint=models.CheckConstraint(check=models.Q(('SEQUENCE__gte', 1)), name='ot_sequence_positive'),
+            constraint=models.CheckConstraint(condition=models.Q(('SEQUENCE__gte', 1)), name='ot_sequence_positive'),
         ),
         migrations.AlterUniqueTogether(
             name='othertest',
@@ -1761,11 +1761,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='laboratorytest',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('PERFORMED', True), _negated=True), ('PERFORMEDDATE__isnull', False), _connector='OR'), name='lab_performed_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('PERFORMED', True), _negated=True), ('PERFORMEDDATE__isnull', False), _connector='OR'), name='lab_performed_date_required'),
         ),
         migrations.AddConstraint(
             model_name='laboratorytest',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('PERFORMED', True), _negated=True), ('RESULT__isnull', False), _connector='OR'), name='lab_performed_result_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('PERFORMED', True), _negated=True), ('RESULT__isnull', False), _connector='OR'), name='lab_performed_result_required'),
         ),
         migrations.AlterUniqueTogether(
             name='laboratorytest',
@@ -1797,15 +1797,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='lab_microbiology',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('RESULT', 'Positive'), _negated=True), ('IFPOSITIVE__isnull', False), _connector='OR'), name='lmc_positive_needs_ifpositive'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('RESULT', 'Positive'), _negated=True), ('IFPOSITIVE__isnull', False), _connector='OR'), name='lmc_positive_needs_ifpositive'),
         ),
         migrations.AddConstraint(
             model_name='lab_microbiology',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('IFPOSITIVE', 'Other'), _negated=True), ('SPECIFYOTHERSPECIMEN__isnull', False), _connector='OR'), name='lmc_other_needs_specify'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('IFPOSITIVE', 'Other'), _negated=True), ('SPECIFYOTHERSPECIMEN__isnull', False), _connector='OR'), name='lmc_other_needs_specify'),
         ),
         migrations.AddConstraint(
             model_name='lab_microbiology',
-            constraint=models.CheckConstraint(check=models.Q(('SPECSAMPDATE__isnull', True), ('BACSTRAINISOLDATE__isnull', True), ('BACSTRAINISOLDATE__gte', models.F('SPECSAMPDATE')), _connector='OR'), name='lmc_isolation_after_collection'),
+            constraint=models.CheckConstraint(condition=models.Q(('SPECSAMPDATE__isnull', True), ('BACSTRAINISOLDATE__isnull', True), ('BACSTRAINISOLDATE__gte', models.F('SPECSAMPDATE')), _connector='OR'), name='lmc_isolation_after_collection'),
         ),
         migrations.AlterUniqueTogether(
             name='lab_microbiology',
@@ -1844,7 +1844,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='fu_contact_90',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('ASSESSED', 'Yes'), _negated=True), ('ASSESSDATE__isnull', False), _connector='OR'), name='cfu90_assess_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('ASSESSED', 'Yes'), _negated=True), ('ASSESSDATE__isnull', False), _connector='OR'), name='cfu90_assess_date_required'),
         ),
         migrations.AddIndex(
             model_name='fu_contact_28',
@@ -1864,7 +1864,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='fu_contact_28',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('ASSESSED', 'Yes'), _negated=True), ('ASSESSDATE__isnull', False), _connector='OR'), name='cfu28_assess_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('ASSESSED', 'Yes'), _negated=True), ('ASSESSDATE__isnull', False), _connector='OR'), name='cfu28_assess_date_required'),
         ),
         migrations.AddIndex(
             model_name='fu_case_90',
@@ -1884,11 +1884,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='fu_case_90',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('EvaluatedAtDay90', 'Yes'), _negated=True), ('EvaluateDate__isnull', False), _connector='OR'), name='fu90_assess_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('EvaluatedAtDay90', 'Yes'), _negated=True), ('EvaluateDate__isnull', False), _connector='OR'), name='fu90_assess_date_required'),
         ),
         migrations.AddConstraint(
             model_name='fu_case_90',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('Dead', 'Yes'), _negated=True), models.Q(('DeathDate__isnull', False), ('DeathReason__isnull', False)), _connector='OR'), name='fu90_death_info_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('Dead', 'Yes'), _negated=True), models.Q(('DeathDate__isnull', False), ('DeathReason__isnull', False)), _connector='OR'), name='fu90_death_info_required'),
         ),
         migrations.AddIndex(
             model_name='fu_case_28',
@@ -1912,11 +1912,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='fu_case_28',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('EvaluatedAtDay28', 'Yes'), _negated=True), ('EvaluateDate__isnull', False), _connector='OR'), name='fu28_assess_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('EvaluatedAtDay28', 'Yes'), _negated=True), ('EvaluateDate__isnull', False), _connector='OR'), name='fu28_assess_date_required'),
         ),
         migrations.AddConstraint(
             model_name='fu_case_28',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('Dead', 'Yes'), _negated=True), models.Q(('DeathDate__isnull', False), ('DeathReason__isnull', False)), _connector='OR'), name='fu28_death_info_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('Dead', 'Yes'), _negated=True), models.Q(('DeathDate__isnull', False), ('DeathReason__isnull', False)), _connector='OR'), name='fu28_death_info_required'),
         ),
         migrations.AddField(
             model_name='followupantibiotic90',
@@ -2002,15 +2002,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='endcasecrf',
-            constraint=models.CheckConstraint(check=models.Q(('WITHDRAWREASON', 'na'), ('WITHDRAWDATE__isnull', False), _connector='OR'), name='ec_withdraw_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(('WITHDRAWREASON', 'na'), ('WITHDRAWDATE__isnull', False), _connector='OR'), name='ec_withdraw_date_required'),
         ),
         migrations.AddConstraint(
             model_name='endcasecrf',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('INCOMPLETE', 'yes'), _negated=True), ('INCOMPLETEDEATH', True), ('INCOMPLETEMOVED', True), ('INCOMPLETEOTHER__isnull', False), _connector='OR'), name='ec_incomplete_reason_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('INCOMPLETE', 'yes'), _negated=True), ('INCOMPLETEDEATH', True), ('INCOMPLETEMOVED', True), ('INCOMPLETEOTHER__isnull', False), _connector='OR'), name='ec_incomplete_reason_required'),
         ),
         migrations.AddConstraint(
             model_name='endcasecrf',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('LOSTTOFOLLOWUP', 'yes'), _negated=True), ('LOSTTOFOLLOWUPDATE__isnull', False), _connector='OR'), name='ec_ltfu_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('LOSTTOFOLLOWUP', 'yes'), _negated=True), ('LOSTTOFOLLOWUPDATE__isnull', False), _connector='OR'), name='ec_ltfu_date_required'),
         ),
         migrations.AddField(
             model_name='dischargeicd',
@@ -2039,15 +2039,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='disch_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('TRANSFERHOSP', 'Yes'), _negated=True), ('TRANSFERREASON__isnull', False), ('TRANSFERLOCATION__isnull', False), _connector='OR'), name='disch_transfer_info_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('TRANSFERHOSP', 'Yes'), _negated=True), ('TRANSFERREASON__isnull', False), ('TRANSFERLOCATION__isnull', False), _connector='OR'), name='disch_transfer_info_required'),
         ),
         migrations.AddConstraint(
             model_name='disch_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('DEATHATDISCH', 'Yes'), _negated=True), ('DEATHCAUSE__isnull', False), _connector='OR'), name='disch_death_cause_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('DEATHATDISCH', 'Yes'), _negated=True), ('DEATHCAUSE__isnull', False), _connector='OR'), name='disch_death_cause_required'),
         ),
         migrations.AddConstraint(
             model_name='disch_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('DEATHATDISCH', 'Yes'), _negated=True), ('DISCHSTATUS', 'Died'), _connector='OR'), name='disch_death_status_consistency'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('DEATHATDISCH', 'Yes'), _negated=True), ('DISCHSTATUS', 'Died'), _connector='OR'), name='disch_death_status_consistency'),
         ),
         migrations.AddIndex(
             model_name='contactunderlyingcondition',
@@ -2063,7 +2063,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='contactunderlyingcondition',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERDISEASE', True), _negated=True), ('OTHERDISEASESPECIFY__isnull', False), _connector='OR'), name='cund_specify_other_disease'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERDISEASE', True), _negated=True), ('OTHERDISEASESPECIFY__isnull', False), _connector='OR'), name='cund_specify_other_disease'),
         ),
         migrations.AddField(
             model_name='contactmedicationhistory90',
@@ -2113,15 +2113,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='contactendcasecrf',
-            constraint=models.CheckConstraint(check=models.Q(('WITHDRAWREASON', 'na'), ('WITHDRAWDATE__isnull', False), _connector='OR'), name='cec_withdraw_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(('WITHDRAWREASON', 'na'), ('WITHDRAWDATE__isnull', False), _connector='OR'), name='cec_withdraw_date_required'),
         ),
         migrations.AddConstraint(
             model_name='contactendcasecrf',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('INCOMPLETE', 'yes'), _negated=True), ('INCOMPLETEDEATH', True), ('INCOMPLETEMOVED', True), ('INCOMPLETEOTHER__isnull', False), _connector='OR'), name='cec_incomplete_reason_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('INCOMPLETE', 'yes'), _negated=True), ('INCOMPLETEDEATH', True), ('INCOMPLETEMOVED', True), ('INCOMPLETEOTHER__isnull', False), _connector='OR'), name='cec_incomplete_reason_required'),
         ),
         migrations.AddConstraint(
             model_name='contactendcasecrf',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('LOSTTOFOLLOWUP', 'yes'), _negated=True), ('LOSTTOFOLLOWUPDATE__isnull', False), _connector='OR'), name='cec_ltfu_date_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('LOSTTOFOLLOWUP', 'yes'), _negated=True), ('LOSTTOFOLLOWUPDATE__isnull', False), _connector='OR'), name='cec_ltfu_date_required'),
         ),
         migrations.AddIndex(
             model_name='cli_case',
@@ -2149,23 +2149,23 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='cli_case',
-            constraint=models.CheckConstraint(check=models.Q(('GCS__isnull', True), ('EYES__isnull', True), ('MOTOR__isnull', True), ('VERBAL__isnull', True), ('GCS', django.db.models.expressions.CombinedExpression(django.db.models.expressions.CombinedExpression(models.F('EYES'), '+', models.F('MOTOR')), '+', models.F('VERBAL'))), _connector='OR'), name='clin_gcs_sum_check'),
+            constraint=models.CheckConstraint(condition=models.Q(('GCS__isnull', True), ('EYES__isnull', True), ('MOTOR__isnull', True), ('VERBAL__isnull', True), ('GCS', django.db.models.expressions.CombinedExpression(django.db.models.expressions.CombinedExpression(models.F('EYES'), '+', models.F('MOTOR')), '+', models.F('VERBAL'))), _connector='OR'), name='clin_gcs_sum_check'),
         ),
         migrations.AddConstraint(
             model_name='cli_case',
-            constraint=models.CheckConstraint(check=models.Q(('BLOODPRESSURE_SYS__isnull', True), ('BLOODPRESSURE_DIAS__isnull', True), ('BLOODPRESSURE_DIAS__lt', models.F('BLOODPRESSURE_SYS')), _connector='OR'), name='clin_bp_dias_lt_sys'),
+            constraint=models.CheckConstraint(condition=models.Q(('BLOODPRESSURE_SYS__isnull', True), ('BLOODPRESSURE_DIAS__isnull', True), ('BLOODPRESSURE_DIAS__lt', models.F('BLOODPRESSURE_SYS')), _connector='OR'), name='clin_bp_dias_lt_sys'),
         ),
         migrations.AddConstraint(
             model_name='cli_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('DRAINAGE', True), _negated=True), ('DRAINAGETYPE__isnull', False), _connector='OR'), name='clin_drainage_type_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('DRAINAGE', True), _negated=True), ('DRAINAGETYPE__isnull', False), _connector='OR'), name='clin_drainage_type_required'),
         ),
         migrations.AddConstraint(
             model_name='cli_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('INFECTFOCUS48H', 'Other'), _negated=True), ('SPECIFYOTHERINFECT48H__isnull', False), _connector='OR'), name='clin_specify_other_infection'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('INFECTFOCUS48H', 'Other'), _negated=True), ('SPECIFYOTHERINFECT48H__isnull', False), _connector='OR'), name='clin_specify_other_infection'),
         ),
         migrations.AddConstraint(
             model_name='cli_case',
-            constraint=models.CheckConstraint(check=models.Q(('SYMPTOMONSETDATE__isnull', True), ('ADMISDATE__isnull', True), ('SYMPTOMONSETDATE__lte', models.F('ADMISDATE')), _connector='OR'), name='clin_symptom_before_admission'),
+            constraint=models.CheckConstraint(condition=models.Q(('SYMPTOMONSETDATE__isnull', True), ('ADMISDATE__isnull', True), ('SYMPTOMONSETDATE__lte', models.F('ADMISDATE')), _connector='OR'), name='clin_symptom_before_admission'),
         ),
         migrations.AddField(
             model_name='aehospevent',
@@ -2210,7 +2210,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='symptom_72h',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERSYMPTOM_2', True), _negated=True), ('SPECIFYOTHERSYMPTOM_2__isnull', False), _connector='OR'), name='s72_specify_other'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERSYMPTOM_2', True), _negated=True), ('SPECIFYOTHERSYMPTOM_2__isnull', False), _connector='OR'), name='s72_specify_other'),
         ),
         migrations.AddIndex(
             model_name='rehospitalization90',
@@ -2286,7 +2286,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='improvesympt',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('IMPROVE_SYMPTS', 'yes'), _negated=True), ('SYMPTS__isnull', False), ('IMPROVE_CONDITIONS__isnull', False), _connector='OR'), name='is_specify_if_improved'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('IMPROVE_SYMPTS', 'yes'), _negated=True), ('SYMPTS__isnull', False), ('IMPROVE_CONDITIONS__isnull', False), _connector='OR'), name='is_specify_if_improved'),
         ),
         migrations.AddIndex(
             model_name='hospiprocess',
@@ -2310,7 +2310,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='hospiprocess',
-            constraint=models.CheckConstraint(check=models.Q(('STARTDTC__isnull', True), ('ENDDTC__isnull', True), ('ENDDTC__gte', models.F('STARTDTC')), _connector='OR'), name='hp_end_after_start'),
+            constraint=models.CheckConstraint(condition=models.Q(('STARTDTC__isnull', True), ('ENDDTC__isnull', True), ('ENDDTC__gte', models.F('STARTDTC')), _connector='OR'), name='hp_end_after_start'),
         ),
         migrations.AddIndex(
             model_name='historysymptom',
@@ -2326,7 +2326,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='historysymptom',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('OTHERSYMPTOM', True), _negated=True), ('SPECIFYOTHERSYMPTOM__isnull', False), _connector='OR'), name='hsym_specify_other'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('OTHERSYMPTOM', True), _negated=True), ('SPECIFYOTHERSYMPTOM__isnull', False), _connector='OR'), name='hsym_specify_other'),
         ),
         migrations.AddIndex(
             model_name='followupantibiotic90',

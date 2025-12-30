@@ -531,7 +531,7 @@ class CLI_CASE(AuditFieldsMixin):
         constraints = [
             # GCS must equal sum of components
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(GCS__isnull=True) |
                     models.Q(EYES__isnull=True) |
                     models.Q(MOTOR__isnull=True) |
@@ -542,7 +542,7 @@ class CLI_CASE(AuditFieldsMixin):
             ),
             # Diastolic must be less than systolic
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(BLOODPRESSURE_SYS__isnull=True) |
                     models.Q(BLOODPRESSURE_DIAS__isnull=True) |
                     models.Q(BLOODPRESSURE_DIAS__lt=models.F('BLOODPRESSURE_SYS'))
@@ -551,7 +551,7 @@ class CLI_CASE(AuditFieldsMixin):
             ),
             # If drainage performed, type must be specified
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(DRAINAGE=True) |
                     models.Q(DRAINAGETYPE__isnull=False)
                 ),
@@ -559,7 +559,7 @@ class CLI_CASE(AuditFieldsMixin):
             ),
             # If other infection, must specify
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(INFECTFOCUS48H='Other') |
                     models.Q(SPECIFYOTHERINFECT48H__isnull=False)
                 ),
@@ -567,7 +567,7 @@ class CLI_CASE(AuditFieldsMixin):
             ),
             # Symptom onset must be before or on admission
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(SYMPTOMONSETDATE__isnull=True) |
                     models.Q(ADMISDATE__isnull=True) |
                     models.Q(SYMPTOMONSETDATE__lte=models.F('ADMISDATE'))

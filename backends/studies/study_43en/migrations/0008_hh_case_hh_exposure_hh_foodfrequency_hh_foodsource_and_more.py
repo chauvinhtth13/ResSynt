@@ -226,19 +226,19 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='hh_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('HOUSING_TYPE', 'other'), _negated=True), ('HOUSING_TYPE_OTHER__isnull', False), _connector='OR'), name='hh_specify_housing_type'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('HOUSING_TYPE', 'other'), _negated=True), ('HOUSING_TYPE_OTHER__isnull', False), _connector='OR'), name='hh_specify_housing_type'),
         ),
         migrations.AddConstraint(
             model_name='hh_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('FLOOR_MATERIAL', 'other'), _negated=True), ('FLOOR_MATERIAL_OTHER__isnull', False), _connector='OR'), name='hh_specify_floor_material'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('FLOOR_MATERIAL', 'other'), _negated=True), ('FLOOR_MATERIAL_OTHER__isnull', False), _connector='OR'), name='hh_specify_floor_material'),
         ),
         migrations.AddConstraint(
             model_name='hh_case',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('ROOF_MATERIAL', 'other'), _negated=True), ('ROOF_MATERIAL_OTHER__isnull', False), _connector='OR'), name='hh_specify_roof_material'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('ROOF_MATERIAL', 'other'), _negated=True), ('ROOF_MATERIAL_OTHER__isnull', False), _connector='OR'), name='hh_specify_roof_material'),
         ),
         migrations.AddConstraint(
             model_name='hh_case',
-            constraint=models.CheckConstraint(check=models.Q(('RESPONDENT_MEMBER_NUM__isnull', True), ('TOTAL_MEMBERS__isnull', True), ('RESPONDENT_MEMBER_NUM__lte', models.F('TOTAL_MEMBERS')), _connector='OR'), name='hh_respondent_within_members'),
+            constraint=models.CheckConstraint(condition=models.Q(('RESPONDENT_MEMBER_NUM__isnull', True), ('TOTAL_MEMBERS__isnull', True), ('RESPONDENT_MEMBER_NUM__lte', models.F('TOTAL_MEMBERS')), _connector='OR'), name='hh_respondent_within_members'),
         ),
         migrations.AddIndex(
             model_name='hh_member',
@@ -266,11 +266,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='hh_member',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('RELATIONSHIP', 'D'), _negated=True), ('CHILD_ORDER__isnull', False), _connector='OR'), name='hhmem_child_must_have_order'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('RELATIONSHIP', 'D'), _negated=True), ('CHILD_ORDER__isnull', False), _connector='OR'), name='hhmem_child_must_have_order'),
         ),
         migrations.AddConstraint(
             model_name='hh_member',
-            constraint=models.CheckConstraint(check=models.Q(('RELATIONSHIP', 'D'), ('CHILD_ORDER__isnull', True), _connector='OR'), name='hhmem_non_child_no_order'),
+            constraint=models.CheckConstraint(condition=models.Q(('RELATIONSHIP', 'D'), ('CHILD_ORDER__isnull', True), _connector='OR'), name='hhmem_non_child_no_order'),
         ),
         migrations.AddConstraint(
             model_name='hh_member',
@@ -298,7 +298,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='hh_foodsource',
-            constraint=models.CheckConstraint(check=models.Q(('SOURCE_OTHER__isnull', True), ('SOURCE_OTHER', 'never'), ('SOURCE_OTHER_SPECIFY__isnull', False), _connector='OR'), name='src_specify_other'),
+            constraint=models.CheckConstraint(condition=models.Q(('SOURCE_OTHER__isnull', True), ('SOURCE_OTHER', 'never'), ('SOURCE_OTHER_SPECIFY__isnull', False), _connector='OR'), name='src_specify_other'),
         ),
         migrations.AddIndex(
             model_name='hh_foodfrequency',
@@ -334,30 +334,30 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='hh_exposure',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('TOILET_TYPE', 'other'), _negated=True), ('TOILET_TYPE_OTHER__isnull', False), _connector='OR'), name='exp_specify_toilet_type'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('TOILET_TYPE', 'other'), _negated=True), ('TOILET_TYPE_OTHER__isnull', False), _connector='OR'), name='exp_specify_toilet_type'),
         ),
         migrations.AddConstraint(
             model_name='hh_exposure',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('COOKING_FUEL', 'other'), _negated=True), ('COOKING_FUEL_OTHER__isnull', False), _connector='OR'), name='exp_specify_cooking_fuel'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('COOKING_FUEL', 'other'), _negated=True), ('COOKING_FUEL_OTHER__isnull', False), _connector='OR'), name='exp_specify_cooking_fuel'),
         ),
         migrations.AddConstraint(
             model_name='hh_exposure',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('WATER_TREATMENT', 'yes'), _negated=True), ('TREATMENT_BOILING', True), ('TREATMENT_FILTER_MACHINE', True), ('TREATMENT_FILTER_PORTABLE', True), ('TREATMENT_CHEMICAL', True), ('TREATMENT_SODIS', True), ('TREATMENT_OTHER', True), _connector='OR'), name='exp_treatment_method_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('WATER_TREATMENT', 'yes'), _negated=True), ('TREATMENT_BOILING', True), ('TREATMENT_FILTER_MACHINE', True), ('TREATMENT_FILTER_PORTABLE', True), ('TREATMENT_CHEMICAL', True), ('TREATMENT_SODIS', True), ('TREATMENT_OTHER', True), _connector='OR'), name='exp_treatment_method_required'),
         ),
         migrations.AddConstraint(
             model_name='hh_exposure',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('RAISES_ANIMALS', 'yes'), _negated=True), ('ANIMAL_DOG', True), ('ANIMAL_CAT', True), ('ANIMAL_COW', True), ('ANIMAL_BIRD', True), ('ANIMAL_POULTRY', True), ('ANIMAL_OTHER', True), _connector='OR'), name='exp_animal_type_required'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('RAISES_ANIMALS', 'yes'), _negated=True), ('ANIMAL_DOG', True), ('ANIMAL_CAT', True), ('ANIMAL_COW', True), ('ANIMAL_BIRD', True), ('ANIMAL_POULTRY', True), ('ANIMAL_OTHER', True), _connector='OR'), name='exp_animal_type_required'),
         ),
         migrations.AddConstraint(
             model_name='hh_exposure',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('WATER_OTHER', True), _negated=True), ('WATER_OTHER_SPECIFY__isnull', False), _connector='OR'), name='exp_specify_water_other'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('WATER_OTHER', True), _negated=True), ('WATER_OTHER_SPECIFY__isnull', False), _connector='OR'), name='exp_specify_water_other'),
         ),
         migrations.AddConstraint(
             model_name='hh_exposure',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('TREATMENT_OTHER', True), _negated=True), ('TREATMENT_OTHER_SPECIFY__isnull', False), _connector='OR'), name='exp_specify_treatment_other'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('TREATMENT_OTHER', True), _negated=True), ('TREATMENT_OTHER_SPECIFY__isnull', False), _connector='OR'), name='exp_specify_treatment_other'),
         ),
         migrations.AddConstraint(
             model_name='hh_exposure',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('ANIMAL_OTHER', True), _negated=True), ('ANIMAL_OTHER_SPECIFY__isnull', False), _connector='OR'), name='exp_specify_animal_other'),
+            constraint=models.CheckConstraint(condition=models.Q(models.Q(('ANIMAL_OTHER', True), _negated=True), ('ANIMAL_OTHER_SPECIFY__isnull', False), _connector='OR'), name='exp_specify_animal_other'),
         ),
     ]

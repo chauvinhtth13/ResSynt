@@ -229,7 +229,7 @@ class FU_CASE_90(AuditFieldsMixin):
         constraints = [
             # If assessed YES, must have assessment date
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(EvaluatedAtDay90='Yes') |
                     models.Q(EvaluateDate__isnull=False)
                 ),
@@ -237,7 +237,7 @@ class FU_CASE_90(AuditFieldsMixin):
             ),
             # If deceased YES, must have death date and cause
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(Dead='Yes') |
                     (models.Q(DeathDate__isnull=False) & models.Q(DeathReason__isnull=False))
                 ),

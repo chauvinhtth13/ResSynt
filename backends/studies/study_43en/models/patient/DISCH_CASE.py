@@ -180,7 +180,7 @@ class DISCH_CASE(AuditFieldsMixin):
         constraints = [
             # If transferred, must have transfer info
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(TRANSFERHOSP='Yes') |
                     (models.Q(TRANSFERREASON__isnull=False) | models.Q(TRANSFERLOCATION__isnull=False))
                 ),
@@ -188,7 +188,7 @@ class DISCH_CASE(AuditFieldsMixin):
             ),
             # If death, must have death cause
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(DEATHATDISCH='Yes') |
                     models.Q(DEATHCAUSE__isnull=False)
                 ),
@@ -196,7 +196,7 @@ class DISCH_CASE(AuditFieldsMixin):
             ),
             # Death status consistency
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(DEATHATDISCH='Yes') |
                     models.Q(DISCHSTATUS='Died')
                 ),

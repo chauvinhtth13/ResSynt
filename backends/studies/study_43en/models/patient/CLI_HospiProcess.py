@@ -93,7 +93,7 @@ class HospiProcess(AuditFieldsMixin):
             ),
             # End date must be after start date
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(STARTDTC__isnull=True) |
                     models.Q(ENDDTC__isnull=True) |
                     models.Q(ENDDTC__gte=models.F('STARTDTC'))
