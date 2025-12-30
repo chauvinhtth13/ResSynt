@@ -1,82 +1,100 @@
 <!-- frontends\templates\includes\features_list.html -->
 {% load static i18n %}
-<!-- Brand Section -->
-<div class="d-flex gap-4 align-items-center mb-5">
-    <img src="{% static 'base/images/logo.png' %}" alt="Logo" class="logo">
+
+<!-- Brand Header -->
+<header class="d-flex gap-4 align-items-center mb-5">
+    <img src="{% static 'base/images/logo.png' %}" alt="RESSYNT Logo" class="logo">
     <div class="d-flex flex-column justify-content-center">
         <h1 class="title">RESSYNT</h1>
         <small class="subtitle">{% trans "Research Data Management Platform" %}</small>
     </div>
+</header>
+
+<!-- Headline -->
+<h2 class="headline-neon mb-4">{% trans "Synchronize your science. Simplify your success." %}</h2>
+
+<!-- Features Grid -->
+<div class="row g-4 mb-4" role="list" aria-label="{% trans 'Key Features' %}">
+
+    <article class="col-6" role="listitem">
+        <div class="feature-card feature-card--highlight">
+            <span class="feature-number">01</span>
+            <div class="feature-icon feature-icon--animated">
+                <i class="bi bi-file-earmark-check"></i>
+            </div>
+            <h3 class="feature-title">{% trans "Smart Data Capture" %}</h3>
+            <p class="feature-desc">
+                {% trans "AI-powered eCRF with smart validation to ensure data accuracy." %}
+            </p>
+        </div>
+    </article>
+
+    <article class="col-6" role="listitem">
+        <div class="feature-card">
+            <span class="feature-number">02</span>
+            <div class="feature-icon feature-icon--animated">
+                <i class="bi bi-bar-chart"></i>
+            </div>
+            <h3 class="feature-title">{% trans "Study Metrics" %}</h3>
+            <p class="feature-desc">
+                {% trans "Real-time dashboards for screening/enrollment, queries, and protocol tracking." %}
+            </p>
+        </div>
+    </article>
+
+    <article class="col-6" role="listitem">
+        <div class="feature-card">
+            <span class="feature-number">03</span>
+            <div class="feature-icon feature-icon--animated">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <h3 class="feature-title">{% trans "Visit Management" %}</h3>
+            <p class="feature-desc">
+                {% trans "Automated visit scheduling with smart reminders for compliance." %}
+            </p>
+        </div>
+    </article>
+
+    <article class="col-6" role="listitem">
+        <div class="feature-card feature-card--highlight">
+            <span class="feature-number">04</span>
+            <div class="feature-icon feature-icon--animated">
+                <i class="bi bi-shield-lock"></i>
+            </div>
+            <h3 class="feature-title">{% trans "Data Privacy" %}</h3>
+            <p class="feature-desc">
+                {% trans "GDPR-compliant with AES-256-GCM encryption and role-based access." %}
+            </p>
+        </div>
+    </article>
 </div>
 
-<!-- Headline Section -->
-<div class="mb-4">
-    <h1 class="headline-neon">{% trans "Synchronize your science. Simplify your success." %}</h1>
-</div>
-
-<div class="container-fluid p-0 mb-4">
-    <div class="row g-4">
-        <div class="col-6">
-            <div class="glass-prism-top p-4 rounded-5 h-100">
-                <div class="glass-neon d-flex align-items-center justify-content-center mb-3 rounded-4"
-                    style="width: 60px; height: 60px;">
-                    <i class="bi bi-file-earmark-check fs-3"></i>
-                </div>
-                <h5 class="font-chakra-petch fw-bold text-white h5" data-i18n="feature1-title">
-                    {% trans "Smart Data Capture" %}
-                </h5>
-                <div class="font-chakra-petch text-white" data-i18n="feature1-desc">
-                    {% trans "Electronic Case Report Forms (eCRF) utilizing AI-assisted validation to support data accuracy and reduce entry errors." %}
-                </div>
-            </div>
+<div class="trust-signals mb-4">
+    <p class="trust-signals-label">{% trans "Compliance & Security" %}</p>
+    <div class="trust-badges">
+        <div class="trust-badge" title="{% trans 'GDPR Compliant' %}">
+            <i class="bi bi-shield-check"></i>
+            <span>GDPR</span>
         </div>
-
-        <div class="col-6">
-            <div class="glass-prism-top p-4 rounded-5 h-100">
-                <div class="glass-neon d-flex align-items-center justify-content-center mb-3 rounded-4"
-                    style="width: 60px; height: 60px;">
-                    <i class="bi bi-bar-chart fs-3"></i>
-                </div>
-                <h5 class="font-chakra-petch fw-bold text-white h5" data-i18n="feature2-title">
-                    {% trans "Study Metrics" %}
-                </h5>
-                <div class="font-chakra-petch text-white" data-i18n="feature2-desc">
-                    {% trans "Provides essential project indicators including enrollment tracking, query status, and protocol deviation summaries." %}
-                </div>
-            </div>
+        <div class="trust-badge" title="{% trans 'AES-256 Encryption' %}">
+            <i class="bi bi-lock"></i>
+            <span>AES-256-GCM</span>
         </div>
-
-        <div class="col-6">
-            <div class="glass-prism-top p-4 rounded-5 h-100">
-                <div class="glass-neon d-flex align-items-center justify-content-center mb-3 rounded-4"
-                    style="width: 60px; height: 60px;">
-                    <i class="bi bi-calendar-check fs-3"></i>
-                </div>
-                <h5 class="font-chakra-petch fw-bold text-white h5" data-i18n="feature3-title">
-                    {% trans "Visit Management" %}
-                </h5>
-                <div class="font-chakra-petch text-white" data-i18n="feature3-desc">
-                    {% trans "Calculates visit windows based on protocol requirements and sends automated notifications to support subject compliance." %}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-6">
-            <div class="glass-prism-top p-4 rounded-5 h-100">
-                <div class="glass-neon d-flex align-items-center justify-content-center mb-3 rounded-4"
-                    style="width: 60px; height: 60px;">
-                    <i class="bi bi-shield-lock fs-3"></i>
-                </div>
-                <h5 class="font-chakra-petch fw-bold text-white h5" data-i18n="feature4-title">
-                    {% trans "Data Privacy" %}
-                </h5>
-                <div class="font-chakra-petch text-white" data-i18n="feature4-desc">
-                    {% trans "Secures data using standard AES-256-GCM encryption and Role-Based Access Control (RBAC) in accordance with GDPR." %}
-                </div>
-            </div>
+        <div class="trust-badge" title="{% trans '99.9% Uptime SLA' %}">
+            <i class="bi bi-cloud-check"></i>
+            <span>99.9% SLA</span>
         </div>
     </div>
 </div>
 
-<p class="font-chakra-petch text-white mb-0">{% trans "Need help? Contact us at" %} <a href="mailto:ressynt@oucru.org" class="footer-email">ressynt@oucru.org</a></p>
-<p class="font-chakra-petch footer-credit">{% trans "Designed by Chau Vinh & Pham Tuong Duy" %}</p>
+
+<!-- Footer -->
+<footer class="features-footer">
+    <p class="mb-1">
+        {% trans "Need help? Contact us at" %}
+        <a href="mailto:ressynt@oucru.org" class="footer-email">ressynt@oucru.org</a>
+    </p>
+    <p class="footer-credit mb-0">
+        {% trans "Designed by Chau Vinh & Pham Tuong Duy" %}
+    </p>
+</footer>

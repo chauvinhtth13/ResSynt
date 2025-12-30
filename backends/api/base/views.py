@@ -36,67 +36,67 @@ logger = logging.getLogger(__name__)
 @ensure_language
 @set_language_on_response
 def select_study(request):
-    """
-    Study selection view.
-    Allows users to choose which study to work with.
-    """
-    # Clear study if requested
-    if request.GET.get('clear') or request.POST.get('clear_study'):
-        StudyService.clear_study_session(request.session)
-        logger.debug(f"Cleared study selection for user {request.user.pk}")
+    # """
+    # Study selection view.
+    # Allows users to choose which study to work with.
+    # """
+    # # Clear study if requested
+    # if request.GET.get('clear') or request.POST.get('clear_study'):
+    #     StudyService.clear_study_session(request.session)
+    #     logger.debug(f"Cleared study selection for user {request.user.pk}")
 
-    # Superusers go to admin
-    if request.user.is_superuser:
-        return redirect('admin:index')
+    # # Superusers go to admin
+    # if request.user.is_superuser:
+    #     return redirect('admin:index')
 
-    # Get user's studies with optional search
-    query = request.GET.get('q', '').strip()
-    studies = StudyService.get_user_studies(request.user, query)
+    # # Get user's studies with optional search
+    # query = request.GET.get('q', '').strip()
+    # studies = StudyService.get_user_studies(request.user, query)
 
-    context = {
-        'studies': studies,
-        'query': query,
-        'current_study_id': request.session.get(SessionKeys.CURRENT_STUDY),
-    }
+    # context = {
+    #     'studies': studies,
+    #     'query': query,
+    #     'current_study_id': request.session.get(SessionKeys.CURRENT_STUDY),
+    # }
 
-    # Handle POST - study selection
-    if request.method == 'POST':
-        study_id = request.POST.get('study_id')
+    # # Handle POST - study selection
+    # if request.method == 'POST':
+    #     study_id = request.POST.get('study_id')
         
-        if study_id:
-            try:
-                study_id = int(study_id)
-                study = next((s for s in studies if s.pk == study_id), None)
+    #     if study_id:
+    #         try:
+    #             study_id = int(study_id)
+    #             study = next((s for s in studies if s.pk == study_id), None)
                 
-                if study:
-                    # Setup session with study info
-                    StudyService.set_study_session(request.session, study)
-                    logger.debug(f"User {request.user.pk} selected study {study.code}")
+    #             if study:
+    #                 # Setup session with study info
+    #                 StudyService.set_study_session(request.session, study)
+    #                 logger.debug(f"User {request.user.pk} selected study {study.code}")
                     
-                    # Redirect to next URL or dashboard
-                    next_url = request.GET.get('next')
-                    if next_url:
-                        try:
-                            return redirect(reverse(next_url))
-                        except Exception as e:
-                            logger.warning(f"Cannot reverse '{next_url}': {e}")
+    #                 # Redirect to next URL or dashboard
+    #                 next_url = request.GET.get('next')
+    #                 if next_url:
+    #                     try:
+    #                         return redirect(reverse(next_url))
+    #                     except Exception as e:
+    #                         logger.warning(f"Cannot reverse '{next_url}': {e}")
                     
-                    # Fallback: construct URL from study code
-                    study_code_lower = study.code.lower()
-                    try:
-                        return redirect(reverse(f'study_{study_code_lower}:home_dashboard'))
-                    except Exception as e:
-                        logger.warning(f"Cannot reverse namespace URL: {e}")
-                        # Last resort: direct URL
-                        dashboard_url = f'/studies/{study_code_lower}/dashboard/'
-                        logger.info(f"Redirecting to direct URL: {dashboard_url}")
-                        return redirect(dashboard_url)
-                else:
-                    context['error_message'] = LoginMessages.NO_STUDY_ACCESS
+    #                 # Fallback: construct URL from study code
+    #                 study_code_lower = study.code.lower()
+    #                 try:
+    #                     return redirect(reverse(f'study_{study_code_lower}:home_dashboard'))
+    #                 except Exception as e:
+    #                     logger.warning(f"Cannot reverse namespace URL: {e}")
+    #                     # Last resort: direct URL
+    #                     dashboard_url = f'/studies/{study_code_lower}/dashboard/'
+    #                     logger.info(f"Redirecting to direct URL: {dashboard_url}")
+    #                     return redirect(dashboard_url)
+    #             else:
+    #                 context['error_message'] = LoginMessages.NO_STUDY_ACCESS
                     
-            except (ValueError, TypeError):
-                context['error_message'] = LoginMessages.INVALID_STUDY
-
+    #         except (ValueError, TypeError):
+    #             context['error_message'] = LoginMessages.INVALID_STUDY
+    context: Dict[str, Any] = {}
     return render(request, 'default/select_study.html', context)
 
 

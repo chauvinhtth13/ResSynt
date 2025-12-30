@@ -70,6 +70,7 @@ THIRD_PARTY_APPS = [
     "health_check",
     "health_check.db",
     "health_check.cache",
+    "django_extensions"
 ]
 
 LOCAL_APPS = [
@@ -178,8 +179,8 @@ ACCOUNT_RATE_LIMITS = {
     "reset_password": "10/m/ip",
     "reset_password_email": "5/m/ip",
     "reset_password_from_key": "20/m/ip",
-    "login": "20/m/ip",
-    "login_failure": "10/m/ip",
+    "login": "5/m/ip",
+    "login_failure": "5/m/ip",
 }
 
 USERSESSIONS_TRACK_ACTIVITY = True
@@ -192,8 +193,8 @@ ACCOUNT_LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 # Axes (brute-force protection)
 AXES_ENABLED = True
-AXES_FAILURE_LIMIT = 5
-AXES_COOLOFF_TIME = timedelta(minutes=30)
+AXES_FAILURE_LIMIT = 7
+AXES_COOLOFF_TIME = None 
 AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCK_OUT_AT_FAILURE = True

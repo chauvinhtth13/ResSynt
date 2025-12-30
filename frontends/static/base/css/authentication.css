@@ -1,20 +1,35 @@
+/* ==========================================================================
+   AUTHENTICATION CSS - Reorganized Version
+   ========================================================================== */
+
+/* ==========================================================================
+   1. CSS VARIABLES
+   ========================================================================== */
+
 :root {
     /* ---------- Typography ---------- */
     --font-primary: 'Chakra Petch', sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* ---------- Authentication Specific ---------- */
+    --auth-logo-height: 100px;
+    --auth-title-size: 3rem;
+    --auth-subtitle-size: 0.875rem;
+    --auth-headline-size: 2.5rem;
 }
 
 /* ==========================================================================
-   1. TYPOGRAPHY COMPONENTS
+   2. BASE TYPOGRAPHY & BRANDING
    ========================================================================== */
 
 .font-chakra-petch {
-    font-family: var(--font-primary) !important;
+    font-family: var(--font-primary);
 }
 
 /* ---------- Logo ---------- */
 .logo {
     width: auto;
-    height: 100px;
+    height: var(--auth-logo-height);
     filter: drop-shadow(var(--shadow-text));
 }
 
@@ -23,16 +38,18 @@
     margin: -8px 0 0 0;
     padding: 0;
     font-family: var(--font-primary);
-    font-size: 3rem;
+    font-size: var(--auth-title-size);
     font-weight: 700;
     letter-spacing: 0.4em;
     text-transform: uppercase;
-    background: linear-gradient(180deg,
-            #ffffff 0%,
-            #d4d4d4 25%,
-            #737373 50%,
-            #a3a3a3 75%,
-            #ffffff 100%);
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #d4d4d4 25%,
+        #737373 50%,
+        #a3a3a3 75%,
+        #ffffff 100%
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -40,25 +57,35 @@
     filter: drop-shadow(var(--shadow-text));
 }
 
+.title_logo {
+    height: 1.2em;
+    vertical-align: middle;
+}
+
 /* ---------- Subtitle ---------- */
 .subtitle {
     margin: 0;
     padding-left: 0.5rem;
     font-family: var(--font-primary);
-    font-size: 0.875rem !important;
+    font-size: var(--auth-subtitle-size);
     font-weight: 700;
     letter-spacing: 0.25em;
     text-transform: uppercase;
     color: var(--color-accent-cyan);
     opacity: 0.9;
-    text-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
+    text-shadow: 0 0 10px rgba(var(--rgb-accent-cyan), 0.4);
     border-left: 3px solid var(--color-accent-cyan);
 }
 
-@media (min-width: 1200px) {
-    .subtitle {
-        font-size: 1rem !important;
-    }
+.subtitle-logo {
+    font-family: var(--font-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--color-accent-cyan);
+    opacity: 0.9;
+    text-shadow: 0 0 10px rgba(var(--rgb-accent-cyan), 0.4);
 }
 
 /* ---------- Headline Neon ---------- */
@@ -66,16 +93,18 @@
     position: relative;
     display: inline-block;
     font-family: var(--font-primary);
-    font-size: 2.5rem;
+    font-size: var(--auth-headline-size);
     font-weight: 700;
     line-height: 1.3;
     letter-spacing: 0.03em;
-    background: linear-gradient(90deg,
-            var(--color-accent-cyan) 0%,
-            var(--color-accent-teal) 25%,
-            var(--color-accent-purple) 50%,
-            var(--color-accent-pink) 75%,
-            var(--color-accent-cyan) 100%);
+    background: linear-gradient(
+        90deg,
+        var(--color-accent-cyan) 0%,
+        var(--color-accent-teal) 25%,
+        var(--color-accent-purple) 50%,
+        var(--color-accent-pink) 75%,
+        var(--color-accent-cyan) 100%
+    );
     background-size: 200% 100%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -90,18 +119,735 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg,
-            var(--color-accent-cyan),
-            var(--color-accent-purple),
-            transparent);
+    background: linear-gradient(
+        90deg,
+        var(--color-accent-cyan) 0%,
+        var(--color-accent-teal) 25%,
+        var(--color-accent-purple) 50%,
+        var(--color-accent-pink) 75%,
+        var(--color-accent-cyan) 100%
+    );
+    background-size: 200% 100%;
     border-radius: 2px;
     box-shadow:
-        0 0 12px rgba(0, 245, 255, 0.5),
-        0 0 24px rgba(168, 85, 247, 0.3);
+        0 0 12px rgba(var(--rgb-accent-cyan), 0.5),
+        0 0 24px rgba(var(--rgb-accent-purple), 0.3);
+    animation: headlineGradient 6s linear infinite;
+}
+
+/* ---------- Tagline ---------- */
+.tagline {
+    font-family: var(--font-primary);
+    font-size: 1.0625rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 540px;
 }
 
 /* ==========================================================================
-   2. FOOTER COMPONENTS
+   3. FORM COMPONENTS
+   ========================================================================== */
+
+/* ---------- Form Label & Control ---------- */
+.form-label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-family: var(--font-primary);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.form-control {
+    border-radius: var(--radius-lg, 0.75rem);
+    padding: 0.75rem 1rem;
+    background-color: transparent !important;
+    -webkit-backdrop-filter: blur(var(--blur-glass, 1.25rem));
+    backdrop-filter: blur(var(--blur-glass, 1.25rem));
+    border: 1px solid var(--glass-border, rgba(240, 248, 255, 0.15));
+    color: rgba(255, 255, 255, 0.9);
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    transition: 
+        color var(--transition-slow),
+        border-color var(--transition-slow),
+        box-shadow var(--transition-slow);
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+    font-style: normal;
+}
+
+.form-control:focus {
+    color: #ffffff;
+    border-color: var(--color-accent-cyan);
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.5),
+        0 0 0 2px rgba(var(--rgb-accent-cyan), 0.25);
+    outline: none;
+}
+
+/* ---------- Input with Icon ---------- */
+.input-icon-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1rem;
+    transition: color var(--transition-slow);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.form-control--with-icon {
+    padding-left: 2.75rem;
+}
+
+.form-control--with-icon:focus + .input-icon  {
+    color: var(--color-accent-cyan);
+    text-shadow: 0 0 8px rgba(var(--rgb-accent-cyan), 0.5);
+}
+
+/* ---------- Password Toggle ---------- */
+.password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.4);
+    transition: 
+        color var(--transition-slow),
+        text-shadow var(--transition-slow);
+    z-index: 10;
+    border-radius: var(--radius-sm);
+}
+
+.password-toggle-btn:hover {
+    color: var(--color-accent-cyan);
+    text-shadow: 0 0 8px var(--color-accent-cyan);
+}
+
+.password-toggle-btn:focus-visible {
+    outline: 2px solid rgba(var(--rgb-accent-cyan), 0.5);
+    outline-offset: 2px;
+}
+
+/* ---------- Forgot Password Link ---------- */
+.forgot-password-link {
+    font-family: var(--font-primary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    transition: color var(--transition-slow);
+}
+
+.forgot-password-link:hover {
+    color: var(--color-accent-cyan);
+}
+
+/* ---------- Form Check (Remember Me) ---------- */
+.form-check-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    cursor: pointer;
+}
+
+.form-check-input {
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0;
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 
+        background-color var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.form-check-input:checked {
+    background-color: var(--color-accent-cyan);
+    border-color: var(--color-accent-cyan);
+}
+
+.form-check-input:focus {
+    border-color: var(--color-accent-cyan);
+    box-shadow: 0 0 0 2px rgba(var(--rgb-accent-cyan), 0.25);
+}
+
+.form-check-label {
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    user-select: none;
+}
+
+/* ---------- Form Validation & Alerts ---------- */
+.form-control.is-invalid {
+    border-color: #ff6b7a;
+    background-image: none;
+}
+
+.form-control.is-invalid:focus {
+    border-color: #ff6b7a;
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.5),
+        0 0 0 2px rgba(255, 107, 122, 0.25);
+}
+
+.invalid-feedback {
+    font-family: var(--font-primary);
+    font-size: 0.8125rem;
+    color: #ff6b7a;
+    margin-top: 0.5rem;
+}
+
+/* ==========================================================================
+   4. BUTTON COMPONENTS
+   ========================================================================== */
+
+.btn-cyber {
+    position: relative;
+    background: transparent;
+    border: 1px solid var(--color-accent-cyan) !important;
+    color: var(--color-accent-cyan);
+    font-family: var(--font-primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 0.75rem 2rem;
+    overflow: hidden;
+    z-index: 1;
+    transition: 
+        color var(--transition-slow),
+        box-shadow var(--transition-slow);
+}
+
+.btn-cyber::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--color-accent-cyan);
+    transition: left var(--transition-slow);
+    z-index: -1;
+}
+
+.btn-cyber:hover {
+    color: #000;
+    box-shadow: 0 0 20px var(--color-accent-cyan);
+}
+
+.btn-cyber:hover::before {
+    left: 0;
+}
+
+.btn-cyber:focus-visible {
+    outline: 2px solid rgba(var(--rgb-accent-cyan), 0.5);
+    outline-offset: 2px;
+}
+
+.btn-cyber:disabled,
+.btn-cyber:disabled:hover {
+    color: #000;
+    box-shadow: none;
+}
+
+.btn-cyber:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-cyber:disabled::before {
+    left: 0;
+}
+
+.btn-cyber .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+/* ---------- Registration Notice ---------- */
+.registration-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.registration-notice-text {
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.registration-notice-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-accent-pink);
+    text-decoration: none;
+    padding: 0.375rem 0.75rem;
+    border-radius: 2rem;
+    background: rgba(var(--rgb-accent-pink), 0.1);
+    border: 1px solid rgba(var(--rgb-accent-pink), 0.2);
+    transition: 
+        background-color var(--transition-slow),
+        border-color var(--transition-slow),
+        box-shadow var(--transition-slow),
+        gap var(--transition-slow);
+}
+
+.registration-notice-link:hover {
+    background: rgba(var(--rgb-accent-pink), 0.15);
+    border-color: rgba(var(--rgb-accent-pink), 0.4);
+    box-shadow: 0 0 16px rgba(var(--rgb-accent-pink), 0.2);
+    gap: 0.5rem;
+}
+
+.registration-notice-link i {
+    font-size: 0.75rem;
+    transition: transform var(--transition-slow);
+}
+
+.registration-notice-link:hover i {
+    transform: translateX(2px);
+}
+
+/* ==========================================================================
+   5. AUTH CARD (Login/Register Form)
+   ========================================================================== */
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    
+    /* Glass Effect */
+    background: var(--gradient-glass);
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    backdrop-filter: blur(var(--blur-glass));
+    border: 1px solid var(--glass-border);
+    box-shadow: 
+        var(--shadow-glass),
+        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.15),
+        inset 0 -1px 0 rgba(var(--rgb-glass-base), 0.05);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Top accent line */
+.auth-card::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--rgb-accent-cyan), 0.5) 20%,
+        rgba(var(--rgb-accent-purple), 0.5) 50%,
+        rgba(var(--rgb-accent-pink), 0.5) 80%,
+        transparent 100%
+    );
+    pointer-events: none;
+}
+
+/* ---------- Mobile Brand Header ---------- */
+.auth-card-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.auth-card-logo {
+    width: 40px;
+    height: auto;
+}
+
+.auth-card-title {
+    font-size: 1.75rem !important;
+    margin: 0 !important;
+}
+
+/* ---------- Card Header ---------- */
+.auth-card-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.auth-card-heading {
+    font-family: var(--font-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.25rem 0;
+}
+
+.auth-card-subheading {
+    font-family: var(--font-primary);
+    font-size: 0.9375rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+}
+
+/* ---------- Auth Form ---------- */
+.auth-form {
+    margin-bottom: 0;
+}
+
+/* ---------- Auth Divider ---------- */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.25rem 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.auth-divider span {
+    font-family: var(--font-primary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ---------- SSO Options ---------- */
+.sso-options {
+    margin-bottom: 1.25rem;
+}
+
+/* ---------- Card Footer ---------- */
+.auth-card-footer {
+    text-align: center;
+}
+
+.security-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-primary);
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0;
+}
+
+.security-note i {
+    color: rgba(var(--rgb-accent-cyan), 0.6);
+}
+
+/* ---------- Auth Card Alerts ---------- */
+.auth-card .alert {
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+}
+
+.auth-card .alert-danger {
+    background-color: rgba(220, 53, 69, 0.15);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: #ff6b7a;
+}
+
+/* ---------- Mobile Footer ---------- */
+.auth-mobile-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 1.5rem;
+    gap: 0.25rem;
+    font-family: var(--font-primary);
+    color: #fff;
+}
+
+/* ==========================================================================
+   6. FEATURE CARD COMPONENTS
+   ========================================================================== */
+
+/* ---------- Feature Card Base ---------- */
+.feature-card {
+    position: relative;
+    height: 100%;
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    
+    /* Glass Effect */
+    background: var(--gradient-glass);
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    backdrop-filter: blur(var(--blur-glass));
+    border: 1px solid var(--glass-border);
+    box-shadow: 
+        var(--shadow-glass),
+        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.15),
+        inset 0 -1px 0 rgba(var(--rgb-glass-base), 0.05);
+    overflow: hidden;
+    
+    /* Hover transition */
+    transition: 
+        transform var(--transition-slow),
+        box-shadow var(--transition-slow),
+        border-color var(--transition-slow);
+}
+
+/* Top accent line */
+.feature-card::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--rgb-accent-cyan), 0.5) 20%,
+        rgba(var(--rgb-accent-purple), 0.5) 50%,
+        rgba(var(--rgb-accent-pink), 0.5) 80%,
+        transparent 100%
+    );
+    pointer-events: none;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+        var(--shadow-glass-hover),
+        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.2);
+}
+
+/* ---------- Highlighted Feature Card ---------- */
+.feature-card--highlight {
+    border-color: rgba(var(--rgb-accent-cyan), 0.3);
+    background: linear-gradient(
+        135deg,
+        rgba(var(--rgb-accent-cyan), 0.08) 0%,
+        var(--glass-bg-secondary) 50%,
+        var(--glass-bg-tertiary) 100%
+    );
+}
+
+.feature-card--highlight::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--rgb-accent-cyan), 0.4) 0%,
+        rgba(var(--rgb-accent-purple), 0.2) 50%,
+        transparent 100%
+    );
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* ---------- Feature Number ---------- */
+.feature-number {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: var(--font-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(var(--rgb-accent-cyan), 0.4);
+    letter-spacing: 0.05em;
+}
+
+/* ---------- Feature Icon ---------- */
+.feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    
+    /* Glass Neon Effect */
+    background: linear-gradient(
+        135deg,
+        rgba(var(--rgb-accent-cyan), 0.25) 0%,
+        rgba(var(--rgb-accent-purple), 0.25) 100%
+    );
+    -webkit-backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
+    backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
+    border: 1px solid rgba(var(--rgb-glass-base), 0.3);
+    box-shadow: 
+        0 8px 32px 0 rgba(var(--rgb-accent-cyan), 0.25),
+        inset 0 2px 0 rgba(var(--rgb-glass-base), 0.2);
+    
+    transition: transform var(--transition-slow);
+}
+
+.feature-icon i {
+    font-size: 1.375rem;
+    color: var(--color-accent-cyan);
+    filter: drop-shadow(0 0 8px rgba(var(--rgb-accent-cyan), 0.5));
+}
+
+/* Animated Icon */
+.feature-icon--animated {
+    position: relative;
+}
+
+.feature-card:hover .feature-icon--animated {
+    transform: scale(1.05);
+}
+
+.feature-card:hover .feature-icon--animated i {
+    animation: iconGlow 2s ease-in-out infinite;
+}
+
+/* Pulse ring on hover */
+.feature-icon--animated::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 2px solid rgba(var(--rgb-accent-cyan), 0.3);
+    opacity: 0;
+    transition: opacity var(--transition-slow);
+}
+
+.feature-card:hover .feature-icon--animated::after {
+    opacity: 1;
+    animation: pulseRing 1.5s ease-out infinite;
+}
+
+/* ---------- Feature Title ---------- */
+.feature-title {
+    font-family: var(--font-primary);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.375rem;
+}
+
+/* ---------- Feature Description ---------- */
+.feature-desc {
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0;
+}
+
+/* ---------- Feature Badge ---------- */
+.feature-badge {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    font-family: var(--font-primary);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-accent-cyan);
+    background: rgba(var(--rgb-accent-cyan), 0.15);
+    border: 1px solid rgba(var(--rgb-accent-cyan), 0.3);
+    border-radius: 2rem;
+}
+
+.feature-badge--security {
+    color: var(--color-accent-purple);
+    background: rgba(var(--rgb-accent-purple), 0.15);
+    border-color: rgba(var(--rgb-accent-purple), 0.3);
+}
+
+/* ==========================================================================
+   7. TRUST SIGNALS
+   ========================================================================== */
+
+.trust-signals {
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trust-signals-label {
+    font-family: var(--font-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 0.75rem;
+}
+
+.trust-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2rem;
+    font-family: var(--font-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    transition: 
+        background-color var(--transition-slow),
+        border-color var(--transition-slow),
+        color var(--transition-slow);
+    cursor: default;
+}
+
+.trust-badge:hover {
+    background: rgba(var(--rgb-accent-cyan), 0.1);
+    border-color: rgba(var(--rgb-accent-cyan), 0.3);
+    color: var(--color-accent-cyan);
+}
+
+.trust-badge i {
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   8. FOOTER COMPONENTS
    ========================================================================== */
 
 .footer-email {
@@ -124,147 +870,255 @@
 }
 
 .footer-credit {
+    font-family: var(--font-primary);
     font-size: 0.875rem;
     color: #ffffff;
     opacity: 0.6;
 }
 
+.features-footer {
+    font-family: var(--font-primary);
+    color: #fff;
+}
+
 /* ==========================================================================
-   3. ANIMATIONS
+   9. ACCESSIBILITY
+   ========================================================================== */
+
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-accent-cyan);
+    color: #000;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+    top: 1rem;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
+   10. ANIMATIONS
    ========================================================================== */
 
 @keyframes headlineGradient {
     0% {
-        background-position: 0% center;
+        background-position: 0% 50%;
     }
-
     100% {
-        background-position: -200% center;
+        background-position: 200% 50%;
     }
 }
 
-
-
-/* Outlined Input Style - giống hình mẫu */
-.form-group {
-    position: relative;
-    margin-bottom: 24px;
+@keyframes iconFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
 }
 
-.form-group input {
-    width: 100%;
-    height: 50px;
-    padding: 14px 16px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: #fff;
-    outline: none;
-    transition: border-color 0.2s;
+@keyframes iconGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(var(--rgb-accent-cyan), 0.5));
+    }
+    50% {
+        filter: drop-shadow(0 0 16px rgba(var(--rgb-accent-cyan), 0.8));
+    }
 }
 
-.form-group input:focus {
-    border-color: #1a73e8;
+@keyframes pulseRing {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
 }
 
-.form-group label {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    padding: 0 4px;
-    color: #666;
-    font-size: 16px;
-    pointer-events: none;
-    transition: all 0.2s;
-}
-
-/* Label nằm trên border khi focus hoặc có value */
-.form-group input:focus~label,
-.form-group input:not(:placeholder-shown)~label {
-    top: 0;
-    font-size: 12px;
-    color: #1a73e8;
-}
-
-/* Label màu xám khi không focus nhưng có value */
-.form-group input:not(:focus):not(:placeholder-shown)~label {
-    color: #666;
-}
-
-.form-group input::placeholder {
-    color: transparent;
-}
-
-/* Password Toggle */
-.password-toggle {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: #666;
-    cursor: pointer;
-    padding: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.password-toggle:hover {
-    color: #333;
-}
-
-.password-toggle svg {
-    width: 20px;
-    height: 20px;
-}
-
-/* Input padding khi có toggle */
-.form-group.has-toggle input {
-    padding-right: 45px;
-}
-
-
-/* ========================================================================== 
-   PASSWORD INPUT
+/* ==========================================================================
+   11. RESPONSIVE DESIGN
    ========================================================================== */
-/* Password Toggle Enhancement */
-.password-toggle-icon {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: #6b7280;
-    cursor: pointer;
-    padding: 0.25rem;
-    font-size: clamp(1rem, 0.5vw + 0.85rem, 1.25rem);
-    transition: color var(--transition-fast);
-    z-index: 2;
+
+/* ---------- Hide mobile brand on desktop ---------- */
+@media (min-width: 768px) {
+    .auth-card-brand,
+    .auth-mobile-footer {
+        display: none;
+    }
 }
 
-.password-toggle-icon:hover,
-.password-toggle-icon:focus-visible {
-    color: var(--color-royal-blue-500);
-    outline: none;
+/* ---------- Extra small devices (< 576px) ---------- */
+@media (max-width: 576px) {
+    :root {
+        --auth-logo-height: 70px;
+        --auth-title-size: 1.75rem;
+        --auth-subtitle-size: 0.75rem;
+        --auth-headline-size: 1.5rem;
+    }
+    
+    .title {
+        letter-spacing: 0.2em;
+    }
+    
+    .btn-cyber {
+        padding: 0.625rem 1.5rem;
+        letter-spacing: 1px;
+        font-size: 0.875rem;
+    }
+    
+    .auth-card {
+        padding: 1.75rem;
+        border-radius: 1.25rem;
+    }
+    
+    .auth-card-heading {
+        font-size: 1.25rem;
+    }
+    
+    .auth-card-subheading {
+        font-size: 0.875rem;
+    }
 }
 
-.password-toggle-icon:focus-visible {
-    outline: 2px solid var(--color-royal-blue-500);
-    outline-offset: 2px;
+/* ---------- Small devices (≥ 576px) ---------- */
+@media (min-width: 576px) {
+    :root {
+        --auth-title-size: 2.5rem;
+        --auth-headline-size: 2rem;
+    }
 }
 
-.password-toggle-icon i {
-    display: block;
-    transition: transform 0.2s ease;
+@media (min-width: 576px) and (max-width: 991.98px) {
+    .auth-card {
+        max-width: 380px;
+    }
 }
 
-/* Ngăn button bị submit form */
-.password-toggle-icon[type="button"] {
-    -webkit-appearance: none;
-    appearance: none;
+/* ---------- Medium devices (≥ 768px) ---------- */
+@media (min-width: 768px) {
+    :root {
+        --auth-title-size: 2.75rem;
+        --auth-headline-size: 2.25rem;
+    }
+}
+
+/* ---------- Large devices (≥ 992px) ---------- */
+@media (min-width: 992px) {
+    :root {
+        --auth-title-size: 3rem;
+        --auth-headline-size: 2.5rem;
+    }
+    
+    .auth-card {
+        max-width: 400px;
+        padding: 2.5rem;
+    }
+}
+
+/* ---------- Extra large devices (≥ 1200px) ---------- */
+@media (min-width: 1200px) {
+    .subtitle {
+        font-size: 1rem;
+    }
+    
+    .auth-card {
+        max-width: 420px;
+        padding: 2.5rem;
+    }
+}
+
+/* ---------- Feature cards responsive (≤ 1400px) ---------- */
+@media (max-width: 1400px) {
+    .feature-card {
+        padding: 1.25rem;
+    }
+    
+    .feature-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .feature-icon i {
+        font-size: 1.25rem;
+    }
+    
+    .feature-title {
+        font-size: 1rem;
+    }
+    
+    .feature-desc {
+        font-size: 0.8125rem;
+    }
+    
+    .feature-number {
+        font-size: 0.6875rem;
+    }
+    
+    .tagline {
+        font-size: 1rem;
+    }
+    
+    .trust-badges {
+        gap: 0.5rem;
+    }
+    
+    .trust-badge {
+        padding: 0.25rem 0.625rem;
+        font-size: 0.6875rem;
+    }
+}
+
+/* ---------- Feature cards responsive (≤ 1200px) ---------- */
+@media (max-width: 1200px) {
+    .feature-card {
+        padding: 1rem;
+        border-radius: 1.25rem;
+    }
+    
+    .feature-icon {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 0.75rem;
+        border-radius: 0.75rem;
+    }
+    
+    .feature-icon i {
+        font-size: 1.125rem;
+    }
+    
+    .feature-title {
+        font-size: 0.9375rem;
+    }
+    
+    .feature-desc {
+        font-size: 0.75rem;
+        line-height: 1.45;
+    }
+    
+    .feature-badge {
+        font-size: 0.625rem;
+        padding: 0.1875rem 0.5rem;
+    }
+    
+    .tagline {
+        font-size: 0.9375rem;
+    }
+    
+    .headline-neon {
+        font-size: 2rem;
+    }
 }

@@ -9,9 +9,9 @@
 <link rel="stylesheet" href="{% static 'base/css/select_study.css' %}">
 {% endblock %}
 
-{% block main %}
+{% block base_main %}
 
-{% include 'includes/header/select_study_header.html' %}
+{% include 'components/header.html' with show_logo=True%}
 
 <main class="container-fluid p-5">
     <!-- Wrapper để căn giữa card -->

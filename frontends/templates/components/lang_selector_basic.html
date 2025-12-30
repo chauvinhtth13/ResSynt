@@ -1,0 +1,33 @@
+<!-- frontends/templates/components/dropdown/language_selector_basic.html -->
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_available_languages as LANGUAGES %}
+
+<div class="dropdown">
+  <button class="btn btn-link text-dark p-1" 
+          type="button" 
+          data-bs-toggle="dropdown" 
+          aria-expanded="false"
+          aria-label="{% trans 'Select language' %}">
+    <i class="bi bi-globe fs-5"></i>
+    <span class="ms-1 d-none d-md-inline text-uppercase small">{{ LANGUAGE_CODE }}</span>
+  </button>
+  
+  <ul class="dropdown-menu dropdown-menu-end shadow">
+    {% for lang_code, lang_name in LANGUAGES %}
+      <li>
+        <form action="{% url 'set_language' %}" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="language" value="{{ lang_code }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit" class="dropdown-item d-flex align-items-center {% if lang_code == LANGUAGE_CODE %}active{% endif %}">
+            <span class="me-2">{{ lang_name }}</span>
+            {% if lang_code == LANGUAGE_CODE %}
+              <i class="bi bi-check ms-auto"></i>
+            {% endif %}
+          </button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
