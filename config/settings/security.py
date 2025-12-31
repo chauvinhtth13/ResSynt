@@ -32,6 +32,8 @@ try:
     from csp.constants import SELF
 except ImportError:
     SELF = "'self'"
+    
+CSP_ENABLED = True
 
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {

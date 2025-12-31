@@ -166,6 +166,12 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
+        # API account (auth, lockout, etc.)
+        "backends.api.base.account": {
+            "handlers": ["console_dev", "file_security"],
+            "level": "DEBUG" if _DEBUG else "WARNING",
+            "propagate": False,
+        },
         # Audit logger (use: logging.getLogger('audit').info(...))
         "audit": {
             "handlers": ["file_audit"],

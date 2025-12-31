@@ -8,6 +8,7 @@ This module assembles all URL patterns:
 """
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import include, path
 
 from .base import urlpatterns as base_urlpatterns
 from .studies import get_study_urlpatterns
@@ -25,6 +26,13 @@ urlpatterns.extend(get_study_urlpatterns())
 
 # Development: serve static and media files
 if settings.DEBUG:
+    try:
+        import debug_toolbar
+        urlpatterns = [
+            path('__debug__/', include(debug_toolbar.urls)),
+        ] + urlpatterns
+    except ImportError:
+        pass
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

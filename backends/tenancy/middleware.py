@@ -181,17 +181,17 @@ class UnifiedTenancyMiddleware:
     
     def _get_client_ip(self, request: HttpRequest) -> str:
         """
-        Get client IP address securely.
-        
-        Note: X-Forwarded-For can be spoofed. In production, configure
-        AXES_IPWARE_PROXY_COUNT based on your proxy setup.
+        Get client IP with proxy awareness.
+        IMPORTANT: Set AXES_IPWARE_PROXY_COUNT correctly based on your proxy setup.
         """
-        # Use first IP from X-Forwarded-For if behind proxy
         xff = request.META.get('HTTP_X_FORWARDED_FOR')
         if xff:
-            # Take only the first IP (client IP when properly configured)
-            return xff.split(',')[0].strip()[:45]
-        
+            # Take the nth IP from the right (based on proxy count)
+            ips = [ip.strip() for ip in xff.split(',')]
+            proxy_count = getattr(settings, 'AXES_IPWARE_PROXY_COUNT', 1)
+            # The client IP is proxy_count positions from the right
+            client_index = max(0, len(ips) - proxy_count - 1)
+            return ips[client_index][:45]
         return request.META.get('REMOTE_ADDR', '127.0.0.1')[:45]
     
     # =========================================================================

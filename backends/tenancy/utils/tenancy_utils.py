@@ -76,7 +76,7 @@ class TenancyUtils:
                     'group__permissions',
                     queryset=Permission.objects.filter(
                         content_type__app_label=app_label
-                    ).select_related('content_type')
+                    ).only('codename', 'content_type_id')  # Only fetch needed fields
                 )
             )
             

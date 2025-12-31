@@ -116,6 +116,9 @@ MANAGEMENT_DB_SCHEMA = env("MANAGEMENT_DB_SCHEMA", default="management")
 DATABASES = {
     "default": DatabaseConfig.get_management_db(env),
 }
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+
 DatabaseConfig.validate_config(DATABASES["default"], "default")
 
 # Load study databases
@@ -133,8 +136,8 @@ DATABASE_ROUTERS = ["backends.tenancy.db_router.TenantRouter"]
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "resync-cache",
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": BASE_DIR / ".cache",
     }
 }
 
@@ -157,9 +160,9 @@ SESSION_SAVE_EVERY_REQUEST = False
 # =============================================================================
 
 AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesBackend",  # MUST BE FIRST - intercepts all auth attempts
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
-    "axes.backends.AxesBackend",  # Must be last
 ]
 
 # Allauth
@@ -170,17 +173,17 @@ ACCOUNT_LOGIN_METHODS = {"username", "email"}
 ACCOUNT_SESSION_REMEMBER = False
 ACCOUNT_USERNAME_MIN_LENGTH = 3
 ACCOUNT_USERNAME_BLACKLIST = ["admin", "administrator", "root", "system"]
-ACCOUNT_EMAIL_SUBJECT_PREFIX = "[ResSync]"
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[ResSynt - Research Data Management Platform]"
 ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True
 ACCOUNT_LOGOUT_ON_GET = False  # Require POST for logout (CSRF protection)
+PASSWORD_RESET_TIMEOUT = 900  # 15 minutes
 ACCOUNT_RATE_LIMITS = {
     "change_password": "5/m/user",
     "reset_password": "10/m/ip",
     "reset_password_email": "5/m/ip",
     "reset_password_from_key": "20/m/ip",
-    "login": "5/m/ip",
-    "login_failure": "5/m/ip",
+    # login rate limiting handled by django-axes
 }
 
 USERSESSIONS_TRACK_ACTIVITY = True
@@ -190,18 +193,22 @@ LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/select-study/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/accounts/login/"
+ANONYMOUS_USER_NAME = None
 
 # Axes (brute-force protection)
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 7
-AXES_COOLOFF_TIME = None 
-AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]
+# AXES_COOLOFF_TIME = None  # No auto-unlock - admin must manually unblock
+# Block username OR IP separately (either triggers lockout)
+AXES_LOCKOUT_PARAMETERS = [["username"], ["ip_address"]]
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCK_OUT_AT_FAILURE = True
 AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
-AXES_VERBOSE = False
+AXES_VERBOSE = True
 AXES_ENABLE_ACCESS_FAILURE_LOG = True
-AXES_LOCKOUT_TEMPLATE = "errors/lockout.html"
+# Custom lockout: inline error on login page instead of redirect
+AXES_LOCKOUT_CALLABLE = "backends.api.base.account.lockout.lockout_response"
+AXES_USERNAME_FORM_FIELD = "login"  # Allauth uses 'login' field
 AXES_IPWARE_PROXY_COUNT = 1
 AXES_IPWARE_META_PRECEDENCE_ORDER = [
     "HTTP_X_FORWARDED_FOR",

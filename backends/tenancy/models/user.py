@@ -41,6 +41,24 @@ class User(AbstractUser):
     
     last_study_accessed_at= models.DateTimeField(null=True, blank=True)    
     last_study_accessed_id= models.IntegerField(null=True, blank=True) 
+    
+    # ✨ RSA PUBLIC KEY (for backup signature verification)
+    public_key_pem = models.TextField(
+        blank=True,
+        null=True,
+        help_text="User's RSA public key (PEM format) for backup signature verification"
+    )
+    key_generated_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Timestamp when RSA key pair was generated"
+    )
+    key_last_rotated = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Timestamp of last key rotation"
+    )
+    
     # Metadata
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -155,11 +173,17 @@ class User(AbstractUser):
         return sites
         
     def get_total_permissions_count(self) -> int:
-        from django.contrib.auth.models import Permission
-        return Permission.objects.filter(
-            group__studymembership__user=self,
-            group__studymembership__is_active=True
-        ).distinct().count()
+        """Count total permissions across all studies"""
+        cache_key = f'user_perms_count_{self.pk}'
+        count = cache.get(cache_key)
+        
+        if count is None:
+            count = 0
+            for study in self.get_accessible_studies():
+                count += len(self.get_study_permissions(study))
+            cache.set(cache_key, count, 300)
+        
+        return count
     
     @property
     def studies_count(self) -> int:
@@ -184,23 +208,39 @@ class User(AbstractUser):
     
     def is_axes_locked(self) -> bool:
         """
-        Check if user is locked by django-axes
-        Direct database check - no cache
+        Check if user is locked by django-axes.
+        ✅ SIMPLIFIED: Direct DB check with cooloff support
         """
         try:
             from axes.models import AccessAttempt
-            from axes.conf import settings as axes_settings
+            from django.conf import settings
+            from django.utils import timezone
             
-            # Force fresh query - no cache
+            # Get latest attempt for this user
             attempt = AccessAttempt.objects.filter(
                 username=self.username
-            ).first()
+            ).order_by('-attempt_time').first()
             
             if not attempt:
                 return False
             
-            failure_limit = getattr(axes_settings, 'AXES_FAILURE_LIMIT', 5)
-            return attempt.failures_since_start >= failure_limit
+            # Get failure limit
+            failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 5)
+            
+            # Check if failures exceed limit
+            if attempt.failures_since_start < failure_limit:
+                return False
+            
+            # Check cooloff period
+            cooloff = getattr(settings, 'AXES_COOLOFF_TIME', None)
+            if cooloff:
+                cooloff_expiry = attempt.attempt_time + cooloff
+                if timezone.now() > cooloff_expiry:
+                    # Cooloff expired, user can try again
+                    return False
+            
+            # User is locked
+            return True
             
         except Exception as e:
             logger.error(f"Error checking axes lock: {e}")
