@@ -55,8 +55,8 @@ def individual_detail(request, subjectid):
     View individual details with all related data
     """
     queryset = get_filtered_individuals(request.user)
-    # Find by MEMBER.MEMBERID (which is the SUBJECTID)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    # Find by MEMBERID.MEMBERID (which is the SUBJECTID)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Get related counts
     exposure_count = 1 if hasattr(individual, 'exposure') and individual.exposure else 0
@@ -100,7 +100,7 @@ def individual_create(request):
                     set_audit_metadata(individual, request.user)
                     individual.save()
                     
-                    subjectid = individual.MEMBER.MEMBERID if individual.MEMBER else 'N/A'
+                    subjectid = individual.MEMBERID.MEMBERID if individual.MEMBERID else 'N/A'
                     logger.info(f"✅ Created individual: {subjectid}")
                     logger.info("=" * 80)
                     logger.info("=== ✅ INDIVIDUAL CREATE SUCCESS ===")
@@ -158,7 +158,7 @@ def individual_update(request, subjectid):
     logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     logger.info(f"✅ Found individual: {subjectid}")
     
     if request.method == 'POST':
@@ -174,7 +174,7 @@ def individual_update(request, subjectid):
                     set_audit_metadata(individual, request.user)
                     individual.save()
                     
-                    subjectid = individual.MEMBER.MEMBERID if individual.MEMBER else 'N/A'
+                    subjectid = individual.MEMBERID.MEMBERID if individual.MEMBERID else 'N/A'
                     logger.info(f"✅ Updated individual: {subjectid}")
                     logger.info("=" * 80)
                     logger.info("=== ✅ INDIVIDUAL UPDATE SUCCESS ===")
@@ -231,7 +231,7 @@ def individual_view(request, subjectid):
     logger.info("=" * 80)
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Create readonly form
     individual_form = IndividualForm(instance=individual)

@@ -57,7 +57,7 @@ class Individual(AuditFieldsMixin):
         NO = 'no', _('No')
     
     # PRIMARY KEY - Link to HH_Member
-    MEMBER = models.OneToOneField(
+    MEMBERID = models.OneToOneField(
         'HH_Member',
         on_delete=models.CASCADE,
         primary_key=True,
@@ -156,15 +156,15 @@ class Individual(AuditFieldsMixin):
     @property
     def household_id(self):
         """Get household ID from member relationship."""
-        if hasattr(self, 'MEMBER') and self.MEMBER:
-            return self.MEMBER.HHID_id
+        if hasattr(self, 'MEMBERID') and self.MEMBERID:
+            return self.MEMBERID.HHID
         return None
     
     @property
     def SUBJECTID(self):
         """Get Subject ID from member relationship (MEMBERID)."""
-        if hasattr(self, 'MEMBER') and self.MEMBER:
-            return self.MEMBER.MEMBERID
+        if hasattr(self, 'MEMBERID') and self.MEMBERID:
+            return self.MEMBERID.MEMBERID
         return None
     
     @property
@@ -232,7 +232,7 @@ class Individual(AuditFieldsMixin):
             raise ValidationError(errors)
     
     def __str__(self):
-        return f"{self.MEMBER.MEMBERID}"
+        return f"{self.MEMBERID.MEMBERID}"
 
 
 # ==========================================
@@ -245,7 +245,7 @@ class Individual_Exposure(AuditFieldsMixin):
         YES = 'yes', _('Yes')
         NO = 'no', _('No')
     
-    MEMBER = models.OneToOneField(
+    MEMBERID = models.OneToOneField(
         'Individual',
         on_delete=models.CASCADE,
         primary_key=True,
@@ -297,7 +297,7 @@ class Individual_Exposure(AuditFieldsMixin):
         verbose_name_plural = _('Individual Exposures')
     
     def __str__(self):
-        return f"Exposure: {self.MEMBER}"
+        return f"Exposure: {self.MEMBERID}"
 
 
 # ==========================================
@@ -315,7 +315,7 @@ class Individual_WaterSource(AuditFieldsMixin):
         POND = 'pond', _('Pond/Lake water')
         OTHER = 'other', _('Other')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='water_sources', db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='water_sources', db_column='MEMBERID')
     SOURCE_TYPE = models.CharField(max_length=20, choices=SourceTypeChoices.choices, db_index=True)
     SOURCE_TYPE_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
@@ -330,11 +330,11 @@ class Individual_WaterSource(AuditFieldsMixin):
         db_table = 'Individual_WaterSource'
         verbose_name = _('Individual Water Source')
         verbose_name_plural = _('Individual Water Sources')
-        ordering = ['MEMBER', 'SOURCE_TYPE']
-        unique_together = [['MEMBER', 'SOURCE_TYPE']]
+        ordering = ['MEMBERID', 'SOURCE_TYPE']
+        unique_together = [['MEMBERID', 'SOURCE_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_SOURCE_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_SOURCE_TYPE_display()}"
 
 
 # ==========================================
@@ -351,7 +351,7 @@ class Individual_WaterTreatment(AuditFieldsMixin):
         SODIS = 'sodis', _('Solar disinfection (SODIS)')
         OTHER = 'other', _('Other')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='treatment_methods', db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='treatment_methods', db_column='MEMBERID')
     TREATMENT_TYPE = models.CharField(max_length=20, choices=TreatmentTypeChoices.choices, db_index=True)
     TREATMENT_TYPE_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
@@ -359,11 +359,11 @@ class Individual_WaterTreatment(AuditFieldsMixin):
         db_table = 'Individual_WaterTreatment'
         verbose_name = _('Individual Water Treatment')
         verbose_name_plural = _('Individual Water Treatments')
-        ordering = ['MEMBER', 'TREATMENT_TYPE']
-        unique_together = [['MEMBER', 'TREATMENT_TYPE']]
+        ordering = ['MEMBERID', 'TREATMENT_TYPE']
+        unique_together = [['MEMBERID', 'TREATMENT_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_TREATMENT_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_TREATMENT_TYPE_display()}"
 
 
 # ==========================================
@@ -397,7 +397,7 @@ class Individual_Comorbidity(AuditFieldsMixin):
         TREATING = 'treating', _('Đang điều trị')
         NOT_TREATING = 'not_treating', _('Không điều trị')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='comorbidities', db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='comorbidities', db_column='MEMBERID')
     COMORBIDITY_TYPE = models.CharField(max_length=30, choices=ComorbidityTypeChoices.choices, db_index=True)
     COMORBIDITY_OTHER = models.CharField(max_length=200, null=True, blank=True)
     TREATMENT_STATUS = models.CharField(max_length=20, choices=TreatmentStatusChoices.choices, null=True, blank=True)
@@ -406,11 +406,11 @@ class Individual_Comorbidity(AuditFieldsMixin):
         db_table = 'Individual_Comorbidity'
         verbose_name = _('Comorbidity')
         verbose_name_plural = _('Comorbidities')
-        ordering = ['MEMBER', 'COMORBIDITY_TYPE']
-        unique_together = [['MEMBER', 'COMORBIDITY_TYPE']]
+        ordering = ['MEMBERID', 'COMORBIDITY_TYPE']
+        unique_together = [['MEMBERID', 'COMORBIDITY_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_COMORBIDITY_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_COMORBIDITY_TYPE_display()}"
 
 
 # ==========================================
@@ -440,7 +440,7 @@ class Individual_Vaccine(AuditFieldsMixin):
         PNEUMOCOCCAL = 'pneumococcal', _('Phế cầu khuẩn')
         OTHER = 'other', _('Other')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='vaccines', db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='vaccines', db_column='MEMBERID')
     VACCINE_TYPE = models.CharField(max_length=30, choices=VaccineTypeChoices.choices, db_index=True)
     VACCINE_OTHER = models.CharField(max_length=200, null=True, blank=True)
     
@@ -448,11 +448,11 @@ class Individual_Vaccine(AuditFieldsMixin):
         db_table = 'Individual_Vaccine'
         verbose_name = _('Vaccine')
         verbose_name_plural = _('Vaccines')
-        ordering = ['MEMBER', 'VACCINE_TYPE']
-        unique_together = [['MEMBER', 'VACCINE_TYPE']]
+        ordering = ['MEMBERID', 'VACCINE_TYPE']
+        unique_together = [['MEMBERID', 'VACCINE_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_VACCINE_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_VACCINE_TYPE_display()}"
 
 
 # ==========================================
@@ -474,7 +474,7 @@ class Individual_Hospitalization(AuditFieldsMixin):
         DAYS_5_7 = '5-7', _('5-7 ngày')
         DAYS_7_PLUS = '>7', _('Trên 7 ngày')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='hospitalizations', db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='hospitalizations', db_column='MEMBERID')
     HOSPITAL_TYPE = models.CharField(max_length=20, choices=HospitalTypeChoices.choices, db_index=True)
     HOSPITAL_OTHER = models.CharField(max_length=200, null=True, blank=True)
     DURATION = models.CharField(max_length=10, choices=DurationChoices.choices, null=True, blank=True)
@@ -483,10 +483,10 @@ class Individual_Hospitalization(AuditFieldsMixin):
         db_table = 'Individual_Hospitalization'
         verbose_name = _('Hospitalization')
         verbose_name_plural = _('Hospitalizations')
-        ordering = ['MEMBER', 'HOSPITAL_TYPE']
+        ordering = ['MEMBERID', 'HOSPITAL_TYPE']
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_HOSPITAL_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_HOSPITAL_TYPE_display()}"
 
 
 # ==========================================
@@ -509,7 +509,7 @@ class Individual_Medication(AuditFieldsMixin):
         DAYS_7_14 = '7-14', _('7-14 ngày')
         DAYS_14_PLUS = '>14', _('> 14 ngày')
     
-    MEMBER = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='medications', db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual_Exposure', on_delete=models.CASCADE, related_name='medications', db_column='MEMBERID')
     MEDICATION_TYPE = models.CharField(max_length=30, choices=MedicationTypeChoices.choices, db_index=True)
     MEDICATION_DETAIL = models.CharField(max_length=500, null=True, blank=True, verbose_name=_('Medication Detail'))
     DURATION = models.CharField(max_length=10, choices=DurationChoices.choices, null=True, blank=True)
@@ -518,10 +518,10 @@ class Individual_Medication(AuditFieldsMixin):
         db_table = 'Individual_Medication'
         verbose_name = _('Medication')
         verbose_name_plural = _('Medications')
-        ordering = ['MEMBER', 'MEDICATION_TYPE']
+        ordering = ['MEMBERID', 'MEDICATION_TYPE']
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_MEDICATION_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_MEDICATION_TYPE_display()}"
 
 
 # ==========================================
@@ -538,7 +538,7 @@ class Individual_FoodFrequency(AuditFieldsMixin):
         DAILY_1 = '1/day', _('1 time/day')
         DAILY_2_PLUS = '2+/day', _('2+ times/day')
     
-    MEMBER = models.OneToOneField('Individual', on_delete=models.CASCADE, primary_key=True, db_column='MEMBERID', related_name='food_frequency')
+    MEMBERID = models.OneToOneField('Individual', on_delete=models.CASCADE, primary_key=True, db_column='MEMBERID', related_name='food_frequency')
     
     # FOOD CATEGORIES (same as household)
     RICE_NOODLES = models.CharField(max_length=15, choices=FrequencyChoices.choices, null=True, blank=True)
@@ -559,7 +559,7 @@ class Individual_FoodFrequency(AuditFieldsMixin):
         verbose_name_plural = _('Individual Food Frequencies')
     
     def __str__(self):
-        return f"Food Freq: {self.MEMBER_id}"
+        return f"Food Freq: {self.MEMBERID}"
 
 
 # ==========================================
@@ -579,7 +579,7 @@ class Individual_Travel(AuditFieldsMixin):
         INTERNATIONAL = 'international', _('Nước ngoài')
         DOMESTIC = 'domestic', _('Tỉnh thành trong nước')
     
-    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='travel_history', db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='travel_history', db_column='MEMBERID')
     TRAVEL_TYPE = models.CharField(max_length=20, choices=TravelTypeChoices.choices, db_index=True)
     FREQUENCY = models.CharField(max_length=15, choices=FrequencyChoices.choices, null=True, blank=True)
     
@@ -587,11 +587,11 @@ class Individual_Travel(AuditFieldsMixin):
         db_table = 'Individual_Travel'
         verbose_name = _('Travel History')
         verbose_name_plural = _('Travel Histories')
-        ordering = ['MEMBER', 'TRAVEL_TYPE']
-        unique_together = [['MEMBER', 'TRAVEL_TYPE']]
+        ordering = ['MEMBERID', 'TRAVEL_TYPE']
+        unique_together = [['MEMBERID', 'TRAVEL_TYPE']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_TRAVEL_TYPE_display()}"
+        return f"{self.MEMBERID} - {self.get_TRAVEL_TYPE_display()}"
 
 
 # ==========================================
@@ -610,9 +610,9 @@ class Individual_FollowUp(AuditFieldsMixin):
         NO = 'no', _('No')
         NA = 'na', _('Not applicable')
     
-    # Composite PK: MEMBER + VISIT_TIME
+    # Composite PK: MEMBERID + VISIT_TIME
     FUID = models.CharField(max_length=50, primary_key=True, editable=False, verbose_name=_('Follow-up ID'))
-    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='follow_ups', db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='follow_ups', db_column='MEMBERID')
     VISIT_TIME = models.CharField(max_length=10, choices=VisitTimeChoices.choices, db_index=True)
     
     # VISIT INFO
@@ -635,7 +635,7 @@ class Individual_FollowUp(AuditFieldsMixin):
         db_table = 'Individual_FollowUp'
         verbose_name = _('Follow-up Visit')
         verbose_name_plural = _('Follow-up Visits')
-        ordering = ['MEMBER', 'VISIT_TIME']
+        ordering = ['MEMBERID', 'VISIT_TIME']
         constraints = [
             # Assessment date required if assessed
             models.CheckConstraint(
@@ -692,11 +692,11 @@ class Individual_FollowUp(AuditFieldsMixin):
     def save(self, *args, **kwargs):
         # Auto-generate PK from MEMBERID + VISIT_TIME
         if not self.FUID:
-            self.FUID = f"{self.MEMBER_id}-{self.VISIT_TIME}"
+            self.FUID = f"{self.MEMBERID}-{self.VISIT_TIME}"
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_VISIT_TIME_display()}"
+        return f"{self.MEMBERID} - {self.get_VISIT_TIME_display()}"
 
 
 # ==========================================
@@ -738,7 +738,7 @@ class Individual_Symptom(AuditFieldsMixin):
         unique_together = [['FOLLOW_UP', 'SYMPTOM_TYPE']]
     
     def __str__(self):
-        return f"{self.FOLLOW_UP.MEMBER_id} - {self.FOLLOW_UP.get_VISIT_TIME_display()} - {self.get_SYMPTOM_TYPE_display()}"
+        return f"{self.FOLLOW_UP.MEMBERID} - {self.FOLLOW_UP.get_VISIT_TIME_display()} - {self.get_SYMPTOM_TYPE_display()}"
 
 
 # ==========================================
@@ -793,7 +793,7 @@ class Individual_Sample(AuditFieldsMixin):
         NO = 'no', _('No')
         NA = 'na', _('Not applicable')
     
-    MEMBER = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='samples',db_column='MEMBERID')
+    MEMBERID = models.ForeignKey('Individual', on_delete=models.CASCADE, related_name='samples',db_column='MEMBERID')
     SAMPLE_TIME = models.CharField(max_length=10, choices=SampleTimeChoices.choices, db_index=True)
     
     # SAMPLE COLLECTION
@@ -812,8 +812,8 @@ class Individual_Sample(AuditFieldsMixin):
         db_table = 'Individual_Sample'
         verbose_name = _('Sample Collection')
         verbose_name_plural = _('Sample Collections')
-        ordering = ['MEMBER', 'SAMPLE_TIME']
-        unique_together = [['MEMBER', 'SAMPLE_TIME']]
+        ordering = ['MEMBERID', 'SAMPLE_TIME']
+        unique_together = [['MEMBERID', 'SAMPLE_TIME']]
     
     def __str__(self):
-        return f"{self.MEMBER_id} - {self.get_SAMPLE_TIME_display()}"
+        return f"{self.MEMBERID} - {self.get_SAMPLE_TIME_display()}"

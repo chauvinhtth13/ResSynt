@@ -53,10 +53,10 @@ def individual_exposure_create(request, subjectid):
     
     # Get individual
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Check if already exists
-    if Individual_Exposure.objects.filter(MEMBER=individual).exists():
+    if Individual_Exposure.objects.filter(MEMBERID=individual).exists():
         logger.warning(f"Exposure already exists for {subjectid}")
         messages.warning(request, f'Exposure data already exists for {subjectid}. Redirecting to update.')
         return redirect('study_44en:individual:exposure_update', subjectid=subjectid)
@@ -71,7 +71,7 @@ def individual_exposure_create(request, subjectid):
                 with transaction.atomic():
                     # Save main exposure
                     exposure = exposure_form.save(commit=False)
-                    exposure.MEMBER = individual
+                    exposure.MEMBERID = individual
                     
                     # Handle hardcoded radio buttons not in form
                     shared_toilet = request.POST.get('shared_toilet', '').strip()
@@ -114,7 +114,7 @@ def individual_exposure_create(request, subjectid):
     
     # Load existing data if any (user might be re-editing after redirect)
     try:
-        existing_exposure = Individual_Exposure.objects.get(MEMBER=individual)
+        existing_exposure = Individual_Exposure.objects.get(MEMBERID=individual)
         water_data = load_water_data(existing_exposure)
         treatment_data = load_treatment_data(existing_exposure)
         comorbidity_data = load_comorbidity_data(existing_exposure)
@@ -151,10 +151,10 @@ def individual_exposure_update(request, subjectid):
     
     # Get individual and exposure
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     try:
-        exposure = Individual_Exposure.objects.get(MEMBER=individual)
+        exposure = Individual_Exposure.objects.get(MEMBERID=individual)
         logger.info(f"Found existing exposure for {subjectid}")
     except Individual_Exposure.DoesNotExist:
         logger.warning(f"No exposure found for {subjectid}")
@@ -240,10 +240,10 @@ def individual_exposure_view(request, subjectid):
     
     # Get individual and exposure
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     try:
-        exposure = Individual_Exposure.objects.get(MEMBER=individual)
+        exposure = Individual_Exposure.objects.get(MEMBERID=individual)
     except Individual_Exposure.DoesNotExist:
         messages.error(request, f'No exposure data found for {subjectid}')
         return redirect('study_44en:individual:detail', subjectid=subjectid)
@@ -286,10 +286,10 @@ def individual_exposure_2_create(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Check if already exists
-    if Individual_Exposure.objects.filter(MEMBER=individual).exists():
+    if Individual_Exposure.objects.filter(MEMBERID=individual).exists():
         logger.warning(f"Exposure already exists for {subjectid}")
         messages.warning(request, f'Exposure data already exists for {subjectid}. Redirecting to update.')
         return redirect('study_44en:individual:exposure_2_update', subjectid=subjectid)
@@ -304,7 +304,7 @@ def individual_exposure_2_create(request, subjectid):
             try:
                 with transaction.atomic():
                     # Create new exposure with only EXP 2/3 data
-                    exposure = Individual_Exposure(MEMBER=individual)
+                    exposure = Individual_Exposure(MEMBERID=individual)
                     
                     # Save vaccination_history
                     vaccination_history = request.POST.get('vaccination_history', '').strip()
@@ -345,7 +345,7 @@ def individual_exposure_2_create(request, subjectid):
     
     # Load existing data if any
     try:
-        existing_exposure = Individual_Exposure.objects.get(MEMBER=individual)
+        existing_exposure = Individual_Exposure.objects.get(MEMBERID=individual)
         vaccine_data = load_vaccines(existing_exposure)
         hospitalization_data = load_hospitalizations(existing_exposure)
         medication_data = load_medications(existing_exposure)
@@ -376,11 +376,11 @@ def individual_exposure_2_update(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Get exposure
     try:
-        exposure = Individual_Exposure.objects.get(MEMBER=individual)
+        exposure = Individual_Exposure.objects.get(MEMBERID=individual)
     except Individual_Exposure.DoesNotExist:
         logger.error(f"No exposure found for {subjectid}")
         messages.error(request, f'No exposure data found for {subjectid}. Please create first.')
@@ -463,10 +463,10 @@ def individual_exposure_2_view(request, subjectid):
     logger.info("=== 👁️ EXPOSURE 2 VIEW (READ-ONLY) ===")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     try:
-        exposure = Individual_Exposure.objects.get(MEMBER=individual)
+        exposure = Individual_Exposure.objects.get(MEMBERID=individual)
     except Individual_Exposure.DoesNotExist:
         messages.error(request, f'No exposure data found for {subjectid}')
         return redirect('study_44en:individual:detail', subjectid=subjectid)
@@ -508,7 +508,7 @@ def individual_exposure_3_create(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Note: Food frequency and travel are separate from exposure record
     # They link directly to Individual, not Individual_Exposure
@@ -564,7 +564,7 @@ def individual_exposure_3_update(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     if request.method == 'POST':
         logger.info("Processing POST - Updating exposure 3")
@@ -613,7 +613,7 @@ def individual_exposure_3_view(request, subjectid):
     logger.info("=== 👁️ EXPOSURE 3 VIEW (READ-ONLY) ===")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Load existing data
     food_data = load_food_frequency(individual)
@@ -646,10 +646,10 @@ def individual_exposure_list(request, subjectid):
     logger.info("=" * 80)
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Check which exposure parts exist (OneToOneField - single exposure object)
-    exposure = Individual_Exposure.objects.filter(MEMBER=individual).first()
+    exposure = Individual_Exposure.objects.filter(MEMBERID=individual).first()
     
     # Create dictionary: part_number → exposure object (if exists)
     exposures_by_part = {}
@@ -687,9 +687,9 @@ def individual_exposure(request, subjectid):
     Keep for backward compatibility with old URLs
     """
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
-    if Individual_Exposure.objects.filter(MEMBER=individual).exists():
+    if Individual_Exposure.objects.filter(MEMBERID=individual).exists():
         logger.info(f"🔄 Redirecting to update for {subjectid}")
         return redirect('study_44en:individual:exposure_update', subjectid=subjectid)
     else:

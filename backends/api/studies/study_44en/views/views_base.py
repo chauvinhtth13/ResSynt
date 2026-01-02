@@ -51,7 +51,7 @@ def dashboard(request):
     
     # Get recent data
     recent_households = HH_CASE.objects.order_by('-last_modified_at')[:5]
-    recent_individuals = Individual.objects.select_related('MEMBER').order_by('-last_modified_at')[:5]
+    recent_individuals = Individual.objects.select_related('MEMBERID').order_by('-last_modified_at')[:5]
     
     context = {
         'total_households': total_households,
@@ -111,7 +111,7 @@ def individual_list(request):
     """
     List all individuals with search and filter
     """
-    queryset = get_filtered_individuals(request.user).select_related('MEMBER', 'MEMBER__HHID')
+    queryset = get_filtered_individuals(request.user).select_related('MEMBERID', 'MEMBERID__HHID')
     
     # Search functionality
     search_query = request.GET.get('search', '')

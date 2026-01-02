@@ -158,7 +158,7 @@ def save_water_sources(request, exposure):
     Template fields: water_{source}_drink, water_{source}_domestic, water_{source}_irrigation, water_{source}_other
     """
     # Clear existing records
-    Individual_WaterSource.objects.filter(MEMBER=exposure).delete()
+    Individual_WaterSource.objects.filter(MEMBERID=exposure).delete()
     
     count = 0
     for source_key, source_choice in WATER_SOURCE_MAPPING.items():
@@ -176,7 +176,7 @@ def save_water_sources(request, exposure):
             
             # Create water source record
             ws = Individual_WaterSource(
-                MEMBER=exposure,
+                MEMBERID=exposure,
                 SOURCE_TYPE=source_choice,
                 SOURCE_TYPE_OTHER=other_name,
                 DRINKING=drink,
@@ -199,7 +199,7 @@ def save_water_treatment(request, exposure):
     Template fields: water_treatment (radio), treatment_{type} (checkboxes)
     """
     # Clear existing records
-    Individual_WaterTreatment.objects.filter(MEMBER=exposure).delete()
+    Individual_WaterTreatment.objects.filter(MEMBERID=exposure).delete()
     
     # Check if water treatment is used
     water_treatment = request.POST.get('water_treatment', '').strip()
@@ -216,7 +216,7 @@ def save_water_treatment(request, exposure):
             
             # Create water treatment record
             wt = Individual_WaterTreatment(
-                MEMBER=exposure,
+                MEMBERID=exposure,
                 TREATMENT_TYPE=treatment_choice,
                 TREATMENT_TYPE_OTHER=other_text
             )
@@ -248,7 +248,7 @@ def save_comorbidities(request, exposure):
     - Template: 'not_treated' -> Model: 'not_treating'
     """
     # Clear existing records
-    Individual_Comorbidity.objects.filter(MEMBER=exposure).delete()
+    Individual_Comorbidity.objects.filter(MEMBERID=exposure).delete()
     
     # Check if person has conditions
     has_conditions = request.POST.get('has_conditions', '').strip()
@@ -272,7 +272,7 @@ def save_comorbidities(request, exposure):
             
             # Create comorbidity record
             comorb = Individual_Comorbidity(
-                MEMBER=exposure,
+                MEMBERID=exposure,
                 COMORBIDITY_TYPE=condition_choice,
                 COMORBIDITY_OTHER=None,
                 TREATMENT_STATUS=treatment_status_model
@@ -295,7 +295,7 @@ def save_comorbidities(request, exposure):
             treatment_status_model = 'not_treating'
         
         comorb = Individual_Comorbidity(
-            MEMBER=exposure,
+            MEMBERID=exposure,
             COMORBIDITY_TYPE='OTHER',
             COMORBIDITY_OTHER=other_text if other_text else None,
             TREATMENT_STATUS=treatment_status_model
@@ -325,7 +325,7 @@ def load_water_data(exposure):
     """
     water_data = {}
     
-    water_sources = Individual_WaterSource.objects.filter(MEMBER=exposure)
+    water_sources = Individual_WaterSource.objects.filter(MEMBERID=exposure)
     for ws in water_sources:
         # Map model SOURCE_TYPE to template key (handle uppercase/lowercase)
         # Model: 'BOTTLED' or 'bottled' -> Template: 'bottle'
@@ -350,7 +350,7 @@ def load_treatment_data(exposure):
     """
     treatment_data = {}
     
-    treatments = Individual_WaterTreatment.objects.filter(MEMBER=exposure)
+    treatments = Individual_WaterTreatment.objects.filter(MEMBERID=exposure)
     
     # Create reverse mapping (model choice -> template key)
     type_reverse_map = {v: k for k, v in WATER_TREATMENT_MAPPING.items()}
@@ -390,7 +390,7 @@ def load_comorbidity_data(exposure):
     """
     comorbidity_data = {}
     
-    comorbidities = Individual_Comorbidity.objects.filter(MEMBER=exposure)
+    comorbidities = Individual_Comorbidity.objects.filter(MEMBERID=exposure)
     
     # Create reverse mapping (model choice -> template key)
     # Need to handle both COPD and ASTHMA mapping to same template field
@@ -438,7 +438,7 @@ def save_vaccines(request, exposure):
     Template fields: vaccination_history (radio), vaccine_{type} (checkboxes)
     """
     # Clear existing records
-    Individual_Vaccine.objects.filter(MEMBER=exposure).delete()
+    Individual_Vaccine.objects.filter(MEMBERID=exposure).delete()
     
     # Update vaccination status on exposure
     vaccination_history = request.POST.get('vaccination_history', '').strip()
@@ -460,7 +460,7 @@ def save_vaccines(request, exposure):
             
             # Create vaccine record
             vaccine = Individual_Vaccine(
-                MEMBER=exposure,
+                MEMBERID=exposure,
                 VACCINE_TYPE=vaccine_choice,
                 VACCINE_OTHER=other_text
             )
@@ -478,7 +478,7 @@ def save_hospitalizations(request, exposure):
     Template fields: has_hospitalization (radio), hosp_{type} (checkboxes), hosp_{type}_duration (radio)
     """
     # Clear existing records
-    Individual_Hospitalization.objects.filter(MEMBER=exposure).delete()
+    Individual_Hospitalization.objects.filter(MEMBERID=exposure).delete()
     
     # Update hospitalization status on exposure
     has_hospitalization = request.POST.get('has_hospitalization', '').strip()
@@ -505,7 +505,7 @@ def save_hospitalizations(request, exposure):
             
             # Create hospitalization record
             hosp = Individual_Hospitalization(
-                MEMBER=exposure,
+                MEMBERID=exposure,
                 HOSPITAL_TYPE=hosp_choice,
                 HOSPITAL_OTHER=other_text,
                 DURATION=mapped_duration
@@ -527,7 +527,7 @@ def save_medications(request, exposure):
                      med_{type}_type_exp2 (text), med_{type}_duration (radio)
     """
     # Clear existing records
-    Individual_Medication.objects.filter(MEMBER=exposure).delete()
+    Individual_Medication.objects.filter(MEMBERID=exposure).delete()
     
     # Update medication status on exposure
     has_medication = request.POST.get('has_medication', '').strip()
@@ -552,7 +552,7 @@ def save_medications(request, exposure):
             
             # Create medication record
             med = Individual_Medication(
-                MEMBER=exposure,
+                MEMBERID=exposure,
                 MEDICATION_TYPE=med_type,
                 MEDICATION_DETAIL=med_detail or None,
                 DURATION=mapped_duration
@@ -582,7 +582,7 @@ def load_vaccines(exposure):
         vaccine_data['vaccination_history'] = status_reverse.get(exposure.VACCINATION_STATUS, '')
     
     # Load individual vaccines
-    vaccines = Individual_Vaccine.objects.filter(MEMBER=exposure)
+    vaccines = Individual_Vaccine.objects.filter(MEMBERID=exposure)
     type_reverse_map = {v: k for k, v in VACCINE_MAPPING.items()}
     
     for vaccine in vaccines:
@@ -606,7 +606,7 @@ def load_hospitalizations(exposure):
     hosp_data['has_hospitalization'] = exposure.HOSPITALIZED_3M if exposure.HOSPITALIZED_3M else ''
     
     # Load individual hospitalizations
-    hospitalizations = Individual_Hospitalization.objects.filter(MEMBER=exposure)
+    hospitalizations = Individual_Hospitalization.objects.filter(MEMBERID=exposure)
     type_reverse_map = {v: k for k, v in HOSPITAL_MAPPING.items()}
     
     logger.info(f"📖 Loading {hospitalizations.count()} hospitalizations")
@@ -638,7 +638,7 @@ def load_medications(exposure):
     med_data['has_medication'] = exposure.MEDICATION_3M if exposure.MEDICATION_3M else ''
     
     # Load individual medications
-    medications = Individual_Medication.objects.filter(MEMBER=exposure)
+    medications = Individual_Medication.objects.filter(MEMBERID=exposure)
     type_reverse_map = {v: k for k, v in MEDICATION_MAPPING.items()}
     
     for med in medications:
@@ -698,7 +698,7 @@ def save_food_frequency(request, individual):
     
     # Get or create food frequency record
     food_freq, created = Individual_FoodFrequency.objects.get_or_create(
-        MEMBER=individual
+        MEMBERID=individual
     )
     
     # Update all fields
@@ -732,7 +732,7 @@ def save_travel_history(request, individual):
     from backends.studies.study_44en.models.individual import Individual_Travel
     
     # Clear existing travel records
-    Individual_Travel.objects.filter(MEMBER=individual).delete()
+    Individual_Travel.objects.filter(MEMBERID=individual).delete()
     
     # Value mapping: template -> model
     freq_mapping = {
@@ -759,7 +759,7 @@ def save_travel_history(request, individual):
             # Only create record if not 'never'
             # Or always create to track the answer
             travel = Individual_Travel(
-                MEMBER=individual,
+                MEMBERID=individual,
                 TRAVEL_TYPE=travel_type,
                 FREQUENCY=model_frequency
             )
@@ -789,7 +789,7 @@ def load_food_frequency(individual):
     food_data = {}
     
     try:
-        food_freq = Individual_FoodFrequency.objects.get(MEMBER=individual)
+        food_freq = Individual_FoodFrequency.objects.get(MEMBERID=individual)
     except Individual_FoodFrequency.DoesNotExist:
         return food_data
     
@@ -840,7 +840,7 @@ def load_travel_history(individual):
     
     travel_data = {}
     
-    travels = Individual_Travel.objects.filter(MEMBER=individual)
+    travels = Individual_Travel.objects.filter(MEMBERID=individual)
     
     # Reverse mapping: model frequency -> template value
     freq_reverse_mapping = {

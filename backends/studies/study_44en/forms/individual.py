@@ -35,7 +35,7 @@ class IndividualForm(forms.ModelForm):
         model = Individual
         fields = '__all__'
         widgets = {
-            'MEMBER': forms.Select(attrs={'class': 'form-select'}),
+            'MEMBERID': forms.Select(attrs={'class': 'form-select'}),
             
             # Personal Info
             'INITIALS': forms.TextInput(attrs={
@@ -243,7 +243,7 @@ class Individual_FoodFrequencyForm(forms.ModelForm):
     
     class Meta:
         model = Individual_FoodFrequency
-        exclude = ['MEMBER']  # MEMBER will be set in view
+        exclude = ['MEMBERID']  # MEMBERID will be set in view
         widgets = {
             'RICE_NOODLES': forms.Select(attrs={'class': 'form-select'}),
             'RED_MEAT': forms.Select(attrs={'class': 'form-select'}),
@@ -286,7 +286,7 @@ class Individual_FollowUpForm(forms.ModelForm):
     
     class Meta:
         model = Individual_FollowUp
-        exclude = ['MEMBER']  # MEMBER will be set in view
+        exclude = ['MEMBERID']  # MEMBERID will be set in view
         widgets = {
             'FOLLOW_UP_id': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -395,7 +395,7 @@ class Individual_SampleForm(forms.ModelForm):
     
     class Meta:
         model = Individual_Sample
-        exclude = ['MEMBER']  # MEMBER will be set in view
+        exclude = ['MEMBERID']  # MEMBERID will be set in view
         widgets = {
             'SAMPLE_TIME': forms.Select(attrs={'class': 'form-select'}),
             'SAMPLE_COLLECTED': forms.Select(attrs={'class': 'form-select'}),

@@ -206,7 +206,7 @@ class HH_MemberForm(forms.ModelForm):
 
 
 # ==========================================
-# MEMBER FORMSET
+# MEMBERID FORMSET
 # ==========================================
 
 class BaseHH_MemberFormSet(BaseInlineFormSet):

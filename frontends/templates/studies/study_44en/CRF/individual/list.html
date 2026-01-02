@@ -117,8 +117,8 @@
                     {% endif %}
                   </td>
                   <td>
-                    {% if individual.MEMBER %}
-                      {{ individual.MEMBER.get_GENDER_display|default:individual.MEMBER.GENDER }}
+                    {% if individual.MEMBERID %}
+                      {{ individual.MEMBERID.get_GENDER_display|default:individual.MEMBERID.GENDER }}
                     {% else %}
                       -
                     {% endif %}

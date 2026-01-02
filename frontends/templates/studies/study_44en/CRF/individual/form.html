@@ -47,9 +47,9 @@
         <div class="mb-4">
             <p class="fw-bold mb-2">1. Select Household Member: <span class="text-danger">*</span></p>
             <div class="ms-md-3">
-                {{ individual_form.MEMBER }}
-                {% if individual_form.MEMBER.errors %}
-                <div class="text-danger small mt-1">{{ individual_form.MEMBER.errors.0 }}</div>
+                {{ individual_form.MEMBERID }}
+                {% if individual_form.MEMBERID.errors %}
+                <div class="text-danger small mt-1">{{ individual_form.MEMBERID.errors.0 }}</div>
                 {% endif %}
             </div>
         </div>

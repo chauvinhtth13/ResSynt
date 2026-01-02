@@ -40,12 +40,12 @@ def dashboard_44en(request):
     
     # Follow-up statistics
     total_followups = Individual_FollowUp.objects.filter(
-        MEMBER__in=individuals.values_list('MEMBER', flat=True)
+        MEMBERID__in=individuals.values_list('MEMBERID', flat=True)
     ).count()
     
     # Pending follow-ups (scheduled but not completed)
     pending_followups = Individual_FollowUp.objects.filter(
-        MEMBER__in=individuals.values_list('MEMBER', flat=True),
+        MEMBERID__in=individuals.values_list('MEMBERID', flat=True),
         ASSESSMENT_DATE__isnull=True
     ).count()
     

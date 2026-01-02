@@ -41,13 +41,13 @@
               <tbody>
                 {% for individual in individuals %}
                 <tr>
-                  <td><a href="{% url 'study_44en:individual:detail' subjectid=individual.MEMBER_id %}">{{ individual.MEMBER.MEMBERID }}</a></td>
+                  <td><a href="{% url 'study_44en:individual:detail' subjectid=individual.MEMBER_id %}">{{ individual.MEMBERID.MEMBERID }}</a></td>
                   <td>
-                    <a href="{% url 'study_44en:household:detail' hhid=individual.MEMBER.HHID_id %}">{{ individual.MEMBER.HHID.HHID }}</a>
+                    <a href="{% url 'study_44en:household:detail' hhid=individual.MEMBERID.HHID %}">{{ individual.MEMBERID.HHID.HHID }}</a>
                   </td>
                   <td>{{ individual.INITIALS|default:"-" }}</td>
-                  <td>{{ individual.MEMBER.GENDER|default:"-" }}</td>
-                  <td>{{ individual.DATE_OF_BIRTH|date:"Y-m-d"|default:individual.MEMBER.BIRTH_YEAR|default:"-" }}</td>
+                  <td>{{ individual.MEMBERID.GENDER|default:"-" }}</td>
+                  <td>{{ individual.DATE_OF_BIRTH|date:"Y-m-d"|default:individual.MEMBERID.BIRTH_YEAR|default:"-" }}</td>
                   <td>{{ individual.get_EDUCATION_display|default:"-" }}</td>
                   <td>{{ individual.get_OCCUPATION_display|default:"-" }}</td>
                   <td>

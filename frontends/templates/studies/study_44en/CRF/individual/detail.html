@@ -207,7 +207,7 @@
                            class="list-group-item list-group-item-action">
                             <i class="bi bi-list-check"></i> All Follow-ups
                         </a>
-                        <a href="{% if individual.MEMBER %}{% url 'study_44en:household:detail' hhid=individual.MEMBER.HHID_id %}{% else %}#{% endif %}" 
+                        <a href="{% if individual.MEMBER %}{% url 'study_44en:household:detail' hhid=individual.MEMBER.HHID %}{% else %}#{% endif %}" 
                            class="list-group-item list-group-item-action {% if not individual.MEMBER %}disabled{% endif %}">
                             <i class="bi bi-house"></i> View Household
                         </a>

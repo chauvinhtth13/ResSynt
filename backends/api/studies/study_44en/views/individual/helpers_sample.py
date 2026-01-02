@@ -57,7 +57,7 @@ def save_samples(request, individual):
     logger.info("💾 Saving sample collection data...")
     
     # Delete existing samples for this individual
-    deleted_count = Individual_Sample.objects.filter(MEMBER=individual).delete()[0]
+    deleted_count = Individual_Sample.objects.filter(MEMBERID=individual).delete()[0]
     logger.info(f"🗑️ Deleted {deleted_count} existing sample records")
     
     samples_created = 0
@@ -73,7 +73,7 @@ def save_samples(request, individual):
         # Only create record if user selected something
         if collected:
             sample = Individual_Sample(
-                MEMBER=individual,
+                MEMBERID=individual,
                 SAMPLE_TIME=model_time,
                 SAMPLE_COLLECTED=collected,
             )
@@ -119,7 +119,7 @@ def load_samples(individual):
     data = {}
     
     # Query all samples for this individual
-    samples = Individual_Sample.objects.filter(MEMBER=individual)
+    samples = Individual_Sample.objects.filter(MEMBERID=individual)
     logger.info(f"Found {samples.count()} sample records")
     
     # Build reverse mapping: model_time -> form_prefix

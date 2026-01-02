@@ -42,13 +42,13 @@ def individual_sample_create(request, subjectid):
     logger.info("=" * 80)
     logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     
-    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Check if sample data already exists
-    sample_exists = Individual_Sample.objects.filter(MEMBER=individual).exists()
-    food_exists = Individual_FoodFrequency.objects.filter(MEMBER=individual).exists()
+    sample_exists = Individual_Sample.objects.filter(MEMBERID=individual).exists()
+    food_exists = Individual_FoodFrequency.objects.filter(MEMBERID=individual).exists()
     
     if sample_exists or food_exists:
         logger.warning(f"⚠️ Sample data already exists for {subjectid} - redirecting to update")
@@ -79,7 +79,7 @@ def individual_sample_create(request, subjectid):
                     
                     # Save food frequency
                     food_frequency = food_frequency_form.save(commit=False)
-                    food_frequency.MEMBER = individual
+                    food_frequency.MEMBERID = individual
                     set_audit_metadata(food_frequency, request.user)
                     food_frequency.save()
                     logger.info(f"✅ Created food frequency for {subjectid}")
@@ -139,13 +139,13 @@ def individual_sample_update(request, subjectid):
     logger.info("=" * 80)
     logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     
-    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Get food frequency (may or may not exist)
     try:
-        food_frequency = Individual_FoodFrequency.objects.get(MEMBER=individual)
+        food_frequency = Individual_FoodFrequency.objects.get(MEMBERID=individual)
         logger.info(f"✅ Found food frequency for {subjectid}")
     except Individual_FoodFrequency.DoesNotExist:
         logger.warning(f"⚠️ No food frequency found for {subjectid}")
@@ -173,7 +173,7 @@ def individual_sample_update(request, subjectid):
                     
                     # Update food frequency
                     food_frequency = food_frequency_form.save(commit=False)
-                    food_frequency.MEMBER = individual
+                    food_frequency.MEMBERID = individual
                     set_audit_metadata(food_frequency, request.user)
                     food_frequency.save()
                     logger.info(f"✅ Updated food frequency for {subjectid}")
@@ -236,13 +236,13 @@ def individual_sample_view(request, subjectid):
     logger.info("=== 👁️ INDIVIDUAL SAMPLE VIEW (READ-ONLY) ===")
     logger.info("=" * 80)
     
-    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Get food frequency
     try:
-        food_frequency = Individual_FoodFrequency.objects.get(MEMBER=individual)
+        food_frequency = Individual_FoodFrequency.objects.get(MEMBERID=individual)
     except Individual_FoodFrequency.DoesNotExist:
         food_frequency = None
     
@@ -291,11 +291,11 @@ def individual_sample(request, subjectid):
     This is kept for backward compatibility with old URLs
     """
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Check if sample data exists
-    sample_exists = Individual_Sample.objects.filter(MEMBER=individual).exists()
-    food_exists = Individual_FoodFrequency.objects.filter(MEMBER=individual).exists()
+    sample_exists = Individual_Sample.objects.filter(MEMBERID=individual).exists()
+    food_exists = Individual_FoodFrequency.objects.filter(MEMBERID=individual).exists()
     
     if sample_exists or food_exists:
         # Data exists - redirect to update

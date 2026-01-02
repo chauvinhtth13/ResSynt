@@ -134,7 +134,7 @@ class HH_CASE(AuditFieldsMixin):
 
 
 # ==========================================
-# 2. HOUSEHOLD MEMBER MODEL
+# 2. HOUSEHOLD MEMBERID MODEL
 # ==========================================
 class HH_Member(AuditFieldsMixin):
     """Household member with dynamic child ordering"""
@@ -257,7 +257,7 @@ class HH_Member(AuditFieldsMixin):
     def save(self, *args, **kwargs):
         # Auto-generate MEMBERID from HHID + MEMBER_NUM
         if not self.MEMBERID:
-            self.MEMBERID = f"{self.HHID_id}-{self.MEMBER_NUM}"
+            self.MEMBERID = f"{self.HHID}-{self.MEMBER_NUM}"
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -345,7 +345,7 @@ class HH_Exposure(AuditFieldsMixin):
         ]
     
     def __str__(self):
-        return f"Exposure: {self.HHID_id}"
+        return f"Exposure: {self.HHID}"
 
 
 # ==========================================
@@ -386,7 +386,7 @@ class HH_WaterSource(AuditFieldsMixin):
         ]
     
     def __str__(self):
-        return f"{self.HHID_id} - {self.get_SOURCE_TYPE_display()}"
+        return f"{self.HHID} - {self.get_SOURCE_TYPE_display()}"
 
 
 # ==========================================
@@ -418,7 +418,7 @@ class HH_WaterTreatment(AuditFieldsMixin):
         ]
     
     def __str__(self):
-        return f"{self.HHID_id} - {self.get_TREATMENT_TYPE_display()}"
+        return f"{self.HHID} - {self.get_TREATMENT_TYPE_display()}"
 
 
 # ==========================================
@@ -450,7 +450,7 @@ class HH_Animal(AuditFieldsMixin):
         ]
     
     def __str__(self):
-        return f"{self.HHID_id} - {self.get_ANIMAL_TYPE_display()}"
+        return f"{self.HHID} - {self.get_ANIMAL_TYPE_display()}"
 
 
 # ==========================================
@@ -501,7 +501,7 @@ class HH_FoodFrequency(AuditFieldsMixin):
         verbose_name_plural = _('Food Frequencies')
     
     def __str__(self):
-        return f"Food Freq: {self.HHID_id}"
+        return f"Food Freq: {self.HHID}"
 
 
 # ==========================================
@@ -537,7 +537,7 @@ class HH_FoodSource(AuditFieldsMixin):
         verbose_name_plural = _('Food Sources')
     
     def __str__(self):
-        return f"Food Source: {self.HHID_id}"
+        return f"Food Source: {self.HHID}"
 
 
 # ==========================================

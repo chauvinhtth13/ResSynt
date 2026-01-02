@@ -45,11 +45,11 @@ def individual_followup_list(request, subjectid):
     logger.info("=" * 80)
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Get all follow-ups
     followups = Individual_FollowUp.objects.filter(
-        MEMBER=individual
+        MEMBERID=individual
     )
     
     # Create dictionary: visit_time → followup object
@@ -84,9 +84,9 @@ def individual_followup_create(request, subjectid):
     logger.info("=" * 80)
     logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     
-    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # POST - Create new follow-up
     if request.method == 'POST':
@@ -99,7 +99,7 @@ def individual_followup_create(request, subjectid):
                 logger.info("📝 Saving follow-up data...")
                 
                 # Create follow-up record
-                followup = Individual_FollowUp(MEMBER=individual)
+                followup = Individual_FollowUp(MEMBERID=individual)
                 
                 # Save VISIT_TIME
                 visit_time = request.POST.get('VISIT_TIME', '').strip()
@@ -191,15 +191,15 @@ def individual_followup_update(request, subjectid, followup_id):
     logger.info("=" * 80)
     logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, FU ID: {followup_id}, Method: {request.method}")
     
-    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Get follow-up (must exist for update)
     followup = get_object_or_404(
         Individual_FollowUp,
         FUID=followup_id,
-        MEMBER=individual
+        MEMBERID=individual
     )
     logger.info(f"✅ Found follow-up {followup_id}")
     
@@ -299,15 +299,15 @@ def individual_followup_view(request, subjectid, followup_id):
     logger.info("=== 👁️ INDIVIDUAL FOLLOW-UP VIEW (READ-ONLY) ===")
     logger.info("=" * 80)
     
-    # Get individual by MEMBER.MEMBERID (which is the SUBJECTID)
+    # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBER'), MEMBER__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
     
     # Get follow-up by FUID (primary key)
     followup = get_object_or_404(
         Individual_FollowUp,
         FUID=followup_id,
-        MEMBER=individual
+        MEMBERID=individual
     )
     
     # Load existing data using helpers
