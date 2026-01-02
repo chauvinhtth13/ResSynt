@@ -41,7 +41,7 @@
               <tbody>
                 {% for individual in individuals %}
                 <tr>
-                  <td><a href="{% url 'study_44en:individual:detail' subjectid=individual.MEMBER_id %}">{{ individual.MEMBERID.MEMBERID }}</a></td>
+                  <td><a href="{% url 'study_44en:individual:detail' subjectid=individual.SUBJECTID %}">{{ individual.SUBJECTID }}</a></td>
                   <td>
                     <a href="{% url 'study_44en:household:detail' hhid=individual.MEMBERID.HHID %}">{{ individual.MEMBERID.HHID.HHID }}</a>
                   </td>
@@ -51,10 +51,10 @@
                   <td>{{ individual.get_EDUCATION_display|default:"-" }}</td>
                   <td>{{ individual.get_OCCUPATION_display|default:"-" }}</td>
                   <td>
-                    <a href="{% url 'study_44en:individual:update' subjectid=individual.MEMBER_id %}" class="btn btn-sm btn-outline-primary">
+                    <a href="{% url 'study_44en:individual:update' subjectid=individual.SUBJECTID %}" class="btn btn-sm btn-outline-primary">
                       <i class="bi bi-pencil"></i> {% trans "Edit" %}
                     </a>
-                    <a href="{% url 'study_44en:individual:detail' subjectid=individual.MEMBER_id %}" class="btn btn-sm btn-outline-info">
+                    <a href="{% url 'study_44en:individual:detail' subjectid=individual.SUBJECTID %}" class="btn btn-sm btn-outline-info">
                       <i class="bi bi-eye"></i> {% trans "View" %}
                     </a>
                   </td>

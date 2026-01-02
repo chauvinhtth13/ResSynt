@@ -53,7 +53,7 @@ def individual_exposure_create(request, subjectid):
     
     # Get individual
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Check if already exists
     if Individual_Exposure.objects.filter(MEMBERID=individual).exists():
@@ -151,7 +151,7 @@ def individual_exposure_update(request, subjectid):
     
     # Get individual and exposure
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     try:
         exposure = Individual_Exposure.objects.get(MEMBERID=individual)
@@ -236,11 +236,11 @@ def individual_exposure_update(request, subjectid):
 @login_required
 def individual_exposure_view(request, subjectid):
     """VIEW exposure data (read-only)"""
-    logger.info("=== 👁️ INDIVIDUAL EXPOSURE VIEW (READ-ONLY) ===")
+    logger.info("=== HHID INDIVIDUAL EXPOSURE VIEW (READ-ONLY) ===")
     
     # Get individual and exposure
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     try:
         exposure = Individual_Exposure.objects.get(MEMBERID=individual)
@@ -270,7 +270,7 @@ def individual_exposure_view(request, subjectid):
         'shared_toilet': exposure.SHARED_TOILET,
     }
     
-    logger.info("=== 👁️ EXPOSURE VIEW END ===")
+    logger.info("=== HHID EXPOSURE VIEW END ===")
     return render(request, 'studies/study_44en/CRF/individual/exposure_form_1.html', context)
 
 
@@ -286,7 +286,7 @@ def individual_exposure_2_create(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Check if already exists
     if Individual_Exposure.objects.filter(MEMBERID=individual).exists():
@@ -376,7 +376,7 @@ def individual_exposure_2_update(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Get exposure
     try:
@@ -460,10 +460,10 @@ def individual_exposure_2_update(request, subjectid):
 @login_required
 def individual_exposure_2_view(request, subjectid):
     """VIEW exposure 2 (vaccination & hospitalization) - READ ONLY"""
-    logger.info("=== 👁️ EXPOSURE 2 VIEW (READ-ONLY) ===")
+    logger.info("=== HHID EXPOSURE 2 VIEW (READ-ONLY) ===")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     try:
         exposure = Individual_Exposure.objects.get(MEMBERID=individual)
@@ -492,7 +492,7 @@ def individual_exposure_2_view(request, subjectid):
         'medication_data': medication_data,
     }
     
-    logger.info("=== 👁️ EXPOSURE 2 VIEW END ===")
+    logger.info("=== HHID EXPOSURE 2 VIEW END ===")
     return render(request, 'studies/study_44en/CRF/individual/exposure_form_2.html', context)
 
 
@@ -508,7 +508,7 @@ def individual_exposure_3_create(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Note: Food frequency and travel are separate from exposure record
     # They link directly to Individual, not Individual_Exposure
@@ -564,7 +564,7 @@ def individual_exposure_3_update(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     if request.method == 'POST':
         logger.info("Processing POST - Updating exposure 3")
@@ -610,10 +610,10 @@ def individual_exposure_3_update(request, subjectid):
 @login_required
 def individual_exposure_3_view(request, subjectid):
     """VIEW exposure 3 (food & travel) - READ ONLY"""
-    logger.info("=== 👁️ EXPOSURE 3 VIEW (READ-ONLY) ===")
+    logger.info("=== HHID EXPOSURE 3 VIEW (READ-ONLY) ===")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Load existing data
     food_data = load_food_frequency(individual)
@@ -628,7 +628,7 @@ def individual_exposure_3_view(request, subjectid):
         'travel_data': travel_data,
     }
     
-    logger.info("=== 👁️ EXPOSURE 3 VIEW END ===")
+    logger.info("=== HHID EXPOSURE 3 VIEW END ===")
     return render(request, 'studies/study_44en/CRF/individual/exposure_form_3.html', context)
 
 
@@ -646,7 +646,7 @@ def individual_exposure_list(request, subjectid):
     logger.info("=" * 80)
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Check which exposure parts exist (OneToOneField - single exposure object)
     exposure = Individual_Exposure.objects.filter(MEMBERID=individual).first()
@@ -687,7 +687,7 @@ def individual_exposure(request, subjectid):
     Keep for backward compatibility with old URLs
     """
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     if Individual_Exposure.objects.filter(MEMBERID=individual).exists():
         logger.info(f"🔄 Redirecting to update for {subjectid}")

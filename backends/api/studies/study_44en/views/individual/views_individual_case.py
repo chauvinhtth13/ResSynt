@@ -56,7 +56,7 @@ def individual_detail(request, subjectid):
     """
     queryset = get_filtered_individuals(request.user)
     # Find by MEMBERID.MEMBERID (which is the SUBJECTID)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Get related counts
     exposure_count = 1 if hasattr(individual, 'exposure') and individual.exposure else 0
@@ -158,7 +158,7 @@ def individual_update(request, subjectid):
     logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     logger.info(f"✅ Found individual: {subjectid}")
     
     if request.method == 'POST':
@@ -227,11 +227,11 @@ def individual_view(request, subjectid):
     VIEW individual (read-only)
     """
     logger.info("=" * 80)
-    logger.info("=== 👁️ INDIVIDUAL VIEW (READ-ONLY) ===")
+    logger.info("=== HHID INDIVIDUAL VIEW (READ-ONLY) ===")
     logger.info("=" * 80)
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Create readonly form
     individual_form = IndividualForm(instance=individual)
@@ -248,7 +248,7 @@ def individual_view(request, subjectid):
     }
     
     logger.info("=" * 80)
-    logger.info("=== 👁️ INDIVIDUAL VIEW END - Rendering template ===")
+    logger.info("=== HHID INDIVIDUAL VIEW END - Rendering template ===")
     logger.info("=" * 80)
     
     return render(request, 'studies/study_44en/CRF/individual/form.html', context)

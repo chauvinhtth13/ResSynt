@@ -357,7 +357,7 @@ def household_view(request, hhid):
     View household (read-only mode)
     """
     logger.info("="*80)
-    logger.info("=== 👁️ HOUSEHOLD VIEW (READ-ONLY) ===")
+    logger.info("=== HHID HOUSEHOLD VIEW (READ-ONLY) ===")
     logger.info("="*80)
     
     # Get household with members
@@ -385,7 +385,7 @@ def household_view(request, hhid):
     }
     
     logger.info("="*80)
-    logger.info("=== 👁️ HOUSEHOLD VIEW END - Rendering template ===")
+    logger.info("=== HHID HOUSEHOLD VIEW END - Rendering template ===")
     logger.info("="*80)
     
     return render(request, 'studies/study_44en/CRF/household/household_form.html', context)

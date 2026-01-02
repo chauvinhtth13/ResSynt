@@ -67,6 +67,18 @@ class Individual(AuditFieldsMixin):
         verbose_name=_('Household Member')
     )
     
+    # SUBJECT ID - Auto-populated from MEMBERID
+    SUBJECTID = models.CharField(
+        max_length=50,
+        unique=True,
+        db_index=True,
+        editable=False,
+        null=True,  # ✅ Add this temporarily for migration
+        blank=True,  # ✅ Add this too
+        verbose_name=_('Subject ID'),
+        help_text=_('Auto-populated from MEMBERID. Format: 44EN-001-1')
+    )
+    
     # PERSONAL INFO
     INITIALS = models.CharField(max_length=20, null=True, blank=True, verbose_name=_('Name Initials'))
     
@@ -95,6 +107,10 @@ class Individual(AuditFieldsMixin):
         db_table = 'Individual'
         verbose_name = _('Individual')
         verbose_name_plural = _('Individuals')
+        indexes = [
+            # Add index for SUBJECTID
+            models.Index(fields=['SUBJECTID'], name='idx_individual_subjectid'),
+        ]
         constraints = [
             # Ensure either DOB or AGE provided
             models.CheckConstraint(
@@ -114,6 +130,12 @@ class Individual(AuditFieldsMixin):
                 name='individual_ethnicity_other_detail',
                 violation_error_message='Please specify other ethnicity'
             ),
+            # # Ensure SUBJECTID is always set
+            # models.CheckConstraint(
+            #     condition=models.Q(SUBJECTID__isnull=False),
+            #     name='individual_subjectid_required',
+            #     violation_error_message='SUBJECTID must be set'
+            # ),
         ]
     
     @cached_property
@@ -161,16 +183,9 @@ class Individual(AuditFieldsMixin):
         return None
     
     @property
-    def SUBJECTID(self):
-        """Get Subject ID from member relationship (MEMBERID)."""
-        if hasattr(self, 'MEMBERID') and self.MEMBERID:
-            return self.MEMBERID.MEMBERID
-        return None
-    
-    @property
     def full_id(self):
         """44EN-001-1"""
-        return self.SUBJECTID
+        return self.SUBJECTID  # Now returns field value directly
     
     @cached_property
     def has_follow_up_data(self):
@@ -188,6 +203,14 @@ class Individual(AuditFieldsMixin):
     def clean(self):
         """Validate Individual data."""
         errors = {}
+        
+        # Validate SUBJECTID matches MEMBERID
+        if self.MEMBERID and self.SUBJECTID:
+            expected_subjectid = self.MEMBERID.MEMBERID
+            if self.SUBJECTID != expected_subjectid:
+                errors['SUBJECTID'] = _(
+                    f'SUBJECTID "{self.SUBJECTID}" does not match MEMBERID "{expected_subjectid}"'
+                )
         
         # Validate DOB
         if self.DATE_OF_BIRTH:
@@ -231,8 +254,17 @@ class Individual(AuditFieldsMixin):
         if errors:
             raise ValidationError(errors)
     
+    def save(self, *args, **kwargs):
+        """Override save to auto-populate SUBJECTID from MEMBERID"""
+        # Auto-populate SUBJECTID from primary key (MEMBERID column value)
+        if self.pk:
+            self.SUBJECTID = self.pk
+        
+        # Call parent save
+        super().save(*args, **kwargs)
+    
     def __str__(self):
-        return f"{self.MEMBERID.MEMBERID}"
+        return f"{self.SUBJECTID}"
 
 
 # ==========================================

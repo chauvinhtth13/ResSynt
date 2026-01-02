@@ -44,7 +44,7 @@ def individual_sample_create(request, subjectid):
     
     # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Check if sample data already exists
     sample_exists = Individual_Sample.objects.filter(MEMBERID=individual).exists()
@@ -141,7 +141,7 @@ def individual_sample_update(request, subjectid):
     
     # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Get food frequency (may or may not exist)
     try:
@@ -233,12 +233,12 @@ def individual_sample_view(request, subjectid):
     VIEW sample data (read-only)
     """
     logger.info("=" * 80)
-    logger.info("=== 👁️ INDIVIDUAL SAMPLE VIEW (READ-ONLY) ===")
+    logger.info("=== HHID INDIVIDUAL SAMPLE VIEW (READ-ONLY) ===")
     logger.info("=" * 80)
     
     # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Get food frequency
     try:
@@ -272,7 +272,7 @@ def individual_sample_view(request, subjectid):
     }
     
     logger.info("=" * 80)
-    logger.info("=== 👁️ SAMPLE VIEW END - Rendering template ===")
+    logger.info("=== HHID SAMPLE VIEW END - Rendering template ===")
     logger.info("=" * 80)
     
     return render(request, 'studies/study_44en/CRF/individual/sample_form.html', context)
@@ -291,7 +291,7 @@ def individual_sample(request, subjectid):
     This is kept for backward compatibility with old URLs
     """
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Check if sample data exists
     sample_exists = Individual_Sample.objects.filter(MEMBERID=individual).exists()

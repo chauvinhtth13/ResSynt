@@ -291,7 +291,7 @@ def household_food_view(request, hhid):
     VIEW food data (read-only)
     """
     logger.info("=" * 80)
-    logger.info("=== 👁️ HOUSEHOLD FOOD VIEW (READ-ONLY) ===")
+    logger.info("=== HHID HOUSEHOLD FOOD VIEW (READ-ONLY) ===")
     logger.info("=" * 80)
     
     # Get household
@@ -339,7 +339,7 @@ def household_food_view(request, hhid):
     }
     
     logger.info("=" * 80)
-    logger.info("=== 👁️ FOOD VIEW END - Rendering template ===")
+    logger.info("=== HHID FOOD VIEW END - Rendering template ===")
     logger.info("=" * 80)
     
     return render(

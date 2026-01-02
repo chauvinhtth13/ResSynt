@@ -489,7 +489,7 @@ def household_exposure_view(request, hhid):
     VIEW exposure data (read-only)
     """
     logger.info("=" * 80)
-    logger.info("=== 👁️ HOUSEHOLD EXPOSURE VIEW (READ-ONLY) ===")
+    logger.info("=== HHID HOUSEHOLD EXPOSURE VIEW (READ-ONLY) ===")
     logger.info("=" * 80)
     
     # Get household
@@ -543,7 +543,7 @@ def household_exposure_view(request, hhid):
     }
     
     logger.info("=" * 80)
-    logger.info("=== 👁️ EXPOSURE VIEW END - Rendering template ===")
+    logger.info("=== HHID EXPOSURE VIEW END - Rendering template ===")
     logger.info("=" * 80)
     
     return render(

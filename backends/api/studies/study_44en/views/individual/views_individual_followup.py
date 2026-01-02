@@ -45,7 +45,7 @@ def individual_followup_list(request, subjectid):
     logger.info("=" * 80)
     
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Get all follow-ups
     followups = Individual_FollowUp.objects.filter(
@@ -86,7 +86,7 @@ def individual_followup_create(request, subjectid):
     
     # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # POST - Create new follow-up
     if request.method == 'POST':
@@ -193,7 +193,7 @@ def individual_followup_update(request, subjectid, followup_id):
     
     # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Get follow-up (must exist for update)
     followup = get_object_or_404(
@@ -296,12 +296,12 @@ def individual_followup_view(request, subjectid, followup_id):
     VIEW follow-up visit (read-only)
     """
     logger.info("=" * 80)
-    logger.info("=== 👁️ INDIVIDUAL FOLLOW-UP VIEW (READ-ONLY) ===")
+    logger.info("=== HHID INDIVIDUAL FOLLOW-UP VIEW (READ-ONLY) ===")
     logger.info("=" * 80)
     
     # Get individual by MEMBERID.MEMBERID (which is the SUBJECTID)
     queryset = get_filtered_individuals(request.user)
-    individual = get_object_or_404(queryset.select_related('MEMBERID'), MEMBERID__MEMBERID=subjectid)
+    individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     # Get follow-up by FUID (primary key)
     followup = get_object_or_404(
@@ -327,7 +327,7 @@ def individual_followup_view(request, subjectid, followup_id):
     }
     
     logger.info("=" * 80)
-    logger.info("=== 👁️ FOLLOW-UP VIEW END - Rendering template ===")
+    logger.info("=== HHID FOLLOW-UP VIEW END - Rendering template ===")
     logger.info("=" * 80)
     
     return render(request, 'studies/study_44en/CRF/individual/followup_form.html', context)
