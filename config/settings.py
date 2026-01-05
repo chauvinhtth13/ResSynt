@@ -899,7 +899,7 @@ FIELD_ENCRYPTION_KEY = env(
     default=''
 )
 
-# ✨ NEW: RSA + AES Hybrid Backup Encryption
+#  NEW: RSA + AES Hybrid Backup Encryption
 # RSA Key Configuration
 RSA_KEY_SIZE = env.int('RSA_KEY_SIZE', default=4096)
 RSA_SIGNATURE_ALGORITHM = 'RSA-PSS'  # Digital signature algorithm

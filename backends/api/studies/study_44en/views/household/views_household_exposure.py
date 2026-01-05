@@ -240,7 +240,7 @@ def household_exposure_create(request, hhid):
                     exposure.HHID = household
                     set_audit_metadata(exposure, request.user)
                     exposure.save()
-                    logger.info(f"✅ Created exposure for {hhid}")
+                    logger.info(f"Created exposure for {hhid}")
                     
                     # 2. Save water sources
                     _save_water_sources(request, exposure)
@@ -256,22 +256,22 @@ def household_exposure_create(request, hhid):
                     food_freq.HHID = household
                     set_audit_metadata(food_freq, request.user)
                     food_freq.save()
-                    logger.info("✅ Saved food frequency")
+                    logger.info("Saved food frequency")
                     
                     # 6. Save food source
                     food_source = food_source_form.save(commit=False)
                     food_source.HHID = household
                     set_audit_metadata(food_source, request.user)
                     food_source.save()
-                    logger.info("✅ Saved food source")
+                    logger.info("Saved food source")
                     
                     logger.info("=" * 80)
-                    logger.info("=== ✅ EXPOSURE CREATE SUCCESS ===")
+                    logger.info("=== EXPOSURE CREATE SUCCESS ===")
                     logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'✅ Created exposure data for household {hhid}'
+                        f'Created exposure data for household {hhid}'
                     )
                     return redirect('study_44en:household:detail', hhid=hhid)
                     
@@ -299,7 +299,7 @@ def household_exposure_create(request, hhid):
         exposure_form = HH_ExposureForm()
         food_freq_form = HH_FoodFrequencyForm()
         food_source_form = HH_FoodSourceForm()
-        logger.info("✅ Blank forms initialized")
+        logger.info("Blank forms initialized")
     
     context = {
         'household': household,
@@ -345,7 +345,7 @@ def household_exposure_update(request, hhid):
     # Get exposure (must exist for update)
     try:
         exposure = HH_Exposure.objects.get(HHID=household)
-        logger.info(f"✅ Found existing exposure for {hhid}")
+        logger.info(f"Found existing exposure for {hhid}")
     except HH_Exposure.DoesNotExist:
         logger.warning(f"⚠️ No exposure found for {hhid} - redirecting to create")
         messages.error(
@@ -388,7 +388,7 @@ def household_exposure_update(request, hhid):
                     exposure = exposure_form.save(commit=False)
                     set_audit_metadata(exposure, request.user)
                     exposure.save()
-                    logger.info(f"✅ Updated exposure for {hhid}")
+                    logger.info(f"Updated exposure for {hhid}")
                     
                     # 2. Update water sources (clear & recreate)
                     _save_water_sources(request, exposure)
@@ -404,22 +404,22 @@ def household_exposure_update(request, hhid):
                     food_freq.HHID = household
                     set_audit_metadata(food_freq, request.user)
                     food_freq.save()
-                    logger.info("✅ Updated food frequency")
+                    logger.info("Updated food frequency")
                     
                     # 6. Update food source
                     food_source = food_source_form.save(commit=False)
                     food_source.HHID = household
                     set_audit_metadata(food_source, request.user)
                     food_source.save()
-                    logger.info("✅ Updated food source")
+                    logger.info("Updated food source")
                     
                     logger.info("=" * 80)
-                    logger.info("=== ✅ EXPOSURE UPDATE SUCCESS ===")
+                    logger.info("=== EXPOSURE UPDATE SUCCESS ===")
                     logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'✅ Updated exposure data for household {hhid}'
+                        f'Updated exposure data for household {hhid}'
                     )
                     return redirect('study_44en:household:detail', hhid=hhid)
                     
@@ -447,7 +447,7 @@ def household_exposure_update(request, hhid):
         exposure_form = HH_ExposureForm(instance=exposure)
         food_freq_form = HH_FoodFrequencyForm(instance=food_freq)
         food_source_form = HH_FoodSourceForm(instance=food_source)
-        logger.info("✅ Forms initialized with existing data")
+        logger.info("Forms initialized with existing data")
     
     # Load existing related data
     water_data = _load_water_data(exposure)

@@ -20,7 +20,7 @@
                     {% endif %}
                 </div>
                 <div>
-                    <!-- ✅ NEW: Use proper update URL -->
+                    <!-- NEW: Use proper update URL -->
                     {% if household and household.HHID %}
                         <a href="{% url 'study_44en:household:update' hhid=household.HHID %}" 
                         class="btn btn-primary me-2">

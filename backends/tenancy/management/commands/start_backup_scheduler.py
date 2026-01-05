@@ -179,7 +179,7 @@ class Command(BaseCommand):
         )
         
         # Start scheduler thread
-        self.stdout.write(f'\n✅ Scheduler starting...')
+        self.stdout.write(f'\nScheduler starting...')
         self.stdout.write(f'   Next backup: {scheduler.next_backup_time()}')
         self.stdout.write(f'   Press CTRL+C to stop\n')
         

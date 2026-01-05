@@ -158,8 +158,8 @@ def household_create(request):
         household_valid = household_form.is_valid()
         formset_valid = member_formset.is_valid()
         
-        logger.info(f"  Household form: {'✅ VALID' if household_valid else '❌ INVALID'}")
-        logger.info(f"  Member formset: {'✅ VALID' if formset_valid else '❌ INVALID'}")
+        logger.info(f"  Household form: {'VALID' if household_valid else '❌ INVALID'}")
+        logger.info(f"  Member formset: {'VALID' if formset_valid else '❌ INVALID'}")
         
         if household_valid and formset_valid:
             logger.info("💾 Calling save_household_and_related...")
@@ -172,10 +172,10 @@ def household_create(request):
             )
             
             if household:
-                logger.info(f"✅ SUCCESS: Household created: {household.HHID}")
+                logger.info(f"SUCCESS: Household created: {household.HHID}")
                 messages.success(
                     request,
-                    f'✅ Đã tạo hộ gia đình {household.HHID} thành công.'
+                    f'Đã tạo hộ gia đình {household.HHID} thành công.'
                 )
                 return redirect('study_44en:household:detail', hhid=household.HHID)
             else:
@@ -203,7 +203,7 @@ def household_create(request):
             prefix='members'
         )
         
-        logger.info("✅ Blank forms initialized")
+        logger.info("Blank forms initialized")
     
     # Build context
     context = {
@@ -244,7 +244,7 @@ def household_update(request, hhid):
     # Get household with members
     logger.info("📥 Step 1: Fetching household with members...")
     household, members = get_household_with_related(request, hhid)
-    logger.info(f"✅ Household found: {household.HHID}, {members.count()} members")
+    logger.info(f"Household found: {household.HHID}, {members.count()} members")
     
     # GET - Show current data
     if request.method == 'GET':
@@ -258,7 +258,7 @@ def household_update(request, hhid):
             prefix='members'
         )
         
-        logger.info(f"✅ Forms initialized with existing data")
+        logger.info(f"Forms initialized with existing data")
         logger.info(f"   Members in formset: {len(member_formset.queryset)}")
         
         context = {
@@ -297,7 +297,7 @@ def household_update(request, hhid):
     formset_valid = member_formset.is_valid()
     
     if form_valid and formset_valid:
-        logger.info("✅ All forms valid - saving...")
+        logger.info("All forms valid - saving...")
         
         # Save using helper
         saved_household = save_household_and_related(
@@ -308,7 +308,7 @@ def household_update(request, hhid):
         )
         
         if saved_household:
-            logger.info(f"✅ SUCCESS - Household {saved_household.HHID} updated")
+            logger.info(f"SUCCESS - Household {saved_household.HHID} updated")
             messages.success(request, f'Household {saved_household.HHID} updated successfully')
             
             logger.info("="*80)

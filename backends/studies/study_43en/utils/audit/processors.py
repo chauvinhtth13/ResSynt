@@ -384,6 +384,18 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
             if k not in self.metadata_fields
         }
         
+        # Personal form (if present)
+        if 'personal' in forms_config:
+            instance = forms_config['personal']['instance']
+            if instance and instance.pk:
+                old_data = self.detector.extract_old_data(instance)
+                all_old_data['personal'] = {
+                    k: v for k, v in old_data.items()
+                    if k not in self.metadata_fields
+                }
+            else:
+                all_old_data['personal'] = {}
+        
         # Related forms
         for name, config in forms_config.get('related', {}).items():
             instance = config['instance']
@@ -413,6 +425,17 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
             instance=main_config['instance'],
             **main_kwargs  # Pass extra kwargs
         )
+
+        # Add personal form if present in forms_config
+        if 'personal' in forms_config:
+            personal_config = forms_config['personal']
+            personal_kwargs = personal_config.get('kwargs', {})
+            personal_kwargs.update(form_kwargs)
+            forms_dict['personal'] = personal_config['class'](
+                request.POST,
+                instance=personal_config['instance'],
+                **personal_kwargs
+            )
         
         # Related forms
         forms_dict['related'] = {}
@@ -431,6 +454,13 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
         """Validate all forms"""
         valid = forms_dict['main'].is_valid()
         
+        # Validate personal form if present
+        if 'personal' in forms_dict:
+            personal_valid = forms_dict['personal'].is_valid()
+            if not personal_valid:
+                logger.error(f"Personal form errors: {forms_dict['personal'].errors}")
+            valid = personal_valid and valid
+        
         for form in forms_dict.get('related', {}).values():
             valid = form.is_valid() and valid
         
@@ -446,6 +476,20 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
         
         main_changes = self.detector.detect_changes(all_old_data['main'], new_main)
         all_changes.extend(main_changes)
+        
+        # Personal form changes (if present)
+        if 'personal' in forms_dict:
+            new_personal = self.detector.extract_new_data(forms_dict['personal'])
+            new_personal = {k: v for k, v in new_personal.items() if k not in self.metadata_fields}
+            
+            old_personal = all_old_data.get('personal', {})
+            personal_changes = self.detector.detect_changes(old_personal, new_personal)
+            
+            # Prefix field names
+            for change in personal_changes:
+                change['field'] = f"personal_{change['field']}"
+            
+            all_changes.extend(personal_changes)
         
         # Related forms changes
         for name, form in forms_dict.get('related', {}).items():
@@ -497,6 +541,10 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
                 context['discharge_form'] = main_form
             elif 'Clinical' in form_class_name:
                 context['clinical_form'] = main_form
+        
+        # Add personal form if present
+        if 'personal' in forms_dict:
+            context['personal_form'] = forms_dict['personal']
         
         # Add related forms with proper naming
         for name, form in forms_dict.get('related', {}).items():
@@ -592,6 +640,7 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
         redirect_url: str,
         extra_context: Dict = None,
         skip_change_reason=None,
+        
         
     ):
         """Process complex forms with formsets"""

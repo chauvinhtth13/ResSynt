@@ -82,13 +82,13 @@ def individual_sample_create(request, subjectid):
                     food_frequency.MEMBERID = individual
                     set_audit_metadata(food_frequency, request.user)
                     food_frequency.save()
-                    logger.info(f"✅ Created food frequency for {subjectid}")
+                    logger.info(f"Created food frequency for {subjectid}")
                     
                     logger.info("=" * 80)
-                    logger.info("=== ✅ SAMPLE CREATE SUCCESS ===")
+                    logger.info("=== SAMPLE CREATE SUCCESS ===")
                     logger.info("=" * 80)
                     
-                    messages.success(request, f'✅ Created sample data for individual {subjectid}')
+                    messages.success(request, f'Created sample data for individual {subjectid}')
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
@@ -146,7 +146,7 @@ def individual_sample_update(request, subjectid):
     # Get food frequency (may or may not exist)
     try:
         food_frequency = Individual_FoodFrequency.objects.get(MEMBERID=individual)
-        logger.info(f"✅ Found food frequency for {subjectid}")
+        logger.info(f"Found food frequency for {subjectid}")
     except Individual_FoodFrequency.DoesNotExist:
         logger.warning(f"⚠️ No food frequency found for {subjectid}")
         food_frequency = None
@@ -176,13 +176,13 @@ def individual_sample_update(request, subjectid):
                     food_frequency.MEMBERID = individual
                     set_audit_metadata(food_frequency, request.user)
                     food_frequency.save()
-                    logger.info(f"✅ Updated food frequency for {subjectid}")
+                    logger.info(f"Updated food frequency for {subjectid}")
                     
                     logger.info("=" * 80)
-                    logger.info("=== ✅ SAMPLE UPDATE SUCCESS ===")
+                    logger.info("=== SAMPLE UPDATE SUCCESS ===")
                     logger.info("=" * 80)
                     
-                    messages.success(request, f'✅ Updated sample data for individual {subjectid}')
+                    messages.success(request, f'Updated sample data for individual {subjectid}')
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:

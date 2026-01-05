@@ -5,8 +5,8 @@ Features:
 - SHA-256 checksum
 - Automatic cleanup
 - Support multiple databases
-- ✅ CROSS-PLATFORM: Windows + Linux support
-- ✅ AES-256-GCM encryption (no GPG needed)
+- CROSS-PLATFORM: Windows + Linux support
+- AES-256-GCM encryption (no GPG needed)
 """
 import os
 import sys
@@ -25,7 +25,7 @@ class BackupManager:
     """
     Manage database backups with compression
     
-    ✅ NEW: Auto-detect PostgreSQL on Windows/Linux
+    NEW: Auto-detect PostgreSQL on Windows/Linux
     """
     
     def __init__(self):
@@ -37,7 +37,7 @@ class BackupManager:
         # Retention policy
         self.retention_days = getattr(settings, 'BACKUP_RETENTION_DAYS', 90)
         
-        # ✅ NEW: Find PostgreSQL binaries
+        # NEW: Find PostgreSQL binaries
         self.pg_dump_path = self._find_pg_dump()
         
         logger.info(f"BackupManager initialized: {self.backup_dir}")
@@ -45,7 +45,7 @@ class BackupManager:
     
     def _find_pg_dump(self) -> str:
         """
-        ✅ NEW: Auto-detect pg_dump location
+        NEW: Auto-detect pg_dump location
         
         Returns:
             Full path to pg_dump executable
@@ -112,7 +112,7 @@ class BackupManager:
     
     def _get_windows_postgres_paths(self) -> List[str]:
         """
-        ✅ NEW: Get possible PostgreSQL paths on Windows
+        NEW: Get possible PostgreSQL paths on Windows
         
         Returns:
             List of possible bin directories
@@ -275,7 +275,7 @@ class BackupManager:
         """
         Build pg_dump command
         
-        ✅ UPDATED: Use full path to pg_dump + support schema filtering
+        UPDATED: Use full path to pg_dump + support schema filtering
         
         Args:
             schemas: List of schema names to backup (default: all schemas)
@@ -284,7 +284,7 @@ class BackupManager:
             ['C:/Program Files/PostgreSQL/16/bin/pg_dump.exe', '-h', 'localhost', ...]
         """
         cmd = [
-            self.pg_dump_path,  # ✅ Use detected path
+            self.pg_dump_path,  # Use detected path
             '-h', db_config['HOST'],
             '-p', str(db_config['PORT']),
             '-U', db_config['USER'],

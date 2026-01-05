@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def rate_limit(key_prefix: str, max_requests: int = 10, window: int = 60):
     """
     Rate limit decorator
-    ✅ ENHANCED: Added email alerting
+    ENHANCED: Added email alerting
     
     Args:
         key_prefix: Prefix for cache key
@@ -37,7 +37,7 @@ def rate_limit(key_prefix: str, max_requests: int = 10, window: int = 60):
                     f"({count} requests in {window}s)"
                 )
                 
-                # ✅ Send async alert email via Celery (throttled)
+                # Send async alert email via Celery (throttled)
                 alert_key = f'alert_sent:{cache_key}'
                 if not cache.get(alert_key):  # Only send once per 5 minutes
                     try:

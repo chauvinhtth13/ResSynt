@@ -5,16 +5,24 @@ Site Filtering Utilities for Views
 ===================================
 
 High-level helper functions matching dashboard.py logic
+✅ OPTIMIZED: Redis caching integrated
 """
 
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.core.cache import cache
 import logging
+import hashlib
 
 logger = logging.getLogger(__name__)
 
 DB_ALIAS = 'db_study_43en'
+
+# 🚀 Cache timeout configuration
+CACHE_TIMEOUT_SHORT = 300  # 5 minutes - cho query results
+CACHE_TIMEOUT_MEDIUM = 1800  # 30 minutes - cho metadata
+CACHE_TIMEOUT_LONG = 3600  # 1 hour - cho rarely changed data
 
 
 def get_site_filter_params(request):
@@ -62,22 +70,34 @@ def get_site_filter_params(request):
         return (user_site_codes, 'multiple')
 
 
-def get_filtered_queryset(model, site_filter, filter_type):
+def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):
     """
-     COPY FROM DASHBOARD
-    Get filtered queryset matching dashboard logic
+    🚀 OPTIMIZED: Get filtered queryset với Redis caching
     
     Args:
         model: Django model class
         site_filter: 'all' | str | list
         filter_type: 'all' | 'single' | 'multiple'
+        use_cache: Enable/disable caching (default True)
     
     Returns:
         Filtered QuerySet using db_study_43en
     """
+    # 🔥 Cache key generation
+    if use_cache:
+        cache_key = _generate_cache_key('queryset', model.__name__, site_filter, filter_type)
+        
+        # Try to get from cache
+        cached_pks = cache.get(cache_key)
+        if cached_pks is not None:
+            logger.debug(f"✅ Cache HIT: [{model.__name__}] {len(cached_pks)} objects")
+            # Return queryset filtered by cached PKs
+            return model.objects.using(DB_ALIAS).filter(pk__in=cached_pks)
+    
+    # Cache MISS - query database
     if filter_type == 'all':
         logger.debug(f"[{model.__name__}] Query all sites")
-        return model.objects.using(DB_ALIAS)
+        queryset = model.objects.using(DB_ALIAS)
     
     elif filter_type == 'multiple':
         logger.debug(f"[{model.__name__}] Query multiple sites: {site_filter}")
@@ -87,11 +107,147 @@ def get_filtered_queryset(model, site_filter, filter_type):
             return model.objects.using(DB_ALIAS).none()
         
         # Use manager's filter_by_site which handles multiple sites
-        return model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
+        queryset = model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
     
     else:  # filter_type == 'single'
         logger.debug(f"[{model.__name__}] Query single site: {site_filter}")
-        return model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
+        queryset = model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
+    
+    # 🔥 Cache the result (PKs only to save memory)
+    if use_cache:
+        try:
+            pks = list(queryset.values_list('pk', flat=True))
+            cache.set(cache_key, pks, CACHE_TIMEOUT_SHORT)
+            logger.debug(f"💾 Cached: [{model.__name__}] {len(pks)} objects")
+        except Exception as e:
+            logger.warning(f"Failed to cache queryset: {e}")
+    
+    return queryset
+
+
+def _generate_cache_key(*args):
+    """
+    Generate unique cache key from arguments
+    
+    Example: 'site_query_SCR_CASE_all_all_v1'
+    """
+    # Create deterministic hash
+    content = '_'.join(str(arg) for arg in args)
+    hash_suffix = hashlib.md5(content.encode()).hexdigest()[:8]
+    
+    return f"site_query_{hash_suffix}_v1"
+
+
+def batch_get_related(primary_instances, related_model, fk_field, site_filter, filter_type):
+    """
+    🚀 BATCH GET related objects trong 1 query thay vì N queries
+    
+    Args:
+        primary_instances: List of primary model instances (e.g., SCR_CASE instances)
+        related_model: Related model class (e.g., ENR_CASE)
+        fk_field: Foreign key field name (e.g., 'USUBJID')
+        site_filter, filter_type: Site filtering params
+        
+    Returns:
+        dict: {primary_instance.pk: related_instance or None}
+        
+    Example:
+        screening_cases = [case1, case2, case3]
+        enrollment_map = batch_get_related(
+            screening_cases, ENR_CASE, 'USUBJID', site_filter, filter_type
+        )
+        # enrollment_map = {case1.pk: enr1, case2.pk: enr2, case3.pk: None}
+    """
+    if not primary_instances:
+        return {}
+    
+    # Build filter for related objects
+    filter_kwargs = {f"{fk_field}__in": primary_instances}
+    
+    # Get related objects
+    related_qs = get_filtered_queryset(related_model, site_filter, filter_type).filter(**filter_kwargs)
+    
+    # Build map: primary_instance -> related_instance
+    related_map = {}
+    for related_obj in related_qs:
+        fk_value = getattr(related_obj, fk_field)
+        if hasattr(fk_value, 'pk'):
+            # ForeignKey case
+            related_map[fk_value.pk] = related_obj
+        else:
+            # Direct value case
+            related_map[fk_value] = related_obj
+    
+    # Fill in None for instances without related objects
+    result = {}
+    for instance in primary_instances:
+        result[instance.pk] = related_map.get(instance.pk)
+    
+    logger.info(f"🚀 Batch got {len(related_map)}/{len(primary_instances)} {related_model.__name__} in 1 query")
+    
+    return result
+
+
+def batch_check_exists(instances, check_models, fk_field, site_filter, filter_type):
+    """
+    🚀 BATCH CHECK existence của multiple models
+    
+    Args:
+        instances: List of instances to check against
+        check_models: List of model classes to check (e.g., [CLI_CASE, DISCH_CASE, ...])
+        fk_field: Foreign key field name
+        site_filter, filter_type: Site filtering params
+        
+    Returns:
+        dict: {
+            instance.pk: {
+                'CLI_CASE': bool,
+                'DISCH_CASE': bool,
+                ...
+            }
+        }
+    """
+    if not instances:
+        return {}
+    
+    results = {instance.pk: {} for instance in instances}
+    
+    # Query each model once
+    for model in check_models:
+        filter_kwargs = {f"{fk_field}__in": instances}
+        existing_pks = set(
+            get_filtered_queryset(model, site_filter, filter_type)
+            .filter(**filter_kwargs)
+            .values_list(fk_field, flat=True)
+        )
+        
+        # Update results
+        for instance in instances:
+            instance_pk = instance.pk
+            results[instance_pk][model.__name__] = instance_pk in existing_pks
+    
+    logger.info(f"🚀 Batch checked {len(check_models)} models for {len(instances)} instances")
+    
+    return results
+
+
+def invalidate_cache(model_name=None, site_filter=None):
+    """
+    🗑️ Invalidate cache khi có data changes
+    
+    Args:
+        model_name: Specific model to invalidate (None = all)
+        site_filter: Specific site filter (None = all)
+    """
+    if model_name and site_filter:
+        # Invalidate specific cache
+        pattern = f"site_query_*{model_name}*{site_filter}*"
+        cache.delete_pattern(pattern)
+        logger.info(f"🗑️ Invalidated cache: {model_name} @ {site_filter}")
+    else:
+        # Invalidate all site query cache
+        cache.delete_pattern("site_query_*")
+        logger.info(f"🗑️ Invalidated all site query cache")
 
 
 def get_site_filtered_object_or_404(model, site_filter, filter_type, **kwargs):

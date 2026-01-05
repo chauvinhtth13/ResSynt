@@ -73,8 +73,8 @@ class Individual(AuditFieldsMixin):
         unique=True,
         db_index=True,
         editable=False,
-        null=True,  # ✅ Add this temporarily for migration
-        blank=True,  # ✅ Add this too
+        null=True,  # Add this temporarily for migration
+        blank=True,  # Add this too
         verbose_name=_('Subject ID'),
         help_text=_('Auto-populated from MEMBERID. Format: 44EN-001-1')
     )

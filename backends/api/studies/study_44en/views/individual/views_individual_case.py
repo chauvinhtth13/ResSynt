@@ -101,14 +101,14 @@ def individual_create(request):
                     individual.save()
                     
                     subjectid = individual.MEMBERID.MEMBERID if individual.MEMBERID else 'N/A'
-                    logger.info(f"✅ Created individual: {subjectid}")
+                    logger.info(f"Created individual: {subjectid}")
                     logger.info("=" * 80)
-                    logger.info("=== ✅ INDIVIDUAL CREATE SUCCESS ===")
+                    logger.info("=== INDIVIDUAL CREATE SUCCESS ===")
                     logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'✅ Individual {subjectid} created successfully.'
+                        f'Individual {subjectid} created successfully.'
                     )
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
@@ -128,7 +128,7 @@ def individual_create(request):
         logger.info("📄 GET REQUEST - Showing blank form...")
         initial_data = {'ENR_DATE': date.today()}
         individual_form = IndividualForm(initial=initial_data)
-        logger.info("✅ Blank form initialized")
+        logger.info("Blank form initialized")
     
     context = {
         'individual_form': individual_form,
@@ -159,7 +159,7 @@ def individual_update(request, subjectid):
     
     queryset = get_filtered_individuals(request.user)
     individual = get_object_or_404(queryset, SUBJECTID=subjectid)
-    logger.info(f"✅ Found individual: {subjectid}")
+    logger.info(f"Found individual: {subjectid}")
     
     if request.method == 'POST':
         logger.info("💾 POST REQUEST - Processing update...")
@@ -175,14 +175,14 @@ def individual_update(request, subjectid):
                     individual.save()
                     
                     subjectid = individual.MEMBERID.MEMBERID if individual.MEMBERID else 'N/A'
-                    logger.info(f"✅ Updated individual: {subjectid}")
+                    logger.info(f"Updated individual: {subjectid}")
                     logger.info("=" * 80)
-                    logger.info("=== ✅ INDIVIDUAL UPDATE SUCCESS ===")
+                    logger.info("=== INDIVIDUAL UPDATE SUCCESS ===")
                     logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'✅ Individual {subjectid} updated successfully.'
+                        f'Individual {subjectid} updated successfully.'
                     )
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
@@ -201,7 +201,7 @@ def individual_update(request, subjectid):
         # GET - Show form with data
         logger.info("📄 GET REQUEST - Loading existing data...")
         individual_form = IndividualForm(instance=individual)
-        logger.info("✅ Form initialized with existing data")
+        logger.info("Form initialized with existing data")
     
     context = {
         'individual_form': individual_form,
@@ -272,7 +272,7 @@ __all__ = [
     'individual_list',
     'individual_detail',
     'individual_create',
-    'individual_update',  # ✅ NEW: Renamed from individual_edit
-    'individual_view',    # ✅ NEW: Read-only view
+    'individual_update',  # NEW: Renamed from individual_edit
+    'individual_view',    # NEW: Read-only view
     'individual_edit',    # Deprecated alias
 ]

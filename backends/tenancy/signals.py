@@ -137,7 +137,7 @@ def handle_failed_login(sender, credentials, request, **kwargs):
 def handle_axes_lockout(request, username, ip_address, **kwargs):
     """
     Handle axes lockout event
-    ✅ ENHANCED: Using Celery for async email alerts
+    ENHANCED: Using Celery for async email alerts
     """
     try:
         timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -158,7 +158,7 @@ def handle_axes_lockout(request, username, ip_address, **kwargs):
             ).strip()
             user.save(update_fields=['notes'])
             
-            # ✅ Send async email alert via Celery
+            # Send async email alert via Celery
             send_security_alert.delay(
                 alert_type='user_lockout',
                 details={
@@ -173,7 +173,7 @@ def handle_axes_lockout(request, username, ip_address, **kwargs):
             # Log attempt for non-existent user
             logger.info(f"Lockout attempt for non-existent user: {username}")
             
-            # ✅ Send async alert for non-existent user (potential attack)
+            # Send async alert for non-existent user (potential attack)
             send_security_alert.delay(
                 alert_type='invalid_user_attempt',
                 details={

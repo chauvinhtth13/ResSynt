@@ -82,22 +82,22 @@ def household_food_create(request, hhid):
                     food_frequency.HHID = household
                     set_audit_metadata(food_frequency, request.user)
                     food_frequency.save()
-                    logger.info(f"✅ Created food frequency for {hhid}")
+                    logger.info(f"Created food frequency for {hhid}")
                     
                     # Save food source
                     food_source = food_source_form.save(commit=False)
                     food_source.HHID = household
                     set_audit_metadata(food_source, request.user)
                     food_source.save()
-                    logger.info(f"✅ Created food source for {hhid}")
+                    logger.info(f"Created food source for {hhid}")
                     
                     logger.info("=" * 80)
-                    logger.info("=== ✅ FOOD CREATE SUCCESS ===")
+                    logger.info("=== FOOD CREATE SUCCESS ===")
                     logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'✅ Created food data for household {hhid}'
+                        f'Created food data for household {hhid}'
                     )
                     return redirect('study_44en:household:detail', hhid=hhid)
                     
@@ -122,7 +122,7 @@ def household_food_create(request, hhid):
         
         food_frequency_form = HH_FoodFrequencyForm(prefix='frequency')
         food_source_form = HH_FoodSourceForm(prefix='source')
-        logger.info("✅ Blank forms initialized")
+        logger.info("Blank forms initialized")
     
     context = {
         'household': household,
@@ -163,7 +163,7 @@ def household_food_update(request, hhid):
     # Get food frequency (must exist for update)
     try:
         food_frequency = HH_FoodFrequency.objects.get(HHID=household)
-        logger.info(f"✅ Found food frequency for {hhid}")
+        logger.info(f"Found food frequency for {hhid}")
     except HH_FoodFrequency.DoesNotExist:
         logger.warning(f"⚠️ No food frequency found for {hhid}")
         food_frequency = None
@@ -171,7 +171,7 @@ def household_food_update(request, hhid):
     # Get food source (must exist for update)
     try:
         food_source = HH_FoodSource.objects.get(HHID=household)
-        logger.info(f"✅ Found food source for {hhid}")
+        logger.info(f"Found food source for {hhid}")
     except HH_FoodSource.DoesNotExist:
         logger.warning(f"⚠️ No food source found for {hhid}")
         food_source = None
@@ -212,22 +212,22 @@ def household_food_update(request, hhid):
                     food_frequency.HHID = household
                     set_audit_metadata(food_frequency, request.user)
                     food_frequency.save()
-                    logger.info(f"✅ Updated food frequency for {hhid}")
+                    logger.info(f"Updated food frequency for {hhid}")
                     
                     # Update food source
                     food_source = food_source_form.save(commit=False)
                     food_source.HHID = household
                     set_audit_metadata(food_source, request.user)
                     food_source.save()
-                    logger.info(f"✅ Updated food source for {hhid}")
+                    logger.info(f"Updated food source for {hhid}")
                     
                     logger.info("=" * 80)
-                    logger.info("=== ✅ FOOD UPDATE SUCCESS ===")
+                    logger.info("=== FOOD UPDATE SUCCESS ===")
                     logger.info("=" * 80)
                     
                     messages.success(
                         request,
-                        f'✅ Updated food data for household {hhid}'
+                        f'Updated food data for household {hhid}'
                     )
                     return redirect('study_44en:household:detail', hhid=hhid)
                     
@@ -258,7 +258,7 @@ def household_food_update(request, hhid):
             instance=food_source,
             prefix='source'
         )
-        logger.info("✅ Forms initialized with existing data")
+        logger.info("Forms initialized with existing data")
     
     context = {
         'household': household,

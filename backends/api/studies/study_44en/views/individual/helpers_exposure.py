@@ -513,7 +513,7 @@ def save_hospitalizations(request, exposure):
             set_audit_metadata(hosp, request.user)
             hosp.save()
             
-            logger.info(f"✅ Saved hospitalization: {hosp_choice}, OTHER='{other_text}', DURATION={mapped_duration}")
+            logger.info(f"Saved hospitalization: {hosp_choice}, OTHER='{other_text}', DURATION={mapped_duration}")
             count += 1
     
     logger.info(f"Saved {count} hospitalizations")

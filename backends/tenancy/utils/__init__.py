@@ -72,7 +72,7 @@ __all__ = [
     'get_role_description',
     'parse_group_to_role_key',
     
-    # ✨ NEW: Role checker
+    #  NEW: Role checker
     'RoleChecker',
     'get_user_role',
     'check_permission',

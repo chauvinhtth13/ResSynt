@@ -165,7 +165,7 @@ def antibiotic_list(request, usubjid, culture_id):
         logger.info(f"🔍 Processing POST data...")
         logger.info(f"🔍 Total POST keys: {len(request.POST.keys())}")
 
-        # ✅ DEBUG: Log first 20 keys
+        # DEBUG: Log first 20 keys
         post_keys = [k for k in request.POST.keys() if k.startswith('sensitivity_')]
         logger.info(f"🔍 Sensitivity keys found: {len(post_keys)}")
         logger.info(f"🔍 First 10 keys: {post_keys[:10]}")
@@ -181,13 +181,13 @@ def antibiotic_list(request, usubjid, culture_id):
                 
                 logger.info(f"  → Sensitivity value: '{sensitivity}' (type: {type(sensitivity).__name__})")
                 
-                # ✅ FIX 1: Only skip if form field doesn't exist at all (None)
+                # FIX 1: Only skip if form field doesn't exist at all (None)
                 # Don't skip empty string or 'ND' - these are valid values
                 if sensitivity is None:
                     logger.info(f"  ⏭️  SKIP: Form field doesn't exist (None)")
                     continue
                 
-                # ✅ FIX 2: Allow empty string but log it
+                # FIX 2: Allow empty string but log it
                 if sensitivity == '':
                     logger.info(f"  ⚠️  WARNING: Empty string value (will be treated as no change)")
                     # Don't skip - let detector handle it
@@ -202,13 +202,13 @@ def antibiotic_list(request, usubjid, culture_id):
                             LAB_CULTURE_ID=culture
                         )
                         
-                        logger.info(f"  ✅ Found test ID {test_id}: {test.AST_ID}")
+                        logger.info(f"  Found test ID {test_id}: {test.AST_ID}")
                         logger.info(f"     Old sensitivity: '{test.SENSITIVITY_LEVEL}'")
                         logger.info(f"     Old MIC: '{test.MIC}'")
                         logger.info(f"     Old IZDIAM: '{test.IZDIAM}'")
                         logger.info(f"     Old NOTES: '{test.NOTES}'")
                         
-                        # ✅ FIX 3: Check first-time fill (but DON'T skip if changing TO ND)
+                        # FIX 3: Check first-time fill (but DON'T skip if changing TO ND)
                         is_first_time_fill = (
                             test.SENSITIVITY_LEVEL == 'ND' and
                             not test.MIC and
@@ -216,7 +216,7 @@ def antibiotic_list(request, usubjid, culture_id):
                             not test.NOTES
                         )
                         
-                        # ✅ IMPORTANT: If changing FROM filled value TO ND, NOT first-fill
+                        # IMPORTANT: If changing FROM filled value TO ND, NOT first-fill
                         is_reverting_to_nd = (
                             test.SENSITIVITY_LEVEL != 'ND' and  # Was filled
                             sensitivity == 'ND'  # Now reverting to ND
@@ -224,10 +224,10 @@ def antibiotic_list(request, usubjid, culture_id):
                         
                         if is_reverting_to_nd:
                             logger.info(f"  🔄 REVERT TO ND: {test.SENSITIVITY_LEVEL} → ND (This is a CHANGE!)")
-                            is_first_time_fill = False  # ✅ Force to detect as change
+                            is_first_time_fill = False  # Force to detect as change
                         
                         if is_first_time_fill and sensitivity != 'ND':
-                            logger.info(f"  ✅ FIRST-TIME FILL: {test.AST_ID} - Skip audit, just UPDATE")
+                            logger.info(f"  FIRST-TIME FILL: {test.AST_ID} - Skip audit, just UPDATE")
                             
                             # Build new data from POST
                             mic_raw = request.POST.get(f'mic_{identifier}', '')
@@ -247,18 +247,18 @@ def antibiotic_list(request, usubjid, culture_id):
                                 except ValueError:
                                     new_data['IZDIAM'] = None
                             
-                            # ✅ Store for DIRECT UPDATE (no audit)
+                            # Store for DIRECT UPDATE (no audit)
                             changes_by_test[test_id] = {
                                 'test': test,
                                 'new_data': new_data,
-                                'changes': [],  # ✅ Empty = no audit needed
+                                'changes': [],  # Empty = no audit needed
                                 'is_first_fill': True,
                             }
                             
                             logger.info(f"     → Queued for FIRST-FILL (no audit)")
-                            continue  # ✅ Skip change detection
+                            continue  # Skip change detection
                         
-                        # ✅ Normal update OR revert to ND → detect changes
+                        # Normal update OR revert to ND → detect changes
                         logger.info(f"  🔄 NORMAL UPDATE/REVERT: {test.AST_ID} - Detect changes + audit")
                         
                         # Capture old data
@@ -270,7 +270,7 @@ def antibiotic_list(request, usubjid, culture_id):
                         mic_raw = request.POST.get(f'mic_{identifier}', '')
                         mic_value = mic_raw.strip() or None
                         
-                        # ✅ FIX 4: Get IZDIAM and NOTES properly
+                        # FIX 4: Get IZDIAM and NOTES properly
                         izdiam_raw = request.POST.get(f'izdiam_{identifier}', '')
                         izdiam_value = izdiam_raw.strip() if izdiam_raw else None
                         
@@ -278,7 +278,7 @@ def antibiotic_list(request, usubjid, culture_id):
                         notes_value = notes_raw.strip() if notes_raw else None
                         
                         new_data = {
-                            'SENSITIVITY_LEVEL': sensitivity,  # ✅ Can be 'ND'
+                            'SENSITIVITY_LEVEL': sensitivity,  # Can be 'ND'
                             'MIC': mic_value,
                             'IZDIAM': izdiam_value,
                             'NOTES': notes_value,
@@ -308,7 +308,7 @@ def antibiotic_list(request, usubjid, culture_id):
                             for idx, change in enumerate(test_changes, 1):
                                 logger.info(f"       Change {idx}: {change['field']} | {change['old_value']} → {change['new_value']}")
                             
-                            # ✅ Enhanced display with AST_ID
+                            # Enhanced display with AST_ID
                             antibiotic_name = test.get_antibiotic_display_name()
                             ast_id = test.AST_ID  # e.g., "003-A-001-C1-AMP"
                             
@@ -320,12 +320,12 @@ def antibiotic_list(request, usubjid, culture_id):
                                 'NOTES': 'Notes'
                             }
                             
-                            # ✅ FIX 5: Process EACH change separately
+                            # FIX 5: Process EACH change separately
                             for change in test_changes:
                                 # Technical field for POST (keep as is for hidden form)
                                 change['field'] = f"test_{test_id}_{change['field']}"
                                 
-                                # ✅ Display label: AST_ID - Field Name
+                                # Display label: AST_ID - Field Name
                                 original_field = change['field'].split('_')[-1]  # Get last part (e.g., "MIC")
                                 field_label = field_display.get(original_field, original_field)
                                 change['field_label'] = f"{ast_id} - {field_label}"
@@ -334,7 +334,7 @@ def antibiotic_list(request, usubjid, culture_id):
                                 change['antibiotic'] = antibiotic_name
                                 change['ast_id'] = ast_id
                             
-                            # ✅ Store changes for this test
+                            # Store changes for this test
                             changes_by_test[test_id] = {
                                 'test': test,
                                 'new_data': new_data,
@@ -342,11 +342,11 @@ def antibiotic_list(request, usubjid, culture_id):
                                 'is_first_fill': False,
                             }
                             
-                            # ✅ FIX 6: Add ALL changes from this test
+                            # FIX 6: Add ALL changes from this test
                             all_changes.extend(test_changes)
                             
-                            logger.info(f"     ✅ Test {test.AST_ID} ({antibiotic_name}): {len(test_changes)} changes added")
-                            logger.info(f"     ✅ Total changes so far: {len(all_changes)}")
+                            logger.info(f"     Test {test.AST_ID} ({antibiotic_name}): {len(test_changes)} changes added")
+                            logger.info(f"     Total changes so far: {len(all_changes)}")
                         else:
                             logger.info(f"     ⏭️  No changes detected for {test.AST_ID}")
                     
@@ -359,7 +359,7 @@ def antibiotic_list(request, usubjid, culture_id):
                 
                 # Process NEW tests (identifier format: new_AntibioticName_Tier)
                 elif identifier.startswith('new_'):
-                    # ✅ FIX 7: Only skip NEW tests if ND (not filled)
+                    # FIX 7: Only skip NEW tests if ND (not filled)
                     if sensitivity == 'ND':
                         logger.info(f"  ⏭️  SKIP new test {identifier}: sensitivity is ND (not filled)")
                         continue
@@ -379,10 +379,10 @@ def antibiotic_list(request, usubjid, culture_id):
                     izdiam_value = request.POST.get(f'izdiam_{identifier}', '').strip() or None
                     notes_value = request.POST.get(f'notes_{identifier}', '').strip() or None
                     
-                    logger.info(f"  ✅ Creating new test: {antibiotic_name} ({tier})")
+                    logger.info(f"  Creating new test: {antibiotic_name} ({tier})")
                     logger.info(f"     Sensitivity: {sensitivity}, MIC: {mic_value}")
                     
-                    # ✅ Store for creation in STEP 5/6
+                    # Store for creation in STEP 5/6
                     new_test_key = f"new_{antibiotic_name}_{tier}"
                     changes_by_test[new_test_key] = {
                         'test': None,  # No existing test
@@ -394,12 +394,12 @@ def antibiotic_list(request, usubjid, culture_id):
                             'IZDIAM': float(izdiam_value) if izdiam_value else None,
                             'NOTES': notes_value,
                         },
-                        'changes': [],  # ✅ Empty = no audit needed (new test creation)
+                        'changes': [],  # Empty = no audit needed (new test creation)
                         'is_new': True,
                     }
                     logger.info(f"     → Queued for creation (no audit for new)")
 
-        # ✅ FINAL SUMMARY LOG
+        # FINAL SUMMARY LOG
         logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         logger.info(f"📊 PROCESSING SUMMARY:")
         logger.info(f"   Total POST sensitivity keys: {len(post_keys)}")
@@ -407,7 +407,7 @@ def antibiotic_list(request, usubjid, culture_id):
         logger.info(f"   Total changes detected: {len(all_changes)}")
         logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-        # ✅ DEBUG: Log all changes
+        # DEBUG: Log all changes
         if all_changes:
             logger.info(f"📋 ALL CHANGES DETAIL:")
             for idx, change in enumerate(all_changes, 1):

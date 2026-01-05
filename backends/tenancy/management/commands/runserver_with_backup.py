@@ -72,7 +72,7 @@ class Command(BaseCommand):
             bufsize=1
         )
         
-        self.stdout.write(self.style.SUCCESS('✅ Both services started!\n'))
+        self.stdout.write(self.style.SUCCESS('Both services started!\n'))
         
         try:
             # Stream output from both processes

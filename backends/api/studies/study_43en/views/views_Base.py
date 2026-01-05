@@ -47,25 +47,37 @@ from django.http import HttpResponse
 from backends.studies.study_43en.utils.site_utils import (
     get_site_filter_params,
     get_filtered_queryset,
-    get_site_filtered_object_or_404
+    get_site_filtered_object_or_404,
+    batch_get_related,
+    batch_check_exists,
+    invalidate_cache,
 )
+from backends.studies.study_43en.utils.performance import profile_view
 
 
 # ==========================================
-#  PATIENT LIST - REFACTORED
+#  PATIENT LIST - 🚀 OPTIMIZED WITH REDIS
 # ==========================================
 
 @login_required
+@profile_view("patient_list")
 def patient_list(request):
-    """Danh sách các bệnh nhân -  WITH NEW SITE FILTERING"""
+    """
+    Danh sách các bệnh nhân - OPTIMIZED VERSION
+    
+    ✅ Improvements:
+    - Redis caching for queries
+    - Batch queries thay vì N+1
+    - Giảm từ ~100 queries xuống ~10 queries
+    """
     query = request.GET.get('q', '')
     
-    #  NEW: Get site filter với 3 strategies
+    # Get site filter
     site_filter, filter_type = get_site_filter_params(request)
     
     logger.info(f"patient_list - User: {request.user.username}, Site: {site_filter}, Type: {filter_type}")
     
-    #  NEW: Get filtered queryset (hỗ trợ all/single/multiple)
+    # 🚀 Get filtered queryset (with Redis caching)
     cases = get_filtered_queryset(SCR_CASE, site_filter, filter_type).filter(
         is_confirmed=True
     ).order_by('USUBJID')
@@ -85,18 +97,35 @@ def patient_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    #  Process status với site filtering
+    # 🚀 BATCH: Get all enrollments trong 1 query
+    enrollment_map = batch_get_related(
+        list(page_obj.object_list),
+        ENR_CASE,
+        'USUBJID',
+        site_filter,
+        filter_type
+    )
+    
+    # 🚀 BATCH: Check all CRFs existence
+    enrollments = [e for e in enrollment_map.values() if e is not None]
+    
+    if enrollments:
+        crf_status_map = batch_check_exists(
+            enrollments,
+            [CLI_CASE, DISCH_CASE, EndCaseCRF, FU_CASE_28, FU_CASE_90, SAM_CASE, LaboratoryTest],
+            'USUBJID',
+            site_filter,
+            filter_type
+        )
+    else:
+        crf_status_map = {}
+    
+    # Process status (giờ chỉ là lookup, không query DB!)
     for case in page_obj:
-        try:
-            #  Use site filtering for related queries
-            enrollment = get_filtered_queryset(ENR_CASE, site_filter, filter_type).filter(USUBJID=case).first()
-            case.has_enrollment = enrollment is not None
-            # Add enrollment date to case
-            case.enrollment_date = enrollment.ENRDATE if enrollment else None
-        except:
-            case.has_enrollment = False
-            enrollment = None
-            case.enrollment_date = None
+        enrollment = enrollment_map.get(case.pk)
+        
+        case.has_enrollment = enrollment is not None
+        case.enrollment_date = enrollment.ENRDATE if enrollment else None
         
         if not case.has_enrollment:
             case.process_status = 'not_enrolled'
@@ -104,39 +133,31 @@ def patient_list(request):
             case.process_badge = 'secondary'
             continue
         
-        # Check EndCaseCRF
-        try:
-            has_endcase = get_filtered_queryset(EndCaseCRF, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-        except:
-            has_endcase = False
+        # Get CRF status từ batch results
+        crf_status = crf_status_map.get(enrollment.pk, {})
         
-        if has_endcase:
+        # Check EndCaseCRF
+        if crf_status.get('EndCaseCRF', False):
             case.process_status = 'completed'
             case.process_label = 'Study Completed'
             case.process_badge = 'success'
             continue
         
         # Check other CRFs
-        try:
-            has_clinical = get_filtered_queryset(CLI_CASE, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_discharge = get_filtered_queryset(DISCH_CASE, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_fu28 = get_filtered_queryset(FU_CASE_28, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_fu90 = get_filtered_queryset(FU_CASE_90, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_sample = get_filtered_queryset(SAM_CASE, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_lab = get_filtered_queryset(LaboratoryTest, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            
-            all_completed = all([has_clinical, has_discharge, has_fu28, has_fu90, has_sample, has_lab])
-            
-            if all_completed:
-                case.process_status = 'completed'
-                case.process_label = 'Study Completed'
-                case.process_badge = 'success'
-            else:
-                case.process_status = 'ongoing'
-                case.process_label = 'Ongoing'
-                case.process_badge = 'primary'
-        except Exception as e:
-            logger.error(f"Error checking status for {case.USUBJID}: {e}")
+        all_completed = all([
+            crf_status.get('CLI_CASE', False),
+            crf_status.get('DISCH_CASE', False),
+            crf_status.get('FU_CASE_28', False),
+            crf_status.get('FU_CASE_90', False),
+            crf_status.get('SAM_CASE', False),
+            crf_status.get('LaboratoryTest', False),
+        ])
+        
+        if all_completed:
+            case.process_status = 'completed'
+            case.process_label = 'Study Completed'
+            case.process_badge = 'success'
+        else:
             case.process_status = 'ongoing'
             case.process_label = 'Ongoing'
             case.process_badge = 'primary'
@@ -147,8 +168,8 @@ def patient_list(request):
         'query': query,
         'view_type': 'patients',
         'is_paginated': page_obj.has_other_pages(),
-        'site_filter': site_filter,  #  For debugging
-        'filter_type': filter_type,  #  For debugging
+        'site_filter': site_filter,
+        'filter_type': filter_type,
     }
     
     return render(request, 'studies/study_43en/CRF/base/patient_list.html', context)
@@ -336,20 +357,28 @@ def patient_detail(request, usubjid):
 
 
 # ==========================================
-#  CONTACT LIST - REFACTORED
+#  CONTACT LIST - 🚀 OPTIMIZED WITH REDIS
 # ==========================================
 
 @login_required
+@profile_view("contact_list")
 def contact_list(request):
-    """Danh sách contacts -  WITH NEW SITE FILTERING"""
+    """
+    Danh sách contacts - OPTIMIZED VERSION
+    
+    ✅ Improvements:
+    - Redis caching for queries
+    - Batch queries thay vì N+1
+    - Giảm từ ~50+ queries xuống ~10 queries
+    """
     query = request.GET.get('q', '')
     
-    #  NEW: Get site filter
+    # Get site filter
     site_filter, filter_type = get_site_filter_params(request)
     
     logger.info(f"contact_list - User: {request.user.username}, Site: {site_filter}, Type: {filter_type}")
     
-    #  NEW: Get filtered queryset
+    # 🚀 Get filtered queryset (with Redis caching)
     eligible_screening_contacts = get_filtered_queryset(SCR_CONTACT, site_filter, filter_type).filter(
         CONSENTTOSTUDY=True,
         LIVEIN5DAYS3MTHS=True,
@@ -376,17 +405,35 @@ def contact_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Add status info and process status
+    # 🚀 BATCH: Get all enrollments trong 1 query
+    enrollment_map = batch_get_related(
+        list(page_obj.object_list),
+        ENR_CONTACT,
+        'USUBJID',
+        site_filter,
+        filter_type
+    )
+    
+    # 🚀 BATCH: Check all CRFs existence
+    enrollments = [e for e in enrollment_map.values() if e is not None]
+    
+    if enrollments:
+        crf_status_map = batch_check_exists(
+            enrollments,
+            [ContactEndCaseCRF, SAM_CONTACT, FU_CONTACT_28, FU_CONTACT_90],
+            'USUBJID',
+            site_filter,
+            filter_type
+        )
+    else:
+        crf_status_map = {}
+    
+    # Process status (giờ chỉ là lookup, không query DB!)
     for contact in page_obj:
-        try:
-            #  Use site filtering for enrollment
-            enrollment = get_filtered_queryset(ENR_CONTACT, site_filter, filter_type).filter(USUBJID=contact).first()
-            contact.has_enrollment = enrollment is not None
-            contact.enrollment_date = enrollment.ENRDATE if enrollment else None
-        except:
-            contact.has_enrollment = False
-            enrollment = None
-            contact.enrollment_date = None
+        enrollment = enrollment_map.get(contact.pk)
+        
+        contact.has_enrollment = enrollment is not None
+        contact.enrollment_date = enrollment.ENRDATE if enrollment else None
         
         if not contact.has_enrollment:
             contact.process_status = 'not_enrolled'
@@ -394,36 +441,28 @@ def contact_list(request):
             contact.process_badge = 'secondary'
             continue
         
-        # Check EndCaseCRF for contact
-        try:
-            has_endcase = get_filtered_queryset(ContactEndCaseCRF, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-        except:
-            has_endcase = False
+        # Get CRF status từ batch results
+        crf_status = crf_status_map.get(enrollment.pk, {})
         
-        if has_endcase:
+        # Check EndCaseCRF
+        if crf_status.get('ContactEndCaseCRF', False):
             contact.process_status = 'completed'
             contact.process_label = 'Study Completed'
             contact.process_badge = 'success'
             continue
         
-        # Check other CRFs for contact
-        try:
-            has_sample = get_filtered_queryset(SAM_CONTACT, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_fu28 = get_filtered_queryset(FU_CONTACT_28, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_fu90 = get_filtered_queryset(FU_CONTACT_90, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            
-            all_completed = all([has_sample, has_fu28, has_fu90])
-            
-            if all_completed:
-                contact.process_status = 'completed'
-                contact.process_label = 'Study Completed'
-                contact.process_badge = 'success'
-            else:
-                contact.process_status = 'ongoing'
-                contact.process_label = 'Ongoing'
-                contact.process_badge = 'primary'
-        except Exception as e:
-            logger.error(f"Error checking status for contact {contact.USUBJID}: {e}")
+        # Check other CRFs
+        all_completed = all([
+            crf_status.get('SAM_CONTACT', False),
+            crf_status.get('FU_CONTACT_28', False),
+            crf_status.get('FU_CONTACT_90', False),
+        ])
+        
+        if all_completed:
+            contact.process_status = 'completed'
+            contact.process_label = 'Study Completed'
+            contact.process_badge = 'success'
+        else:
             contact.process_status = 'ongoing'
             contact.process_label = 'Ongoing'
             contact.process_badge = 'primary'

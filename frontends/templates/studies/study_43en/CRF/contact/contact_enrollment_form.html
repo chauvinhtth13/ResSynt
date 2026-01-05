@@ -29,7 +29,7 @@
 <style>
   /* Contact-specific purple theme overrides */
   .enr-case-header,
-  .card-header.bg-contact-gradient {
+  .card-header.bg-contact-gradient,
   .card-primary .card-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -410,6 +410,18 @@
           </ul>
         </div>
         {% endif %}
+
+
+        {% if personal_form.errors and not is_readonly %}
+        <div class="alert alert-danger">
+          <h5><i class="fas fa-exclamation-triangle"></i> {% trans "Personal Data Errors" %}</h5>
+          <ul class="mb-0">
+            {% for field, errors in personal_form.errors.items %}
+              <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
         
         {% if medhisdrug_formset.errors %}
         <div class="alert alert-warning">
@@ -487,17 +499,17 @@
             <div class="row mb-4">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="{{ form.FULLNAME.id_for_label }}" class="required">
+                  <label for="{{ personal_form.FULLNAME.id_for_label }}" class="required">
                     <i class="fas fa-user-friends mr-2"></i>{% trans "Contact Full Name" %}
                     <span class="text-danger">*</span>
                   </label>
                   <div class="input-group">
-                    {{ form.FULLNAME }}
+                    {{ personal_form.FULLNAME }}
                   </div>
-                  {% if form.FULLNAME.errors %}
+                  {% if personal_form.FULLNAME.errors %}
                     <small class="text-danger">
                       <i class="fas fa-exclamation-circle mr-1"></i>
-                      {{ form.FULLNAME.errors.0 }}
+                      {{ personal_form.FULLNAME.errors.0 }}
                     </small>
                   {% endif %}
                   <small class="form-text text-muted">
@@ -509,17 +521,17 @@
               
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="{{ form.PHONE.id_for_label }}" class="required">
+                  <label for="{{ personal_form.PHONE.id_for_label }}" class="required">
                     <i class="fas fa-phone mr-2"></i>{% trans "Contact Phone Number" %}
                     <span class="text-danger">*</span>
                   </label>
                   <div class="input-group">
-                    {{ form.PHONE }}
+                    {{ personal_form.PHONE }}
                   </div>
-                  {% if form.PHONE.errors %}
+                  {% if personal_form.PHONE.errors %}
                     <small class="text-danger">
                       <i class="fas fa-exclamation-circle mr-1"></i>
-                      {{ form.PHONE.errors.0 }}
+                      {{ personal_form.PHONE.errors.0 }}
                     </small>
                   {% endif %}
                   <small class="form-text text-muted">

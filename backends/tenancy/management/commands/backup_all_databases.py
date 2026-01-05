@@ -216,7 +216,7 @@ class Command(BaseCommand):
                     }
                 )
                 
-                self.stdout.write(self.style.SUCCESS(f'  ✅ SUCCESS: {final_path.name}\n'))
+                self.stdout.write(self.style.SUCCESS(f'  SUCCESS: {final_path.name}\n'))
                 
                 results['success'] += 1
                 results['details'].append({

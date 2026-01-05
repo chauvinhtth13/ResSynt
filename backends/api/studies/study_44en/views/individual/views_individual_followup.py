@@ -123,7 +123,7 @@ def individual_followup_create(request, subjectid):
                 
                 set_audit_metadata(followup, request.user)
                 followup.save()
-                logger.info(f"✅ Created follow-up {followup.FUID} for {subjectid}")
+                logger.info(f"Created follow-up {followup.FUID} for {subjectid}")
                 
                 # Save symptoms using helper
                 save_symptoms(request, followup)
@@ -135,10 +135,10 @@ def individual_followup_create(request, subjectid):
                 save_followup_medications(request, followup)
                 
                 logger.info("=" * 80)
-                logger.info("=== ✅ FOLLOW-UP CREATE SUCCESS ===")
+                logger.info("=== FOLLOW-UP CREATE SUCCESS ===")
                 logger.info("=" * 80)
                 
-                messages.success(request, f'✅ Follow-up visit created successfully')
+                messages.success(request, f'Follow-up visit created successfully')
                 return redirect('study_44en:individual:followup_list', subjectid=subjectid)
                 
         except Exception as e:
@@ -201,7 +201,7 @@ def individual_followup_update(request, subjectid, followup_id):
         FUID=followup_id,
         MEMBERID=individual
     )
-    logger.info(f"✅ Found follow-up {followup_id}")
+    logger.info(f"Found follow-up {followup_id}")
     
     # POST - Update follow-up
     if request.method == 'POST':
@@ -235,7 +235,7 @@ def individual_followup_update(request, subjectid, followup_id):
                 
                 set_audit_metadata(followup, request.user)
                 followup.save()
-                logger.info(f"✅ Updated follow-up {followup.FUID}")
+                logger.info(f"Updated follow-up {followup.FUID}")
                 
                 # Update symptoms using helper
                 save_symptoms(request, followup)
@@ -247,10 +247,10 @@ def individual_followup_update(request, subjectid, followup_id):
                 save_followup_medications(request, followup)
                 
                 logger.info("=" * 80)
-                logger.info("=== ✅ FOLLOW-UP UPDATE SUCCESS ===")
+                logger.info("=== FOLLOW-UP UPDATE SUCCESS ===")
                 logger.info("=" * 80)
                 
-                messages.success(request, f'✅ Follow-up visit updated successfully')
+                messages.success(request, f'Follow-up visit updated successfully')
                 return redirect('study_44en:individual:followup_list', subjectid=subjectid)
                 
         except Exception as e:
@@ -352,7 +352,7 @@ def individual_followup_detail(request, subjectid, followup_id):
 __all__ = [
     'individual_followup_list',
     'individual_followup_create',
-    'individual_followup_update',   # ✅ NEW: Split from detail
-    'individual_followup_view',      # ✅ NEW: Split from detail
+    'individual_followup_update',   # NEW: Split from detail
+    'individual_followup_view',      # NEW: Split from detail
     'individual_followup_detail',    # Deprecated alias
 ]

@@ -94,7 +94,7 @@ def save_samples(request, individual):
             sample.save()
             samples_created += 1
             
-            logger.info(f"✅ Saved sample {model_time}: collected={collected}, stool={stool_date or 'N/A'}, throat={throat_date or 'N/A'}")
+            logger.info(f"Saved sample {model_time}: collected={collected}, stool={stool_date or 'N/A'}, throat={throat_date or 'N/A'}")
     
     logger.info(f"📊 Total samples created: {samples_created}/4")
     return samples_created

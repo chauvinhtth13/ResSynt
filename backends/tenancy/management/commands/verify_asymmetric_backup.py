@@ -46,7 +46,7 @@ class Command(BaseCommand):
         is_symmetric = SymmetricBackupEncryption.is_encrypted(backup_path)
         
         if is_hybrid:
-            self.stdout.write(f'   Format: ✨ Hybrid Encrypted (RSA + AES)')
+            self.stdout.write(f'   Format:  Hybrid Encrypted (RSA + AES)')
             self._verify_hybrid(backup_path)
         elif is_symmetric:
             self.stdout.write(f'   Format: 🔒 Symmetric Encrypted (AES-256-GCM)')

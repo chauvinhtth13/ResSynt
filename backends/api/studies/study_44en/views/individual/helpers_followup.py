@@ -122,7 +122,7 @@ def save_symptoms(request, followup):
             set_audit_metadata(symptom, request.user)
             symptom.save()
             
-            logger.info(f"✅ Saved symptom: {symptom_choice}, OTHER='{other_text}'")
+            logger.info(f"Saved symptom: {symptom_choice}, OTHER='{other_text}'")
             count += 1
     
     logger.info(f"Saved {count} symptoms")
@@ -170,7 +170,7 @@ def save_followup_hospitalizations(request, followup):
             set_audit_metadata(hosp, request.user)
             hosp.save()
             
-            logger.info(f"✅ Saved followup hospitalization: {hosp_choice}, OTHER='{other_text}', DURATION={mapped_duration}")
+            logger.info(f"Saved followup hospitalization: {hosp_choice}, OTHER='{other_text}', DURATION={mapped_duration}")
             count += 1
     
     logger.info(f"Saved {count} followup hospitalizations")

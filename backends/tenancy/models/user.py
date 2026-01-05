@@ -42,7 +42,7 @@ class User(AbstractUser):
     last_study_accessed_at= models.DateTimeField(null=True, blank=True)    
     last_study_accessed_id= models.IntegerField(null=True, blank=True) 
     
-    # ✨ RSA PUBLIC KEY (for backup signature verification)
+    #  RSA PUBLIC KEY (for backup signature verification)
     public_key_pem = models.TextField(
         blank=True,
         null=True,

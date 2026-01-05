@@ -78,26 +78,26 @@ def individual_exposure_create(request, subjectid):
                     if shared_toilet:
                         exposure.SHARED_TOILET = shared_toilet
                     
-                    # ✅ FIX: Save water_treatment Yes/No
+                    # FIX: Save water_treatment Yes/No
                     water_treatment = request.POST.get('water_treatment', '').strip()
                     if water_treatment:
                         exposure.WATER_TREATMENT = water_treatment
                     
-                    # ✅ FIX: Save has_conditions Yes/No
+                    # FIX: Save has_conditions Yes/No
                     has_conditions = request.POST.get('has_conditions', '').strip()
                     if has_conditions:
                         exposure.HAS_COMORBIDITY = has_conditions
                     
                     set_audit_metadata(exposure, request.user)
                     exposure.save()
-                    logger.info(f"✅ Created exposure for {subjectid}")
+                    logger.info(f"Created exposure for {subjectid}")
                     
                     # Save related data using helper functions
                     save_water_sources(request, exposure)
                     save_water_treatment(request, exposure)
                     save_comorbidities(request, exposure)
                     
-                    messages.success(request, f'✅ Created exposure data for {subjectid}')
+                    messages.success(request, f'Created exposure data for {subjectid}')
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
@@ -119,7 +119,7 @@ def individual_exposure_create(request, subjectid):
         treatment_data = load_treatment_data(existing_exposure)
         comorbidity_data = load_comorbidity_data(existing_exposure)
         shared_toilet = existing_exposure.SHARED_TOILET
-        logger.info("✅ Loaded existing data for display")
+        logger.info("Loaded existing data for display")
     except Individual_Exposure.DoesNotExist:
         water_data = {}
         treatment_data = {}
@@ -177,26 +177,26 @@ def individual_exposure_update(request, subjectid):
                     if shared_toilet:
                         exposure.SHARED_TOILET = shared_toilet
                     
-                    # ✅ FIX: Save water_treatment Yes/No
+                    # FIX: Save water_treatment Yes/No
                     water_treatment = request.POST.get('water_treatment', '').strip()
                     if water_treatment:
                         exposure.WATER_TREATMENT = water_treatment
                     
-                    # ✅ FIX: Save has_conditions Yes/No
+                    # FIX: Save has_conditions Yes/No
                     has_conditions = request.POST.get('has_conditions', '').strip()
                     if has_conditions:
                         exposure.HAS_COMORBIDITY = has_conditions
                     
                     set_audit_metadata(exposure, request.user)
                     exposure.save()
-                    logger.info(f"✅ Updated exposure for {subjectid}")
+                    logger.info(f"Updated exposure for {subjectid}")
                     
                     # Update related data
                     save_water_sources(request, exposure)
                     save_water_treatment(request, exposure)
                     save_comorbidities(request, exposure)
                     
-                    messages.success(request, f'✅ Updated exposure data for {subjectid}')
+                    messages.success(request, f'Updated exposure data for {subjectid}')
                     return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
                     
             except Exception as e:
@@ -282,7 +282,7 @@ def individual_exposure_view(request, subjectid):
 def individual_exposure_2_create(request, subjectid):
     """CREATE exposure 2 (vaccination & hospitalization)"""
     logger.info("=" * 80)
-    logger.info("=== ✨ EXPOSURE 2 CREATE (VACCINATION & HOSPITALIZATION) ===")
+    logger.info("===  EXPOSURE 2 CREATE (VACCINATION & HOSPITALIZATION) ===")
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     
     queryset = get_filtered_individuals(request.user)
@@ -297,7 +297,7 @@ def individual_exposure_2_create(request, subjectid):
     if request.method == 'POST':
         logger.info("Processing POST - Creating exposure 2")
         
-        # ✅ Use separate form for EXP 2/3 only
+        # Use separate form for EXP 2/3 only
         exposure_form = Individual_Exposure2Form(request.POST)
         
         if exposure_form.is_valid():
@@ -323,14 +323,14 @@ def individual_exposure_2_create(request, subjectid):
                     
                     set_audit_metadata(exposure, request.user)
                     exposure.save()
-                    logger.info(f"✅ Created exposure for {subjectid}")
+                    logger.info(f"Created exposure for {subjectid}")
                     
                     # Save related data
                     save_vaccines(request, exposure)
                     save_hospitalizations(request, exposure)
                     save_medications(request, exposure)
                     
-                    messages.success(request, f'✅ Created exposure 2 data for {subjectid}')
+                    messages.success(request, f'Created exposure 2 data for {subjectid}')
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
@@ -349,7 +349,7 @@ def individual_exposure_2_create(request, subjectid):
         vaccine_data = load_vaccines(existing_exposure)
         hospitalization_data = load_hospitalizations(existing_exposure)
         medication_data = load_medications(existing_exposure)
-        logger.info("✅ Loaded existing data for display")
+        logger.info("Loaded existing data for display")
     except Individual_Exposure.DoesNotExist:
         vaccine_data = {}
         hospitalization_data = {}
@@ -364,7 +364,7 @@ def individual_exposure_2_create(request, subjectid):
         'medication_data': medication_data,
     }
     
-    logger.info("=== ✨ EXPOSURE 2 CREATE END ===")
+    logger.info("===  EXPOSURE 2 CREATE END ===")
     return render(request, 'studies/study_44en/CRF/individual/exposure_form_2.html', context)
 
 
@@ -389,13 +389,13 @@ def individual_exposure_2_update(request, subjectid):
     if request.method == 'POST':
         logger.info("Processing POST - Updating exposure 2")
         
-        # ✅ Use separate form for EXP 2/3 only - won't touch EXP 1/3 fields
+        # Use separate form for EXP 2/3 only - won't touch EXP 1/3 fields
         exposure_form = Individual_Exposure2Form(request.POST, instance=exposure)
         
         if exposure_form.is_valid():
             try:
                 with transaction.atomic():
-                    # ✅ Only update EXP 2/3 specific fields, preserve EXP 1/3 fields
+                    # Only update EXP 2/3 specific fields, preserve EXP 1/3 fields
                     
                     # Save vaccination_history
                     vaccination_history = request.POST.get('vaccination_history', '').strip()
@@ -415,14 +415,14 @@ def individual_exposure_2_update(request, subjectid):
                     set_audit_metadata(exposure, request.user)
                     exposure.save(update_fields=['VACCINATION_STATUS', 'HOSPITALIZED_3M', 'MEDICATION_3M', 
                                                 'last_modified_by_id', 'last_modified_by_username'])
-                    logger.info(f"✅ Updated exposure for {subjectid}")
+                    logger.info(f"Updated exposure for {subjectid}")
                     
                     # Update related data
                     save_vaccines(request, exposure)
                     save_hospitalizations(request, exposure)
                     save_medications(request, exposure)
                     
-                    messages.success(request, f'✅ Updated exposure 2 data for {subjectid}')
+                    messages.success(request, f'Updated exposure 2 data for {subjectid}')
                     return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
                     
             except Exception as e:
@@ -525,11 +525,11 @@ def individual_exposure_3_create(request, subjectid):
                 save_travel_history(request, individual)
                 
                 logger.info("=" * 80)
-                logger.info("=== ✅ EXPOSURE 3 CREATE SUCCESS ===")
-                logger.info("✅ Saved food frequency and travel history")
+                logger.info("=== EXPOSURE 3 CREATE SUCCESS ===")
+                logger.info("Saved food frequency and travel history")
                 logger.info("=" * 80)
                 
-                messages.success(request, f"✅ Created exposure 3 data for {subjectid}")
+                messages.success(request, f"Created exposure 3 data for {subjectid}")
                 return redirect('study_44en:individual:detail', subjectid=subjectid)
                 
         except Exception as e:
@@ -548,8 +548,8 @@ def individual_exposure_3_create(request, subjectid):
         'individual': individual,
         'is_create': True,
         'is_readonly': False,
-        'food_data': food_data,  # ✅ CRITICAL: Pass data to template
-        'travel_data': travel_data,  # ✅ CRITICAL: Pass data to template
+        'food_data': food_data,  # CRITICAL: Pass data to template
+        'travel_data': travel_data,  # CRITICAL: Pass data to template
     }
     
     logger.info("=== 🍽️ EXPOSURE 3 CREATE END ===")
@@ -578,11 +578,11 @@ def individual_exposure_3_update(request, subjectid):
                 save_travel_history(request, individual)
                 
                 logger.info("=" * 80)
-                logger.info("=== ✅ EXPOSURE 3 UPDATE SUCCESS ===")
-                logger.info("✅ Updated food frequency and travel history")
+                logger.info("=== EXPOSURE 3 UPDATE SUCCESS ===")
+                logger.info("Updated food frequency and travel history")
                 logger.info("=" * 80)
                 
-                messages.success(request, f"✅ Updated exposure 3 data for {subjectid}")
+                messages.success(request, f"Updated exposure 3 data for {subjectid}")
                 return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
                 
         except Exception as e:

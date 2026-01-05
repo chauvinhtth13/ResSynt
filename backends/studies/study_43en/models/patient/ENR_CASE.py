@@ -1,55 +1,32 @@
+# backends/studies/study_43en/models/patient/enr_case_updated.py
+"""
+UPDATED ENR_CASE Model - After PII Migration
+
+Changes:
+- Removed: FULLNAME, PHONE, MEDRECORDID
+- Removed: All address fields (STREET_NEW, WARD_NEW, etc.)
+- Removed: PRIMARY_ADDRESS
+- Added: property access to personal_data relationship
+"""
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.functional import cached_property
-from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 from backends.studies.study_43en.models.base_models import AuditFieldsMixin
-from datetime import date, datetime
+from backends.studies.study_43en.models.patient.PER_DATA import PERSONAL_DATA
+from datetime import date
 from dateutil.relativedelta import relativedelta
-from encrypted_model_fields.fields import EncryptedCharField
 
-
-from django.core.validators import BaseValidator
-
-class ValidDateValidator(BaseValidator):
-    message = _('Day, Month, and Year must form a valid date')
-    code = 'invalid_date'
-    
-    def compare(self, a, b):
-        # a = (day, month, year), b = None
-        day, month, year = a
-        try:
-            date(year, month, day)
-            return False  # Valid date
-        except ValueError:
-            return True  # Invalid date
 
 class ENR_CASE(AuditFieldsMixin):
     """
-    Patient enrollment information with optimized queries and validation
+    Patient enrollment information (NON-PII fields only)
     
-    Performance optimizations:
-    - Cached properties for computed fields
-    - Database constraints for data integrity
-    - Optimized indexes for common queries
+    PII fields moved to PERSONAL_DATA model for better security
+    Access via: enrollment_case.personal_data.FULLNAME, etc.
     """
-
-    FULLNAME = EncryptedCharField(
-        max_length=200,
-        null=True,
-        blank=True,
-        verbose_name=_('Full Name'),
-        help_text=_('Patient full name (confidential)')
-    )
-
-    PHONE = EncryptedCharField(
-        max_length=20,
-        null=True,
-        blank=True,
-        verbose_name=_('Phone Number'),
-        help_text=_('Phone number')
-    )
     
     # ==========================================
     # CHOICES DEFINITIONS
@@ -74,11 +51,6 @@ class ENR_CASE(AuditFieldsMixin):
         UNKNOWN = 'unknown', _('Unknown')
     
     # ==========================================
-    # MANAGERS
-    # ==========================================
-        
-    
-    # ==========================================
     # PRIMARY KEY
     # ==========================================
     USUBJID = models.OneToOneField(
@@ -88,7 +60,7 @@ class ENR_CASE(AuditFieldsMixin):
         to_field='USUBJID',
         db_column='USUBJID',
         verbose_name=_('Patient ID'),
-        related_name='enrollment_case'  # Better naming
+        related_name='enrollment_case'
     )
     
     # ==========================================
@@ -106,12 +78,12 @@ class ENR_CASE(AuditFieldsMixin):
         max_length=50,
         null=True,
         blank=True,
-        db_index=True,  # Added index for department filtering
+        db_index=True,
         verbose_name=_('Recruitment Department')
     )
     
     # ==========================================
-    # BIRTH INFORMATION - WITH VALIDATION
+    # BIRTH INFORMATION
     # ==========================================
     DAYOFBIRTH = models.IntegerField(
         null=True,
@@ -130,7 +102,7 @@ class ENR_CASE(AuditFieldsMixin):
     YEAROFBIRTH = models.IntegerField(
         null=True,
         blank=True,
-        validators=[MinValueValidator(1900)],  # Reasonable minimum
+        validators=[MinValueValidator(1900)],
         verbose_name=_('Year of Birth')
     )
     
@@ -150,7 +122,7 @@ class ENR_CASE(AuditFieldsMixin):
         choices=SexChoices.choices,
         null=True,
         blank=True,
-        db_index=True,  # For demographic reporting
+        db_index=True,
         verbose_name=_('Sex')
     )
     
@@ -158,19 +130,9 @@ class ENR_CASE(AuditFieldsMixin):
         max_length=50,
         null=True,
         blank=True,
-        db_index=True,  # For demographic reporting
+        db_index=True,
         verbose_name=_('Ethnicity')
     )
-
-
-    MEDRECORDID = EncryptedCharField(
-        max_length=50, 
-        null=True, 
-        blank=True,
-        verbose_name=_('Medical Record Number')
-    )
-
-
     
     OCCUPATION = models.CharField(
         max_length=100,
@@ -184,7 +146,7 @@ class ENR_CASE(AuditFieldsMixin):
     # ==========================================
     FROMOTHERHOSPITAL = models.BooleanField(
         default=False,
-        db_index=True,  # For transfer tracking
+        db_index=True,
         verbose_name=_('Transferred from another healthcare facility (HCF)?')
     )
     
@@ -205,85 +167,6 @@ class ENR_CASE(AuditFieldsMixin):
         null=True,
         blank=True,
         verbose_name=_('Reason for admission at previous HCF')
-    )
-    
-    # ==========================================
-    # ADDRESS INFORMATION - DUAL SYSTEM
-    # ==========================================
-    
-    # NEW ADDRESS FIELDS (After administrative reform)
-    STREET_NEW = models.CharField(
-        max_length=200,
-        null=True,
-        blank=True,
-        verbose_name=_('Street/Road (New Administrative Division)'),
-        help_text=_('Street name under new administrative structure')
-    )
-    
-    WARD_NEW = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        verbose_name=_('Ward/Commune (New Administrative Division)'),
-        help_text=_('Ward/commune under new administrative structure')
-    )
-
-    
-    CITY_NEW = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        db_index=True,
-        verbose_name=_('City/Province (New Administrative Division)'),
-        help_text=_('City/province under new administrative structure')
-    )
-    
-    # OLD ADDRESS FIELDS (Before reform)
-    STREET = models.CharField(
-        max_length=200,
-        null=True,
-        blank=True,
-        verbose_name=_('Street/Road (Old Administrative Division)'),
-        help_text=_('Street name under old administrative structure')
-    )
-
-    WARD = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        verbose_name=_('Ward/Commune (Old Administrative Division)'),
-        help_text=_('Ward/commune under old administrative structure')
-    )
-    
-    DISTRICT = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        db_index=True,
-        verbose_name=_('District/County (Old Administrative Division)'),
-        help_text=_('District under old administrative structure')
-    )
-    
-    PROVINCECITY = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        db_index=True,
-        verbose_name=_('Province/City (Old Administrative Division)'),
-        help_text=_('Province/city under old administrative structure')
-    )
-    
-    # Primary address indicator
-    PRIMARY_ADDRESS = models.CharField(
-        max_length=10,
-        choices=[
-            ('new', _('New Address')),
-            ('old', _('Old Address')),
-            ('both', _('Both Addresses'))
-        ],
-        default='new',
-        verbose_name=_('Primary Address System'),
-        help_text=_('Which address system to use as primary')
     )
     
     # ==========================================
@@ -309,7 +192,7 @@ class ENR_CASE(AuditFieldsMixin):
         choices=ResidenceTypeChoices.choices,
         null=True,
         blank=True,
-        db_index=True,  # For epidemiological analysis
+        db_index=True,
         verbose_name=_('Residential area type')
     )
     
@@ -322,7 +205,7 @@ class ENR_CASE(AuditFieldsMixin):
     )
     
     # ==========================================
-    # RISK FACTORS - WITH BETTER NAMING
+    # RISK FACTORS
     # ==========================================
     HOSP2D6M = models.CharField(
         max_length=10,
@@ -385,10 +268,10 @@ class ENR_CASE(AuditFieldsMixin):
     # ==========================================
     UNDERLYINGCONDS = models.BooleanField(
         default=False,
-        db_index=True,  # For risk stratification queries
+        db_index=True,
         verbose_name=_('Has Underlying Conditions')
     )
-        
+    
     # ==========================================
     # META OPTIONS
     # ==========================================
@@ -400,47 +283,77 @@ class ENR_CASE(AuditFieldsMixin):
         indexes = [
             models.Index(fields=['ENRDATE'], name='idx_enr_date'),
             models.Index(fields=['last_modified_by_id', '-last_modified_at'], name='idx_enr_modified'),
-            models.Index(fields=['SEX', 'ENRDATE'], name='idx_enr_sex_date'),  # Composite for reports
-            models.Index(fields=['PROVINCECITY', 'DISTRICT'], name='idx_enr_location'),  # Geographic queries
-            models.Index(fields=['UNDERLYINGCONDS', 'ENRDATE'], name='idx_enr_conds_date'),  # Risk analysis
-        ]
-        constraints = [
-            # Ensure either DOB or age is provided
-            models.CheckConstraint(
-                condition=models.Q(
-                    DAYOFBIRTH__lte=31,
-                    MONTHOFBIRTH__lte=12,
-                    YEAROFBIRTH__gte=1900
-                ) | models.Q(DAYOFBIRTH__isnull=True),
-                name='enr_valid_date_components'
-            ),
-            # Ensure prior hospital date is provided if transferred
-            models.CheckConstraint(
-                condition=(
-                    ~models.Q(FROMOTHERHOSPITAL=True) |
-                    models.Q(PRIORHOSPIADMISDATE__isnull=False)
-                ),
-                name='enr_prior_date_if_transferred'
-            ),
+            models.Index(fields=['SEX', 'ENRDATE'], name='idx_enr_sex_date'),
+            models.Index(fields=['UNDERLYINGCONDS', 'ENRDATE'], name='idx_enr_conds_date'),
         ]
     
     def __str__(self):
         return f"{self.USUBJID.USUBJID}"
     
+    # ==========================================
+    # ✨ NEW: PII ACCESS PROPERTIES
+    # ==========================================
+    
+    @property
+    def FULLNAME(self):
+        """Access full name from personal_data (backward compatibility)"""
+        try:
+            return self.personal_data.FULLNAME
+        except:
+            return None
+    
+    @property
+    def PHONE(self):
+        """Access phone from personal_data (backward compatibility)"""
+        try:
+            return self.personal_data.PHONE
+        except:
+            return None
+    
+    @property
+    def MEDRECORDID(self):
+        """Access medical record ID from personal_data (backward compatibility)"""
+        try:
+            return self.personal_data.MEDRECORDID
+        except:
+            return None
+    
+    @property
+    def geographic_location(self):
+        """Get formatted geographic location from personal_data"""
+        try:
+            return self.personal_data.geographic_location
+        except:
+            return None
+    
+    @property
+    def full_address_new(self):
+        """Get new full address from personal_data"""
+        try:
+            return self.personal_data.full_address_new
+        except:
+            return None
+    
+    @property
+    def full_address_old(self):
+        """Get old full address from personal_data"""
+        try:
+            return self.personal_data.full_address_old
+        except:
+            return None
+    
+    # ==========================================
+    # EXISTING PROPERTIES
+    # ==========================================
+    
     @cached_property
     def SITEID(self):
-        """
-        Get SITEID from related SCR_CASE (cached)
-        Performance: Reduces repeated DB queries
-        """
+        """Get SITEID from related SCR_CASE (cached)"""
         return self.USUBJID.SITEID if self.USUBJID else None
     
     @cached_property
     def calculated_age(self):
-        """
-        Calculate age from DOB or return provided age
-        Returns: (age: float, is_calculated: bool)
-        """
+        """Calculate age from DOB or return provided age"""
         if all([self.DAYOFBIRTH, self.MONTHOFBIRTH, self.YEAROFBIRTH]):
             try:
                 birth_date = date(self.YEAROFBIRTH, self.MONTHOFBIRTH, self.DAYOFBIRTH)
@@ -448,7 +361,6 @@ class ENR_CASE(AuditFieldsMixin):
                 age = relativedelta(reference_date, birth_date)
                 return (age.years + age.months/12 + age.days/365, True)
             except ValueError:
-                # Invalid date combination
                 return (self.AGEIFDOBUNKNOWN, False) if self.AGEIFDOBUNKNOWN else (None, False)
         return (self.AGEIFDOBUNKNOWN, False) if self.AGEIFDOBUNKNOWN else (None, False)
     
@@ -463,34 +375,8 @@ class ENR_CASE(AuditFieldsMixin):
         """Check if full DOB is available"""
         return all([self.DAYOFBIRTH, self.MONTHOFBIRTH, self.YEAROFBIRTH])
     
-    @property
-    def geographic_location(self):
-        """Get formatted geographic location based on primary address"""
-        if self.PRIMARY_ADDRESS == 'new' or self.PRIMARY_ADDRESS == 'both':
-            if any([self.STREET_NEW, self.WARD_NEW, self.DISTRICT_NEW, self.CITY_NEW]):
-                parts = [self.STREET_NEW, self.WARD_NEW, self.DISTRICT_NEW, self.CITY_NEW]
-                return ', '.join(filter(None, parts))
-        
-        # Fallback to old address
-        parts = [self.STREET, self.WARD, self.DISTRICT, self.PROVINCECITY]
-        return ', '.join(filter(None, parts)) or None
-    
-    @property
-    def full_address_new(self):
-        """Get new full address"""
-        parts = [self.STREET_NEW, self.WARD_NEW, self.CITY_NEW]
-        result = ', '.join(filter(None, parts))
-        return result if result else None
-    
-    @property
-    def full_address_old(self):
-        """Get old full address"""
-        parts = [self.STREET, self.WARD, self.DISTRICT, self.PROVINCECITY]
-        result = ', '.join(filter(None, parts))
-        return result if result else None
-    
     def clean(self):
-        """Enhanced validation with better error messages"""
+        """Enhanced validation"""
         errors = {}
         
         # Validate birth date if all components provided
@@ -498,19 +384,17 @@ class ENR_CASE(AuditFieldsMixin):
             try:
                 birth_date = date(self.YEAROFBIRTH, self.MONTHOFBIRTH, self.DAYOFBIRTH)
                 
-                # Check if birth date is in the future
                 if birth_date > date.today():
                     errors['YEAROFBIRTH'] = _('Date of birth cannot be in the future')
                 
-                # Check if age is reasonable for enrollment
                 if self.ENRDATE:
                     age = relativedelta(self.ENRDATE, birth_date).years
-                    if age < 16:  # Based on UPPER16AGE screening criteria
+                    if age < 16:
                         errors['YEAROFBIRTH'] = _('Patient must be at least 16 years old at enrollment')
                     elif age > 150:
                         errors['YEAROFBIRTH'] = _('Age calculation results in unrealistic age (>150 years)')
                         
-            except ValueError as e:
+            except ValueError:
                 errors['DAYOFBIRTH'] = _('Invalid date combination: Day, Month, and Year do not form a valid date')
         
         # Validate that either DOB or age is provided
@@ -546,7 +430,7 @@ class ENR_CASE(AuditFieldsMixin):
         if hasattr(self, '_SITEID'):
             del self._SITEID
         
-        # Auto-set UNDERLYINGCONDS flag if UnderlyingCondition exists
+        # Auto-set UNDERLYINGCONDS flag
         if self.pk:
             try:
                 underlying = self.Underlying_Condition
