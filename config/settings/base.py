@@ -215,6 +215,8 @@ AXES_IPWARE_META_PRECEDENCE_ORDER = [
     "X_FORWARDED_FOR",
     "REMOTE_ADDR",
 ]
+AXES_NEVER_LOCKOUT_WHITELIST = True
+AXES_IP_WHITELIST = ["127.0.0.1", "::1"]
 
 # =============================================================================
 # TEMPLATES

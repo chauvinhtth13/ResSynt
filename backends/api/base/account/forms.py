@@ -112,8 +112,11 @@ class AxesLoginForm(LoginForm):
                     _("The username and/or password you specified are not correct."),
                     code='invalid_login'
                 )
+        except forms.ValidationError:
+            # Re-raise validation errors (superuser block)
+            raise
         except Exception as e:
-            # Don't break login if check fails
+            # Don't break login if check fails (database errors, etc.)
             logger.debug(f"Superuser check failed: {e}")
     
     def user_credentials(self) -> Dict[str, Any]:

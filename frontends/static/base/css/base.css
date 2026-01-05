@@ -108,6 +108,10 @@ html {
     box-sizing: border-box;
 }
 
+.font-chakra-petch {
+    font-family: "Chakra Petch";
+}
+
 /* ==========================================================================
    3. GLASS MORPHISM COMPONENTS
    ========================================================================== */
@@ -385,4 +389,86 @@ html {
     background: var(--gradient-glass);
     -webkit-backdrop-filter: blur(var(--blur-glass));
     backdrop-filter: blur(var(--blur-glass));
+}
+
+.bg-navy-blue-900 {
+    background-color: var(--color-midnight-navy-900) !important;
+}
+
+.brand-label {
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--gradient-metallic);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 1px transparent;
+    filter: drop-shadow(var(--shadow-text));
+}
+
+.btn-nav-action {
+    height: 42px; /* Chiều cao cố định cho mọi nút -> ĐỒNG NHẤT */
+    color: var(--color-titanium-silver);
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none; /* Xóa gạch chân nếu là thẻ a */
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Hiệu ứng Hover chung */
+.btn-nav-action:hover {
+    color: rgba(var(--rgb-accent-cyan), 1);
+    background-color: var(--rgb-accent-cyan);
+}
+
+/* Xóa outline xanh mặc định của Bootstrap khi click */
+.btn-nav-action:focus {
+    box-shadow: none; 
+    border: none; 
+    outline: none;
+}
+
+/* --- ELEMENTS RIÊNG BIỆT --- */
+
+/* Vạch ngăn cách (Divider) */
+.nav-divider {
+    width: 1px;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin: 0 4px; /* Khoảng cách an toàn */
+}
+
+ /* Chấm đỏ thông báo */
+.notif-wrapper { position: relative; }
+.notif-badge {
+    position: absolute;
+    top: 0px; right: 0px;
+    width: 8px; height: 8px;
+    background-color: #ff5f57;
+    border-radius: 50%;
+    border: 1px solid var(--color-midnight-navy-900); /* Viền tiệp màu nền */
+}
+
+/* User Icon Circle (Tối ưu hóa) */
+.user-icon-box {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: 0.2s;
+}
+
+/* Khi hover vào nút cha, icon con cũng đổi màu */
+.btn-nav-action:hover .user-icon-box {
+    border-color: rgba(var(--rgb-accent-cyan), 1);
+    color: rgba(var(--rgb-accent-cyan), 1);
 }

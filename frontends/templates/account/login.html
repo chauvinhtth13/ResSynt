@@ -55,8 +55,6 @@
         <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
         {% elif message.tags == 'error' %}
         <i class="bi bi-x-circle-fill me-2" aria-hidden="true"></i>
-        {% else %}
-        <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>
         {% endif %}
         <small>{{ message }}</small>
     </div>
@@ -67,13 +65,6 @@
     <form method="POST" action="{% url 'account_login' %}" id="loginForm" class="auth-form">
         {% csrf_token %}
         
-        <!-- Honeypot field (hidden from users, traps bots) -->
-        {% if form.website %}
-        <div style="position:absolute;left:-9999px;" aria-hidden="true">
-            {{ form.website }}
-        </div>
-        {% endif %}
-
         <fieldset>
             <!-- Username/Email Input -->
             <div class="mb-4">
@@ -81,11 +72,11 @@
                     {% trans "Username or Email" %}
                 </label>
                 <div class="input-icon-wrapper">
-                    <i class="bi bi-person input-icon" aria-hidden="true"></i>
                     <input type="text" id="{{ form.login.id_for_label }}" name="{{ form.login.html_name }}"
                         value="{{ form.login.value|default:'' }}" class="form-control form-control--with-icon"
                         placeholder="{% trans 'Enter username or email' %}" autocomplete="username" autocapitalize="none"
                         spellcheck="false" required autofocus aria-required="true">
+                    <i class="bi bi-person input-icon" aria-hidden="true"></i>
                 </div>
             </div>
 
@@ -107,10 +98,10 @@
                     <i class="bi bi-lock input-icon" aria-hidden="true"></i>
                     <button type="button"
                             class="password-toggle-btn" 
-                            onclick="togglePassword()"
+                            onclick="togglePassword(this)"
                             aria-label="{% trans 'Toggle password visibility' %}"
                             aria-pressed="false">
-                        <i class="fa-regular fa-eye-slash" id="toggleIcon" aria-hidden="true"></i>
+                        <i class="fa-regular fa-eye-slash" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -145,60 +136,4 @@
         </p>
     </div>
 </div>
-
-<script nonce="{{ request.csp_nonce }}">
-    function togglePassword() {
-        const passwordInput = document.getElementById('passwordInput');
-        const toggleIcon = document.getElementById('toggleIcon');
-        const toggleBtn = document.querySelector('.password-toggle-btn');
-
-        const isPassword = passwordInput.type === 'password';
-
-        passwordInput.type = isPassword ? 'text' : 'password';
-        toggleIcon.classList.toggle('fa-eye-slash', !isPassword);
-        toggleIcon.classList.toggle('fa-eye', isPassword);
-        toggleBtn.setAttribute('aria-pressed', isPassword);
-    }
-
-    // Keyboard support for password toggle
-    document.querySelector('.password-toggle-btn')?.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            togglePassword();
-        }
-    });
-
-    // Form Submit Loading State
-    document.getElementById('loginForm')?.addEventListener('submit', function (e) {
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = submitBtn.querySelector('.btn-text');
-        const btnLoading = submitBtn.querySelector('.btn-loading');
-
-        // Basic client-side validation
-        if (!this.checkValidity()) {
-            e.preventDefault();
-            return;
-        }
-
-        // Show loading state
-        submitBtn.disabled = true;
-        btnText?.classList.add('d-none');
-        btnLoading?.classList.remove('d-none');
-    });
-
-    // Re-enable button if user navigates back
-    window.addEventListener('pageshow', function (event) {
-        if (event.persisted) {
-            const submitBtn = document.getElementById('submitBtn');
-            const btnText = submitBtn?.querySelector('.btn-text');
-            const btnLoading = submitBtn?.querySelector('.btn-loading');
-
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                btnText?.classList.remove('d-none');
-                btnLoading?.classList.add('d-none');
-            }
-        }
-    });
-</script>
 {% endblock %}

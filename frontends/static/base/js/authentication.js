@@ -1,95 +1,102 @@
-// frontends\static\base\js\authentication.js
-(() => {
-  class PasswordToggleHandler {
-    constructor() {
-      this.initializeToggles();
-    }
+/**
+ * Authentication Module - ResSync Platform
+ * Handles password visibility toggle, form submission states, and auto-dismiss alerts
+ */
 
-    initializeToggles() {
-      // Tìm TẤT CẢ các container chứa password input
-      const passwordContainers = document.querySelectorAll('.password-input-container');
-      
-      passwordContainers.forEach((container, index) => {
-        const passwordInput = container.querySelector('input[type="password"], input[type="text"]');
-        const toggleButton = container.querySelector('.password-toggle-icon');
-        const toggleIcon = toggleButton?.querySelector('i');
-        
-        if (!passwordInput || !toggleButton || !toggleIcon) {
-          console.warn(`[PasswordToggle] Missing elements in container ${index}:`, {
-            passwordInput: !!passwordInput,
-            toggleButton: !!toggleButton,
-            toggleIcon: !!toggleIcon
-          });
-          return;
-        }
+(function () {
+    'use strict';
 
-        // Gán unique ID nếu chưa có
-        if (!passwordInput.id) {
-          passwordInput.id = `password-field-${index}`;
-        }
-        
-        // Setup ARIA attributes
-        toggleButton.setAttribute('aria-controls', passwordInput.id);
-        toggleButton.setAttribute('aria-label', 'Toggle password visibility');
-        
-        // Bind sự kiện click cho từng button
-        this.bindToggleEvent(toggleButton, passwordInput, toggleIcon);
-      });
-    }
+    // =============================================
+    // Password Toggle
+    // =============================================
 
-    bindToggleEvent(button, input, icon) {
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation(); // Ngăn event bubbling
-        
-        const currentType = input.getAttribute('type');
-        const newType = currentType === 'password' ? 'text' : 'password';
-        
-        // Toggle input type
-        input.setAttribute('type', newType);
-        
-        // Toggle icon với animation
-        this.toggleIcon(icon, newType === 'password');
-        
-        // Update ARIA
-        button.setAttribute('aria-pressed', newType === 'text');
-        
-        // Focus lại input để user tiếp tục nhập
+    window.togglePassword = function (button) {
+        const wrapper = button.closest('.input-icon-wrapper');
+        if (!wrapper) return;
+
+        const input = wrapper.querySelector('input[type="password"], input[type="text"]');
+        const icon = button.querySelector('i');
+        if (!input || !icon) return;
+
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        icon.classList.toggle('fa-eye-slash', !isPassword);
+        icon.classList.toggle('fa-eye', isPassword);
+        button.setAttribute('aria-pressed', String(isPassword));
         input.focus();
-        
-        // Giữ cursor position
-        const cursorPosition = input.selectionStart;
-        setTimeout(() => {
-          input.setSelectionRange(cursorPosition, cursorPosition);
-        }, 0);
-      });
+    };
+
+    // =============================================
+    // Form Submit Handler
+    // =============================================
+
+    function initFormSubmit() {
+        document.querySelectorAll('.auth-card form').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                const btn = form.querySelector('button[type="submit"]');
+                if (!btn || !form.checkValidity()) {
+                    if (!form.checkValidity()) e.preventDefault();
+                    return;
+                }
+
+                btn.disabled = true;
+                const text = btn.querySelector('.btn-text');
+                const loading = btn.querySelector('.btn-loading');
+                if (text) text.classList.add('d-none');
+                if (loading) loading.classList.remove('d-none');
+            });
+        });
     }
 
-    toggleIcon(icon, showEyeSlash) {
-      // Thêm animation khi chuyển icon
-      icon.style.transition = 'transform 0.2s ease';
-      icon.style.transform = 'scale(0.8)';
-      
-      setTimeout(() => {
-        if (showEyeSlash) {
-          icon.classList.remove('bi-eye');
-          icon.classList.add('bi-eye-slash');
-        } else {
-          icon.classList.remove('bi-eye-slash');
-          icon.classList.add('bi-eye');
-        }
-        icon.style.transform = 'scale(1)';
-      }, 100);
-    }
-  }
+    // =============================================
+    // Auto-Dismiss Alerts (30s)
+    // =============================================
 
-  // Khởi tạo khi DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      new PasswordToggleHandler();
+    function initAlertAutoDismiss() {
+        document.querySelectorAll('.auth-card .alert').forEach(function (alert) {
+            // Skip lockout alerts (critical - must stay visible)
+            if (alert.querySelector('.bi-shield-lock-fill')) return;
+
+            setTimeout(function () {
+                alert.style.transition = 'opacity 0.3s ease-out';
+                alert.style.opacity = '0';
+                setTimeout(function () {
+                    alert.remove();
+                }, 100);
+            }, 10000);
+        });
+    }
+
+    // =============================================
+    // Initialize
+    // =============================================
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Password toggle keyboard support
+        document.querySelectorAll('.password-toggle-btn').forEach(function (btn) {
+            btn.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    window.togglePassword(this);
+                }
+            });
+        });
+
+        initFormSubmit();
+        initAlertAutoDismiss();
     });
-  } else {
-    // DOM đã load xong
-    new PasswordToggleHandler();
-  }
+
+    // Reset buttons on back navigation (bfcache)
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+            document.querySelectorAll('.auth-card button[type="submit"]').forEach(function (btn) {
+                btn.disabled = false;
+                var text = btn.querySelector('.btn-text');
+                var loading = btn.querySelector('.btn-loading');
+                if (text) text.classList.remove('d-none');
+                if (loading) loading.classList.add('d-none');
+            });
+        }
+    });
+
 })();

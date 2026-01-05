@@ -1,8 +1,9 @@
 <!-- frontends/templates/components/header.html -->
 {% load static i18n %}
 
-<nav class="navbar navbar-expand bg-white border-bottom shadow-sm {{ position|default:'sticky-top' }}" 
-     {% if position == 'fixed-top' %}style="z-index: 1030;"{% endif %}>
+<nav class="navbar navbar-expand bg-navy-blue-900 shadow-lg sticky-top fixed-top py-3 px-4" 
+     role="navigation"
+     aria-label="Main navigation">
   <div class="container-fluid">
     
     <!-- Left Section -->
@@ -14,12 +15,14 @@
       {% endif %}
       
       {% if show_logo %}
-        <a href="{% url 'home' %}" class="navbar-brand m-0">
-          <img src="{% static 'base/images/logo.png' %}" 
-               alt="ResSync Logo" 
-               height="30"
-               class="d-block">
-        </a>
+      <div class="d-inline-flex align-items-center text-decoration-none">
+        <img src="{% static 'base/images/logo.png' %}" 
+              alt="ResSync Logo" 
+              height="35">
+        <h4 class="h4 m-0 ms-2 font-chakra-petch brand-label fw-bold">
+              RESSYNT
+        </h4>
+      </div>
       {% endif %}
     </div>
 
@@ -52,12 +55,12 @@
     <div class="d-flex align-items-center">
       {% if show_notifications %}
         {% include 'components/notification_menu.html' %}
-        <div class="vr mx-2"></div>
+        <div class="nav-divider"></div>
       {% endif %}
       
       {% if show_language_selector|default:True %}
         {% include 'components/lang_selector_basic.html' %}
-        <div class="vr mx-2"></div>
+        <div class="nav-divider"></div>
       {% endif %}
       
       {% if show_user_menu|default:True %}

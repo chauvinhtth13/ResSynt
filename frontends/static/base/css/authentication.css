@@ -22,10 +22,6 @@
    2. BASE TYPOGRAPHY & BRANDING
    ========================================================================== */
 
-.font-chakra-petch {
-    font-family: var(--font-primary);
-}
-
 /* ---------- Logo ---------- */
 .logo {
     width: auto;
@@ -155,6 +151,12 @@
     font-weight: 600;
     font-family: var(--font-primary);
     color: rgba(255, 255, 255, 0.9);
+}
+
+.form-text {
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: var(--font-primary);
 }
 
 .form-control {
