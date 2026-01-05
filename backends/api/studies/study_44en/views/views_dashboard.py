@@ -12,9 +12,17 @@ from datetime import datetime, timedelta
 from backends.studies.study_44en.models.household import HH_CASE, HH_Member
 from backends.studies.study_44en.models.individual import Individual, Individual_FollowUp
 from .views_base import get_filtered_households, get_filtered_individuals
+from backends.studies.study_44en.utils.permission_decorators import (
+    require_crf_view,
+    require_crf_add,
+    require_crf_change,
+    require_crf_delete,
+)
+
 
 
 @login_required
+@require_crf_view('dashboard')
 def dashboard_44en(request):
     """
     Main dashboard for Study 44EN

@@ -19,7 +19,6 @@ from .patient import *
 from .contact import *
 
 # Import standalone models
-from .audit_log import *
 from .schedule import *
 
 

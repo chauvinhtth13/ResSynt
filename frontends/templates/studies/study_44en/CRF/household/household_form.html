@@ -484,6 +484,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Show change reason modal if changes detected
+    {% if show_reason_form and detected_changes %}
+    console.log('🔔 Changes detected, showing reason modal');
+    $('#changeReasonModal').modal('show');
+    {% endif %}
 });
 </script>
+
+<!-- Change Reason Modal -->
+{% include 'default/change_reason_modal.html' %}
+
 {% endblock %}

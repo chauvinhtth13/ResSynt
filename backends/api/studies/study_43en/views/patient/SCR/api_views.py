@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from backends.studies.study_43en.models.patient import SCR_CASE
-from backends.studies.study_43en.utils.permission_decorators import check_site_permission
+from backends.audit_log.utils.permission_decorators import check_site_permission
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,7 @@
-# backends/studies/study_43en/utils/audit/sanitizer.py
+# backends/audit_log/utils/sanitizer.py
 """
-Security sanitizer for audit log system
+🌐 BASE Security Sanitizer - Shared across all studies
+
 Prevents XSS, SQL injection, CSV injection, etc.
 """
 import re
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 class SecuritySanitizer:
     """Comprehensive security sanitizer"""
     
-    #  Enhanced XSS patterns (prevent bypasses)
+    # ✅ Enhanced XSS patterns (prevent bypasses)
     XSS_PATTERNS = [
         r'<\s*script[^>]*>',                       # <script> opening tag
         r'<\s*/\s*script\s*>',                     # </script> closing tag
@@ -35,7 +36,7 @@ class SecuritySanitizer:
         r'<\s*meta[^>]*http-equiv',                # <meta http-equiv
     ]
     
-    #  More precise SQL patterns (require SQL context)
+    # ✅ More precise SQL patterns (require SQL context)
     SQL_PATTERNS = [
         r'union\s+select',                         # UNION SELECT
         r'select\s+.*\s+from',                     # SELECT ... FROM
@@ -87,7 +88,7 @@ class SecuritySanitizer:
         if c.isspace():
             return True
         
-        #  Vietnamese Unicode range
+        # ✅ Vietnamese Unicode range
         if '\u00C0' <= c <= '\u1EF9':
             return True
         
@@ -122,25 +123,25 @@ class SecuritySanitizer:
         
         original = text
         
-        #  1. Length check
+        # ✅ 1. Length check
         if len(text) > self.max_length:
             errors.append(f'Lý do quá dài (tối đa {self.max_length} ký tự)')
             text = text[:self.max_length]
         
-        #  2. Strip whitespace
+        # ✅ 2. Strip whitespace
         text = text.strip()
         
         if len(text) < self.min_length:
             errors.append(f'Lý do quá ngắn (tối thiểu {self.min_length} ký tự)')
         
-        #  3. Unicode normalization (prevent Unicode attacks)
+        # ✅ 3. Unicode normalization (prevent Unicode attacks)
         text = unicodedata.normalize('NFKC', text)
         
-        #  4. Remove null bytes & control characters
+        # ✅ 4. Remove null bytes & control characters
         text = text.replace('\x00', '')
         text = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]', '', text)
         
-        #  5. Check XSS patterns
+        # ✅ 5. Check XSS patterns
         text_lower = text.lower()
         for pattern in self.XSS_PATTERNS:
             if re.search(pattern, text_lower, re.IGNORECASE | re.DOTALL):
@@ -150,7 +151,7 @@ class SecuritySanitizer:
                 )
                 break
         
-        #  6. Check SQL patterns
+        # ✅ 6. Check SQL patterns
         for pattern in self.SQL_PATTERNS:
             if re.search(pattern, text_lower, re.IGNORECASE):
                 errors.append('Lý do chứa từ khóa SQL không hợp lệ')
@@ -159,7 +160,7 @@ class SecuritySanitizer:
                 )
                 break
         
-        #  7. Check command injection patterns
+        # ✅ 7. Check command injection patterns
         for pattern in self.CMD_PATTERNS:
             if re.search(pattern, text):
                 errors.append('Lý do chứa ký tự đặc biệt không hợp lệ')
@@ -168,7 +169,7 @@ class SecuritySanitizer:
                 )
                 break
         
-        #  8. Special character ratio check (Vietnamese-aware)
+        # ✅ 8. Special character ratio check (Vietnamese-aware)
         unsafe_chars = sum(1 for c in text if not self._is_safe_char(c))
         
         if len(text) > 0:
@@ -179,15 +180,15 @@ class SecuritySanitizer:
                     f'({ratio*100:.0f}%, tối đa {self.max_special_char_ratio*100:.0f}%)'
                 )
         
-        #  9. HTML escape (always!)
+        # ✅ 9. HTML escape (always!)
         sanitized = html.escape(text, quote=True)
         
-        #  10. CSV injection prevention
+        # ✅ 10. CSV injection prevention
         if sanitized and sanitized[0] in ['=', '+', '-', '@', '\t', '\r']:
             sanitized = "'" + sanitized
             warnings.append('Thêm dấu nháy đơn để đảm bảo an toàn khi export')
         
-        #  11. Check if modified
+        # ✅ 11. Check if modified
         if sanitized != original:
             warnings.append('Lý do đã được làm sạch để đảm bảo an toàn')
         

@@ -11,14 +11,14 @@ from backends.studies.study_43en.models.patient import SCR_CASE
 from backends.studies.study_43en.forms.patient.SCR import ScreeningCaseForm
 from django.contrib import messages
 # Audit utilities
-from backends.studies.study_43en.utils.audit.decorators import audit_log
-from backends.studies.study_43en.utils.audit.processors import (
+from backends.audit_log.utils.decorators import audit_log
+from backends.audit_log.utils.processors import (
     process_crf_update,
     process_crf_create,
 )
 
 # Permission utilities
-from backends.studies.study_43en.utils.permission_decorators import (
+from backends.audit_log.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,

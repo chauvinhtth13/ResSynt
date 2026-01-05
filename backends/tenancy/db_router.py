@@ -93,6 +93,7 @@ class TenantRouter:
     # Apps that use study databases
     STUDY_APPS: Set[str] = {
         'studies',         # Base studies app
+        'audit_log',       # ✅ NEW: Base audit log system (shared across studies)
     }
     
     # Thread-safe routing cache

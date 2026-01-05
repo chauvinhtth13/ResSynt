@@ -1,4 +1,41 @@
-# Define utility functions for site filtering
+# backends/audit_log/utils/__init__.py
+"""
+🌐 BASE Audit Log Utils - Shared across all studies
+
+Export all utility classes and functions
+"""
+from .helpers import get_client_ip, normalize_value, format_value_for_display
+from .integrity import IntegrityChecker
+from .detector import ChangeDetector
+from .sanitizer import SecuritySanitizer
+from .validator import ReasonValidator
+from .decorators import audit_log
+from .rate_limiter import rate_limit
+
+__all__ = [
+    # Helpers
+    'get_client_ip',
+    'normalize_value',
+    'format_value_for_display',
+    
+    # Core classes
+    'IntegrityChecker',
+    'ChangeDetector',
+    'SecuritySanitizer',
+    'ReasonValidator',
+    
+    # Decorators
+    'audit_log',
+    'rate_limit',
+    
+    # Legacy - deprecated (for backwards compatibility)
+    'get_site_filtered_object_or_404',
+    'get_queryset_for_model',
+]
+
+# ==========================================
+# LEGACY FUNCTIONS (DEPRECATED - kept for backwards compatibility)
+# ==========================================
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 

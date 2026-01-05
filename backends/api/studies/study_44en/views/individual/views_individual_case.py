@@ -18,8 +18,16 @@ from django.urls import reverse
 from backends.studies.study_44en.models.individual import Individual
 from backends.studies.study_44en.forms.individual import IndividualForm
 from backends.api.studies.study_44en.views.views_base import (
-    get_filtered_individuals, get_individual_with_related
+        get_filtered_individuals, get_individual_with_related
 )
+
+from backends.studies.study_44en.utils.permission_decorators import (
+    require_crf_view,
+    require_crf_add,
+    require_crf_change,
+    require_crf_delete,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +45,7 @@ def set_audit_metadata(instance, user):
 # ==========================================
 
 @login_required
+@require_crf_view('individual')
 def individual_list(request):
     """
     List all individuals with search, filter, and pagination
@@ -50,6 +59,7 @@ def individual_list(request):
 # ==========================================
 
 @login_required
+@require_crf_view('individual')
 def individual_detail(request, subjectid):
     """
     View individual details with all related data
@@ -78,6 +88,7 @@ def individual_detail(request, subjectid):
 # ==========================================
 
 @login_required
+@require_crf_add('individual')
 def individual_create(request):
     """
     CREATE new individual
@@ -148,6 +159,7 @@ def individual_create(request):
 # ==========================================
 
 @login_required
+@require_crf_change('individual')
 def individual_update(request, subjectid):
     """
     UPDATE existing individual
@@ -222,6 +234,7 @@ def individual_update(request, subjectid):
 # ==========================================
 
 @login_required
+@require_crf_view('individual')
 def individual_view(request, subjectid):
     """
     VIEW individual (read-only)

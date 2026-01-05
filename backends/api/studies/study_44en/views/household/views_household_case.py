@@ -22,10 +22,9 @@ from backends.studies.study_44en.forms.household import (
     HH_MemberFormSet,
 )
 
-# Import utilities (copied from study_43en)
-# NOTE: Audit system DISABLED for study_44en - no audit_log table exists
-# from backends.studies.study_44en.utils.audit.decorators import audit_log
-# from backends.studies.study_44en.utils.audit.processors import process_complex_update
+# Import audit utilities
+from backends.audit_log.utils.detector import ChangeDetector
+from backends.audit_log.utils.validator import ReasonValidator
 
 # Import helpers
 from .helpers import (
@@ -35,6 +34,14 @@ from .helpers import (
     make_form_readonly,
     make_formset_readonly,
 )
+from backends.studies.study_44en.utils.permission_decorators import (
+    require_crf_view,
+    require_crf_add,
+    require_crf_change,
+    require_crf_delete,
+)
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +51,7 @@ logger = logging.getLogger(__name__)
 # ==========================================
 
 @login_required
+@require_crf_view('hh_case')
 def household_list(request):
     """
     List all households with search and pagination
@@ -80,6 +88,7 @@ def household_list(request):
 # ==========================================
 
 @login_required
+@require_crf_view('hh_case')
 def household_detail(request, hhid):
     """
     View household details with all members and exposure data
@@ -126,6 +135,7 @@ def household_detail(request, hhid):
 
 @login_required
 # @audit_log(model_name='HOUSEHOLD', get_patient_id_from='hhid')  # DISABLED - no audit_log table
+@require_crf_add('hh_case')
 def household_create(request):
     """
     Create new household with members
@@ -228,6 +238,7 @@ def household_create(request):
 
 @login_required
 # @audit_log(model_name='HOUSEHOLD', get_patient_id_from='hhid')  # DISABLED - no audit_log table
+@require_crf_change('hh_case')
 def household_update(request, hhid):
     """
     Update household WITHOUT audit system (44en has no audit_log table)
@@ -270,6 +281,8 @@ def household_update(request, hhid):
             'is_readonly': False,
             'current_version': household.version if hasattr(household, 'version') else None,
             'today': date.today(),
+            'show_reason_form': False,  # GET request - no reason needed
+            'detected_changes': {},
         }
         
         logger.info("="*80)
@@ -278,7 +291,7 @@ def household_update(request, hhid):
         
         return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
     
-    # POST - Simple save (no audit system)
+    # POST - Save with change detection
     logger.info("="*80)
     logger.info("💾 POST REQUEST - Processing form submission...")
     logger.info("="*80)
@@ -297,7 +310,57 @@ def household_update(request, hhid):
     formset_valid = member_formset.is_valid()
     
     if form_valid and formset_valid:
-        logger.info("All forms valid - saving...")
+        logger.info("✅ All forms valid")
+        
+        # Detect changes
+        detector = ChangeDetector(household, household_form)
+        changes = detector.detect_changes()
+        
+        # Check if change reason is provided when there are changes
+        change_reason = request.POST.get('change_reason', '').strip()
+        
+        if changes and not change_reason:
+            logger.warning("⚠️ Changes detected but no reason provided - showing modal")
+            
+            context = {
+                'form': household_form,
+                'household_form': household_form,
+                'household': household,
+                'member_formset': member_formset,
+                'is_create': False,
+                'is_readonly': False,
+                'today': date.today(),
+                'show_reason_form': True,
+                'detected_changes': changes,
+            }
+            
+            messages.warning(request, 'Vui lòng nhập lý do thay đổi.')
+            return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
+        
+        # Validate reason if provided
+        if change_reason:
+            validator = ReasonValidator()
+            is_valid, error_msg = validator.validate(change_reason)
+            
+            if not is_valid:
+                logger.warning(f"❌ Invalid change reason: {error_msg}")
+                
+                context = {
+                    'form': household_form,
+                    'household_form': household_form,
+                    'household': household,
+                    'member_formset': member_formset,
+                    'is_create': False,
+                    'is_readonly': False,
+                    'today': date.today(),
+                    'show_reason_form': True,
+                    'detected_changes': changes,
+                }
+                
+                messages.error(request, f'Lý do không hợp lệ: {error_msg}')
+                return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
+        
+        logger.info("💾 Saving household...")
         
         # Save using helper
         saved_household = save_household_and_related(
@@ -337,10 +400,15 @@ def household_update(request, hhid):
         'is_readonly': False,
         'today': date.today(),
         'current_version': household.version if hasattr(household, 'version') else None,
+        'show_reason_form': False,
+        'detected_changes': {},
     }
     
     logger.info("="*80)
     logger.info("=== 📝 HOUSEHOLD UPDATE END (POST) - Rendering with errors ===")
+    logger.info("="*80)
+    
+    return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
     logger.info("="*80)
     
     return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
@@ -352,6 +420,7 @@ def household_update(request, hhid):
 
 @login_required
 # @audit_log(model_name='HOUSEHOLD', get_patient_id_from='hhid')  # DISABLED - no audit_log table
+@require_crf_view('hh_case')
 def household_view(request, hhid):
     """
     View household (read-only mode)

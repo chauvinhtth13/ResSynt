@@ -18,12 +18,15 @@ from django.contrib import messages
 from datetime import datetime
 from django.contrib.auth import get_user_model
 
-from backends.studies.study_43en.models.audit_log import AuditLog, AuditLogDetail
-from backends.studies.study_43en.utils.permission_decorators import require_crf_view
+from backends.audit_log.models.audit_log import AuditLog, AuditLogDetail
+from backends.audit_log.utils.permission_decorators import require_crf_view
 from backends.studies.study_43en.utils.site_utils import (
     get_site_filter_params,
     get_filtered_queryset
 )
+
+# ✅ NEW: Use base audit_log models instead (for new studies)
+# from backends.audit_log.models import AuditLog, AuditLogDetail
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -194,7 +197,7 @@ def audit_log_list(request):
         'filter_type': filter_type,
     }
     
-    return render(request, 'studies/study_43en/audit_log/audit_log_list.html', context)
+    return render(request, 'audit_log/audit_log_list.html', context)
 
 
 # ==========================================
@@ -312,7 +315,7 @@ def audit_log_detail(request, log_id):
         'filter_type': filter_type,
     }
     
-    return render(request, 'studies/study_43en/audit_log/audit_log_detail.html', context)
+    return render(request, 'audit_log/audit_log_detail.html', context)
 
 
 # ==========================================

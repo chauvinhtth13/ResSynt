@@ -1,5 +1,7 @@
-# backends/studies/study_43en/utils/audit/detector.py
+# backends/audit_log/utils/detector.py
 """
+🌐 BASE Change Detection - Shared across all studies
+
 FIXED Change detection - Exclude metadata fields but KEEP date fields
 """
 import logging
@@ -14,7 +16,7 @@ class ChangeDetector:
     """Detect changes between old and new data"""
     
     def __init__(self):
-        #  FIX: ONLY exclude metadata fields, NOT date fields
+        # ✅ FIX: ONLY exclude metadata fields, NOT date fields
         self.excluded_fields = [
             # Primary keys
             'id', 
@@ -29,7 +31,7 @@ class ChangeDetector:
             # Version control
             'version', 
             
-            #  CRITICAL: Exclude audit metadata fields
+            # ✅ CRITICAL: Exclude audit metadata fields
             'last_modified_by',
             'last_modified_by_id',
             'last_modified_by_username',
@@ -46,17 +48,17 @@ class ChangeDetector:
             # Auto-generated IDs
             'USUBJID',
             
-            #  REMOVED: Count fields no longer used (replaced by formsets)
+            # ✅ REMOVED: Count fields no longer used (replaced by formsets)
             'REHOSPCOUNT',
             'ANTIBIOCOUNT',
             
-            #  Header fields (auto-populated from enrollment, read-only)
+            # ✅ Header fields (auto-populated from enrollment, read-only)
             'EVENT',
             'STUDYID',
             'SITEID',
             'SUBJID',
             
-            #  Formset technical fields (not user-editable)
+            # ✅ Formset technical fields (not user-editable)
             'DELETE',      # Checkbox for deletion (False = not deleted)
             'SEQUENCE',    # Read-only sequence number
             
@@ -67,7 +69,7 @@ class ChangeDetector:
         """
         Detect changes
         
-         FIX: Only compare fields present in new_data (form fields)
+        ✅ FIX: Only compare fields present in new_data (form fields)
         This prevents detecting "deletions" for fields not in the form
         
         Returns:
@@ -83,17 +85,17 @@ class ChangeDetector:
         """
         changes = []
         
-        #  FIX: If new_data is empty (DummyForm), no changes to detect
+        # ✅ FIX: If new_data is empty (DummyForm), no changes to detect
         if not new_data:
-            logger.debug(" new_data is empty (DummyForm) - no main changes to detect")
+            logger.debug("⚠️ new_data is empty (DummyForm) - no main changes to detect")
             return changes
         
-        #  CRITICAL: Only check fields that are in new_data (submitted via form)
+        # ✅ CRITICAL: Only check fields that are in new_data (submitted via form)
         # Don't check old_data fields that weren't in the form
         for field in new_data.keys():
-            #  FIX: Skip excluded fields
+            # ✅ FIX: Skip excluded fields
             if field in self.excluded_fields:
-                logger.debug(f" Skipping metadata field: {field}")
+                logger.debug(f"⏭️ Skipping metadata field: {field}")
                 continue
             
             old_value = old_data.get(field)
@@ -103,7 +105,7 @@ class ChangeDetector:
             old_norm = normalize_value(old_value)
             new_norm = normalize_value(new_value)
             
-            logger.info(f" Comparing {field}: old='{old_value}' (norm: '{old_norm}') vs new='{new_value}' (norm: '{new_norm}')")
+            logger.info(f"🔍 Comparing {field}: old='{old_value}' (norm: '{old_norm}') vs new='{new_value}' (norm: '{new_norm}')")
             
             if old_norm != new_norm:
                 change = {
@@ -116,21 +118,21 @@ class ChangeDetector:
                 changes.append(change)
                 
                 logger.info(
-                    f" Change detected: {field} "
+                    f"✅ Change detected: {field} "
                     f"'{change['old_display']}' → '{change['new_display']}'"
                 )
         
-        logger.info(f" Total changes detected: {len(changes)} (only form fields)")
+        logger.info(f"📝 Total changes detected: {len(changes)} (only form fields)")
         return changes
     
     def extract_old_data(self, instance) -> Dict:
         """Extract old data from model instance"""
-        #  FIX: Don't exclude date fields
+        # ✅ FIX: Don't exclude date fields
         excluded = list(self.excluded_fields)
         
         data = model_to_dict(instance, exclude=excluded)
         
-        logger.debug(f" Extracted old data: {len(data)} fields")
+        logger.debug(f"📦 Extracted old data: {len(data)} fields")
         if 'SCREENINGFORMDATE' in data:
             logger.debug(f"   SCREENINGFORMDATE: {data['SCREENINGFORMDATE']}") 
         return data
@@ -139,15 +141,15 @@ class ChangeDetector:
         """
         Extract new data from form
         
-         FIX: Only extract fields that are DEFINED IN THE FORM
+        ✅ FIX: Only extract fields that are DEFINED IN THE FORM
         This prevents detecting changes for read-only/hidden fields
         that appear in cleaned_data but weren't actually in the form
         """
         if not form.is_valid():
-            logger.warning(" Form not valid - cannot extract new data")
+            logger.warning("⚠️ Form not valid - cannot extract new data")
             return {}
         
-        #  Only get fields that are in the form definition
+        # ✅ Only get fields that are in the form definition
         new_data = {}
         for field_name in form.fields.keys():
             if field_name in form.cleaned_data:
@@ -157,7 +159,7 @@ class ChangeDetector:
         for field in self.excluded_fields:
             new_data.pop(field, None)
         
-        logger.debug(f" Extracted new data: {len(new_data)} fields (only form fields)")
+        logger.debug(f"📦 Extracted new data: {len(new_data)} fields (only form fields)")
         if 'SCREENINGFORMDATE' in new_data:
             logger.debug(f"   SCREENINGFORMDATE: {new_data['SCREENINGFORMDATE']}")
         return new_data

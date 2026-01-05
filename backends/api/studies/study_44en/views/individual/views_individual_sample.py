@@ -24,6 +24,14 @@ from .helpers_sample import (
     save_samples,
     load_samples,
 )
+from backends.studies.study_44en.utils.permission_decorators import (
+    require_crf_view,
+    require_crf_add,
+    require_crf_change,
+    require_crf_delete,
+)
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +41,7 @@ logger = logging.getLogger(__name__)
 # ==========================================
 
 @login_required
+@require_crf_add('individual_sample')
 def individual_sample_create(request, subjectid):
     """
     CREATE new sample and food frequency data
@@ -130,6 +139,7 @@ def individual_sample_create(request, subjectid):
 # ==========================================
 
 @login_required
+@require_crf_change('individual_sample')
 def individual_sample_update(request, subjectid):
     """
     UPDATE existing sample and food frequency data
@@ -228,6 +238,7 @@ def individual_sample_update(request, subjectid):
 # ==========================================
 
 @login_required
+@require_crf_view('individual_sample')
 def individual_sample_view(request, subjectid):
     """
     VIEW sample data (read-only)

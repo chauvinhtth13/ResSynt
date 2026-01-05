@@ -1,12 +1,16 @@
-# backends/studies/study_43en/utils/audit/decorators.py
+# backends/studies/study_44en/utils/audit/decorators.py
 """
-FIXED: Audit log decorator - Proper data structure for checksum
+✅ UPDATED: Using base audit_log system from backends.audit_log
+
+This file now uses the shared audit_log system.
+For study_44en, just import from backends.audit_log
 """
 import logging
 from functools import wraps
 from django.db import transaction
-from backends.studies.study_43en.models.audit_log import AuditLog, AuditLogDetail
-from .helpers import get_client_ip
+# ✅ NEW: Use base audit_log system
+from backends.audit_log.models import AuditLog, AuditLogDetail
+from backends.audit_log.utils.helpers import get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +109,10 @@ def _create_simple_audit_log(request, action, model_name, patient_id):
     Create simple audit log for CREATE/VIEW (no change details)
     Automatically extracts site_id from multiple sources
     """
-    from backends.studies.study_43en.models.audit_log import AuditLog
-    from backends.studies.study_43en.models.patient import SCR_CASE
-    from backends.studies.study_43en.models.contact import SCR_CONTACT
+    # ✅ AuditLog already imported from backends.audit_log at top
+    # Use study_44en models for SITEID lookup
+    from backends.studies.study_44en.models.patient import SCR_CASE
+    from backends.studies.study_44en.models.contact import SCR_CONTACT
     
     # Get site_id - Priority order:
     # 1. From audit_data (set by view)

@@ -52,9 +52,14 @@ class Command(BaseCommand):
             set_current_db(db_name)
             study_db_manager.add_study_db(db_name)
             
-            # Import models (must be after switching DB)
-            from backends.studies.study_43en.models.audit_log import AuditLog
-            from backends.studies.study_43en.utils.audit.integrity import IntegrityChecker
+            # ✅ Import models - Try base audit_log first, fallback to study-specific
+            try:
+                from backends.audit_log.models import AuditLog
+                from backends.audit_log.utils.integrity import IntegrityChecker
+            except ImportError:
+                # Fallback for old study-specific imports
+                from backends.audit_log.models.audit_log import AuditLog
+                from backends.audit_log.utils.integrity import IntegrityChecker
             
             # Get all audit logs
             total = AuditLog.objects.using(db_name).count()

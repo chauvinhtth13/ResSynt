@@ -17,7 +17,7 @@ from backends.studies.study_44en.models.individual import Individual, Individual
 from backends.studies.study_44en.forms.individual import Individual_ExposureForm, Individual_Exposure2Form
 from backends.api.studies.study_44en.views.views_base import get_filtered_individuals
 from .helpers_exposure import (
-    set_audit_metadata,
+        set_audit_metadata,
     make_form_readonly,
     save_water_sources,
     save_water_treatment,
@@ -36,6 +36,14 @@ from .helpers_exposure import (
     load_food_frequency,
     load_travel_history,
 )
+from backends.studies.study_44en.utils.permission_decorators import (
+    require_crf_view,
+    require_crf_add,
+    require_crf_change,
+    require_crf_delete,
+)
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +53,7 @@ logger = logging.getLogger(__name__)
 # ==========================================
 
 @login_required
+@require_crf_add('individual_exposure')
 def individual_exposure_create(request, subjectid):
     """CREATE new exposure data (water sources, treatment, comorbidities)"""
     logger.info("=" * 80)
@@ -143,6 +152,7 @@ def individual_exposure_create(request, subjectid):
 
 
 @login_required
+@require_crf_change('individual_exposure')
 def individual_exposure_update(request, subjectid):
     """UPDATE existing exposure data"""
     logger.info("=" * 80)
@@ -234,6 +244,7 @@ def individual_exposure_update(request, subjectid):
 
 
 @login_required
+@require_crf_view('individual_exposure')
 def individual_exposure_view(request, subjectid):
     """VIEW exposure data (read-only)"""
     logger.info("=== HHID INDIVIDUAL EXPOSURE VIEW (READ-ONLY) ===")

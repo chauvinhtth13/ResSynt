@@ -1,5 +1,9 @@
-# backends/studies/study_43en/utils/rate_limiter.py
+# backends/audit_log/utils/rate_limiter.py
+"""
+🌐 BASE Rate Limiter - Shared across all studies
 
+Rate limiting for audit log operations with email alerting
+"""
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.conf import settings
@@ -13,12 +17,18 @@ logger = logging.getLogger(__name__)
 def rate_limit(key_prefix: str, max_requests: int = 10, window: int = 60):
     """
     Rate limit decorator
-    ENHANCED: Added email alerting
+    
+    ✅ ENHANCED: Added email alerting
     
     Args:
         key_prefix: Prefix for cache key
         max_requests: Max requests allowed in window
         window: Time window in seconds
+    
+    Example:
+        @rate_limit('audit_update', max_requests=10, window=60)
+        def my_view(request):
+            ...
     """
     def decorator(view_func):
         @wraps(view_func)

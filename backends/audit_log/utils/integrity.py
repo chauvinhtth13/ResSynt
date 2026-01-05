@@ -1,6 +1,8 @@
-# backends/studies/study_43en/utils/audit/integrity.py
+# backends/audit_log/utils/integrity.py
 """
-Integrity check with SHA-256 - FIXED date serialization
+🌐 BASE Integrity Checker - Shared across all studies
+
+SHA-256 checksum for audit log integrity verification
 """
 import hashlib
 import json
@@ -12,12 +14,23 @@ logger = logging.getLogger(__name__)
 
 
 class IntegrityChecker:
-    """Check integrity with checksums"""
+    """
+    Check integrity with SHA-256 checksums
+    
+    Ensures audit logs haven't been tampered with
+    """
     
     @staticmethod
     def _serialize_value(value):
         """
-         Convert non-JSON-serializable values to strings
+        ✅ Convert non-JSON-serializable values to strings
+        
+        Handles:
+        - None → None
+        - date/datetime → ISO format
+        - Decimal → string
+        - Boolean → boolean (keep as is)
+        - Other → string
         """
         if value is None:
             return None
@@ -40,7 +53,9 @@ class IntegrityChecker:
     @staticmethod
     def _serialize_dict(data: dict) -> dict:
         """
-         Recursively serialize all values in dict
+        ✅ Recursively serialize all values in dict
+        
+        Ensures all values are JSON-serializable
         """
         serialized = {}
         for key, value in data.items():
@@ -55,14 +70,30 @@ class IntegrityChecker:
     @staticmethod
     def generate_checksum(audit_data: dict) -> str:
         """
-        Generate SHA-256 checksum
+        Generate SHA-256 checksum for audit log
         
-         FIXED: Serialize date/datetime objects before JSON encoding
+        ✅ FIXED: Serialize date/datetime objects before JSON encoding
+        
+        Args:
+            audit_data: Dictionary with:
+                - user_id
+                - username
+                - action
+                - model_name
+                - patient_id
+                - timestamp
+                - old_data (dict)
+                - new_data (dict)
+                - reason
+        
+        Returns:
+            str: SHA-256 checksum (64 characters)
         """
-        #  Serialize old_data and new_data
+        # ✅ Serialize old_data and new_data
         old_data = IntegrityChecker._serialize_dict(audit_data.get('old_data', {}))
         new_data = IntegrityChecker._serialize_dict(audit_data.get('new_data', {}))
         
+        # Build canonical data structure
         canonical_data = {
             'user_id': str(audit_data.get('user_id', '')),
             'username': audit_data.get('username', ''),
@@ -75,10 +106,11 @@ class IntegrityChecker:
             'reason': audit_data.get('reason', ''),
         }
         
+        # Generate checksum
         canonical_string = json.dumps(canonical_data, sort_keys=True)
         hash_hex = hashlib.sha256(canonical_string.encode()).hexdigest()
         
-        logger.debug(f" Generated checksum: {hash_hex[:16]}...")
+        logger.debug(f"✅ Generated checksum: {hash_hex[:16]}...")
         
         return hash_hex
     
@@ -87,12 +119,18 @@ class IntegrityChecker:
         """
         Verify audit log integrity
         
-         FIXED: Handle date serialization during verification
+        ✅ FIXED: Handle date serialization during verification
+        
+        Args:
+            audit_log: AuditLog instance
+        
+        Returns:
+            bool: True if checksum matches, False if tampered
         """
         stored_checksum = audit_log.checksum
         
         if not stored_checksum:
-            logger.warning(" No checksum stored")
+            logger.warning("⚠️ No checksum stored")
             return False
         
         # Rebuild old_data and new_data from details
@@ -126,11 +164,11 @@ class IntegrityChecker:
         
         if not is_valid:
             logger.error(
-                f" INTEGRITY VIOLATION: AuditLog {audit_log.id}\n"
+                f"🚨 INTEGRITY VIOLATION: AuditLog {audit_log.id}\n"
                 f"   Expected: {calculated_checksum[:16]}...\n"
                 f"   Stored:   {stored_checksum[:16]}..."
             )
         else:
-            logger.debug(f" Integrity verified for AuditLog {audit_log.id}")
+            logger.debug(f"✅ Integrity verified for AuditLog {audit_log.id}")
         
         return is_valid

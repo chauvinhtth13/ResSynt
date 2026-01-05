@@ -22,6 +22,14 @@ from backends.studies.study_44en.models.individual import (
     Individual_FollowUp, Individual_Sample
 )
 
+from backends.studies.study_44en.utils.permission_decorators import (
+    require_crf_view,
+    require_crf_add,
+    require_crf_change,
+    require_crf_delete,
+)
+
+
 
 def get_filtered_households(user):
     """
@@ -38,6 +46,7 @@ def get_filtered_individuals(user):
 
 
 @login_required
+# @require_crf_view('dashboard')
 def dashboard(request):
     """
     Dashboard view for Study 44EN
@@ -67,6 +76,7 @@ def dashboard(request):
 
 
 @login_required
+@require_crf_view('hh_case')
 def household_list(request):
     """
     List all households with search and filter
@@ -107,6 +117,7 @@ def household_list(request):
 
 
 @login_required
+@require_crf_view('individual')
 def individual_list(request):
     """
     List all individuals with search and filter

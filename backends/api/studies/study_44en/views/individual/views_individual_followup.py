@@ -27,6 +27,14 @@ from .helpers_followup import (
     load_followup_hospitalizations,
     load_followup_medications,
 )
+from backends.studies.study_44en.utils.permission_decorators import (
+    require_crf_view,
+    require_crf_add,
+    require_crf_change,
+    require_crf_delete,
+)
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +83,7 @@ def individual_followup_list(request, subjectid):
 # ==========================================
 
 @login_required
+@require_crf_add('individual_followup')
 def individual_followup_create(request, subjectid):
     """
     CREATE new follow-up visit
@@ -182,6 +191,7 @@ def individual_followup_create(request, subjectid):
 # ==========================================
 
 @login_required
+@require_crf_change('individual_followup')
 def individual_followup_update(request, subjectid, followup_id):
     """
     UPDATE existing follow-up visit
@@ -291,6 +301,7 @@ def individual_followup_update(request, subjectid, followup_id):
 # ==========================================
 
 @login_required
+@require_crf_view('individual_followup')
 def individual_followup_view(request, subjectid, followup_id):
     """
     VIEW follow-up visit (read-only)

@@ -21,14 +21,14 @@ from backends.studies.study_43en.models.patient import (
 )
 
 # Import audit utilities
-from backends.studies.study_43en.utils.audit.decorators import audit_log
-from backends.studies.study_43en.utils.audit.processors import (
+from backends.audit_log.utils.decorators import audit_log
+from backends.audit_log.utils.processors import (
     process_crf_update,
     process_crf_create,
 )
 
 # Import permission utilities
-from backends.studies.study_43en.utils.permission_decorators import (
+from backends.audit_log.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,

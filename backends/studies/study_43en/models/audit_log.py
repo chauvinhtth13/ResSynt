@@ -125,7 +125,8 @@ class AuditLog(models.Model):
             raise PermissionDenied("Audit logs are immutable")
         
         if not self.checksum:
-            from backends.studies.study_43en.utils.audit.integrity import IntegrityChecker
+            # ✅ NEW: Import from base audit_log
+            from backends.audit_log.utils.integrity import IntegrityChecker
             
             if hasattr(self, '_temp_checksum_data'):
                 audit_data = self._temp_checksum_data.copy()
@@ -158,7 +159,8 @@ class AuditLog(models.Model):
     
     def verify_integrity(self) -> bool:
         """Verify checksum"""
-        from backends.studies.study_43en.utils.audit.integrity import IntegrityChecker
+        # ✅ NEW: Import from base audit_log
+        from backends.audit_log.utils.integrity import IntegrityChecker
         
         details = self.details.all()
         

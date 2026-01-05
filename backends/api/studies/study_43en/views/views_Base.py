@@ -30,7 +30,7 @@ from backends.studies.study_43en.models.schedule import ExpectedDates, ContactEx
 
 #  Import utils từ study app
 
-from backends.studies.study_43en.utils import get_site_filtered_object_or_404
+from backends.audit_log.utils import get_site_filtered_object_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,6 @@ from backends.studies.study_43en.utils.site_utils import (
     batch_check_exists,
     invalidate_cache,
 )
-from backends.studies.study_43en.utils.performance import profile_view
 
 
 # ==========================================
@@ -60,7 +59,6 @@ from backends.studies.study_43en.utils.performance import profile_view
 # ==========================================
 
 @login_required
-@profile_view("patient_list")
 def patient_list(request):
     """
     Danh sách các bệnh nhân - OPTIMIZED VERSION
@@ -361,7 +359,6 @@ def patient_detail(request, usubjid):
 # ==========================================
 
 @login_required
-@profile_view("contact_list")
 def contact_list(request):
     """
     Danh sách contacts - OPTIMIZED VERSION

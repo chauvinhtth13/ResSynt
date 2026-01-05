@@ -16,11 +16,11 @@ from backends.studies.study_43en.forms.contact.contact_FU_28 import (
 )
 
 # Import utilities
-from backends.studies.study_43en.utils.audit.decorators import audit_log
-from backends.studies.study_43en.utils.audit.processors import (
+from backends.audit_log.utils.decorators import audit_log
+from backends.audit_log.utils.processors import (
     process_complex_update,
 )
-from backends.studies.study_43en.utils.permission_decorators import (
+from backends.audit_log.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,

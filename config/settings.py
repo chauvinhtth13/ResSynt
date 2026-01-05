@@ -112,7 +112,8 @@ BASE_LOCAL_APPS = [
     "backends.tenancy",
     "backends.api",
     "backends.studies",
-    
+    # ✅ NEW: Add base audit_log app
+    "backends.audit_log",
 ]
 
 # ==========================================
