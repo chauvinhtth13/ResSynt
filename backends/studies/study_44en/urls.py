@@ -7,10 +7,10 @@ from django.urls import path, include
 
 # Import views from API layer
 from backends.api.studies.study_44en.views import views_dashboard
-from backends.api.studies.study_44en.views.household import (
-    views_household_case,
+from backends.api.studies.study_44en.views.household.views_food import (
     views_household_food,
 )
+from backends.api.studies.study_44en.views.household.views_case import views_household_case
 from backends.api.studies.study_44en.views.household.views_exposure import views_household_exposure
 from backends.api.studies.study_44en.views.individual import (
     views_individual_case,

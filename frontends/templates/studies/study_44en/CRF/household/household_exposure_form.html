@@ -186,7 +186,7 @@
                                     <td class="text-start">
                                         <div class="d-flex align-items-end">
                                             <span class="fw-bold me-1">Khác:</span>
-                                            <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 px-1 w-75" name="water_other_src_name">
+                                            <input type="text" class="form-control form-control-sm border-0 border-bottom rounded-0 px-1 w-75" name="water_other_src_name" value="{{ water_data.water_other_src_name|default:'' }}">
                                         </div>
                                     </td>
                                     <td><input type="checkbox" class="form-check-input" name="water_other_drink" {% if water_data.water_other_drink %}checked{% endif %}></td>

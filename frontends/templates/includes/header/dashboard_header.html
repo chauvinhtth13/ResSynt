@@ -16,7 +16,7 @@
     <!-- Right Side Controls -->
     <div class="d-flex align-items-center gap-2">
       <!-- Notifications -->
-      {% include 'includes/dropdown_header/notification_menu.html' %}
+      {% include 'includes/dropdown_header/notification_menu.html' with study_code=request.study_code %}
       
       <div class="vr"></div>
       

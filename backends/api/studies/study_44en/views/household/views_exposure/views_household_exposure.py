@@ -246,6 +246,8 @@ def household_exposure_update(request, hhid):
     # Flat field changes
     flat_changes = detect_flat_field_changes(request, exposure)
     all_changes.extend(flat_changes)
+    # Loại bỏ các thay đổi mà giá trị cũ và mới đều rỗng hoặc giống nhau
+    all_changes = [c for c in all_changes if (str(c.get('old_value', '')).strip() != str(c.get('new_value', '')).strip()) and not (str(c.get('old_value', '')).strip() == '' and str(c.get('new_value', '')).strip() == '')]
     logger.info(f"📝 Flat changes: {len(flat_changes)}")
     logger.info(f"📝 TOTAL changes: {len(all_changes)}")
     
@@ -307,6 +309,9 @@ def household_exposure_update(request, hhid):
             water_data[f'water_{source_key}_use'] = request.POST.get(f'water_{source_key}_use') == 'on'
             water_data[f'water_{source_key}_irrigate'] = request.POST.get(f'water_{source_key}_irrigate') == 'on'
             water_data[f'water_{source_key}_other'] = request.POST.get(f'water_{source_key}_other', '')
+        
+        # Preserve water other source name
+        water_data['water_other_src_name'] = request.POST.get('water_other_src_name', '')
         
         # Extract NEW treatment values from POST (preserve user changes)
         new_treatment_method = request.POST.get('TREATMENT_METHOD', '')

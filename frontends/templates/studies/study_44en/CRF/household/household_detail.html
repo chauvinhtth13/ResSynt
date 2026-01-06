@@ -281,4 +281,28 @@
         </div>
     </div>
 </div>
+{# ========== CHANGE REASON MODAL ========== #}
+{% if show_reason_form and detected_changes %}
+    {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+
+{# Custom Scripts #}
+<script src="{% static 'studies/study_44en/js/change-reason-handler.js' %}"></script>
+
+{# Scripts Debug #}
+<script>
+console.log('=== HOUSEHOLD DETAIL SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('show_reason_form:', {{ show_reason_form|default:"false"|lower }});
+console.log('detected_changes count:', {{ detected_changes|length|default:0 }});
+{% if detected_changes %}
+console.log('Changes:', {{ detected_changes|safe|escapejs }});
+{% endif %}
+console.log('=====================================');
+</script>
+
 {% endblock %}

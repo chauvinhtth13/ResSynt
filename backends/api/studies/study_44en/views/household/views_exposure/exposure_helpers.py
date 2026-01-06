@@ -41,10 +41,17 @@ def save_water_sources(request, exposure):
         other_purpose = request.POST.get(f'water_{source_key}_other', '').strip()
         logger.info(f"[save_water_sources] POST: {source_key}: drink={drink}, use={use}, irrigate={irrigate}, other='{other_purpose}'")
         if drink or use or irrigate or other_purpose:
+            # Get other source name if applicable
+            other_name = None
+            if source_key == 'other':
+                other_name = request.POST.get('water_other_src_name', '').strip()
+                logger.info(f"[save_water_sources] water_other_src_name='{other_name}'")
+            
             from backends.api.studies.study_44en.views.household.helpers import set_audit_metadata
             ws = HH_WaterSource(
                 HHID=exposure,
                 SOURCE_TYPE=source_type,
+                SOURCE_TYPE_OTHER=other_name,
                 DRINKING=drink,
                 LIVING=use,
                 IRRIGATION=irrigate,
@@ -53,7 +60,7 @@ def save_water_sources(request, exposure):
             )
             set_audit_metadata(ws, request.user)
             ws.save()
-            logger.info(f"[save_water_sources] Saved: {ws.SOURCE_TYPE} drink={ws.DRINKING} use={ws.LIVING} irrigate={ws.IRRIGATION} other='{ws.OTHER_PURPOSE}'")
+            logger.info(f"[save_water_sources] Saved: {ws.SOURCE_TYPE} name='{ws.SOURCE_TYPE_OTHER}' drink={ws.DRINKING} use={ws.LIVING} irrigate={ws.IRRIGATION} other='{ws.OTHER_PURPOSE}'")
             count += 1
     logger.info(f"Saved {count} water sources")
     return count
@@ -148,6 +155,11 @@ def load_water_data(exposure):
         water_data[f'water_{source_key}_use'] = ws.LIVING
         water_data[f'water_{source_key}_irrigate'] = ws.IRRIGATION
         water_data[f'water_{source_key}_other'] = ws.OTHER_PURPOSE or ''
+        
+        # Load other source name if applicable
+        if source_key == 'other' and ws.SOURCE_TYPE_OTHER:
+            water_data['water_other_src_name'] = ws.SOURCE_TYPE_OTHER
+            logger.info(f"[load_water_data] Loaded water_other_src_name='{ws.SOURCE_TYPE_OTHER}'")
     return water_data
 
 
@@ -203,6 +215,7 @@ def detect_flat_field_changes(request, exposure):
     # ===== 1. Water Sources =====
     old_water_sources = HH_WaterSource.objects.filter(HHID=exposure)
     old_water_dict = {}
+    old_other_src_name = ''
     for ws in old_water_sources:
         source_key = 'bottle' if ws.SOURCE_TYPE == 'bottled' else ws.SOURCE_TYPE
         old_water_dict[source_key] = {
@@ -211,6 +224,9 @@ def detect_flat_field_changes(request, exposure):
             'irrigate': ws.IRRIGATION,
             'other': ws.OTHER_PURPOSE or '',
         }
+        # Save other source name
+        if source_key == 'other' and ws.SOURCE_TYPE_OTHER:
+            old_other_src_name = ws.SOURCE_TYPE_OTHER
     
     source_types = ['tap', 'bottle', 'well', 'rain', 'river', 'pond', 'other']
     for source_key in source_types:
@@ -254,6 +270,18 @@ def detect_flat_field_changes(request, exposure):
                         'old_display': 'Có' if old_data[field_key] else 'Không',
                         'new_display': 'Có' if new_val else 'Không',
                     })
+    
+    # Check water source "Other" name change
+    new_other_src_name = request.POST.get('water_other_src_name', '').strip()
+    if old_other_src_name != new_other_src_name:
+        changes.append({
+            'field': 'water_other_src_name',
+            'field_label': 'Nguồn nước khác - Tên nguồn',
+            'old_value': old_other_src_name,
+            'new_value': new_other_src_name,
+            'old_display': old_other_src_name or '(Trống)',
+            'new_display': new_other_src_name or '(Trống)',
+        })
     
     # ===== 2. Water Treatment =====
     old_treatment = HH_WaterTreatment.objects.filter(HHID=exposure).first()

@@ -8,9 +8,10 @@ UPDATED: Added separate CREATE/UPDATE/VIEW for exposure and food
 
 from django.urls import path
 
+from .views_case import views_household_case
+
 from .views_exposure import views_household_exposure
-from . import (
-    views_household_case,
+from .views_food import (
     views_household_food,
 )
 
@@ -54,29 +55,29 @@ urlpatterns = [
          views_household_exposure.household_exposure, 
          name='exposure'),
     
-    # ===== HOUSEHOLD FOOD =====
-    # Create new food data
-    path('<str:hhid>/food/create/', 
-         views_household_food.household_food_create, 
-         name='food_create'),
+#     # ===== HOUSEHOLD FOOD =====
+#     # Create new food data
+#     path('<str:hhid>/food/create/', 
+#          views_household_food.household_food_create, 
+#          name='food_create'),
     
-    # Update existing food data
-    path('<str:hhid>/food/update/', 
-         views_household_food.household_food_update, 
-         name='food_update'),
+#     # Update existing food data
+#     path('<str:hhid>/food/update/', 
+#          views_household_food.household_food_update, 
+#          name='food_update'),
     
-    # Both 'edit' and 'update' work (for template compatibility)
-    path('<str:hhid>/food/edit/', 
-         views_household_food.household_food_update, 
-         name='food_edit'),  # Alias
+#     # Both 'edit' and 'update' work (for template compatibility)
+#     path('<str:hhid>/food/edit/', 
+#          views_household_food.household_food_update, 
+#          name='food_edit'),  # Alias
     
-    # View food data (read-only)
-    path('<str:hhid>/food/view/', 
-         views_household_food.household_food_view, 
-         name='food_view'),
+#     # View food data (read-only)
+#     path('<str:hhid>/food/view/', 
+#          views_household_food.household_food_view, 
+#          name='food_view'),
     
-    # Legacy endpoint - smart redirect to create or update
-    path('<str:hhid>/food/', 
-         views_household_food.household_food, 
-         name='food'),
+#     # Legacy endpoint - smart redirect to create or update
+#     path('<str:hhid>/food/', 
+#          views_household_food.household_food, 
+#          name='food'),
 ]

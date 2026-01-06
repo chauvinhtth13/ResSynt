@@ -90,10 +90,12 @@
                     
                     <!-- Actions Right -->
                     <div class="notification-actions">
+                        {% if study_code and study_code|lower == '43en' %}
                         <a href="{% url 'study_43en:followup_tracking_list' %}?search={{ notification.usubjid }}" 
                            class="notification-btn-action notification-btn-action--view">
                             <span>Chi tiết</span>
                         </a>
+                        {% endif %}
                         
                         {% if not notification.is_read %}
                         <button class="notification-btn-action notification-btn-action--mark mark-read-btn" 
@@ -107,6 +109,7 @@
                 {% endfor %}
                 
                 <!-- Footer -->
+                {% if study_code and study_code|lower == '43en' %}
                 <div class="notification-footer">
                     <a href="{% url 'study_43en:followup_tracking_list' %}" 
                        class="notification-footer-link">
@@ -114,6 +117,7 @@
                         <span>{% trans "Xem tất cả lịch hẹn" %}</span>
                     </a>
                 </div>
+                {% endif %}
             {% else %}
                 <!-- Empty State -->
                 <div class="notification-empty">
@@ -123,10 +127,12 @@
                     <p class="notification-empty-text">
                         {% trans "Không có lịch hẹn trong 3 ngày tới" %}
                     </p>
+                    {% if study_code and study_code|lower == '43en' %}
                     <a href="{% url 'study_43en:followup_tracking_list' %}" 
                        class="notification-btn-action notification-btn-action--view">
                         {% trans "Xem lịch theo dõi" %}
                     </a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>

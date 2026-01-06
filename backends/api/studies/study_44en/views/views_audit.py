@@ -139,12 +139,14 @@ def audit_log_list(request):
         .distinct()\
         .order_by('model_name')
     
+    study_code = getattr(request, 'study_code', '').lower()
     context = {
         'page_obj': page_obj,
         'filters': filters,
         'users': users,
         'actions': list(actions),
         'model_names': list(model_names),
+        'study_code': study_code,
     }
     
     return render(request, 'audit_log/audit_log_list.html', context)
@@ -161,10 +163,11 @@ def audit_log_detail(request, log_id):
     logger.info(f"=== AUDIT LOG DETAIL (44EN) ===")
     logger.info(f"User: {request.user.username}, Log ID: {log_id}")
     
-    log = get_object_or_404(AuditLog, id=log_id)
+    study_db = getattr(request, 'study_db_alias', 'db_study_44en')
+    log = get_object_or_404(AuditLog.objects.using(study_db), id=log_id)
     
     # Get change details
-    details = AuditLogDetail.objects.filter(audit_log=log).order_by('field_name')
+    details = AuditLogDetail.objects.using(study_db).filter(audit_log=log).order_by('field_name')
     
     changes = []
     for detail in details:

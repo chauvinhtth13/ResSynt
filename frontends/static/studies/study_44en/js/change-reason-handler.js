@@ -11,12 +11,18 @@ $(document).ready(function() {
         return;
     }
     
-    console.log(' Modal found - changes detected by backend');
+    console.log('✅ Modal found - changes detected by backend');
     
-    //  AUTO-DETECT form
-    let $form = $('#hiddenEditCultureForm');
+    // 🎯 AUTO-DETECT form (support all forms)
+    let $form = $('#householdCaseForm');  // Household Case form
     if ($form.length === 0) {
-        $form = $('#hiddenAntibioticForm');  //  Support antibiotic form
+        $form = $('#householdExposureForm');  // Household Exposure form
+    }
+    if ($form.length === 0) {
+        $form = $('#hiddenEditCultureForm');  // Culture form
+    }
+    if ($form.length === 0) {
+        $form = $('#hiddenAntibioticForm');  // Antibiotic form
     }
     if ($form.length === 0) {
         $form = $('form').filter(function() {
@@ -27,7 +33,7 @@ $(document).ready(function() {
     }
     
     if ($form.length === 0) {
-        console.error(' No form found!');
+        console.error('❌ No form found!');
         return;
     }
     
