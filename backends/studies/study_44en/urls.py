@@ -9,9 +9,9 @@ from django.urls import path, include
 from backends.api.studies.study_44en.views import views_dashboard
 from backends.api.studies.study_44en.views.household import (
     views_household_case,
-    views_household_exposure,
     views_household_food,
 )
+from backends.api.studies.study_44en.views.household.views_exposure import views_household_exposure
 from backends.api.studies.study_44en.views.individual import (
     views_individual_case,
     views_individual_exposure,

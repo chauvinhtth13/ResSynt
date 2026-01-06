@@ -5,7 +5,7 @@ Household Views for Study 44EN
 """
 
 from .views_household_case import *
-from .views_household_exposure import *
+from .views_exposure.views_household_exposure import *
 from .views_household_food import *
 
 __all__ = [

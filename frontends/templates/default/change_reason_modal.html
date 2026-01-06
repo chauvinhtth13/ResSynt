@@ -8,7 +8,7 @@
      role="dialog" 
      data-backdrop="static" 
      data-keyboard="false"
-     data-cancel-url="{% url 'study_43en:screening_case_list' %}">
+     data-cancel-url="{{ cancel_url|default:request.META.HTTP_REFERER }}">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header bg-warning">

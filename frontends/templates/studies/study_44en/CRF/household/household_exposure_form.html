@@ -43,7 +43,7 @@
                 <span class="badge bg-info text-dark fs-5">{{ household.HHID }}</span>
             </div>
 
-            <form method="post" action="{% if is_create %}{% url 'study_44en:household:exposure_create' hhid=household.HHID %}{% else %}{% url 'study_44en:household:exposure_update' hhid=household.HHID %}{% endif %}">
+            <form method="post" id="householdExposureForm" action="{% if is_create %}{% url 'study_44en:household:exposure_create' hhid=household.HHID %}{% else %}{% url 'study_44en:household:exposure_update' hhid=household.HHID %}{% endif %}">
                 {% csrf_token %}
                 <input type="hidden" name="HHID" value="{{ household.HHID }}">
     
@@ -569,6 +569,31 @@
     </div>
 </div>
 
+{# ========== CHANGE REASON MODAL ========== #}
+{% if show_reason_form and detected_changes %}
+  {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+
+{# Custom Scripts #}
+<script src="{% static 'studies/study_44en/js/change-reason-handler.js' %}"></script>
+
+{# Scripts Debug #}
+<script>
+console.log('=== HOUSEHOLD EXPOSURE FORM SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('show_reason_form:', {{ show_reason_form|default:"false"|lower }});
+console.log('detected_changes count:', {{ detected_changes|length|default:0 }});
+{% if detected_changes %}
+console.log('Changes:', {{ detected_changes|safe|escapejs }});
+{% endif %}
+console.log('=====================================');
+</script>
+
+{# Form Interaction Scripts #}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Toggle water treatment options
@@ -599,15 +624,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-    // Show change reason modal if changes detected
-    {% if show_reason_form and detected_changes %}
-    console.log('🔔 Changes detected, showing reason modal');
-    $('#changeReasonModal').modal('show');
-    {% endif %}
-
 </script>
-
-<!-- Change Reason Modal -->
-{% include 'default/change_reason_modal.html' %}
 
 {% endblock %}

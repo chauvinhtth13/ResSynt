@@ -7,9 +7,10 @@ UPDATED: Added separate CREATE/UPDATE/VIEW for exposure and food
 """
 
 from django.urls import path
+
+from .views_exposure import views_household_exposure
 from . import (
     views_household_case,
-    views_household_exposure,
     views_household_food,
 )
 

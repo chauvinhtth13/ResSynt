@@ -1,40 +1,50 @@
 # backends/api/studies/study_44en/views/household/views_household_exposure.py
-"""
-✅ REFACTORED: Household Exposure Views - Using Universal Audit System
 
-Following Django development rules:
-- Backend-first approach
-- Universal Audit System (Tier 3 - Complex with formsets)
-- Handles multiple formsets: WaterSource, WaterTreatment, Animal
+"""
+Household Exposure Views for Study 44EN
+Handles exposure, water sources, treatments, and animals
+
+✅ FINAL FIX: Merge detection into save_callback (no detect_callback parameter)
 """
 
 import logging
-from django.shortcuts import render, redirect
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
-from django.db import transaction
 
-# Import models
 from backends.studies.study_44en.models.household import (
-    HH_CASE,
-    HH_Exposure,
-    HH_WaterSource,
-    HH_WaterTreatment,
-    HH_Animal,
+    HH_CASE, HH_Exposure, HH_WaterSource, HH_WaterTreatment, HH_Animal,
+    HH_FoodFrequency, HH_FoodSource
 )
-
-# Import forms
 from backends.studies.study_44en.forms.household import (
     HH_ExposureForm,
-    HH_WaterSourceFormSet,
-    HH_WaterTreatmentFormSet,
-    HH_AnimalFormSet,
+    HH_FoodFrequencyForm, HH_FoodSourceForm
+)
+from ..helpers import (
+    get_household_with_related,
+    set_audit_metadata,
+    make_form_readonly,
 )
 
 # ✅ Import Universal Audit System
 from backends.audit_log.utils.decorators import audit_log
-from backends.audit_log.utils.processors import process_crf_update
+from backends.audit_log.utils.detector import ChangeDetector
+from backends.audit_log.utils.validator import ReasonValidator
+
+# ✅ Import exposure-specific helpers
+from backends.studies.study_44en.views.household.exposure_helpers import (
+    # Save/Load functions
+    save_water_sources,
+    save_water_treatment,
+    save_animals,
+    load_water_data,
+    load_treatment_data,
+    load_animal_data,
+    # Change detection
+    detect_flat_field_changes,
+)
 
 # Import permission decorators
 from backends.studies.study_44en.utils.permission_decorators import (
@@ -43,251 +53,104 @@ from backends.studies.study_44en.utils.permission_decorators import (
     require_crf_change,
 )
 
-# Import helpers
-from .helpers import (
-    get_household_with_related,
-    set_audit_metadata,
-    make_form_readonly,
-    make_formset_readonly,
-)
-
 logger = logging.getLogger(__name__)
 
 
 # ==========================================
-# HELPER FUNCTIONS (Backend Logic)
-# ==========================================
-
-def save_exposure_and_related(request, forms_dict, household, is_create=False):
-    """
-    ✅ Backend save logic for exposure + 3 formsets
-    
-    Args:
-        request: HttpRequest
-        forms_dict: Dictionary containing validated forms
-            - 'main': HH_ExposureForm
-            - 'formsets': {
-                'water_sources': HH_WaterSourceFormSet,
-                'water_treatments': HH_WaterTreatmentFormSet,
-                'animals': HH_AnimalFormSet
-              }
-        household: HH_CASE instance
-        is_create: Boolean flag
-    
-    Returns:
-        HH_Exposure instance
-    """
-    logger.info(f"💾 Saving exposure (is_create={is_create})")
-    
-    with transaction.atomic(using='db_study_44en'):
-        # 1. Save main exposure
-        exposure = forms_dict['main'].save(commit=False)
-        exposure.HHID = household
-        set_audit_metadata(exposure, request.user)
-        
-        if is_create and hasattr(exposure, 'version'):
-            exposure.version = 0
-        
-        exposure.save()
-        logger.info(f"✅ Saved exposure for HHID={household.HHID}")
-        
-        # 2. Save water sources formset
-        if 'formsets' in forms_dict:
-            # Water sources
-            if 'water_sources' in forms_dict['formsets']:
-                ws_formset = forms_dict['formsets']['water_sources']
-                water_sources = ws_formset.save(commit=False)
-                
-                for ws in water_sources:
-                    ws.HHID = exposure
-                    set_audit_metadata(ws, request.user)
-                    ws.save()
-                
-                for ws in ws_formset.deleted_objects:
-                    logger.info(f"🗑️ Deleting water source: {ws.pk}")
-                    ws.delete()
-                
-                logger.info(f"✅ Saved {len(water_sources)} water sources")
-            
-            # Water treatments
-            if 'water_treatments' in forms_dict['formsets']:
-                wt_formset = forms_dict['formsets']['water_treatments']
-                water_treatments = wt_formset.save(commit=False)
-                
-                for wt in water_treatments:
-                    wt.HHID = exposure
-                    set_audit_metadata(wt, request.user)
-                    wt.save()
-                
-                for wt in wt_formset.deleted_objects:
-                    logger.info(f"🗑️ Deleting water treatment: {wt.pk}")
-                    wt.delete()
-                
-                logger.info(f"✅ Saved {len(water_treatments)} water treatments")
-            
-            # Animals
-            if 'animals' in forms_dict['formsets']:
-                animal_formset = forms_dict['formsets']['animals']
-                animals = animal_formset.save(commit=False)
-                
-                for animal in animals:
-                    animal.HHID = exposure
-                    set_audit_metadata(animal, request.user)
-                    animal.save()
-                
-                for animal in animal_formset.deleted_objects:
-                    logger.info(f"🗑️ Deleting animal: {animal.pk}")
-                    animal.delete()
-                
-                logger.info(f"✅ Saved {len(animals)} animals")
-        
-        return exposure
-
-
-# ==========================================
-# CREATE VIEW
+# CREATE VIEW (NO AUDIT)
 # ==========================================
 
 @login_required
 @require_crf_add('hh_exposure')
 def household_exposure_create(request, hhid):
-    """
-    ✅ Create new exposure data for household
-    
-    Following rules:
-    - Django Forms handle validation (backend)
-    - NO audit needed for CREATE
-    """
+    """CREATE new exposure data for household"""
     logger.info("="*80)
-    logger.info("=== 🌊 HOUSEHOLD EXPOSURE CREATE START ===")
+    logger.info("=== 🌱 HOUSEHOLD EXPOSURE CREATE START ===")
     logger.info("="*80)
-    logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
     
-    # Get household
     household, _ = get_household_with_related(request, hhid)
     
-    # Check if exposure already exists
     if HH_Exposure.objects.filter(HHID=household).exists():
-        logger.warning(f"⚠️ Exposure already exists for {hhid}")
-        messages.warning(
-            request,
-            f'Exposure data already exists for {hhid}. Redirecting to update.'
-        )
+        messages.warning(request, f'Exposure already exists for {hhid}')
         return redirect('study_44en:household:exposure_update', hhid=hhid)
     
-    # GET - Show blank forms
+    # GET
     if request.method == 'GET':
         exposure_form = HH_ExposureForm()
-        water_source_formset = HH_WaterSourceFormSet(prefix='water_sources')
-        water_treatment_formset = HH_WaterTreatmentFormSet(prefix='water_treatments')
-        animal_formset = HH_AnimalFormSet(prefix='animals')
+        food_freq_form = HH_FoodFrequencyForm()
+        food_source_form = HH_FoodSourceForm()
         
         context = {
             'household': household,
             'exposure_form': exposure_form,
-            'water_source_formset': water_source_formset,
-            'water_treatment_formset': water_treatment_formset,
-            'animal_formset': animal_formset,
+            'food_freq_form': food_freq_form,
+            'food_source_form': food_source_form,
             'is_create': True,
             'is_readonly': False,
+            'water_data': {},
+            'treatment_method': None,
+            'treatment_other': None,
+            'animal_data': {},
         }
-        
-        logger.info("📄 Showing blank forms")
-        return render(
-            request,
-            'studies/study_44en/CRF/household/household_exposure_form.html',
-            context
-        )
+        return render(request, 'studies/study_44en/CRF/household/household_exposure_form.html', context)
     
-    # POST - Create exposure
+    # POST
     exposure_form = HH_ExposureForm(request.POST)
-    water_source_formset = HH_WaterSourceFormSet(
-        request.POST,
-        prefix='water_sources'
-    )
-    water_treatment_formset = HH_WaterTreatmentFormSet(
-        request.POST,
-        prefix='water_treatments'
-    )
-    animal_formset = HH_AnimalFormSet(
-        request.POST,
-        prefix='animals'
-    )
+    food_freq_form = HH_FoodFrequencyForm(request.POST)
+    food_source_form = HH_FoodSourceForm(request.POST)
     
-    # ✅ Backend validation (Django Forms)
-    all_valid = (
-        exposure_form.is_valid() and
-        water_source_formset.is_valid() and
-        water_treatment_formset.is_valid() and
-        animal_formset.is_valid()
-    )
-    
-    if all_valid:
+    if all([exposure_form.is_valid(), food_freq_form.is_valid(), food_source_form.is_valid()]):
         try:
-            # ✅ Use helper to save in transaction
-            forms_dict = {
-                'main': exposure_form,
-                'formsets': {
-                    'water_sources': water_source_formset,
-                    'water_treatments': water_treatment_formset,
-                    'animals': animal_formset,
-                }
-            }
-            
-            exposure = save_exposure_and_related(
-                request,
-                forms_dict,
-                household,
-                is_create=True
-            )
-            
-            logger.info("="*80)
-            logger.info(f"=== ✅ EXPOSURE CREATE SUCCESS: {hhid} ===")
-            logger.info("="*80)
-            
-            messages.success(
-                request,
-                f'Tạo mới exposure data cho hộ {hhid} thành công!'
-            )
-            return redirect('study_44en:household:detail', hhid=hhid)
-            
+            with transaction.atomic(using='db_study_44en'):
+                exposure = exposure_form.save(commit=False)
+                exposure.HHID = household
+                set_audit_metadata(exposure, request.user)
+                if hasattr(exposure, 'version'):
+                    exposure.version = 0
+                exposure.save()
+                
+                save_water_sources(request, exposure)
+                save_water_treatment(request, exposure)
+                save_animals(request, exposure)
+                
+                food_freq = food_freq_form.save(commit=False)
+                food_freq.HHID = household
+                set_audit_metadata(food_freq, request.user)
+                food_freq.save()
+                
+                food_source = food_source_form.save(commit=False)
+                food_source.HHID = household
+                set_audit_metadata(food_source, request.user)
+                food_source.save()
+                
+                logger.info("=== ✅ EXPOSURE CREATE SUCCESS ===")
+                messages.success(request, f'Created exposure for {hhid}')
+                return redirect('study_44en:household:detail', hhid=hhid)
+                
         except Exception as e:
             logger.error(f"❌ Create failed: {e}", exc_info=True)
-            messages.error(request, f'Lỗi khi tạo: {str(e)}')
+            messages.error(request, f'Error: {str(e)}')
     else:
-        # Log validation errors
         logger.error("❌ Form validation failed")
-        if exposure_form.errors:
-            logger.error(f"Exposure errors: {exposure_form.errors}")
-        if water_source_formset.errors:
-            logger.error(f"Water source errors: {water_source_formset.errors}")
-        if water_treatment_formset.errors:
-            logger.error(f"Water treatment errors: {water_treatment_formset.errors}")
-        if animal_formset.errors:
-            logger.error(f"Animal errors: {animal_formset.errors}")
-        
-        messages.error(request, 'Vui lòng kiểm tra lại các trường bị lỗi.')
+        messages.error(request, 'Please check form errors')
     
-    # Re-render with errors
     context = {
         'household': household,
         'exposure_form': exposure_form,
-        'water_source_formset': water_source_formset,
-        'water_treatment_formset': water_treatment_formset,
-        'animal_formset': animal_formset,
+        'food_freq_form': food_freq_form,
+        'food_source_form': food_source_form,
         'is_create': True,
         'is_readonly': False,
+        'water_data': {},
+        'treatment_method': None,
+        'treatment_other': None,
+        'animal_data': {},
     }
-    
-    return render(
-        request,
-        'studies/study_44en/CRF/household/household_exposure_form.html',
-        context
-    )
+    return render(request, 'studies/study_44en/CRF/household/household_exposure_form.html', context)
 
 
 # ==========================================
-# UPDATE VIEW (WITH UNIVERSAL AUDIT)
+# UPDATE VIEW (MANUAL AUDIT)
 # ==========================================
 
 @login_required
@@ -295,123 +158,278 @@ def household_exposure_create(request, hhid):
 @audit_log(model_name='HH_EXPOSURE', get_patient_id_from='hhid')
 def household_exposure_update(request, hhid):
     """
-    ✅ Update exposure WITH UNIVERSAL AUDIT SYSTEM (Tier 3)
+    ✅ UPDATE with MANUAL AUDIT handling
     
-    Following rules:
-    - Use Universal Audit System for change tracking
-    - Handles 3 formsets automatically
-    - Backend handles all logic
+    We handle audit manually because flat fields are not in forms
     """
     logger.info("="*80)
-    logger.info(f"=== 📝 HOUSEHOLD EXPOSURE UPDATE START ===")
-    logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
+    logger.info("=== 📝 HOUSEHOLD EXPOSURE UPDATE START ===")
     logger.info("="*80)
     
-    # Get household
     household, _ = get_household_with_related(request, hhid)
     
-    # Get exposure (must exist for update)
     try:
-        exposure = HH_Exposure.objects.select_related('HHID').get(HHID=household)
-        logger.info(f"Found exposure for {hhid}")
+        exposure = HH_Exposure.objects.get(HHID=household)
     except HH_Exposure.DoesNotExist:
-        logger.warning(f"⚠️ No exposure found for {hhid}")
-        messages.error(
-            request,
-            f'No exposure data found for {hhid}. Please create first.'
-        )
+        messages.error(request, f'No exposure found for {hhid}')
         return redirect('study_44en:household:exposure_create', hhid=hhid)
     
-    # GET - Show current data
+    try:
+        food_freq = HH_FoodFrequency.objects.get(HHID=household)
+    except HH_FoodFrequency.DoesNotExist:
+        food_freq = None
+    
+    try:
+        food_source = HH_FoodSource.objects.get(HHID=household)
+    except HH_FoodSource.DoesNotExist:
+        food_source = None
+    
+    # GET
     if request.method == 'GET':
         exposure_form = HH_ExposureForm(instance=exposure)
-        water_source_formset = HH_WaterSourceFormSet(
-            instance=exposure,
-            prefix='water_sources'
-        )
-        water_treatment_formset = HH_WaterTreatmentFormSet(
-            instance=exposure,
-            prefix='water_treatments'
-        )
-        animal_formset = HH_AnimalFormSet(
-            instance=exposure,
-            prefix='animals'
-        )
+        food_freq_form = HH_FoodFrequencyForm(instance=food_freq)
+        food_source_form = HH_FoodSourceForm(instance=food_source)
+        
+        water_data = load_water_data(exposure)
+        treatment_data = load_treatment_data(exposure)
+        animal_data = load_animal_data(exposure)
+        
+        logger.info("="*80)
+        logger.info("📋 CONTEXT DEBUG FOR TEMPLATE:")
+        logger.info(f"  treatment_method: {treatment_data['method']}")
+        logger.info(f"  treatment_other: {treatment_data['other']}")
+        logger.info(f"  animal_data: {animal_data}")
+        logger.info("="*80)
         
         context = {
             'household': household,
             'exposure': exposure,
             'exposure_form': exposure_form,
-            'water_source_formset': water_source_formset,
-            'water_treatment_formset': water_treatment_formset,
-            'animal_formset': animal_formset,
+            'food_freq_form': food_freq_form,
+            'food_source_form': food_source_form,
             'is_create': False,
             'is_readonly': False,
-            'current_version': getattr(exposure, 'version', 0),
+            'water_data': water_data,
+            'treatment_method': treatment_data['method'],
+            'treatment_other': treatment_data['other'],
+            'animal_data': animal_data,
+        }
+        return render(request, 'studies/study_44en/CRF/household/household_exposure_form.html', context)
+    
+    # ✅ POST - Manual audit handling
+    logger.info("🔄 POST - Manual audit handling")
+    
+    # DEBUG: Log POST data
+    logger.info("="*80)
+    logger.info("📦 POST DATA DEBUG:")
+    for key, value in request.POST.items():
+        if key.startswith(('TREATMENT', 'animal_', 'WATER_')):
+            logger.info(f"  {key}: '{value}'")
+    logger.info("="*80)
+    
+    # STEP 1: Detect ALL changes (form + flat fields)
+    detector = ChangeDetector()
+    validator = ReasonValidator()
+    
+    # Form changes
+    old_form_data = detector.extract_old_data(exposure)
+    exposure_form = HH_ExposureForm(request.POST, instance=exposure)
+    
+    all_changes = []
+    
+    if exposure_form.is_valid():
+        new_form_data = detector.extract_new_data(exposure_form)
+        form_changes = detector.detect_changes(old_form_data, new_form_data)
+        all_changes.extend(form_changes)
+        logger.info(f"📝 Form changes: {len(form_changes)}")
+    
+    # Flat field changes
+    flat_changes = detect_flat_field_changes(request, exposure)
+    all_changes.extend(flat_changes)
+    logger.info(f"📝 Flat changes: {len(flat_changes)}")
+    logger.info(f"📝 TOTAL changes: {len(all_changes)}")
+    
+    # STEP 2: No changes → save directly
+    if not all_changes:
+        try:
+            with transaction.atomic(using='db_study_44en'):
+                exposure = exposure_form.save(commit=False)
+                set_audit_metadata(exposure, request.user)
+                exposure.save()
+                
+                save_water_sources(request, exposure)
+                save_water_treatment(request, exposure)
+                save_animals(request, exposure)
+                
+                # Food forms
+                food_freq_form = HH_FoodFrequencyForm(request.POST, instance=food_freq)
+                if food_freq_form.is_valid():
+                    food_freq_obj = food_freq_form.save(commit=False)
+                    food_freq_obj.HHID = household
+                    set_audit_metadata(food_freq_obj, request.user)
+                    food_freq_obj.save()
+                
+                food_source_form = HH_FoodSourceForm(request.POST, instance=food_source)
+                if food_source_form.is_valid():
+                    food_source_obj = food_source_form.save(commit=False)
+                    food_source_obj.HHID = household
+                    set_audit_metadata(food_source_obj, request.user)
+                    food_source_obj.save()
+                
+                messages.success(request, 'Updated successfully!')
+                return redirect('study_44en:household:detail', hhid=hhid)
+        except Exception as e:
+            logger.error(f"❌ Save failed: {e}", exc_info=True)
+            messages.error(request, f'Error: {str(e)}')
+    
+    # STEP 3: Has changes → collect reasons
+    reasons_data = {}
+    for change in all_changes:
+        reason_key = f'reason_{change["field"]}'
+        reason = request.POST.get(reason_key, '').strip()
+        if reason:
+            reasons_data[change['field']] = reason
+    
+    # STEP 4: Validate reasons
+    required_fields = [c['field'] for c in all_changes]
+    validation_result = validator.validate_reasons(reasons_data, required_fields)
+    
+    if not validation_result['valid']:
+        # Show reason modal
+        messages.warning(request, 'Please provide reasons for all changes')
+        
+        # ⚠️ PRESERVE NEW POST DATA (not old database values)
+        water_data = load_water_data(exposure)
+        
+        # Extract NEW treatment values from POST (preserve user changes)
+        new_treatment_method = request.POST.get('TREATMENT_METHOD', '')
+        new_treatment_other = request.POST.get('TREATMENT_METHOD_OTHER', '')
+        treatment_data = {
+            'method': new_treatment_method,
+            'other': new_treatment_other
         }
         
-        logger.info(f"📄 Showing form for HHID={hhid}")
-        return render(
-            request,
-            'studies/study_44en/CRF/household/household_exposure_form.html',
-            context
-        )
-    
-    # ✅ POST - USE UNIVERSAL AUDIT SYSTEM (Tier 3)
-    logger.info("🔄 Using Universal Audit System (Tier 3 - Complex)")
-    
-    # ✅ Configure forms for Universal Audit
-    forms_config = {
-        'main': {
-            'class': HH_ExposureForm,
-            'instance': exposure,
-        },
-        'formsets': {
-            'water_sources': {
-                'class': HH_WaterSourceFormSet,
-                'instance': exposure,
-                'prefix': 'water_sources',
-                'related_name': 'hh_watersource_set'
-            },
-            'water_treatments': {
-                'class': HH_WaterTreatmentFormSet,
-                'instance': exposure,
-                'prefix': 'water_treatments',
-                'related_name': 'hh_watertreatment_set'
-            },
-            'animals': {
-                'class': HH_AnimalFormSet,
-                'instance': exposure,
-                'prefix': 'animals',
-                'related_name': 'hh_animal_set'
-            }
-        }
-    }
-    
-    # ✅ Define save callback
-    def save_callback(request, forms_dict):
-        return save_exposure_and_related(
-            request,
-            forms_dict,
-            household,
-            is_create=False
-        )
-    
-    # ✅ Use Universal Audit System
-    return process_crf_update(
-        request=request,
-        instance=exposure,
-        form_class=None,  # Using forms_config instead
-        template_name='studies/study_44en/CRF/household/household_exposure_form.html',
-        redirect_url=reverse('study_44en:household:detail', kwargs={'hhid': hhid}),
-        extra_context={
+        # Extract NEW animal values from POST (preserve user changes)
+        animal_data = {}
+        for animal in ['dog', 'cat', 'bird', 'poultry', 'cow', 'other']:
+            animal_data[animal] = request.POST.get(f'animal_{animal}') == 'on'
+        animal_data['other_text'] = request.POST.get('animal_other_text', '')
+        
+        food_freq_form = HH_FoodFrequencyForm(request.POST, instance=food_freq)
+        food_source_form = HH_FoodSourceForm(request.POST, instance=food_source)
+        
+        from django.urls import reverse
+        cancel_url = reverse('study_44en:household:detail', kwargs={'hhid': hhid})
+        
+        context = {
             'household': household,
             'exposure': exposure,
+            'exposure_form': exposure_form,
+            'food_freq_form': food_freq_form,
+            'food_source_form': food_source_form,
             'is_create': False,
-        },
-        forms_config=forms_config,
-        save_callback=save_callback,
-    )
+            'is_readonly': False,
+            'water_data': water_data,
+            'treatment_method': treatment_data['method'],
+            'treatment_other': treatment_data['other'],
+            'animal_data': animal_data,
+            'detected_changes': all_changes,
+            'show_reason_form': True,
+            'submitted_reasons': reasons_data,
+            'cancel_url': cancel_url,
+        }
+        return render(request, 'studies/study_44en/CRF/household/household_exposure_form.html', context)
+    
+    # STEP 5: Save with audit
+    sanitized_reasons = validation_result.get('sanitized_reasons', reasons_data)
+    
+    # Set audit_data for decorator
+    combined_reason = "\n".join([
+        f"{change['field']}: {sanitized_reasons.get(change['field'], 'N/A')}"
+        for change in all_changes
+    ])
+    
+    request.audit_data = {
+        'patient_id': hhid,
+        'site_id': getattr(household, 'SITEID', None),
+        'reason': combined_reason,
+        'changes': all_changes,
+        'reasons_json': sanitized_reasons,
+    }
+    
+    try:
+        with transaction.atomic(using='db_study_44en'):
+            # 1. Save main exposure form
+            exposure = exposure_form.save(commit=False)
+            set_audit_metadata(exposure, request.user)
+            exposure.save()
+            logger.info(f"✅ Saved exposure for {hhid}")
+            
+            # 2. Save water sources (flat fields)
+            save_water_sources(request, exposure)
+            
+            # 3. Save water treatment (flat fields)
+            save_water_treatment(request, exposure)
+            
+            # 4. Save animals (flat fields)
+            save_animals(request, exposure)
+            
+            # 5. Validate and save food frequency
+            food_freq_form = HH_FoodFrequencyForm(request.POST, instance=food_freq)
+            if not food_freq_form.is_valid():
+                logger.error(f"Food frequency form invalid: {food_freq_form.errors}")
+                raise ValueError(f"Food frequency validation failed: {food_freq_form.errors}")
+            
+            food_freq_obj = food_freq_form.save(commit=False)
+            food_freq_obj.HHID = household
+            set_audit_metadata(food_freq_obj, request.user)
+            food_freq_obj.save()
+            logger.info(f"✅ Saved food frequency for {hhid}")
+            
+            # 6. Validate and save food source
+            food_source_form = HH_FoodSourceForm(request.POST, instance=food_source)
+            if not food_source_form.is_valid():
+                logger.error(f"Food source form invalid: {food_source_form.errors}")
+                raise ValueError(f"Food source validation failed: {food_source_form.errors}")
+            
+            food_source_obj = food_source_form.save(commit=False)
+            food_source_obj.HHID = household
+            set_audit_metadata(food_source_obj, request.user)
+            food_source_obj.save()
+            logger.info(f"✅ Saved food source for {hhid}")
+            
+            # ✅ Audit log will be created automatically by @audit_log decorator
+            # because we set request.audit_data above
+            
+            logger.info("="*80)
+            logger.info(f"=== ✅ UPDATE SUCCESS WITH AUDIT: {hhid} ===")
+            logger.info("="*80)
+            
+            messages.success(request, f'Cập nhật thành công exposure cho hộ {hhid}!')
+            return redirect('study_44en:household:detail', hhid=hhid)
+    except Exception as e:
+        logger.error(f"❌ Save failed: {e}", exc_info=True)
+        messages.error(request, f'Error: {str(e)}')
+    
+    # Re-render with errors
+    water_data = load_water_data(exposure)
+    treatment_data = load_treatment_data(exposure)
+    animal_data = load_animal_data(exposure)
+    
+    context = {
+        'household': household,
+        'exposure': exposure,
+        'exposure_form': exposure_form,
+        'food_freq_form': food_freq_form,
+        'food_source_form': food_source_form,
+        'is_create': False,
+        'is_readonly': False,
+        'water_data': water_data,
+        'treatment_method': treatment_data['method'],
+        'treatment_other': treatment_data['other'],
+        'animal_data': animal_data,
+    }
+    return render(request, 'studies/study_44en/CRF/household/household_exposure_form.html', context)
 
 
 # ==========================================
@@ -421,87 +439,65 @@ def household_exposure_update(request, hhid):
 @login_required
 @require_crf_view('hh_exposure')
 def household_exposure_view(request, hhid):
-    """
-    ✅ View exposure data (read-only)
-    
-    Following rules:
-    - Use template logic to make readonly
-    - No JavaScript needed
-    """
-    logger.info(f"👁️ Read-only view for exposure {hhid}")
-    
-    # Get household
+    """VIEW exposure data (read-only)"""
     household, _ = get_household_with_related(request, hhid)
     
-    # Get exposure
     try:
         exposure = HH_Exposure.objects.get(HHID=household)
     except HH_Exposure.DoesNotExist:
-        messages.error(request, f'No exposure data found for {hhid}')
+        messages.error(request, f'No exposure found for {hhid}')
         return redirect('study_44en:household:detail', hhid=hhid)
     
-    # Create readonly forms
-    exposure_form = HH_ExposureForm(instance=exposure)
-    water_source_formset = HH_WaterSourceFormSet(
-        instance=exposure,
-        prefix='water_sources'
-    )
-    water_treatment_formset = HH_WaterTreatmentFormSet(
-        instance=exposure,
-        prefix='water_treatments'
-    )
-    animal_formset = HH_AnimalFormSet(
-        instance=exposure,
-        prefix='animals'
-    )
+    try:
+        food_freq = HH_FoodFrequency.objects.get(HHID=household)
+    except HH_FoodFrequency.DoesNotExist:
+        food_freq = None
     
-    # ✅ Make all fields readonly (backend logic)
+    try:
+        food_source = HH_FoodSource.objects.get(HHID=household)
+    except HH_FoodSource.DoesNotExist:
+        food_source = None
+    
+    exposure_form = HH_ExposureForm(instance=exposure)
+    food_freq_form = HH_FoodFrequencyForm(instance=food_freq)
+    food_source_form = HH_FoodSourceForm(instance=food_source)
+    
     make_form_readonly(exposure_form)
-    make_formset_readonly(water_source_formset)
-    make_formset_readonly(water_treatment_formset)
-    make_formset_readonly(animal_formset)
+    make_form_readonly(food_freq_form)
+    make_form_readonly(food_source_form)
+    
+    water_data = load_water_data(exposure)
+    treatment_data = load_treatment_data(exposure)
+    animal_data = load_animal_data(exposure)
     
     context = {
         'household': household,
         'exposure': exposure,
         'exposure_form': exposure_form,
-        'water_source_formset': water_source_formset,
-        'water_treatment_formset': water_treatment_formset,
-        'animal_formset': animal_formset,
+        'food_freq_form': food_freq_form,
+        'food_source_form': food_source_form,
         'is_create': False,
         'is_readonly': True,
+        'water_data': water_data,
+        'treatment_method': treatment_data['method'],
+        'treatment_other': treatment_data['other'],
+        'animal_data': animal_data,
     }
-    
-    return render(
-        request,
-        'studies/study_44en/CRF/household/household_exposure_form.html',
-        context
-    )
+    return render(request, 'studies/study_44en/CRF/household/household_exposure_form.html', context)
 
 
 # ==========================================
-# DEPRECATED - Keep for backward compatibility
+# DEPRECATED
 # ==========================================
 
 @login_required
-@require_crf_view('hh_exposure')
 def household_exposure(request, hhid):
-    """
-    DEPRECATED: Legacy view that handles both create and update
-    Redirects to appropriate view based on existence
-    
-    This is kept for backward compatibility with old URLs
-    """
+    """DEPRECATED: Redirect to appropriate view"""
     household, _ = get_household_with_related(request, hhid)
     
-    # Check if exposure exists
     if HH_Exposure.objects.filter(HHID=household).exists():
-        # Data exists - redirect to update
-        logger.info(f"📄 Exposure exists for {hhid} - redirecting to update")
         return redirect('study_44en:household:exposure_update', hhid=hhid)
     else:
-        # No data - redirect to create
-        logger.info(f"📄 No exposure for {hhid} - redirecting to create")
         return redirect('study_44en:household:exposure_create', hhid=hhid)
 
 
@@ -509,5 +505,5 @@ __all__ = [
     'household_exposure_create',
     'household_exposure_update',
     'household_exposure_view',
-    'household_exposure',  # Deprecated but kept for compatibility
+    'household_exposure',
 ]
