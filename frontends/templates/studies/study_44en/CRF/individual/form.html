@@ -5,7 +5,7 @@
 {% block dashboard_content %}
 <main class="container py-4" style="max-width: 1400px;">
     <h4 class="text-center fw-bold mb-4">GENERAL INFORMATION (ENR 1/1)</h4>
-    
+
     <!-- Display form errors -->
     {% if individual_form.errors or individual_form.non_field_errors %}
     <div class="alert alert-danger" role="alert">
@@ -18,7 +18,7 @@
             {% endfor %}
         </ul>
         {% endif %}
-        
+
         {% if individual_form.errors %}
         <p><strong>Individual form errors:</strong></p>
         <ul>
@@ -30,9 +30,9 @@
     </div>
     {% endif %}
 
-    <form method="post" action="">
+    <form method="post" action="" id="individualForm">
         {% csrf_token %}
-        
+
         {% if individual and individual.SUBJECTID %}
         <div class="mb-3 text-center">
             <span class="badge bg-primary fs-6">Subject ID: {{ individual.SUBJECTID }}</span>
@@ -40,7 +40,7 @@
         {% endif %}
 
         <hr class="my-4">
-        
+
         <h4 class="text-center fw-bold mb-4">INDIVIDUAL QUESTIONNAIRE (MEMBERS)</h4>
 
         <!-- 1. Household Member Selection -->
@@ -145,7 +145,7 @@
                         <label class="form-check-label">Vocational / College</label>
                     </div>
                 </div>
-                
+
                 <div class="col-md-4">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="EDUCATION" value="literate"
@@ -170,7 +170,7 @@
                         <label class="form-check-label">University or higher</label>
                     </div>
                 </div>
-                
+
                 <div class="col-md-4">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="EDUCATION" value="not_school_age"
@@ -198,7 +198,7 @@
                        value="{{ individual_form.OCCUPATION_DETAIL.value|default:'' }}"
                        {% if is_readonly %}disabled{% endif %}>
             </div>
-            
+
             <div class="ms-md-3 row">
                 <div class="col-md-6">
                     <div class="form-check mb-2">
@@ -355,14 +355,14 @@
         <div class="row mt-5">
             <div class="col-md-6 mb-3">
                 <label class="fw-bold d-block">Completed by:</label>
-                <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-100" 
-                       value="{{ request.user.username }}" disabled>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-100"
+                    value="{{ request.user.username }}" disabled>
                 <div class="text-muted small mt-1">(Signature and Initials)</div>
             </div>
             <div class="col-md-6 mb-3">
                 <label class="fw-bold d-block">Date of completion:</label>
-                <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-100" 
-                       value="{% now 'Y-m-d' %}" disabled>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none w-100"
+                    value="{% now 'Y-m-d' %}" disabled>
                 <div class="text-muted small mt-1">(dd/mm/yyyy)</div>
             </div>
         </div>
@@ -374,8 +374,8 @@
                 {% if is_create %}Save & Continue{% else %}Update Individual{% endif %}
             </button>
             {% endif %}
-            <a href="{% if individual %}{% url 'study_44en:individual:detail' subjectid=individual.SUBJECTID %}{% else %}{% url 'study_44en:individual:list' %}{% endif %}" 
-               class="btn btn-secondary btn-lg px-5 ms-3">Cancel</a>
+            <a href="{% if individual %}{% url 'study_44en:individual:detail' subjectid=individual.SUBJECTID %}{% else %}{% url 'study_44en:individual:list' %}{% endif %}"
+                class="btn btn-secondary btn-lg px-5 ms-3">Cancel</a>
         </div>
 
     </form>
@@ -383,7 +383,67 @@
 </main>
 
 
-<!-- Change Reason Modal -->
+{# ========== CHANGE REASON MODAL ========== #}
+{% if show_reason_form and detected_changes %}
 {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+
+{# Custom Scripts #}
+<script src="{% static 'studies/study_44en/js/change-reason-handler.js' %}"></script>
+
+{# Scripts Debug #}
+<script>
+console.log('=== INDIVIDUAL FORM SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('show_reason_form:', {{ show_reason_form|default:"false"|lower }});
+console.log('detected_changes count:', {{ detected_changes|length|default:0 }});
+{% if detected_changes %}
+console.log('Changes:', {{ detected_changes|safe|escapejs }});
+{% endif %}
+console.log('=====================================');
+</script>
+
+{# Form Interaction Scripts #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ETHNICITY_OTHER show/hide
+    const ethnicityRadios = document.querySelectorAll('input[name="ETHNICITY"]');
+    const ethnicityOtherInput = document.querySelector('input[name="ETHNICITY_OTHER"]');
+    if (ethnicityRadios.length && ethnicityOtherInput) {
+        function toggleEthnicityOther() {
+            const otherRadio = document.querySelector('input[name="ETHNICITY"][value="other"]');
+            if (otherRadio && otherRadio.checked) {
+                ethnicityOtherInput.style.display = '';
+            } else {
+                ethnicityOtherInput.style.display = 'none';
+            }
+        }
+        ethnicityRadios.forEach(radio => {
+            radio.addEventListener('change', toggleEthnicityOther);
+        });
+        toggleEthnicityOther();
+    }
+
+    // Change Reason Modal popup logic
+    {% if show_reason_form and detected_changes %}
+    var changeReasonModal = document.getElementById('changeReasonModal');
+    if (changeReasonModal) {
+        // Use Bootstrap modal if available
+        if (typeof bootstrap !== 'undefined') {
+            var modal = new bootstrap.Modal(changeReasonModal);
+            modal.show();
+        } else if (window.jQuery && window.jQuery.fn.modal) {
+            window.jQuery(changeReasonModal).modal('show');
+        } else {
+            changeReasonModal.style.display = 'block';
+        }
+    }
+    {% endif %}
+});
+</script>
 
 {% endblock %}

@@ -5,8 +5,10 @@ Following 43EN pattern with both 'edit' and 'update' aliases
 """
 
 from django.urls import path
+
+from .individual_case import views_individual_case
 from . import (
-    views_individual_case, views_individual_exposure,
+    views_individual_exposure,
     views_individual_followup, views_individual_sample
 )
 
