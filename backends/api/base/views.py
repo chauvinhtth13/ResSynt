@@ -96,7 +96,6 @@ def select_study(request):
                     
             except (ValueError, TypeError):
                 context['error_message'] = LoginMessages.INVALID_STUDY
-
     return render(request, 'default/select_study.html', context)
 
 

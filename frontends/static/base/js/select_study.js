@@ -1,21 +1,31 @@
-// frontends\static\js\default\select_study.js
+// frontends/static/base/js/select_study.js
 (() => {
+    'use strict';
+
     class StudySearcher {
         constructor() {
+            // DOM elements
             this.searchInput = document.getElementById('searchInput');
-            this.table = document.querySelector('.table');
-            this.tbody = document.getElementById('studyTableBody');
+            this.listBody = document.getElementById('studyTableBody');
             this.paginationControls = document.getElementById('paginationControls');
-            this.noResultsRow = null;
+            this.pageSizeSelect = document.getElementById('pageSizeSelect');
+            this.defaultEmptyState = document.getElementById('emptyStateDefault');
+            this.searchEmptyState = null;
             
             // Pagination settings
-            this.itemsPerPage = 6;
+            this.itemsPerPage = 5;
             this.currentPage = 1;
-            this.allRows = [];
-            this.filteredRows = [];
+            this.allItems = [];
+            this.filteredItems = [];
 
-            if (!this.searchInput || !this.tbody) {
-                console.error('StudySearcher: Required elements not found.');
+            // Debounce
+            this.searchTimer = null;
+            this.debounceDelay = 200;
+            
+            // Animation frame for smooth rendering
+            this.rafId = null;
+
+            if (!this.searchInput || !this.listBody) {
                 return;
             }
 
@@ -23,88 +33,149 @@
         }
 
         initialize() {
-            // Lấy tất cả <tr> có data-col="code" (chỉ study rows thật)
-            this.allRows = Array.from(this.tbody.querySelectorAll('tr')).filter(row => {
-                return row.querySelector('[data-col="code"]') !== null;
+            // Cache all study items
+            this.allItems = Array.from(this.listBody.querySelectorAll('.study-item[data-study-id]'));
+            this.filteredItems = [...this.allItems];
+            
+            // Pre-cache text content for faster search
+            this.allItems.forEach(item => {
+                const codeEl = item.querySelector('[data-col="code"]');
+                const nameEl = item.querySelector('[data-col="name"]');
+                item._searchText = (
+                    (codeEl?.textContent || '') + ' ' + 
+                    (nameEl?.textContent || '')
+                ).toLowerCase();
             });
             
-            this.filteredRows = [...this.allRows];
-            
-            console.log(`Found ${this.allRows.length} study rows`);
+            // Hide default empty state if we have items
+            if (this.allItems.length > 0 && this.defaultEmptyState) {
+                this.defaultEmptyState.style.display = 'none';
+            }
             
             this.attachEvents();
             this.updateDisplay();
         }
 
         attachEvents() {
-            this.searchInput.addEventListener('input', this.handleSearch.bind(this));
+            // Optimized search with debounce
+            this.searchInput.addEventListener('input', this.onSearchInput.bind(this));
+            
+            // Clear on Escape
+            this.searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.searchInput.value) {
+                    e.preventDefault();
+                    this.searchInput.value = '';
+                    this.handleSearch();
+                }
+            });
+
+            // Page size selector
+            if (this.pageSizeSelect) {
+                this.pageSizeSelect.addEventListener('change', (e) => {
+                    this.setPageSize(e.target.value);
+                });
+            }
+        }
+
+        onSearchInput() {
+            clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => this.handleSearch(), this.debounceDelay);
         }
 
         handleSearch() {
             const filter = this.searchInput.value.toLowerCase().trim();
             
-            console.log(`Searching for: "${filter}"`);
-            
-            // Remove previous no-results row
-            if (this.noResultsRow) {
-                this.noResultsRow.remove();
-                this.noResultsRow = null;
+            // Use cached search text for performance
+            if (filter) {
+                this.filteredItems = this.allItems.filter(item => 
+                    item._searchText.includes(filter)
+                );
+            } else {
+                this.filteredItems = [...this.allItems];
             }
 
-            // Filter rows based on code and name
-            this.filteredRows = this.allRows.filter(row => {
-                const idCell = row.querySelector('[data-col="code"]');
-                const nameCell = row.querySelector('[data-col="name"]');
-                
-                const idText = idCell ? idCell.textContent.toLowerCase().trim() : '';
-                const nameText = nameCell ? nameCell.textContent.toLowerCase().trim() : '';
-
-                return idText.includes(filter) || nameText.includes(filter);
-            });
-
-            console.log(`Found ${this.filteredRows.length} matching rows`);
-
-            // Reset to page 1 when searching
             this.currentPage = 1;
-            this.updateDisplay();
+            this.scheduleUpdate();
+        }
+
+        scheduleUpdate() {
+            // Cancel previous frame
+            if (this.rafId) {
+                cancelAnimationFrame(this.rafId);
+            }
+            // Schedule update on next frame for smooth rendering
+            this.rafId = requestAnimationFrame(() => this.updateDisplay());
         }
 
         updateDisplay() {
-            // Hide all rows first
-            this.allRows.forEach(row => {
-                row.style.display = 'none';
+            // Hide all items using CSS class (faster than style manipulation)
+            this.allItems.forEach(item => {
+                item.classList.add('hidden');
             });
 
-            // Remove old no-results row if exists
-            if (this.noResultsRow) {
-                this.noResultsRow.remove();
-                this.noResultsRow = null;
+            // Remove search empty state
+            this.removeSearchEmptyState();
+            
+            // Handle empty states
+            if (this.allItems.length === 0) {
+                // No studies at all - show default empty
+                if (this.defaultEmptyState) {
+                    this.defaultEmptyState.style.display = '';
+                }
+                this.updatePaginationInfo(0, 0, 0);
+                this.renderPagination();
+                return;
+            }
+            
+            // Hide default empty state
+            if (this.defaultEmptyState) {
+                this.defaultEmptyState.style.display = 'none';
             }
 
-            // Check if no results
-            if (this.filteredRows.length === 0) {
-                this.noResultsRow = document.createElement('tr');
-                this.noResultsRow.innerHTML = '<td colspan="5" class="text-center">No matching studies found</td>';
-                this.tbody.appendChild(this.noResultsRow);
-                
+            // No search results
+            if (this.filteredItems.length === 0) {
+                this.showSearchEmptyState();
                 this.updatePaginationInfo(0, 0, 0);
                 this.renderPagination();
                 return;
             }
 
             // Calculate pagination
-            const totalPages = Math.ceil(this.filteredRows.length / this.itemsPerPage);
+            const totalPages = Math.ceil(this.filteredItems.length / this.itemsPerPage);
             const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-            const endIndex = Math.min(startIndex + this.itemsPerPage, this.filteredRows.length);
+            const endIndex = Math.min(startIndex + this.itemsPerPage, this.filteredItems.length);
 
-            // Show current page rows
+            // Show current page items
             for (let i = startIndex; i < endIndex; i++) {
-                this.filteredRows[i].style.display = '';
+                this.filteredItems[i].classList.remove('hidden');
             }
 
-            // Update info and pagination
-            this.updatePaginationInfo(startIndex + 1, endIndex, this.filteredRows.length);
+            this.updatePaginationInfo(startIndex + 1, endIndex, this.filteredItems.length);
             this.renderPagination();
+        }
+
+        showSearchEmptyState() {
+            if (!this.searchEmptyState) {
+                this.searchEmptyState = document.createElement('div');
+                this.searchEmptyState.className = 'study-list__empty';
+                this.searchEmptyState.id = 'emptyStateSearch';
+                this.searchEmptyState.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state__icon">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                        </div>
+                        <h3 class="empty-state__title">No matching studies</h3>
+                        <p class="empty-state__text">Try a different search term</p>
+                    </div>
+                `;
+            }
+            this.listBody.appendChild(this.searchEmptyState);
+        }
+
+        removeSearchEmptyState() {
+            if (this.searchEmptyState && this.searchEmptyState.parentNode) {
+                this.searchEmptyState.remove();
+            }
         }
 
         updatePaginationInfo(start, end, total) {
@@ -112,7 +183,7 @@
             const endEl = document.getElementById('showingEnd');
             const totalEl = document.getElementById('totalStudies');
 
-            if (startEl) startEl.textContent = start;
+            if (startEl) startEl.textContent = total === 0 ? 0 : start;
             if (endEl) endEl.textContent = end;
             if (totalEl) totalEl.textContent = total;
         }
@@ -120,137 +191,133 @@
         renderPagination() {
             if (!this.paginationControls) return;
 
-            const totalPages = Math.ceil(this.filteredRows.length / this.itemsPerPage);
+            const totalPages = Math.ceil(this.filteredItems.length / this.itemsPerPage);
             this.paginationControls.innerHTML = '';
 
-            // If only 1 page or less, don't show pagination
-            if (totalPages <= 1) return;
+            // Use DocumentFragment for batch DOM updates
+            const fragment = document.createDocumentFragment();
 
-            // Previous button
-            this.paginationControls.appendChild(
-                this.createPaginationButton('Previous', 'Prev', this.currentPage === 1, () => {
-                    if (this.currentPage > 1) this.goToPage(this.currentPage - 1);
-                })
+            // Previous button - always show, disabled when no prev
+            fragment.appendChild(
+                this.createNavButton('‹', this.currentPage === 1 || totalPages === 0, -1)
             );
 
-            // Page numbers
-            this.renderPageNumbers(totalPages);
+            // Page numbers - show at least page 1 placeholder when empty
+            if (totalPages <= 1) {
+                fragment.appendChild(this.createPageButton(1, totalPages === 0));
+            } else {
+                this.appendPageNumbers(fragment, totalPages);
+            }
 
-            // Next button
-            this.paginationControls.appendChild(
-                this.createPaginationButton('Next', 'Next', this.currentPage === totalPages, () => {
-                    if (this.currentPage < totalPages) this.goToPage(this.currentPage + 1);
-                })
+            // Next button - always show, disabled when no next
+            fragment.appendChild(
+                this.createNavButton('›', this.currentPage === totalPages || totalPages <= 1, 1)
             );
+
+            this.paginationControls.appendChild(fragment);
         }
 
-        renderPageNumbers(totalPages) {
-            const maxVisibleButtons = 7;
+        appendPageNumbers(fragment, totalPages) {
+            const maxVisible = 5;
             
-            // If total pages <= 7, show all
-            if (totalPages <= maxVisibleButtons) {
+            if (totalPages <= maxVisible) {
                 for (let i = 1; i <= totalPages; i++) {
-                    this.paginationControls.appendChild(this.createPageNumberButton(i));
+                    fragment.appendChild(this.createPageButton(i));
                 }
                 return;
             }
 
-            // Logic for many pages
-            if (this.currentPage <= 4) {
-                // Beginning: 1 2 3 [4] 5 ... 20
-                for (let i = 1; i <= 5; i++) {
-                    this.paginationControls.appendChild(this.createPageNumberButton(i));
+            if (this.currentPage <= 3) {
+                for (let i = 1; i <= 3; i++) {
+                    fragment.appendChild(this.createPageButton(i));
                 }
-                this.paginationControls.appendChild(this.createEllipsis());
-                this.paginationControls.appendChild(this.createPageNumberButton(totalPages));
+                fragment.appendChild(this.createEllipsis());
+                fragment.appendChild(this.createPageButton(totalPages));
                 
-            } else if (this.currentPage >= totalPages - 3) {
-                // End: 1 ... 16 [17] 18 19 20
-                this.paginationControls.appendChild(this.createPageNumberButton(1));
-                this.paginationControls.appendChild(this.createEllipsis());
-                
-                for (let i = totalPages - 4; i <= totalPages; i++) {
-                    this.paginationControls.appendChild(this.createPageNumberButton(i));
+            } else if (this.currentPage >= totalPages - 2) {
+                fragment.appendChild(this.createPageButton(1));
+                fragment.appendChild(this.createEllipsis());
+                for (let i = totalPages - 2; i <= totalPages; i++) {
+                    fragment.appendChild(this.createPageButton(i));
                 }
                 
             } else {
-                // Middle: 1 ... 8 [9] 10 ... 20
-                this.paginationControls.appendChild(this.createPageNumberButton(1));
-                this.paginationControls.appendChild(this.createEllipsis());
-                
+                fragment.appendChild(this.createPageButton(1));
+                fragment.appendChild(this.createEllipsis());
                 for (let i = this.currentPage - 1; i <= this.currentPage + 1; i++) {
-                    this.paginationControls.appendChild(this.createPageNumberButton(i));
+                    fragment.appendChild(this.createPageButton(i));
                 }
-                
-                this.paginationControls.appendChild(this.createEllipsis());
-                this.paginationControls.appendChild(this.createPageNumberButton(totalPages));
+                fragment.appendChild(this.createEllipsis());
+                fragment.appendChild(this.createPageButton(totalPages));
             }
         }
 
-        createPageNumberButton(pageNum) {
+        createPageButton(pageNum, forceDisabled = false) {
             const li = document.createElement('li');
-            li.className = `page-item ${this.currentPage === pageNum ? 'active' : ''}`;
+            const isActive = this.currentPage === pageNum && !forceDisabled;
+            const isDisabled = forceDisabled;
             
-            const a = document.createElement('a');
-            a.className = 'page-link';
-            a.href = '#';
-            a.textContent = pageNum;
-            a.setAttribute('aria-label', `Page ${pageNum}`);
+            li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
             
-            if (this.currentPage !== pageNum) {
-                a.addEventListener('click', (e) => {
+            const btn = document.createElement('a');
+            btn.className = 'page-link';
+            btn.href = '#';
+            btn.textContent = pageNum;
+            
+            if (!isActive && !isDisabled) {
+                btn.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.goToPage(pageNum);
                 });
-            } else {
-                a.setAttribute('aria-current', 'page');
             }
             
-            li.appendChild(a);
+            li.appendChild(btn);
             return li;
         }
 
-        createPaginationButton(label, symbol, disabled, onClick) {
+        createNavButton(symbol, disabled, direction) {
             const li = document.createElement('li');
-            li.className = `page-item ${disabled ? 'disabled' : ''}`;
+            li.className = 'page-item' + (disabled ? ' disabled' : '');
             
-            const a = document.createElement('a');
-            a.className = 'page-link';
-            a.href = '#';
-            a.setAttribute('aria-label', label);
-            a.innerHTML = `<span aria-hidden="true">${symbol}</span>`;
+            const btn = document.createElement('a');
+            btn.className = 'page-link';
+            btn.href = '#';
+            btn.innerHTML = symbol;
             
             if (!disabled) {
-                a.addEventListener('click', (e) => {
+                btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    onClick();
+                    this.goToPage(this.currentPage + direction);
                 });
             }
             
-            li.appendChild(a);
+            li.appendChild(btn);
             return li;
         }
 
         createEllipsis() {
             const li = document.createElement('li');
             li.className = 'page-item disabled';
-            li.innerHTML = '<span class="page-link">...</span>';
+            li.innerHTML = '<span class="page-link">…</span>';
             return li;
         }
 
         goToPage(page) {
             this.currentPage = page;
-            this.updateDisplay();
-            
-            // Scroll to top of table
-            if (this.table) {
-                this.table.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            this.scheduleUpdate();
+        }
+
+        setPageSize(size) {
+            this.itemsPerPage = parseInt(size, 10);
+            this.currentPage = 1;
+            this.scheduleUpdate();
         }
     }
 
-    // Initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
+    // Initialize
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => new StudySearcher());
+    } else {
         new StudySearcher();
-    });
+    }
 })();

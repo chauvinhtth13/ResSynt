@@ -3,26 +3,29 @@
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE|default:'vi' }}">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ResSync Platform - Research Study Management System">
-    <title>{% block title %}ResSync Platform{% endblock %}</title>
-    <link rel="icon" href="{% static 'images/default/favicon.ico' %}" type="image/x-icon">
-
+    <meta name="description" content="{% trans 'ResSynt Research Management Platform' %}">
+    <title>{% block title %}{% trans "ResSynt Research Management Platform" %}{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'base/images/favicon.ico' %}" type="image/x-icon">
+    
+    <!-- Fonts -->
+    <link rel="stylesheet" href="{% static 'fonts/chakra-petch/chakra-petch.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/bootstrap-icons/bootstrap-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/fontawesome/css/all.min.css' %}">
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
-    <link rel="stylesheet" href="{% static 'font/bootstrap-icons/bootstrap-icons.css' %}">
     <link rel="stylesheet" href="{% static 'base/css/base.css' %}">
 
-    {% block extra_head %}{% endblock %}
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% block header %}{% endblock %}
-    {% block main %}{% endblock %}
-    {% block footer %}{% endblock %}
+    {% block base_main %}{% endblock %}
 
-    <script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/jquery-3.7.1.min.js' %}"></script>
     <script nonce="{{ request.csp_nonce }}" src="{% static 'bootstrap/js/bootstrap.bundle.js' %}"></script>
-    
     {% block extra_js %}{% endblock %}
 </body>
 </html>

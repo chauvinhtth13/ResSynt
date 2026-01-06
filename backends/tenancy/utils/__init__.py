@@ -1,84 +1,35 @@
-# backend/tenancy/utils/__init__.py
 """
-Tenancy utilities package
+Tenancy utilities package.
 """
-
-# Core utilities
-from .tenancy_utils import (
-    TenancyUtils,
-    validate_study_code,
-    validate_database_name,
-    validate_site_code,
-    validate_username,
-    validate_email,
-    validate_permission_code,
-    validate_schema_name,
-    get_model_permissions,
-    get_all_study_permissions,
-    create_custom_permission,
-)
-
-# Role management
-from .role_manager import (
-    StudyRoleManager,
-    RoleTemplate,
-    initialize_study_roles,
-    sync_study_permissions,
-    validate_study_roles,
-    get_available_role_keys,
-    get_available_display_names,
-    convert_key_to_display,
-    convert_display_to_key,
-    get_role_description,
-    parse_group_to_role_key,
-)
-
-# Role checker
-from .role_checker import (
-    RoleChecker,
-    get_user_role,
-    check_permission,
-    is_study_admin,
-    print_user_permissions,
-)
-
-# Database utilities
+from .tenancy_utils import TenancyUtils, validate_study_code, validate_database_name
+from .role_manager import RoleTemplate, StudyRoleManager, initialize_study_roles
+from .role_checker import RoleChecker, get_user_role, check_permission, is_study_admin
 from .db_study_creator import DatabaseStudyCreator
+from .backup_manager import BackupManager, get_backup_manager
 
 __all__ = [
-    # Core utilities
+    # Main utilities
     'TenancyUtils',
-    'validate_study_code',
-    'validate_database_name',
-    'validate_site_code',
-    'validate_username',
-    'validate_email',
-    'validate_permission_code',
-    'validate_schema_name',
-    'get_model_permissions',
-    'get_all_study_permissions',
-    'create_custom_permission',
     
     # Role management
-    'StudyRoleManager',
     'RoleTemplate',
-    'initialize_study_roles',
-    'sync_study_permissions',
-    'validate_study_roles',
-    'get_available_role_keys',
-    'get_available_display_names',
-    'convert_key_to_display',
-    'convert_display_to_key',
-    'get_role_description',
-    'parse_group_to_role_key',
-    
-    # ✨ NEW: Role checker
+    'StudyRoleManager',
     'RoleChecker',
+    
+    # Convenience functions
+    'initialize_study_roles',
     'get_user_role',
     'check_permission',
     'is_study_admin',
-    'print_user_permissions',
     
-    # Database utilities
+    # Database
     'DatabaseStudyCreator',
+    
+    # Backup
+    'BackupManager',
+    'get_backup_manager',
+    
+    # Validators
+    'validate_study_code',
+    'validate_database_name',
 ]

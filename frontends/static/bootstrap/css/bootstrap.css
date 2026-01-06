@@ -3402,6 +3402,7 @@ textarea.form-control-lg {
   margin-left: 0;
 }
 
+
 .dropdown-menu {
   --bs-dropdown-zindex: 1000;
   --bs-dropdown-min-width: 10rem;
@@ -3630,6 +3631,19 @@ textarea.form-control-lg {
   opacity: 1;
 }
 
+.dropdown-menu > li {
+    margin-bottom: var(--bs-dropdown-item-gap);
+}
+
+.dropdown-menu > li:last-child {
+    margin-bottom: 0;
+}
+
+.dropdown-menu > li > form {
+    margin: 0;
+    padding: 0;
+}
+
 .dropdown-item {
   display: block;
   width: 100%;
@@ -3648,11 +3662,11 @@ textarea.form-control-lg {
   color: var(--bs-dropdown-link-hover-color);
   background-color: var(--bs-dropdown-link-hover-bg);
 }
-/* .dropdown-item.active, .dropdown-item:active {
+.dropdown-item.active, .dropdown-item:active {
   color: var(--bs-dropdown-link-active-color);
   text-decoration: none;
   background-color: var(--bs-dropdown-link-active-bg);
-} */
+}
 .dropdown-item.disabled, .dropdown-item:disabled {
   color: var(--bs-dropdown-link-disabled-color);
   pointer-events: none;

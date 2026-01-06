@@ -1,0 +1,100 @@
+<!-- frontends\templates\includes\features_list.html -->
+{% load static i18n %}
+
+<!-- Brand Header -->
+<header class="d-flex gap-4 align-items-center mb-5">
+    <img src="{% static 'base/images/logo.png' %}" alt="RESSYNT Logo" class="logo">
+    <div class="d-flex flex-column justify-content-center">
+        <h1 class="title">RESSYNT</h1>
+        <small class="subtitle">{% trans "Research Data Management Platform" %}</small>
+    </div>
+</header>
+
+<!-- Headline -->
+<h2 class="headline-neon mb-4">{% trans "Synchronize your science. Simplify your success." %}</h2>
+
+<!-- Features Grid -->
+<div class="row g-4 mb-4" role="list" aria-label="{% trans 'Key Features' %}">
+
+    <article class="col-6" role="listitem">
+        <div class="feature-card feature-card--highlight">
+            <span class="feature-number">01</span>
+            <div class="feature-icon feature-icon--animated">
+                <i class="bi bi-file-earmark-check"></i>
+            </div>
+            <h3 class="feature-title">{% trans "Smart Data Capture" %}</h3>
+            <p class="feature-desc">
+                {% trans "AI-powered eCRF with smart validation to ensure data accuracy." %}
+            </p>
+        </div>
+    </article>
+
+    <article class="col-6" role="listitem">
+        <div class="feature-card">
+            <span class="feature-number">02</span>
+            <div class="feature-icon feature-icon--animated">
+                <i class="bi bi-bar-chart"></i>
+            </div>
+            <h3 class="feature-title">{% trans "Study Metrics" %}</h3>
+            <p class="feature-desc">
+                {% trans "Real-time dashboards for screening/enrollment, queries, and protocol tracking." %}
+            </p>
+        </div>
+    </article>
+
+    <article class="col-6" role="listitem">
+        <div class="feature-card">
+            <span class="feature-number">03</span>
+            <div class="feature-icon feature-icon--animated">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <h3 class="feature-title">{% trans "Visit Management" %}</h3>
+            <p class="feature-desc">
+                {% trans "Automated visit scheduling with smart reminders for compliance." %}
+            </p>
+        </div>
+    </article>
+
+    <article class="col-6" role="listitem">
+        <div class="feature-card feature-card--highlight">
+            <span class="feature-number">04</span>
+            <div class="feature-icon feature-icon--animated">
+                <i class="bi bi-shield-lock"></i>
+            </div>
+            <h3 class="feature-title">{% trans "Data Privacy" %}</h3>
+            <p class="feature-desc">
+                {% trans "GDPR-compliant with AES-256-GCM encryption and role-based access." %}
+            </p>
+        </div>
+    </article>
+</div>
+
+<div class="trust-signals mb-4">
+    <p class="trust-signals-label">{% trans "Compliance & Security" %}</p>
+    <div class="trust-badges">
+        <div class="trust-badge" title="{% trans 'GDPR Compliant' %}">
+            <i class="bi bi-shield-check"></i>
+            <span>GDPR</span>
+        </div>
+        <div class="trust-badge" title="{% trans 'AES-256 Encryption' %}">
+            <i class="bi bi-lock"></i>
+            <span>AES-256-GCM</span>
+        </div>
+        <div class="trust-badge" title="{% trans '99.9% Uptime SLA' %}">
+            <i class="bi bi-cloud-check"></i>
+            <span>99.9% SLA</span>
+        </div>
+    </div>
+</div>
+
+
+<!-- Footer -->
+<footer class="features-footer">
+    <p class="mb-1">
+        {% trans "Need help? Contact us at" %}
+        <a href="mailto:ressynt@oucru.org" class="footer-email">ressynt@oucru.org</a>
+    </p>
+    <p class="footer-credit mb-0">
+        {% trans "Designed by Chau Vinh & Pham Tuong Duy" %}
+    </p>
+</footer>

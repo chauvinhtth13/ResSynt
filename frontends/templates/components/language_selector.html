@@ -1,0 +1,36 @@
+{% load i18n %}
+{% with dropdown_id=id|default:"languageSelector" selector_variant=variant|default:"basic" %}
+
+{% if selector_variant == "glass" %}
+<nav class="nav-language" aria-label="{% trans 'Language selection' %}">
+  <div class="dropdown">
+    <button class="btn btn-glass-neon dropdown-toggle" 
+            type="button" 
+            id="{{ dropdown_id }}"
+            data-bs-toggle="dropdown" 
+            aria-expanded="false"
+            aria-haspopup="menu">
+      <i class="bi bi-globe2" aria-hidden="true"></i>
+      {% get_language_info for LANGUAGE_CODE as current %}
+      <span>{{ current.name_local }}</span>
+    </button>
+    {% include "components/_language_menu.html" %}
+  </div>
+</nav>
+
+{% else %}
+<div class="dropdown">
+  <button class="btn btn-nav-action btn-language dropdown-toggle" 
+          type="button" 
+          id="{{ dropdown_id }}"
+          data-bs-toggle="dropdown"
+          aria-expanded="false" 
+          aria-haspopup="menu"
+          aria-label="{% trans 'Select language' %}">
+    {{ LANGUAGE_CODE|upper }}
+  </button>
+  {% include "components/_language_menu.html" %}
+</div>
+{% endif %}
+
+{% endwith %}

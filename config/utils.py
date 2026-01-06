@@ -1,97 +1,157 @@
 """
-Configuration utilities using psycopg3
+Configuration utilities for database and study app management.
 """
 import logging
-from typing import Dict, List, Optional, Tuple
-from pathlib import Path
+import re
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
+
+# Valid identifier pattern (PostgreSQL)
+_IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+
+def validate_identifier(name: str, context: str = "identifier") -> str:
+    """
+    Validate PostgreSQL identifier to prevent SQL injection.
+    
+    Args:
+        name: Identifier to validate
+        context: Description for error message
+        
+    Returns:
+        Validated identifier
+        
+    Raises:
+        ValueError: If identifier is invalid
+    """
+    if not name or not isinstance(name, str):
+        raise ValueError(f"Invalid {context}: must be non-empty string")
+    
+    name = name.strip()
+    
+    if len(name) > 63:  # PostgreSQL identifier limit
+        raise ValueError(f"Invalid {context}: exceeds 63 characters")
+    
+    if not _IDENTIFIER_PATTERN.match(name):
+        raise ValueError(f"Invalid {context}: contains invalid characters")
+    
+    # Block reserved/dangerous names
+    reserved = {'pg_', 'information_schema', 'pg_catalog'}
+    if any(name.lower().startswith(r) for r in reserved):
+        raise ValueError(f"Invalid {context}: reserved name")
+    
+    return name
+
+
+def parse_schemas(schema_str: str) -> List[str]:
+    """
+    Parse and validate comma-separated schema string.
+    
+    Args:
+        schema_str: Comma-separated schema names
+        
+    Returns:
+        List of validated schema names
+    """
+    if not schema_str:
+        return ["public"]
+    
+    schemas = []
+    for s in schema_str.split(','):
+        s = s.strip()
+        if s:
+            schemas.append(validate_identifier(s, "schema"))
+    
+    return schemas if schemas else ["public"]
 
 
 def load_study_apps() -> Tuple[List[str], bool]:
     """
-    Load study apps with comprehensive error handling
+    Load study apps with error handling.
     
     Returns:
-        Tuple of (study_apps: List[str], has_errors: bool)
+        Tuple of (study_apps, has_errors)
     """
     try:
         from backends.studies.study_loader import StudyAppLoader
-        
-        # Get study apps
         study_apps = StudyAppLoader.get_loadable_study_apps()
         
         if study_apps:
             logger.info(f"Loaded {len(study_apps)} study app(s)")
-            return study_apps, False
-        else:
-            logger.debug("No study apps to load")
-            return [], False
-
+        
+        return study_apps, False
+        
     except ImportError as e:
         logger.error(f"Failed to import study_loader: {e}")
         return [], True
     except Exception as e:
-        logger.error(f"Error loading study apps: {e}")
+        # Don't expose internal details
+        logger.error(f"Error loading study apps: {type(e).__name__}")
         return [], True
 
 
 class DatabaseConfig:
-    """Centralized database configuration management"""
+    """Database configuration builder with security validation."""
 
-    REQUIRED_KEYS = {
+    DEFAULT_ENGINE = 'django.db.backends.postgresql'
+    
+    REQUIRED_KEYS = frozenset({
         "ENGINE", "NAME", "USER", "PASSWORD", "HOST", "PORT",
         "ATOMIC_REQUESTS", "AUTOCOMMIT", "CONN_MAX_AGE",
         "CONN_HEALTH_CHECKS", "TIME_ZONE", "OPTIONS", "TEST",
-    }
-
-    DEFAULT_ENGINE = 'django.db.backends.postgresql'
+    })
 
     @classmethod
-    def get_base_config(cls, env) -> Dict:
-        """Get base connection info"""
+    def _build_config(
+        cls,
+        db_name: str,
+        user: str,
+        password: str,
+        host: str,
+        port: int,
+        conn_max_age: int,
+        options: Dict,
+    ) -> Dict:
+        """Build complete database configuration."""
         return {
             "ENGINE": cls.DEFAULT_ENGINE,
-            "NAME": env("PGDATABASE"),
-            "USER": env("PGUSER"),
-            "PASSWORD": env("PGPASSWORD"),
-            "HOST": env("PGHOST"),
-            "PORT": env.int("PGPORT"),
-        }
-
-    @classmethod
-    def add_default_settings(cls, config: Dict, conn_max_age: int = 0) -> Dict:
-        """Add required Django settings"""
-        config.update({
+            "NAME": db_name,
+            "USER": user,
+            "PASSWORD": password,
+            "HOST": host,
+            "PORT": port,
             "ATOMIC_REQUESTS": False,
             "AUTOCOMMIT": True,
             "CONN_MAX_AGE": conn_max_age,
             "CONN_HEALTH_CHECKS": True,
             "TIME_ZONE": None,
-            "OPTIONS": {},
+            "OPTIONS": options,
             "TEST": {
                 "CHARSET": None,
                 "COLLATION": None,
                 "NAME": None,
                 "MIRROR": None,
             },
-        })
-        return config
+        }
+
+    @classmethod
+    def _build_search_path(cls, schemas: List[str]) -> str:
+        """Build validated search_path string."""
+        validated = [validate_identifier(s, "schema") for s in schemas]
+        return ','.join(validated + ['public'])
 
     @classmethod
     def get_management_db(cls, env) -> Dict:
-        """Get management database configuration"""
-        config = cls.get_base_config(env)
+        """Get management database configuration."""
+        schema = env("MANAGEMENT_DB_SCHEMA", default="management")
+        validated_schema = validate_identifier(schema, "management schema")
         
-        # Use longer connection age for management DB (frequently used)
-        conn_max_age = 0 if env('DEBUG') else 600
-        config = cls.add_default_settings(config, conn_max_age)
+        conn_max_age = 0 if env.bool("DEBUG", default=False) else 600
         
-        # Management database specific OPTIONS
-        management_schema = env("PGSCHEMA", default="tenancy")
-        config["OPTIONS"] = {
-            "options": f"-c search_path={management_schema},public",
-            "sslmode": "allow",
+        options = {
+            "options": f"-c search_path={validated_schema},public",
+            "sslmode": "prefer",  # Prefer SSL when available
             "connect_timeout": 10,
             "keepalives": 1,
             "keepalives_idle": 30,
@@ -100,85 +160,74 @@ class DatabaseConfig:
             "application_name": "django_management",
         }
         
-        cls.validate_config(config)
+        config = cls._build_config(
+            db_name=env("PGDATABASE"),
+            user=env("PGUSER"),
+            password=env("PGPASSWORD"),
+            host=env("PGHOST"),
+            port=env.int("PGPORT"),
+            conn_max_age=conn_max_age,
+            options=options,
+        )
+        
+        cls.validate_config(config, "management")
         return config
 
     @classmethod
-    def get_study_db_config(cls, db_name: str, env) -> Dict:
+    def get_study_db_config(cls, db_name: str, env, management_db: Dict = None) -> Dict:
         """
-        Get study database configuration with all schemas
+        Get study database configuration.
         
         Args:
-            db_name: Study database name
+            db_name: Study database name (will be validated)
             env: Environment variables
-            
-        Returns:
-            Complete database configuration
+            management_db: Optional cached management config
         """
-        # Get base config from management DB
-        main_db = cls.get_management_db(env)
+        # Validate database name
+        validate_identifier(db_name, "database name")
         
-        # Study database specific settings
-        config = {
-            "ENGINE": cls.DEFAULT_ENGINE,
-            "NAME": db_name,
-            "USER": env("STUDY_PGUSER", default=main_db["USER"]),
-            "PASSWORD": env("STUDY_PGPASSWORD", default=main_db["PASSWORD"]),
-            "HOST": env("STUDY_PGHOST", default=main_db["HOST"]),
-            "PORT": env.int("STUDY_PGPORT", default=main_db["PORT"]),
-        }
+        if management_db is None:
+            management_db = cls.get_management_db(env)
         
-        # Optimized connection settings for study databases
-        conn_max_age = 0 if env('DEBUG') else 300  # 5 minutes for study DBs
-        config = cls.add_default_settings(config, conn_max_age)
+        # Inherit credentials from management DB if not specified
+        user = env("STUDY_PGUSER", default="") or management_db["USER"]
+        password = env("STUDY_PGPASSWORD", default="") or management_db["PASSWORD"]
+        host = env("STUDY_PGHOST", default="") or management_db["HOST"]
+        port = env.int("STUDY_PGPORT", default=0) or management_db["PORT"]
         
-        # Parse and set up multiple schemas
-        schemas = cls.parse_study_schemas(env)
-        search_path = ','.join(schemas) + ',public'
+        # Build validated search path
+        schemas = parse_schemas(env("STUDY_DB_SCHEMA", default="data"))
+        search_path = cls._build_search_path(schemas)
         
-        # Study database specific OPTIONS
-        config["OPTIONS"] = {
+        conn_max_age = 0 if env.bool("DEBUG", default=False) else 300
+        
+        options = {
             "options": f"-c search_path={search_path}",
-            "sslmode": main_db["OPTIONS"]["sslmode"],
-            "connect_timeout": 5,  # Faster timeout for study DBs
+            "sslmode": management_db["OPTIONS"].get("sslmode", "prefer"),
+            "connect_timeout": 5,
             "keepalives": 1,
-            "keepalives_idle": 60,  # Longer idle for less used DBs
+            "keepalives_idle": 60,
             "keepalives_interval": 10,
             "keepalives_count": 3,
-            "application_name": f"django_study_{db_name}",
+            "application_name": f"django_{db_name}",
         }
+        
+        config = cls._build_config(
+            db_name=db_name,
+            user=user,
+            password=password,
+            host=host,
+            port=port,
+            conn_max_age=conn_max_age,
+            options=options,
+        )
         
         cls.validate_config(config, db_name)
         return config
 
     @classmethod
-    def parse_study_schemas(cls, env) -> List[str]:
-        """
-        Parse study schemas from environment variable
-        
-        Returns:
-            List of schema names
-        """
-        study_schemas_str = env('STUDY_DB_SCHEMA', default='data')
-        
-        if ',' in study_schemas_str:
-            # Split by comma and strip whitespace
-            return [s.strip() for s in study_schemas_str.split(',')]
-        else:
-            return [study_schemas_str.strip()]
-
-    @classmethod
     def validate_config(cls, config: Dict, db_name: str = "default") -> None:
-        """
-        Validate database configuration has all required keys
-        
-        Args:
-            config: Database configuration dictionary
-            db_name: Database name for error messages
-            
-        Raises:
-            ValueError: If required keys are missing
-        """
+        """Validate database configuration has all required keys."""
         missing = cls.REQUIRED_KEYS - set(config.keys())
         if missing:
             raise ValueError(f"Database '{db_name}' missing keys: {sorted(missing)}")

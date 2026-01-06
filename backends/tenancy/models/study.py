@@ -25,7 +25,7 @@ class Study(models.Model):
         unique=True,
         db_index=True,
         validators=[RegexValidator(
-            regex=r'^[A-z0-9_]+$',
+            regex=r'^[A-Z0-9_]+$',  # Use A-Z for uppercase only
             message="Only uppercase letters, numbers, underscores"
         )]
     )
@@ -69,7 +69,7 @@ class Study(models.Model):
         db_table = 'study_information'
         verbose_name = "Studies Information"
         verbose_name_plural = "Studies Information"
-        ordering = ['-created_at', 'code']
+        ordering = ['code']  # Simple consistent ordering
 
     def clean(self):
         """Validate and generate db_name"""

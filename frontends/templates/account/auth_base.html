@@ -1,49 +1,68 @@
 <!-- frontends\templates\account\auth_base.html -->
 {% extends 'base.html' %}
-{% load static %}
-{% load i18n %}
+{% load static i18n %}
 
 {% block title %}Sign In - ResSync Platform{% endblock %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'base/css/authentication.css' %}" />
+{% block extra_css %}
+
+<link rel="stylesheet" href="{% static 'base/css/authentication.css' %}">
+
+<!-- Background Style -->
+<style>
+    html,
+    body {
+        background: 
+            linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+            url("{% static 'base/images/bg.jpg' %}") no-repeat center center fixed;
+        background-size: cover;
+    }
+</style>
+
 {% endblock %}
 
-{% block main %}
-<main class="container-fluid row">
+{% block base_main %}
+<main class="container-fluid row p-0 m-0">
 
-    <!-- Features Section - Hidden on mobile, visible from lg -->
-    <section class="col-lg-7 d-none d-lg-flex flex-column left-side">
-        {% include 'includes/misc/features_list.html' %}
+    <!-- Features Section -->
+    <section class="col-lg-7 d-none d-lg-flex flex-column min-vh-100 justify-content-center ps-5 pe-4 py-5">
+        {% include 'components/features_list.html' %}
     </section>
 
     <!-- Login Section -->
-    <section class="col-12 col-lg-5 right-side justify-content-between">
-        <!-- Header with Language Selector -->
-        <div class="d-flex justify-content-end align-items-stretch p-3 flex-shrink-0">
-            {% include 'includes/dropdown_header/language_selector.html' %}
+    <section class="col-12 col-lg-5 d-flex flex-column min-vh-100 ps-4 pe-5 py-5">
+        <!-- Language Selector -->
+        <header class="d-flex justify-content-end mb-4">
+            {% include "components/language_selector.html" with variant="glass" %}
+        </header>
+
+        <!-- Auth Form -->
+        <div class="flex-grow-1 d-flex justify-content-center align-items-center">
+            {% block auth_content %}{% endblock %}
         </div>
 
-        <!-- Login Content -->
-        {% block auth_content %}
-        {% endblock %}
-
-        <!-- Footer -->
-        <footer class="text-center mt-auto pb-3 flex-shrink-0">
-            <p class="small text-muted mb-1">
-                {% trans 'Need help? Contact our support team at:' %}
-                <a href="mailto:ressync@oucru.org" class="link-royal-blue fw-medium">
-                    ressync@oucru.org
-                </a>
+        <!-- Footer - Mobile only -->
+        <footer class="auth-mobile-footer">
+            <p class="mb-0">
+                {% trans "Need help? Contact us at" %}
+                <a href="mailto:ressynt@oucru.org" class="footer-email">ressynt@oucru.org</a>
             </p>
-            <p class="small text-muted mb-0">
-                {% trans 'Designed by Chau Vinh & Pham Tuong Duy' %}
+            <p class="footer-credit mb-0">
+                {% trans "Designed by Chau Vinh & Pham Tuong Duy" %}
             </p>
         </footer>
     </section>
 </main>
+
+<noscript>
+    <style>
+        .password-toggle-btn { display: none !important; }
+        .btn-loading { display: none !important; }
+        .feature-icon--animated { animation: none !important; }
+    </style>
+</noscript>
 {% endblock %}
 
 {% block extra_js %}
-<script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/authentication.js' %}" defer></script>
+ <script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/authentication.js' %}"></script>
 {% endblock %}
