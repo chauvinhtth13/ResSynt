@@ -35,30 +35,36 @@
             </p>
         </div>
     </div>
-    {% elif form.errors and not is_locked_out %}
-    <!-- Standard Error Messages -->
+    {% elif prg_has_errors or form.errors %}
+    <!-- Standard Error Messages (PRG pattern or form errors) -->
     <div class="alert alert-danger d-flex align-items-center px-3 py-2" role="alert" aria-live="polite">
         <i class="bi bi-exclamation-triangle-fill me-3" aria-hidden="true"></i>
         <div class="small">
+            {% if prg_has_errors %}
+            {% trans "Invalid username or password. Please try again." %}
+            {% else %}
             {% for error in form.non_field_errors %}
             {{ error }}
             {% endfor %}
+            {% endif %}
         </div>
     </div>
-    {% endif %}
-
-    <!-- Django Messages (for warnings) -->
-    {% if messages %}
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }} d-flex align-items-center px-3 py-2 mb-3" role="alert">
-        {% if message.tags == 'warning' %}
-        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
-        {% elif message.tags == 'error' %}
+    {% elif messages %}
+    <!-- Django Messages - only show if no lockout or form errors (avoid duplicates) -->
+    {% with first_message=messages|first %}
+    {% if first_message %}
+    <div class="alert alert-{{ first_message.tags|default:'warning' }} d-flex align-items-center px-3 py-2 mb-3" role="alert" aria-live="polite">
+        {% if 'error' in first_message.tags or 'danger' in first_message.tags %}
         <i class="bi bi-x-circle-fill me-2" aria-hidden="true"></i>
+        {% elif 'warning' in first_message.tags %}
+        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+        {% else %}
+        <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>
         {% endif %}
-        <small>{{ message }}</small>
+        <small>{{ first_message }}</small>
     </div>
-    {% endfor %}
+    {% endif %}
+    {% endwith %}
     {% endif %}
 
     <!-- Login Form -->
@@ -73,7 +79,7 @@
                 </label>
                 <div class="input-icon-wrapper">
                     <input type="text" id="{{ form.login.id_for_label }}" name="{{ form.login.html_name }}"
-                        value="{{ form.login.value|default:'' }}" class="form-control form-control--with-icon"
+                        value="{{ prg_username|default:form.login.value|default:'' }}" class="form-control form-control--with-icon"
                         placeholder="{% trans 'Enter username or email' %}" autocomplete="username" autocapitalize="none"
                         spellcheck="false" required autofocus aria-required="true">
                     <i class="bi bi-person input-icon" aria-hidden="true"></i>

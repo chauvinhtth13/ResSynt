@@ -1,25 +1,48 @@
 /* ==========================================================================
-   AUTHENTICATION CSS - Reorganized Version
+   AUTHENTICATION.CSS - Login/Register Page Styles
+   
+   Thứ tự load: Bootstrap 5 → base.css → authentication.css
+   
+   Structure:
+   1. Page-specific Variables
+   2. Typography & Branding
+   3. Form Components
+   4. Auth Buttons
+   5. Auth Card Layout
+   6. Feature Cards
+   7. Trust Signals & Footer
+   8. Accessibility
+   9. Animations
+   10. Responsive Design
    ========================================================================== */
 
+
 /* ==========================================================================
-   1. CSS VARIABLES
+   1. PAGE-SPECIFIC VARIABLES
    ========================================================================== */
 
 :root {
-    /* ---------- Typography ---------- */
+    /* ========== Typography ========== */
     --font-primary: 'Chakra Petch', sans-serif;
     --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
-    /* ---------- Authentication Specific ---------- */
+    /* ========== Auth Sizing ========== */
     --auth-logo-height: 100px;
     --auth-title-size: 3rem;
     --auth-subtitle-size: 0.875rem;
     --auth-headline-size: 2.5rem;
+    --auth-card-max-width: 400px;
+    --auth-card-padding: 2.5rem;
+    
+    /* ========== Validation ========== */
+    --color-error: #ff6b7a;
+    --color-error-bg: rgba(220, 53, 69, 0.15);
+    --color-error-border: rgba(220, 53, 69, 0.3);
 }
 
+
 /* ==========================================================================
-   2. BASE TYPOGRAPHY & BRANDING
+   2. TYPOGRAPHY & BRANDING
    ========================================================================== */
 
 /* ---------- Logo ---------- */
@@ -29,7 +52,7 @@
     filter: drop-shadow(var(--shadow-text));
 }
 
-/* ---------- Title ---------- */
+/* ---------- Title (Metallic Gradient) ---------- */
 .title {
     margin: -8px 0 0 0;
     padding: 0;
@@ -38,50 +61,41 @@
     font-weight: 700;
     letter-spacing: 0.4em;
     text-transform: uppercase;
-    background: linear-gradient(
-        180deg,
+    background: linear-gradient(180deg,
         #ffffff 0%,
         #d4d4d4 25%,
         #737373 50%,
         #a3a3a3 75%,
         #ffffff 100%
     );
-    -webkit-background-clip: text;
     background-clip: text;
+    -webkit-background-clip: text;
     color: transparent;
     -webkit-text-stroke: 2px transparent;
     filter: drop-shadow(var(--shadow-text));
 }
 
-.title_logo {
-    height: 1.2em;
-    vertical-align: middle;
-}
-
 /* ---------- Subtitle ---------- */
-.subtitle {
-    margin: 0;
-    padding-left: 0.5rem;
+.subtitle,
+.subtitle-logo {
     font-family: var(--font-primary);
-    font-size: var(--auth-subtitle-size);
     font-weight: 700;
     letter-spacing: 0.25em;
     text-transform: uppercase;
     color: var(--color-accent-cyan);
     opacity: 0.9;
     text-shadow: 0 0 10px rgba(var(--rgb-accent-cyan), 0.4);
+}
+
+.subtitle {
+    margin: 0;
+    padding-left: 0.5rem;
+    font-size: var(--auth-subtitle-size);
     border-left: 3px solid var(--color-accent-cyan);
 }
 
 .subtitle-logo {
-    font-family: var(--font-primary);
     font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--color-accent-cyan);
-    opacity: 0.9;
-    text-shadow: 0 0 10px rgba(var(--rgb-accent-cyan), 0.4);
 }
 
 /* ---------- Headline Neon ---------- */
@@ -93,8 +107,7 @@
     font-weight: 700;
     line-height: 1.3;
     letter-spacing: 0.03em;
-    background: linear-gradient(
-        90deg,
+    background: linear-gradient(90deg,
         var(--color-accent-cyan) 0%,
         var(--color-accent-teal) 25%,
         var(--color-accent-purple) 50%,
@@ -102,8 +115,8 @@
         var(--color-accent-cyan) 100%
     );
     background-size: 200% 100%;
-    -webkit-background-clip: text;
     background-clip: text;
+    -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: headlineGradient 6s linear infinite;
 }
@@ -115,15 +128,8 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(
-        90deg,
-        var(--color-accent-cyan) 0%,
-        var(--color-accent-teal) 25%,
-        var(--color-accent-purple) 50%,
-        var(--color-accent-pink) 75%,
-        var(--color-accent-cyan) 100%
-    );
-    background-size: 200% 100%;
+    background: inherit;
+    background-size: inherit;
     border-radius: 2px;
     box-shadow:
         0 0 12px rgba(var(--rgb-accent-cyan), 0.5),
@@ -131,48 +137,39 @@
     animation: headlineGradient 6s linear infinite;
 }
 
-/* ---------- Tagline ---------- */
-.tagline {
-    font-family: var(--font-primary);
-    font-size: 1.0625rem;
-    font-weight: 400;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.7);
-    max-width: 540px;
-}
-
 /* ==========================================================================
    3. FORM COMPONENTS
    ========================================================================== */
 
-/* ---------- Form Label & Control ---------- */
+/* ---------- Labels & Help Text ---------- */
 .form-label {
-    font-size: 0.9375rem;
-    font-weight: 600;
     font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
 }
 
 .form-text {
-    font-size: 0.8125rem;
-    color: rgba(255, 255, 255, 0.6);
-    font-family: var(--font-primary);
-}
-
-.form-control {
-    border-radius: var(--radius-lg, 0.75rem);
-    padding: 0.75rem 1rem;
-    background-color: transparent !important;
-    -webkit-backdrop-filter: blur(var(--blur-glass, 1.25rem));
-    backdrop-filter: blur(var(--blur-glass, 1.25rem));
-    border: 1px solid var(--glass-border, rgba(240, 248, 255, 0.15));
-    color: rgba(255, 255, 255, 0.9);
     font-family: var(--font-primary);
     font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- Form Control (Glass Style) ---------- */
+.form-control {
+    padding: 0.75rem 1rem;
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    background-color: transparent !important;
+    backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
     transition: 
-        color var(--transition-slow),
-        border-color var(--transition-slow),
-        box-shadow var(--transition-slow);
+        color var(--duration-normal) var(--ease-out-quad),
+        border-color var(--duration-normal) var(--ease-out-quad),
+        box-shadow var(--duration-normal) var(--ease-out-quad);
 }
 
 .form-control::placeholder {
@@ -181,7 +178,7 @@
 }
 
 .form-control:focus {
-    color: #ffffff;
+    color: var(--color-white);
     border-color: var(--color-accent-cyan);
     box-shadow:
         0 4px 16px rgba(0, 0, 0, 0.5),
@@ -199,18 +196,18 @@
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 1rem;
-    transition: color var(--transition-slow);
     z-index: 2;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.4);
     pointer-events: none;
+    transition: color var(--duration-normal) var(--ease-out-quad);
 }
 
 .form-control--with-icon {
     padding-left: 2.75rem;
 }
 
-.form-control--with-icon:focus + .input-icon  {
+.form-control--with-icon:focus + .input-icon {
     color: var(--color-accent-cyan);
     text-shadow: 0 0 8px rgba(var(--rgb-accent-cyan), 0.5);
 }
@@ -221,16 +218,16 @@
     top: 50%;
     right: 0.75rem;
     transform: translateY(-50%);
+    z-index: 10;
+    padding: 0.5rem;
     background: none;
     border: none;
-    padding: 0.5rem;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.4);
-    transition: 
-        color var(--transition-slow),
-        text-shadow var(--transition-slow);
-    z-index: 10;
     border-radius: var(--radius-sm);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: 
+        color var(--duration-normal) var(--ease-out-quad),
+        text-shadow var(--duration-normal) var(--ease-out-quad);
 }
 
 .password-toggle-btn:hover {
@@ -243,119 +240,60 @@
     outline-offset: 2px;
 }
 
-/* ---------- Forgot Password Link ---------- */
+/* ---------- Links ---------- */
 .forgot-password-link {
     font-family: var(--font-primary);
     font-size: 0.8125rem;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.5);
     text-decoration: none;
-    transition: color var(--transition-slow);
+    transition: color var(--duration-normal) var(--ease-out-quad);
 }
 
 .forgot-password-link:hover {
     color: var(--color-accent-cyan);
 }
 
-/* ---------- Form Check (Remember Me) ---------- */
-.form-check-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    cursor: pointer;
-}
-
-.form-check-input {
-    width: 1.125rem;
-    height: 1.125rem;
-    margin: 0;
-    background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: 
-        background-color var(--transition-fast),
-        border-color var(--transition-fast),
-        box-shadow var(--transition-fast);
-}
-
-.form-check-input:checked {
-    background-color: var(--color-accent-cyan);
-    border-color: var(--color-accent-cyan);
-}
-
-.form-check-input:focus {
-    border-color: var(--color-accent-cyan);
-    box-shadow: 0 0 0 2px rgba(var(--rgb-accent-cyan), 0.25);
-}
-
-.form-check-label {
-    font-family: var(--font-primary);
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
-    user-select: none;
-}
-
-/* ---------- Form Validation & Alerts ---------- */
-.form-control.is-invalid {
-    border-color: #ff6b7a;
-    background-image: none;
-}
-
-.form-control.is-invalid:focus {
-    border-color: #ff6b7a;
-    box-shadow:
-        0 4px 16px rgba(0, 0, 0, 0.5),
-        0 0 0 2px rgba(255, 107, 122, 0.25);
-}
-
-.invalid-feedback {
-    font-family: var(--font-primary);
-    font-size: 0.8125rem;
-    color: #ff6b7a;
-    margin-top: 0.5rem;
-}
 
 /* ==========================================================================
-   4. BUTTON COMPONENTS
+   4. AUTH BUTTONS
    ========================================================================== */
 
+/* ---------- Cyber Button (Primary) ---------- */
 .btn-cyber {
     position: relative;
-    background: transparent;
-    border: 1px solid var(--color-accent-cyan) !important;
-    color: var(--color-accent-cyan);
+    z-index: 1;
+    padding: 0.75rem 2rem;
     font-family: var(--font-primary);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 2px;
-    padding: 0.75rem 2rem;
+    color: var(--color-accent-cyan);
+    background: transparent;
+    border: 1px solid var(--color-accent-cyan) !important;
     overflow: hidden;
-    z-index: 1;
     transition: 
-        color var(--transition-slow),
-        box-shadow var(--transition-slow);
+        color var(--duration-normal) var(--ease-out-quad),
+        box-shadow var(--duration-normal) var(--ease-out-quad);
 }
 
 .btn-cyber::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: var(--color-accent-cyan);
-    transition: left var(--transition-slow);
+    inset: 0;
     z-index: -1;
+    background: var(--color-accent-cyan);
+    transform: translateX(-100%);
+    transition: transform var(--duration-normal) var(--ease-out-expo);
 }
 
 .btn-cyber:hover {
     color: #000;
-    box-shadow: 0 0 20px var(--color-accent-cyan);
+    box-shadow: var(--shadow-glow-cyan);
 }
 
 .btn-cyber:hover::before {
-    left: 0;
+    transform: translateX(0);
 }
 
 .btn-cyber:focus-visible {
@@ -363,19 +301,15 @@
     outline-offset: 2px;
 }
 
-.btn-cyber:disabled,
-.btn-cyber:disabled:hover {
+.btn-cyber:disabled {
+    opacity: 0.7;
     color: #000;
+    cursor: not-allowed;
     box-shadow: none;
 }
 
-.btn-cyber:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
 .btn-cyber:disabled::before {
-    left: 0;
+    transform: translateX(0);
 }
 
 .btn-cyber .spinner-border {
@@ -392,89 +326,81 @@
     gap: 0.75rem;
 }
 
-.registration-notice-text {
-    font-family: var(--font-primary);
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.5);
-}
-
 .registration-notice-link {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
     font-family: var(--font-primary);
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--color-accent-pink);
     text-decoration: none;
-    padding: 0.375rem 0.75rem;
-    border-radius: 2rem;
     background: rgba(var(--rgb-accent-pink), 0.1);
     border: 1px solid rgba(var(--rgb-accent-pink), 0.2);
+    border-radius: 2rem;
     transition: 
-        background-color var(--transition-slow),
-        border-color var(--transition-slow),
-        box-shadow var(--transition-slow),
-        gap var(--transition-slow);
+        background-color var(--duration-normal) var(--ease-out-quad),
+        border-color var(--duration-normal) var(--ease-out-quad),
+        box-shadow var(--duration-normal) var(--ease-out-quad),
+        gap var(--duration-normal) var(--ease-out-quad);
 }
 
 .registration-notice-link:hover {
+    gap: 0.5rem;
     background: rgba(var(--rgb-accent-pink), 0.15);
     border-color: rgba(var(--rgb-accent-pink), 0.4);
     box-shadow: 0 0 16px rgba(var(--rgb-accent-pink), 0.2);
-    gap: 0.5rem;
 }
 
 .registration-notice-link i {
     font-size: 0.75rem;
-    transition: transform var(--transition-slow);
+    transition: transform var(--duration-normal) var(--ease-out-expo);
 }
 
 .registration-notice-link:hover i {
     transform: translateX(2px);
 }
 
+
 /* ==========================================================================
-   5. AUTH CARD (Login/Register Form)
+   5. AUTH CARD LAYOUT
    ========================================================================== */
 
-.auth-card {
-    width: 100%;
-    max-width: 400px;
-    padding: 2.5rem;
-    border-radius: 1.5rem;
-    
-    /* Glass Effect */
+/* ---------- Shared Glass Card ---------- */
+.auth-card,
+.feature-card {
+    position: relative;
     background: var(--gradient-glass);
-    -webkit-backdrop-filter: blur(var(--blur-glass));
     backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
     border: 1px solid var(--glass-border);
+    border-radius: var(--radius-2xl);
     box-shadow: 
         var(--shadow-glass),
         inset 0 1px 0 rgba(var(--rgb-glass-base), 0.15),
         inset 0 -1px 0 rgba(var(--rgb-glass-base), 0.05);
     overflow: hidden;
-    position: relative;
 }
 
-/* Top accent line */
-.auth-card::after {
+.auth-card::after,
+.feature-card::after {
     content: '';
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(var(--rgb-accent-cyan), 0.5) 20%,
-        rgba(var(--rgb-accent-purple), 0.5) 50%,
-        rgba(var(--rgb-accent-pink), 0.5) 80%,
-        transparent 100%
-    );
+    background: var(--gradient-prism-line);
     pointer-events: none;
 }
 
-/* ---------- Mobile Brand Header ---------- */
+/* ---------- Auth Card Specific ---------- */
+.auth-card {
+    width: 100%;
+    max-width: var(--auth-card-max-width);
+    padding: var(--auth-card-padding);
+}
+
+/* Mobile Brand Header */
 .auth-card-brand {
     display: flex;
     flex-direction: column;
@@ -492,63 +418,29 @@
     margin: 0 !important;
 }
 
-/* ---------- Card Header ---------- */
+/* Card Header */
 .auth-card-header {
     text-align: center;
     margin-bottom: 1.5rem;
 }
 
 .auth-card-heading {
+    margin: 0 0 0.25rem 0;
     font-family: var(--font-primary);
     font-size: 1.5rem;
     font-weight: 700;
-    color: #fff;
-    margin: 0 0 0.25rem 0;
+    color: var(--color-white);
 }
 
 .auth-card-subheading {
+    margin: 0;
     font-family: var(--font-primary);
     font-size: 0.9375rem;
     color: rgba(255, 255, 255, 0.5);
-    margin: 0;
 }
 
-/* ---------- Auth Form ---------- */
-.auth-form {
-    margin-bottom: 0;
-}
 
-/* ---------- Auth Divider ---------- */
-.auth-divider {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin: 1.25rem 0;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.auth-divider span {
-    font-family: var(--font-primary);
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: rgba(255, 255, 255, 0.4);
-}
-
-/* ---------- SSO Options ---------- */
-.sso-options {
-    margin-bottom: 1.25rem;
-}
-
-/* ---------- Card Footer ---------- */
+/* Card Footer */
 .auth-card-footer {
     text-align: center;
 }
@@ -557,86 +449,54 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    margin: 0;
     font-family: var(--font-primary);
     font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.4);
-    margin: 0;
 }
 
 .security-note i {
     color: rgba(var(--rgb-accent-cyan), 0.6);
 }
 
-/* ---------- Auth Card Alerts ---------- */
+/* Alerts */
 .auth-card .alert {
+    margin-bottom: 1.5rem;
     font-family: var(--font-primary);
     font-size: 0.875rem;
     border-radius: var(--radius-md);
-    margin-bottom: 1.5rem;
 }
 
 .auth-card .alert-danger {
-    background-color: rgba(220, 53, 69, 0.15);
-    border: 1px solid rgba(220, 53, 69, 0.3);
-    color: #ff6b7a;
+    color: var(--color-error);
+    background-color: var(--color-error-bg);
+    border: 1px solid var(--color-error-border);
 }
 
-/* ---------- Mobile Footer ---------- */
+/* Mobile Footer */
 .auth-mobile-footer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
-    margin-top: 1.5rem;
     gap: 0.25rem;
+    margin-top: 1.5rem;
     font-family: var(--font-primary);
-    color: #fff;
+    color: var(--color-white);
+    text-align: center;
 }
+
 
 /* ==========================================================================
-   6. FEATURE CARD COMPONENTS
+   6. FEATURE CARDS
    ========================================================================== */
 
-/* ---------- Feature Card Base ---------- */
 .feature-card {
-    position: relative;
     height: 100%;
     padding: 1.5rem;
-    border-radius: 1.5rem;
-    
-    /* Glass Effect */
-    background: var(--gradient-glass);
-    -webkit-backdrop-filter: blur(var(--blur-glass));
-    backdrop-filter: blur(var(--blur-glass));
-    border: 1px solid var(--glass-border);
-    box-shadow: 
-        var(--shadow-glass),
-        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.15),
-        inset 0 -1px 0 rgba(var(--rgb-glass-base), 0.05);
-    overflow: hidden;
-    
-    /* Hover transition */
     transition: 
-        transform var(--transition-slow),
-        box-shadow var(--transition-slow),
-        border-color var(--transition-slow);
-}
-
-/* Top accent line */
-.feature-card::after {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(var(--rgb-accent-cyan), 0.5) 20%,
-        rgba(var(--rgb-accent-purple), 0.5) 50%,
-        rgba(var(--rgb-accent-pink), 0.5) 80%,
-        transparent 100%
-    );
-    pointer-events: none;
+        transform var(--duration-normal) var(--ease-out-expo),
+        box-shadow var(--duration-normal) var(--ease-out-quad),
+        border-color var(--duration-normal) var(--ease-out-quad);
 }
 
 .feature-card:hover {
@@ -646,11 +506,10 @@
         inset 0 1px 0 rgba(var(--rgb-glass-base), 0.2);
 }
 
-/* ---------- Highlighted Feature Card ---------- */
+/* Highlight Variant */
 .feature-card--highlight {
     border-color: rgba(var(--rgb-accent-cyan), 0.3);
-    background: linear-gradient(
-        135deg,
+    background: linear-gradient(135deg,
         rgba(var(--rgb-accent-cyan), 0.08) 0%,
         var(--glass-bg-secondary) 50%,
         var(--glass-bg-tertiary) 100%
@@ -663,24 +522,23 @@
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(
-        135deg,
+    background: linear-gradient(135deg,
         rgba(var(--rgb-accent-cyan), 0.4) 0%,
         rgba(var(--rgb-accent-purple), 0.2) 50%,
         transparent 100%
     );
-    -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
     mask: 
         linear-gradient(#fff 0 0) content-box, 
         linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
     mask-composite: exclude;
+    -webkit-mask-composite: xor;
     pointer-events: none;
 }
 
-/* ---------- Feature Number ---------- */
+/* Feature Number */
 .feature-number {
     position: absolute;
     top: 1rem;
@@ -688,11 +546,11 @@
     font-family: var(--font-primary);
     font-size: 0.75rem;
     font-weight: 700;
-    color: rgba(var(--rgb-accent-cyan), 0.4);
     letter-spacing: 0.05em;
+    color: rgba(var(--rgb-accent-cyan), 0.4);
 }
 
-/* ---------- Feature Icon ---------- */
+/* Feature Icon */
 .feature-icon {
     display: flex;
     align-items: center;
@@ -700,22 +558,18 @@
     width: 56px;
     height: 56px;
     margin-bottom: 1rem;
-    border-radius: 1rem;
-    
-    /* Glass Neon Effect */
-    background: linear-gradient(
-        135deg,
-        rgba(var(--rgb-accent-cyan), 0.25) 0%,
-        rgba(var(--rgb-accent-purple), 0.25) 100%
+    background: linear-gradient(135deg,
+        rgba(var(--rgb-accent-cyan), 0.25),
+        rgba(var(--rgb-accent-purple), 0.25)
     );
-    -webkit-backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
     backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
     border: 1px solid rgba(var(--rgb-glass-base), 0.3);
+    border-radius: var(--radius-xl);
     box-shadow: 
-        0 8px 32px 0 rgba(var(--rgb-accent-cyan), 0.25),
+        0 8px 32px rgba(var(--rgb-accent-cyan), 0.25),
         inset 0 2px 0 rgba(var(--rgb-glass-base), 0.2);
-    
-    transition: transform var(--transition-slow);
+    transition: transform var(--duration-normal) var(--ease-out-expo);
 }
 
 .feature-icon i {
@@ -737,15 +591,14 @@
     animation: iconGlow 2s ease-in-out infinite;
 }
 
-/* Pulse ring on hover */
 .feature-icon--animated::after {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: inherit;
     border: 2px solid rgba(var(--rgb-accent-cyan), 0.3);
+    border-radius: inherit;
     opacity: 0;
-    transition: opacity var(--transition-slow);
+    transition: opacity var(--duration-normal) var(--ease-out-quad);
 }
 
 .feature-card:hover .feature-icon--animated::after {
@@ -753,49 +606,26 @@
     animation: pulseRing 1.5s ease-out infinite;
 }
 
-/* ---------- Feature Title ---------- */
+/* Feature Content */
 .feature-title {
+    margin-bottom: 0.375rem;
     font-family: var(--font-primary);
     font-size: 1.0625rem;
     font-weight: 700;
-    color: #fff;
-    margin-bottom: 0.375rem;
+    color: var(--color-white);
 }
 
-/* ---------- Feature Description ---------- */
 .feature-desc {
+    margin-bottom: 0;
     font-family: var(--font-primary);
     font-size: 0.875rem;
     font-weight: 400;
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 0;
-}
-
-/* ---------- Feature Badge ---------- */
-.feature-badge {
-    display: inline-block;
-    margin-top: 0.75rem;
-    padding: 0.25rem 0.625rem;
-    font-family: var(--font-primary);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-accent-cyan);
-    background: rgba(var(--rgb-accent-cyan), 0.15);
-    border: 1px solid rgba(var(--rgb-accent-cyan), 0.3);
-    border-radius: 2rem;
-}
-
-.feature-badge--security {
-    color: var(--color-accent-purple);
-    background: rgba(var(--rgb-accent-purple), 0.15);
-    border-color: rgba(var(--rgb-accent-purple), 0.3);
 }
 
 /* ==========================================================================
-   7. TRUST SIGNALS
+   7. TRUST SIGNALS & FOOTER
    ========================================================================== */
 
 .trust-signals {
@@ -804,13 +634,13 @@
 }
 
 .trust-signals-label {
+    margin-bottom: 0.75rem;
     font-family: var(--font-primary);
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 0.75rem;
 }
 
 .trust-badges {
@@ -824,46 +654,43 @@
     align-items: center;
     gap: 0.375rem;
     padding: 0.375rem 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 2rem;
     font-family: var(--font-primary);
     font-size: 0.75rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.7);
-    transition: 
-        background-color var(--transition-slow),
-        border-color var(--transition-slow),
-        color var(--transition-slow);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2rem;
     cursor: default;
+    transition: 
+        color var(--duration-normal) var(--ease-out-quad),
+        background-color var(--duration-normal) var(--ease-out-quad),
+        border-color var(--duration-normal) var(--ease-out-quad);
 }
 
 .trust-badge:hover {
+    color: var(--color-accent-cyan);
     background: rgba(var(--rgb-accent-cyan), 0.1);
     border-color: rgba(var(--rgb-accent-cyan), 0.3);
-    color: var(--color-accent-cyan);
 }
 
 .trust-badge i {
     font-size: 0.875rem;
 }
 
-/* ==========================================================================
-   8. FOOTER COMPONENTS
-   ========================================================================== */
-
+/* Footer */
 .footer-email {
-    color: var(--color-accent-cyan);
     font-weight: 500;
+    color: var(--color-accent-cyan);
     text-decoration: none;
     transition:
-        color var(--transition-slow),
-        text-shadow var(--transition-slow),
-        letter-spacing var(--transition-slow);
+        color var(--duration-normal) var(--ease-out-quad),
+        text-shadow var(--duration-normal) var(--ease-out-quad),
+        letter-spacing var(--duration-normal) var(--ease-out-quad);
 }
 
 .footer-email:hover {
-    color: #ffffff;
+    color: var(--color-white);
     letter-spacing: 1.5px;
     text-shadow:
         0 0 5px var(--color-accent-cyan),
@@ -874,102 +701,47 @@
 .footer-credit {
     font-family: var(--font-primary);
     font-size: 0.875rem;
-    color: #ffffff;
+    color: var(--color-white);
     opacity: 0.6;
 }
 
 .features-footer {
     font-family: var(--font-primary);
-    color: #fff;
+    color: var(--color-white);
 }
 
 /* ==========================================================================
-   9. ACCESSIBILITY
-   ========================================================================== */
-
-.skip-link {
-    position: absolute;
-    top: -100%;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    padding: 0.75rem 1.5rem;
-    background: var(--color-accent-cyan);
-    color: #000;
-    font-family: var(--font-primary);
-    font-weight: 600;
-    text-decoration: none;
-    border-radius: var(--radius-md);
-    transition: top var(--transition-fast);
-}
-
-.skip-link:focus {
-    top: 1rem;
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-}
-
-/* ==========================================================================
-   10. ANIMATIONS
+   9. ANIMATIONS
    ========================================================================== */
 
 @keyframes headlineGradient {
-    0% {
-        background-position: 0% 50%;
-    }
-    100% {
-        background-position: 200% 50%;
-    }
-}
-
-@keyframes iconFloat {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-4px);
-    }
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
 }
 
 @keyframes iconGlow {
-    0%, 100% {
-        filter: drop-shadow(0 0 8px rgba(var(--rgb-accent-cyan), 0.5));
-    }
-    50% {
-        filter: drop-shadow(0 0 16px rgba(var(--rgb-accent-cyan), 0.8));
-    }
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(var(--rgb-accent-cyan), 0.5)); }
+    50%      { filter: drop-shadow(0 0 16px rgba(var(--rgb-accent-cyan), 0.8)); }
 }
 
 @keyframes pulseRing {
-    0% {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-    100% {
-        transform: scale(1.3);
-        opacity: 0;
-    }
+    0%   { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(1.3); opacity: 0; }
 }
+
 
 /* ==========================================================================
-   11. RESPONSIVE DESIGN
+   10. RESPONSIVE DESIGN
    ========================================================================== */
 
-/* ---------- Hide mobile brand on desktop ---------- */
-@media (min-width: 768px) {
-    .auth-card-brand,
-    .auth-mobile-footer {
-        display: none;
-    }
-}
-
-/* ---------- Extra small devices (< 576px) ---------- */
-@media (max-width: 576px) {
+/* ---------- Extra Small (< 576px) ---------- */
+@media (max-width: 575.98px) {
     :root {
         --auth-logo-height: 70px;
         --auth-title-size: 1.75rem;
         --auth-subtitle-size: 0.75rem;
         --auth-headline-size: 1.5rem;
+        --auth-card-padding: 1.75rem;
     }
     
     .title {
@@ -978,13 +750,12 @@
     
     .btn-cyber {
         padding: 0.625rem 1.5rem;
-        letter-spacing: 1px;
         font-size: 0.875rem;
+        letter-spacing: 1px;
     }
     
     .auth-card {
-        padding: 1.75rem;
-        border-radius: 1.25rem;
+        border-radius: var(--radius-xl);
     }
     
     .auth-card-heading {
@@ -996,7 +767,7 @@
     }
 }
 
-/* ---------- Small devices (≥ 576px) ---------- */
+/* ---------- Small (≥ 576px) ---------- */
 @media (min-width: 576px) {
     :root {
         --auth-title-size: 2.5rem;
@@ -1005,46 +776,78 @@
 }
 
 @media (min-width: 576px) and (max-width: 991.98px) {
-    .auth-card {
-        max-width: 380px;
+    :root {
+        --auth-card-max-width: 380px;
     }
 }
 
-/* ---------- Medium devices (≥ 768px) ---------- */
+/* ---------- Medium (≥ 768px) ---------- */
 @media (min-width: 768px) {
     :root {
         --auth-title-size: 2.75rem;
         --auth-headline-size: 2.25rem;
     }
+    
+    .auth-card-brand,
+    .auth-mobile-footer {
+        display: none;
+    }
 }
 
-/* ---------- Large devices (≥ 992px) ---------- */
+/* ---------- Large (≥ 992px) ---------- */
 @media (min-width: 992px) {
     :root {
         --auth-title-size: 3rem;
         --auth-headline-size: 2.5rem;
-    }
-    
-    .auth-card {
-        max-width: 400px;
-        padding: 2.5rem;
+        --auth-card-max-width: 400px;
+        --auth-card-padding: 2.5rem;
     }
 }
 
-/* ---------- Extra large devices (≥ 1200px) ---------- */
+/* ---------- Extra Large (≥ 1200px) ---------- */
 @media (min-width: 1200px) {
+    :root {
+        --auth-card-max-width: 420px;
+    }
+    
     .subtitle {
         font-size: 1rem;
     }
+}
+
+/* ---------- Feature Cards Responsive ---------- */
+@media (max-width: 1199.98px) {
+    .feature-card {
+        padding: 1rem;
+        border-radius: var(--radius-xl);
+    }
     
-    .auth-card {
-        max-width: 420px;
-        padding: 2.5rem;
+    .feature-icon {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 0.75rem;
+        border-radius: var(--radius-lg);
+    }
+    
+    .feature-icon i {
+        font-size: 1.125rem;
+    }
+    
+    .feature-title {
+        font-size: 0.9375rem;
+    }
+    
+    .feature-desc {
+        font-size: 0.75rem;
+        line-height: 1.45;
+    }
+    
+    .headline-neon {
+        font-size: 2rem;
     }
 }
 
-/* ---------- Feature cards responsive (≤ 1400px) ---------- */
-@media (max-width: 1400px) {
+@media (min-width: 1200px) and (max-width: 1399.98px) {
     .feature-card {
         padding: 1.25rem;
     }
@@ -1070,9 +873,6 @@
         font-size: 0.6875rem;
     }
     
-    .tagline {
-        font-size: 1rem;
-    }
     
     .trust-badges {
         gap: 0.5rem;
@@ -1081,46 +881,5 @@
     .trust-badge {
         padding: 0.25rem 0.625rem;
         font-size: 0.6875rem;
-    }
-}
-
-/* ---------- Feature cards responsive (≤ 1200px) ---------- */
-@media (max-width: 1200px) {
-    .feature-card {
-        padding: 1rem;
-        border-radius: 1.25rem;
-    }
-    
-    .feature-icon {
-        width: 44px;
-        height: 44px;
-        margin-bottom: 0.75rem;
-        border-radius: 0.75rem;
-    }
-    
-    .feature-icon i {
-        font-size: 1.125rem;
-    }
-    
-    .feature-title {
-        font-size: 0.9375rem;
-    }
-    
-    .feature-desc {
-        font-size: 0.75rem;
-        line-height: 1.45;
-    }
-    
-    .feature-badge {
-        font-size: 0.625rem;
-        padding: 0.1875rem 0.5rem;
-    }
-    
-    .tagline {
-        font-size: 0.9375rem;
-    }
-    
-    .headline-neon {
-        font-size: 2rem;
     }
 }

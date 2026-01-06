@@ -7,6 +7,39 @@
     'use strict';
 
     // =============================================
+    // IMMEDIATE: Prevent Form Resubmission
+    // Must run BEFORE DOMContentLoaded to prevent POST on refresh
+    // =============================================
+
+    if (window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.href);
+    }
+
+    // =============================================
+    // IMMEDIATE: Clear Password Fields on Load
+    // Prevents browser from caching/restoring password values
+    // which could trigger form resubmission with credentials
+    // =============================================
+
+    // Clear password fields as early as possible
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[type="password"]').forEach(function(input) {
+            input.value = '';
+            // Also set autocomplete to prevent browser fill on refresh
+            input.setAttribute('autocomplete', 'new-password');
+        });
+    });
+
+    // Also clear on pageshow (handles bfcache scenarios)
+    window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+            document.querySelectorAll('input[type="password"]').forEach(function(input) {
+                input.value = '';
+            });
+        }
+    });
+
+    // =============================================
     // Password Toggle
     // =============================================
 
@@ -68,6 +101,36 @@
     }
 
     // =============================================
+    // Unsaved Form Data Warning
+    // =============================================
+
+    function initUnsavedDataWarning() {
+        let formHasData = false;
+
+        document.querySelectorAll('.auth-card form').forEach(function (form) {
+            // Track if form has any user input
+            form.addEventListener('input', function () {
+                formHasData = Array.from(form.querySelectorAll('input:not([type="hidden"])')).some(function (input) {
+                    return input.value.trim() !== '';
+                });
+            });
+
+            // Clear flag on successful submit
+            form.addEventListener('submit', function () {
+                formHasData = false;
+            });
+        });
+
+        // Only show warning if form has data
+        window.addEventListener('beforeunload', function (e) {
+            if (formHasData) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    }
+
+    // =============================================
     // Initialize
     // =============================================
 
@@ -84,6 +147,7 @@
 
         initFormSubmit();
         initAlertAutoDismiss();
+        initUnsavedDataWarning();
     });
 
     // Reset buttons on back navigation (bfcache)

@@ -7,13 +7,16 @@ This module provides enhanced login views that:
 2. Show remaining attempts before lockout
 3. Handle lockout gracefully with inline errors
 4. Include additional security measures (honeypot, rate limiting awareness)
+5. Implement PRG (Post-Redirect-Get) pattern to prevent form resubmission
 """
 import logging
 from typing import Any, Dict, Optional
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import signals as auth_signals
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
@@ -65,21 +68,44 @@ class SecureLoginView(LoginView):
         
         SECURITY: We only expose minimal lockout info to prevent
         attackers from gaining intelligence about the system.
+        
+        PRG Pattern: Retrieves error info from session if redirected.
         """
         context = super().get_context_data(**kwargs)
         
-        # Add minimal lockout information
-        lockout_info = self._get_lockout_info()
-        context.update({
-            # Only expose if locked, nothing else
-            'is_locked_out': lockout_info.get('is_locked', False),
-            # SECURITY: Don't expose these to template
-            # 'remaining_attempts': removed for security
-            # 'show_attempt_warning': removed for security  
-            # 'lockout_message': removed - use static message in template
-        })
+        # Check for PRG redirect errors in session
+        login_errors = self.request.session.pop('login_errors', None)
+        
+        if login_errors:
+            # Restore error state from session (PRG pattern)
+            context.update({
+                'is_locked_out': login_errors.get('is_locked', False),
+                'prg_has_errors': login_errors.get('has_errors', False),
+                'prg_username': login_errors.get('username', ''),
+            })
+        else:
+            # Normal GET request - check lockout status
+            lockout_info = self._get_lockout_info()
+            context.update({
+                'is_locked_out': lockout_info.get('is_locked', False),
+            })
         
         return context
+    
+    def get_initial(self) -> Dict[str, Any]:
+        """
+        Provide initial form data.
+        
+        PRG Pattern: Restore username from session after redirect.
+        """
+        initial = super().get_initial()
+        
+        # Check if we have username from PRG redirect (peek, don't pop)
+        login_errors = self.request.session.get('login_errors', {})
+        if login_errors.get('username'):
+            initial['login'] = login_errors.get('username', '')
+        
+        return initial
     
     def form_valid(self, form: LockoutAwareLoginForm) -> HttpResponse:
         """
@@ -95,11 +121,17 @@ class SecureLoginView(LoginView):
     
     def form_invalid(self, form: LockoutAwareLoginForm) -> HttpResponse:
         """
-        Handle invalid form submission.
+        Handle invalid form submission with PRG pattern.
+        
+        PRG (Post-Redirect-Get) Pattern:
+        - Store error info in session
+        - Redirect to GET to prevent form resubmission dialog on refresh
+        - This prevents accidental login attempts when user refreshes
         
         Enhanced to:
         - Log failed attempts (internal only)
         - Track credentials for axes
+        - Redirect to prevent resubmission
         
         SECURITY: We intentionally DON'T show remaining attempts to users
         to prevent attackers from knowing how close they are to lockout.
@@ -115,13 +147,16 @@ class SecureLoginView(LoginView):
         # Get updated lockout info after this attempt (internal tracking only)
         lockout_info = self._get_lockout_info(username=login_value)
         
-        # SECURITY: Don't warn users about remaining attempts
-        # This prevents attackers from knowing how close they are to lockout
+        # Store error info in session for PRG pattern
+        self.request.session['login_errors'] = {
+            'has_errors': True,
+            'is_locked': lockout_info.get('is_locked', False),
+            'username': login_value if not lockout_info.get('is_locked', False) else '',
+        }
         
-        # Set lockout info on form for template access
-        form.set_lockout_info(lockout_info)
-        
-        return super().form_invalid(form)
+        # PRG Pattern: Redirect to prevent form resubmission on refresh
+        # This eliminates "Confirm Form Resubmission" dialog
+        return HttpResponseRedirect(reverse('account_login'))
     
     def _get_lockout_info(self, username: Optional[str] = None) -> Dict[str, Any]:
         """

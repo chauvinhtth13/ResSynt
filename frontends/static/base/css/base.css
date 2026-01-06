@@ -1,13 +1,24 @@
 /* ==========================================================================
-   OPTIMIZED CSS - Performance & Structure Improvements
+   BASE.CSS - Foundation Layer (sau Bootstrap 5)
+   
+   Thứ tự load: Bootstrap 5 → base.css → [page-specific].css
+   
+   Structure:
+   1. CSS Custom Properties (Variables)
+   2. Base Resets & Typography 
+   3. Glass Morphism Foundation
+   4. Button Components
+   5. Dropdown System
+   6. Utility Classes
    ========================================================================== */
 
+
 /* ==========================================================================
-   1. CSS CUSTOM PROPERTIES (Variables)
+   1. CSS CUSTOM PROPERTIES
    ========================================================================== */
 
 :root {
-    /* ---------- Color Scale: Midnight Navy ---------- */
+    /* ========== Color Scale: Midnight Navy ========== */
     --color-midnight-navy-50:  #edf1fc;
     --color-midnight-navy-100: #dae2f8;
     --color-midnight-navy-200: #b8c9f2;
@@ -20,81 +31,93 @@
     --color-midnight-navy-900: #112440;
     --color-midnight-navy-950: #0a192f;
 
-    /* ---------- RGB Values for Alpha Usage ---------- */
-    --rgb-accent-cyan: 0, 245, 255;
-    --rgb-accent-teal: 0, 191, 166;
+    /* ========== RGB Values (for rgba() usage) ========== */
+    --rgb-accent-cyan:   0, 245, 255;
+    --rgb-accent-teal:   0, 191, 166;
     --rgb-accent-purple: 168, 85, 247;
-    --rgb-accent-pink: 255, 110, 199;
-    --rgb-glass-base: 240, 248, 255;
+    --rgb-accent-pink:   255, 110, 199;
+    --rgb-glass-base:    240, 248, 255;
     
-    /* ---------- Solid Accent Colors ---------- */
-    --color-accent-cyan: rgb(var(--rgb-accent-cyan));
-    --color-accent-teal: rgb(var(--rgb-accent-teal));
+    /* ========== Solid Accent Colors ========== */
+    --color-accent-cyan:   rgb(var(--rgb-accent-cyan));
+    --color-accent-teal:   rgb(var(--rgb-accent-teal));
     --color-accent-purple: rgb(var(--rgb-accent-purple));
-    --color-accent-pink: rgb(var(--rgb-accent-pink));
+    --color-accent-pink:   rgb(var(--rgb-accent-pink));
+    --color-white:         #ffffff;
 
-    /* ---------- Metallic Colors ---------- */
+    /* ========== Metallic Colors ========== */
     --color-titanium-silver: #c0c0c0;
-    --color-mclaren-silver: #9BA2B4;
-    --color-carbon-fiber: #2c2c2c;
+    --color-mclaren-silver:  #9ba2b4;
+    --color-carbon-fiber:    #2c2c2c;
 
-    /* ---------- Glass Effect Colors ---------- */
-    --glass-border: rgba(var(--rgb-glass-base), 0.15);
-    --glass-border-light: rgba(var(--rgb-glass-base), 0.12);
-    --glass-bg-primary: rgba(var(--rgb-glass-base), 0.1);
+    /* ========== Glass Effect ========== */
+    --glass-bg-primary:   rgba(var(--rgb-glass-base), 0.10);
     --glass-bg-secondary: rgba(var(--rgb-glass-base), 0.05);
-    --glass-bg-tertiary: rgba(var(--rgb-glass-base), 0.02);
+    --glass-bg-tertiary:  rgba(var(--rgb-glass-base), 0.02);
+    --glass-border:       rgba(var(--rgb-glass-base), 0.15);
+    --glass-border-light: rgba(var(--rgb-glass-base), 0.12);
 
-    /* ---------- Gradients ---------- */
-    --gradient-metallic: linear-gradient(
-        180deg,
-        var(--color-titanium-silver) 0%,
-        var(--color-mclaren-silver) 100%
-    );
-
-    --gradient-highlight: linear-gradient(
-        90deg,
-        var(--color-accent-cyan) 0%,
-        var(--color-accent-purple) 35%,
-        var(--color-accent-pink) 65%,
+    /* ========== Gradients ========== */
+    --gradient-metallic: linear-gradient(180deg, var(--color-titanium-silver), var(--color-mclaren-silver));
+    
+    --gradient-highlight: linear-gradient(90deg, 
+        var(--color-accent-cyan) 0%, 
+        var(--color-accent-purple) 35%, 
+        var(--color-accent-pink) 65%, 
         var(--color-accent-cyan) 100%
     );
-
-    --gradient-glass: linear-gradient(
-        135deg,
-        var(--glass-bg-primary) 0%,
-        var(--glass-bg-secondary) 50%,
+    
+    --gradient-glass: linear-gradient(135deg, 
+        var(--glass-bg-primary) 0%, 
+        var(--glass-bg-secondary) 50%, 
         var(--glass-bg-tertiary) 100%
     );
+    
+    --gradient-prism-line: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(var(--rgb-accent-cyan), 0.5) 20%, 
+        rgba(var(--rgb-accent-purple), 0.5) 50%, 
+        rgba(var(--rgb-accent-pink), 0.5) 80%, 
+        transparent 100%
+    );
 
-    /* ---------- Component Sizing ---------- */
-    --lang-btn-width: 9rem;
-    --lang-btn-height: 3rem;
-    --lang-icon-size: 1rem;
-    --lang-dropdown-width: 10rem;
+    /* ========== Timing Functions (Performance Optimized) ========== */
+    --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quad:  cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --ease-in-out:    cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* ---------- Transitions (Centralized) ---------- */
-    --transition-fast: 150ms ease-out;
-    --transition-normal: 250ms ease;
-    --transition-slow: 300ms ease;
+    /* ========== Duration ========== */
+    --duration-fast:   150ms;
+    --duration-normal: 200ms;
+    --duration-slow:   300ms;
 
-    /* ---------- Shadows (Reusable) ---------- */
-    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
+    /* ========== Shadows ========== */
+    --shadow-glass:       0 8px 32px rgba(0, 0, 0, 0.3);
     --shadow-glass-hover: 0 6px 24px rgba(var(--rgb-accent-cyan), 0.15);
-    --shadow-text: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-glow-cyan:   0 0 20px rgba(var(--rgb-accent-cyan), 0.25);
+    --shadow-text:        0 2px 4px rgba(0, 0, 0, 0.4);
 
-    /* ---------- Blur Values ---------- */
-    --blur-glass: 1.25rem;
+    /* ========== Blur ========== */
+    --blur-glass:    1.25rem;
     --blur-glass-sm: 0.75rem;
 
-    /* ---------- Border Radius ---------- */
-    --radius-sm: 0.375rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
+    /* ========== Border Radius ========== */
+    --radius-sm:  0.375rem;
+    --radius-md:  0.5rem;
+    --radius-lg:  0.75rem;
+    --radius-xl:  1rem;
+    --radius-2xl: 1.5rem;
+    
+    /* ========== Component Dimensions ========== */
+    --nav-btn-height:      2.5rem;
+    --lang-btn-width:      3.75rem;
+    --dropdown-min-width:  11rem;
+    --dropdown-action-width: 16rem;
 }
 
+
 /* ==========================================================================
-   2. BASE STYLES
+   2. BASE RESETS & TYPOGRAPHY
    ========================================================================== */
 
 html {
@@ -102,33 +125,29 @@ html {
     scroll-behavior: smooth;
 }
 
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
+.font-chakra-petch {
+    font-family: "Chakra Petch", sans-serif;
 }
 
-.font-chakra-petch {
-    font-family: "Chakra Petch";
-}
 
 /* ==========================================================================
-   3. GLASS MORPHISM COMPONENTS
+   3. GLASS MORPHISM FOUNDATION
    ========================================================================== */
 
-/* ---------- Glass Base Mixin (shared styles) ---------- */
+/* Base Glass */
 .glass-base {
-    -webkit-backdrop-filter: blur(var(--blur-glass));
+    background: var(--gradient-glass);
     backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
     border: 1px solid var(--glass-border);
 }
 
-/* ---------- Glass Prism (Top Variant) ---------- */
+/* Glass with Prism Top Line */
 .glass-prism-top {
     position: relative;
     background: var(--gradient-glass);
-    -webkit-backdrop-filter: blur(var(--blur-glass));
     backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
     border: 1px solid var(--glass-border);
     box-shadow: 
         var(--shadow-glass),
@@ -142,30 +161,22 @@ html {
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(var(--rgb-accent-cyan), 0.5) 20%,
-        rgba(var(--rgb-accent-purple), 0.5) 50%,
-        rgba(var(--rgb-accent-pink), 0.5) 80%,
-        transparent 100%
-    );
+    background: var(--gradient-prism-line);
     pointer-events: none;
 }
 
-/* ---------- Glass Neon Variant ---------- */
+/* Glass Neon Variant */
 .glass-neon {
-    background: linear-gradient(
-        135deg,
-        rgba(var(--rgb-accent-cyan), 0.25) 0%,
-        rgba(var(--rgb-accent-purple), 0.25) 100%
+    background: linear-gradient(135deg, 
+        rgba(var(--rgb-accent-cyan), 0.25), 
+        rgba(var(--rgb-accent-purple), 0.25)
     );
-    -webkit-backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
     backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
     border: 1px solid rgba(var(--rgb-glass-base), 0.3);
     border-top-color: rgba(var(--rgb-glass-base), 0.5);
     box-shadow: 
-        0 8px 32px 0 rgba(var(--rgb-accent-cyan), 0.25),
+        0 8px 32px rgba(var(--rgb-accent-cyan), 0.25),
         inset 0 2px 0 rgba(var(--rgb-glass-base), 0.2),
         inset 0 -1px 0 rgba(var(--rgb-accent-purple), 0.2);
 }
@@ -175,101 +186,165 @@ html {
     filter: drop-shadow(0 0 8px rgba(var(--rgb-accent-cyan), 0.5));
 }
 
+
 /* ==========================================================================
    4. BUTTON COMPONENTS
    ========================================================================== */
 
+/* ---------- Navigation Action Button ---------- */
+.btn-nav-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--nav-btn-height);
+    padding: 0 0.75rem;
+    
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--color-mclaren-silver);
+    
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    
+    /* Performance: chỉ animate các properties cần thiết */
+    transition: 
+        color var(--duration-normal) var(--ease-out-quad),
+        background-color var(--duration-normal) var(--ease-out-quad),
+        border-color var(--duration-normal) var(--ease-out-quad),
+        box-shadow var(--duration-normal) var(--ease-out-quad);
+}
+
+/* Language Button - Fixed Width */
+.btn-nav-action.btn-language {
+    width: var(--lang-btn-width);
+    padding: 0;
+}
+
+/* Dropdown Arrow */
+.btn-nav-action.dropdown-toggle::after {
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    transition: transform var(--duration-normal) var(--ease-out-expo);
+}
+
+.btn-nav-action.show.dropdown-toggle::after {
+    transform: rotate(180deg);
+}
+
+/* Hover State */
+.btn-nav-action:hover {
+    color: var(--color-accent-cyan);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(var(--rgb-accent-cyan), 0.4);
+    box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        0 0 5px rgba(var(--rgb-accent-cyan), 0.2);
+}
+
+/* Active / Show State */
+.btn-nav-action:active,
+.btn-nav-action.show {
+    color: var(--color-accent-cyan);
+    background-color: rgba(var(--rgb-accent-cyan), 0.15);
+    border-color: var(--color-accent-cyan);
+    box-shadow: 
+        0 0 0 1px rgba(var(--rgb-accent-cyan), 0.2),
+        var(--shadow-glow-cyan);
+}
+
+/* Focus State */
+.btn-nav-action:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--rgb-accent-cyan), 0.5);
+}
+
+/* ---------- Glass Neon Button ---------- */
 .btn-glass-neon {
-    /* Layout */
     position: relative;
     display: inline-grid;
-    grid-template-columns: var(--lang-icon-size) 1fr auto;
+    grid-template-columns: 1rem 1fr auto;
     align-items: center;
+    width: 9.25rem;
+    height: 3rem;
+    padding: 0 1rem;
     
-    /* Sizing */
-    width: var(--lang-btn-width);
-    height: var(--lang-btn-height);
-    
-    /* Glass Effect */
     background: var(--gradient-glass);
-    -webkit-backdrop-filter: blur(var(--blur-glass));
     backdrop-filter: blur(var(--blur-glass));
-    
-    /* Border & Shape */
+    -webkit-backdrop-filter: blur(var(--blur-glass));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     
-    /* Typography */
     font-size: 1rem;
-    color: var(--bs-white, #fff) !important;
+    color: var(--color-white) !important;
     white-space: nowrap;
     
-    /* Shadow */
     box-shadow: 
         0 4px 16px rgba(0, 0, 0, 0.2),
         inset 0 1px 0 rgba(var(--rgb-glass-base), 0.1);
     
-    /* Transitions */
     transition: 
-        border-color var(--transition-normal),
-        box-shadow var(--transition-normal);
+        color var(--duration-normal) var(--ease-in-out),
+        border-color var(--duration-normal) var(--ease-in-out),
+        box-shadow var(--duration-slow) var(--ease-in-out),
+        transform var(--duration-normal) var(--ease-in-out);
 }
 
-/* Pseudo-element for smooth gradient transition */
+/* Hover Overlay */
 .btn-glass-neon::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(
-        135deg,
-        rgba(var(--rgb-accent-cyan), 0.12) 0%,
-        rgba(var(--rgb-accent-purple), 0.1) 100%
+    background: linear-gradient(135deg, 
+        rgba(var(--rgb-accent-cyan), 0.12), 
+        rgba(var(--rgb-accent-purple), 0.1)
     );
     opacity: 0;
-    transition: opacity var(--transition-normal);
+    transition: opacity var(--duration-normal) var(--ease-in-out);
     pointer-events: none;
+}
+
+.btn-glass-neon:hover {
+    color: var(--color-accent-cyan) !important;
+    border-color: rgba(var(--rgb-accent-cyan), 0.35);
+    box-shadow: var(--shadow-glass-hover), inset 0 1px 0 rgba(var(--rgb-glass-base), 0.15);
+    transform: translateY(-1px);
 }
 
 .btn-glass-neon:hover::before {
     opacity: 1;
 }
 
-.btn-glass-neon:hover {
-    border-color: rgba(var(--rgb-accent-cyan), 0.3);
-    box-shadow: 
-        var(--shadow-glass-hover),
-        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.15);
-}
-
-/* Active & Show states */
 .btn-glass-neon:active,
 .btn-glass-neon.show {
-    border-color: rgba(var(--rgb-accent-purple), 0.35);
-    box-shadow: 
-        0 6px 24px rgba(var(--rgb-accent-purple), 0.15),
-        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.12);
-    outline: none;
+    color: var(--color-accent-cyan) !important;
+    border-color: rgba(var(--rgb-accent-cyan), 0.4);
+    box-shadow: 0 4px 20px rgba(var(--rgb-accent-cyan), 0.2), inset 0 1px 0 rgba(var(--rgb-glass-base), 0.12);
+    transform: translateY(0);
 }
 
-/* Keyboard focus only */
-.btn-glass-neon:focus-visible {
-    border-color: rgba(var(--rgb-accent-purple), 0.35);
-    box-shadow: 
-        0 6px 24px rgba(var(--rgb-accent-purple), 0.15),
-        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.12);
-    outline: 2px solid rgba(var(--rgb-accent-cyan), 0.5);
-    outline-offset: 2px;
-}
-
-/* Pseudo-element states */
-.btn-glass-neon:is(:active, .show, :focus-visible)::before {
+.btn-glass-neon:active::before,
+.btn-glass-neon.show::before {
     opacity: 1;
-    background: linear-gradient(
-        135deg,
-        rgba(var(--rgb-accent-cyan), 0.15) 0%,
-        rgba(var(--rgb-accent-purple), 0.12) 100%
+    background: linear-gradient(135deg, 
+        rgba(var(--rgb-accent-cyan), 0.15), 
+        rgba(var(--rgb-accent-purple), 0.12)
     );
+}
+
+.btn-glass-neon:focus-visible {
+    outline: none;
+    border-color: rgba(var(--rgb-accent-cyan), 0.4);
+    box-shadow: 
+        0 4px 20px rgba(var(--rgb-accent-cyan), 0.2),
+        0 0 0 2px rgba(var(--rgb-accent-cyan), 0.3);
+}
+
+.btn-glass-neon:focus-visible::before {
+    opacity: 1;
 }
 
 .btn-glass-neon span {
@@ -277,198 +352,277 @@ html {
     padding-left: 0.5rem;
 }
 
+.btn-glass-neon.dropdown-toggle::after {
+    transition: transform var(--duration-slow) var(--ease-in-out);
+}
+
+.btn-glass-neon.show.dropdown-toggle::after {
+    transform: rotate(180deg);
+}
+
+
 /* ==========================================================================
-   5. DROPDOWN COMPONENTS
+   5. DROPDOWN SYSTEM
    ========================================================================== */
 
-.dropdown-menu-glass-neon {
-    /* Sizing */
-    min-width: var(--lang-dropdown-width);
-    padding: 0.5rem 0;
-    
-    /* Glass Effect */
-    background: linear-gradient(
-        135deg,
-        var(--glass-bg-primary) 0%,
-        var(--glass-bg-secondary) 100%
-    );
-    -webkit-backdrop-filter: blur(var(--blur-glass));
-    backdrop-filter: blur(var(--blur-glass));
-    
-    /* Border & Shape */
-    border: 1px solid var(--glass-border-light);
-    border-radius: var(--radius-lg);
-    
-    /* Shadow */
-    box-shadow: var(--shadow-glass);
-    
-    /* Animation Initial State */
-    opacity: 0;
-    transform: translateY(-4px) translateZ(0);
-    
-    /* Performance */
-    backface-visibility: hidden;
-    transition: 
-        opacity var(--transition-fast),
-        transform var(--transition-fast);
-    
+/* ---------- Base Dropdown ---------- */
+.dropdown-menu-base {
+    padding: 0.5rem;
+    margin-top: 0.5rem !important;
     overflow: hidden;
+    
+    background: linear-gradient(135deg, 
+        rgba(10, 25, 47, 0.95), 
+        rgba(15, 35, 65, 0.92)
+    );
+    backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 
+        0 10px 40px -10px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    
+    /* Animation - GPU accelerated */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transform-origin: top center;
+    will-change: opacity, transform;
+    transition: 
+        opacity var(--duration-normal) var(--ease-out-expo),
+        transform var(--duration-normal) var(--ease-out-expo),
+        visibility var(--duration-normal);
 }
 
-.dropdown-menu-glass-neon.show {
+.dropdown-menu-base.show {
     opacity: 1;
-    transform: translateY(0) translateZ(0);
+    visibility: visible;
+    transform: translateY(0);
 }
 
-/* Top Accent Line */
-.dropdown-menu-glass-neon::before {
+/* Base Item */
+.dropdown-menu-base .dropdown-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-midnight-navy-200);
+    
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    
+    transition: 
+        color var(--duration-fast) var(--ease-out-quad),
+        background-color var(--duration-fast) var(--ease-out-quad);
+}
+
+.dropdown-menu-base .dropdown-item:hover,
+.dropdown-menu-base .dropdown-item:focus {
+    color: var(--color-white);
+    background-color: rgba(var(--rgb-accent-cyan), 0.1);
+    outline: none;
+}
+
+.dropdown-menu-base .dropdown-item i {
+    color: var(--color-midnight-navy-300);
+    transition: color var(--duration-fast) var(--ease-out-quad);
+}
+
+.dropdown-menu-base .dropdown-item:hover i,
+.dropdown-menu-base .dropdown-item:focus i {
+    color: var(--color-accent-cyan);
+}
+
+/* Divider */
+.dropdown-menu-base .dropdown-divider {
+    border-top: 1px solid var(--glass-border);
+    margin: 0.5rem 0;
+    opacity: 0.6;
+}
+
+/* Form Reset */
+.dropdown-menu-base form {
+    margin: 0;
+    padding: 0;
+}
+
+.dropdown-menu-base form .dropdown-item {
+    width: 100%;
+    text-align: left;
+}
+
+/* ---------- Select Dropdown (Language, Theme) ---------- */
+.dropdown-menu-select {
+    min-width: var(--dropdown-min-width);
+}
+
+.dropdown-menu-select > li + li {
+    margin-top: 0.25rem;
+}
+
+/* Accent Line */
+.dropdown-menu-select::before {
     content: '';
     position: absolute;
     inset: 0 10% auto 10%;
     height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(var(--rgb-accent-cyan), 0.4),
-        rgba(var(--rgb-accent-purple), 0.4),
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(var(--rgb-accent-cyan), 0.4), 
+        rgba(var(--rgb-accent-purple), 0.4), 
         transparent
     );
     pointer-events: none;
 }
 
-/* Dropdown Items */
-.dropdown-menu-glass-neon .dropdown-item {
-    font-size: 1rem;
-    font-weight: 500;
-    color: rgba(var(--rgb-glass-base), 0.7);
-    padding: 0.625rem 1rem;
-    transition: 
-        color var(--transition-fast),
-        background-color var(--transition-fast);
+.dropdown-menu-select .dropdown-item {
+    justify-content: space-between;
+    font-weight: 400;
 }
 
-.dropdown-menu-glass-neon .dropdown-item:hover {
-    color: var(--bs-white, #fff);
-    background-color: rgba(var(--rgb-accent-cyan), 0.1);
-}
-
-.dropdown-menu-glass-neon .dropdown-item.active {
+/* Active State */
+.dropdown-menu-select .dropdown-item.active {
     color: var(--color-accent-cyan);
+    font-weight: 600;
     background-color: rgba(var(--rgb-accent-cyan), 0.12);
+    cursor: default;
+    pointer-events: none;
 }
 
-/* Django Form Integration */
-.dropdown-menu-glass-neon form {
-    margin: 0;
-    padding: 0;
+/* Glow Indicator */
+.dropdown-menu-select .dropdown-item.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background: var(--color-accent-cyan);
+    border-radius: 0 2px 2px 0;
+    box-shadow: 0 0 8px rgba(var(--rgb-accent-cyan), 0.5);
 }
 
-.dropdown-menu-glass-neon form .dropdown-item {
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
+/* ---------- Action Dropdown (User Menu) ---------- */
+.dropdown-menu-action {
+    min-width: var(--dropdown-action-width);
+    padding: 0.5rem 0;
 }
+
+/* Prism Line */
+.dropdown-menu-action::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: var(--gradient-prism-line);
+    opacity: 0.8;
+    z-index: 1;
+}
+
+.dropdown-menu-action .dropdown-item {
+    border-radius: 0;
+    transition: 
+        color var(--duration-fast) var(--ease-out-quad),
+        background-color var(--duration-fast) var(--ease-out-quad),
+        padding-left var(--duration-fast) var(--ease-out-expo);
+}
+
+.dropdown-menu-action .dropdown-item:hover,
+.dropdown-menu-action .dropdown-item:focus {
+    padding-left: 1.25rem;
+    color: var(--color-accent-cyan);
+}
+
+.dropdown-menu-action .dropdown-item i {
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+}
+
+/* Header */
+.dropdown-menu-action .dropdown-header {
+    padding: 0.5rem 1rem;
+}
+
+.dropdown-menu-action .dropdown-header-name {
+    color: var(--color-midnight-navy-50);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.dropdown-menu-action .dropdown-header-meta {
+    color: var(--color-midnight-navy-300);
+    font-size: 0.85rem;
+}
+
+/* Danger State - Bootstrap 5 compatible */
+.dropdown-menu-action .dropdown-item-danger {
+    color: var(--bs-danger);
+    background-color: transparent;
+}
+
+.dropdown-menu-action .dropdown-item-danger i {
+    color: var(--bs-danger);
+}
+
+.dropdown-menu-action .dropdown-item-danger:hover,
+.dropdown-menu-action .dropdown-item-danger:focus {
+    color: var(--bs-danger);
+    background-color: var(--bs-danger-bg-subtle);
+}
+
+.dropdown-menu-action .dropdown-item-danger:hover i,
+.dropdown-menu-action .dropdown-item-danger:focus i {
+    color: var(--bs-danger);
+}
+
 
 /* ==========================================================================
    6. UTILITY CLASSES
    ========================================================================== */
 
-.text-accent-cyan {
-    color: var(--color-accent-cyan);
-}
+/* ---------- Text Colors ---------- */
+.text-accent-cyan   { color: var(--color-accent-cyan); }
+.text-accent-purple { color: var(--color-accent-purple); }
+.text-accent-pink   { color: var(--color-accent-pink); }
+.text-accent-teal   { color: var(--color-accent-teal); }
 
-.text-accent-purple {
-    color: var(--color-accent-purple);
-}
-
-.text-accent-pink {
-    color: var(--color-accent-pink);
-}
-
+/* ---------- Backgrounds ---------- */
 .bg-glass {
     background: var(--gradient-glass);
-    -webkit-backdrop-filter: blur(var(--blur-glass));
     backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
 }
 
-.bg-navy-blue-900 {
-    background-color: var(--color-midnight-navy-900) !important;
-}
+.bg-navy-blue-900 { background-color: var(--color-midnight-navy-900) !important; }
+.bg-navy-blue-950 { background-color: var(--color-midnight-navy-950) !important; }
 
+/* ---------- Brand Label ---------- */
 .brand-label {
     letter-spacing: 0.2em;
     text-transform: uppercase;
     background: var(--gradient-metallic);
-    -webkit-background-clip: text;
     background-clip: text;
+    -webkit-background-clip: text;
     color: transparent;
     -webkit-text-stroke: 1px transparent;
     filter: drop-shadow(var(--shadow-text));
 }
 
-.btn-nav-action {
-    height: 42px; /* Chiều cao cố định cho mọi nút -> ĐỒNG NHẤT */
-    color: var(--color-titanium-silver);
-    border: none;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 12px;
-    border-radius: 6px;
-    transition: all 0.2s ease-in-out;
-    text-decoration: none; /* Xóa gạch chân nếu là thẻ a */
-    font-size: 14px;
-    font-weight: 500;
-}
-
-/* Hiệu ứng Hover chung */
-.btn-nav-action:hover {
-    color: rgba(var(--rgb-accent-cyan), 1);
-    background-color: var(--rgb-accent-cyan);
-}
-
-/* Xóa outline xanh mặc định của Bootstrap khi click */
-.btn-nav-action:focus {
-    box-shadow: none; 
-    border: none; 
-    outline: none;
-}
-
-/* --- ELEMENTS RIÊNG BIỆT --- */
-
-/* Vạch ngăn cách (Divider) */
+/* ---------- Nav Divider ---------- */
 .nav-divider {
-    width: 1px;
-    height: 24px;
-    background-color: rgba(255, 255, 255, 0.1);
-    margin: 0 4px; /* Khoảng cách an toàn */
-}
-
- /* Chấm đỏ thông báo */
-.notif-wrapper { position: relative; }
-.notif-badge {
-    position: absolute;
-    top: 0px; right: 0px;
-    width: 8px; height: 8px;
-    background-color: #ff5f57;
-    border-radius: 50%;
-    border: 1px solid var(--color-midnight-navy-900); /* Viền tiệp màu nền */
-}
-
-/* User Icon Circle (Tối ưu hóa) */
-.user-icon-box {
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    display: flex; align-items: center; justify-content: center;
-    margin-right: 8px;
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: 0.2s;
-}
-
-/* Khi hover vào nút cha, icon con cũng đổi màu */
-.btn-nav-action:hover .user-icon-box {
-    border-color: rgba(var(--rgb-accent-cyan), 1);
-    color: rgba(var(--rgb-accent-cyan), 1);
+    width: 0.1rem;
+    height: 1.5rem;
+    margin: 0 0.5rem;
+    background: linear-gradient(to bottom, 
+        transparent 0%, 
+        var(--color-mclaren-silver) 50%, 
+        transparent 100%
+    );
 }

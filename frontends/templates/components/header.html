@@ -1,7 +1,7 @@
 <!-- frontends/templates/components/header.html -->
 {% load static i18n %}
 
-<nav class="navbar navbar-expand bg-navy-blue-900 shadow-lg sticky-top fixed-top py-3 px-4" 
+<nav class="navbar navbar-expand bg-navy-blue-900 shadow-sm sticky-top fixed-top py-3 px-4" 
      role="navigation"
      aria-label="Main navigation">
   <div class="container-fluid">
@@ -59,7 +59,7 @@
       {% endif %}
       
       {% if show_language_selector|default:True %}
-        {% include 'components/lang_selector_basic.html' %}
+        {% include "components/language_selector.html" %}
         <div class="nav-divider"></div>
       {% endif %}
       

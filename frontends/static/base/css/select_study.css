@@ -1,89 +1,544 @@
 /* ==========================================
-   LAYOUT & CONTAINER
+   UTILITY
    ========================================== */
-main.container-fluid {
-    min-height: calc(100vh - 200px);
-}
-/* ==========================================
-   SEARCH BAR
-   ========================================== */
-.controls-bar {
-    position: relative;
-}
-
-.controls-bar .bi-search {
-    position: absolute;
-    top: 50%;
-    left: 1.25rem;
-    transform: translateY(-50%);
-    font-size: clamp(1rem, 0.5vw + 0.9rem, 1.125rem);
-    color: var(--bs-white);
-    pointer-events: none;
-    transition: color var(--transition-fast);
-}
-
-.search-input {
-    width: 100%;
-    padding: clamp(0.625rem, 0.4vw + 0.5rem, 0.75rem)
-             clamp(1rem, 0.6vw + 0.8rem, 1.25rem)
-             clamp(0.625rem, 0.4vw + 0.5rem, 0.75rem)
-             clamp(3rem, 1vw + 2.5rem, 3.5rem);
-    font-size: clamp(0.9375rem, 0.5vw + 0.85rem, 1rem);
-    line-height: 1.5;
-    border: 0.1rem solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius-sm);
-    background: rgba(255, 255, 255, 0.2) !important;
-    background-image: none;
-    box-shadow: var(--bs-box-shadow-lg);
-    transition: border-color var(--transition-fast);
-}
-
-.search-input:focus ~ .bi-search {
-    color: var(--color-royal-blue-900);
-}
-
-.search-input::placeholder {
-    color: var(--bs-white);
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: var(--color-royal-blue-900);
-    background: rgba(255, 255, 255, 0.4) !important;
+.study-item.hidden {
+    display: none !important;
 }
 
 /* ==========================================
-   TABLE SETTINGS
+   PAGE LAYOUT
    ========================================== */
-
-/* Column widths - Optimized */
-.app-table th:nth-child(1),
-.app-table td:nth-child(1) { 
-    width: 10%; 
-    min-width: 100px;
+.study-page {
+    min-height: calc(100vh - 70px);
+    padding: 2rem 1.5rem 3rem;
+    background-color: var(--bs-body-bg);
 }
 
-.table-modern th:nth-child(2),
-.table-modern td:nth-child(2) { 
-    width: 60%; 
+.study-page__container {
+    max-width: 1280px;
+    margin-inline: auto;
+}
+
+/* ==========================================
+   PAGE HEADER
+   ========================================== */
+.study-page__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.study-page__title-group {
+    flex: 1;
     min-width: 200px;
 }
 
-.table-modern th:nth-child(3),
-.table-modern td:nth-child(3) { 
-    width: 10%; 
-    min-width: 100px;
+.study-page__title {
+    margin: 0 0 0.25rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--bs-body-color);
 }
 
-.table-modern th:nth-child(4),
-.table-modern td:nth-child(4) { 
-    width: 10%; 
-    min-width: 100px;
+.study-page__subtitle {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--bs-secondary-color);
 }
 
-.table-modern th:nth-child(5),
-.table-modern td:nth-child(5) { 
-    width: 10%; 
-    min-width: 80px;
+/* ==========================================
+   SEARCH BOX
+   ========================================== */
+.study-page__search {
+    flex: 0 1 380px;
+    min-width: 280px;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box__icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--bs-secondary-color);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.search-box__input {
+    width: 100%;
+    padding: 0.625rem 1rem 0.625rem 2.75rem;
+    font-size: 0.9375rem;
+    color: var(--bs-body-color);
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
+    box-shadow: var(--bs-box-shadow-sm);
+    outline: none;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.search-box__input::placeholder {
+    color: var(--bs-secondary-color);
+}
+
+.search-box__input:focus {
+    border-color: var(--bs-primary);
+    box-shadow: none;
+}
+
+.search-box:focus-within .search-box__icon {
+    color: var(--bs-primary);
+}
+
+/* ==========================================
+   STUDY LIST CARD
+   ========================================== */
+.study-list {
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
+    box-shadow: var(--bs-box-shadow-sm);
+    overflow: hidden;
+}
+
+/* Header Row */
+.study-list__header {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.5rem;
+    background-color: var(--bs-tertiary-bg);
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.study-list__col {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--bs-secondary-color);
+}
+
+.study-list__col--code   { flex: 0 0 120px; }
+.study-list__col--name   { flex: 1; min-width: 0; padding: 0 1rem; }
+.study-list__col--status { flex: 0 0 100px; }
+.study-list__col--date   { flex: 0 0 130px; }
+.study-list__col--action { flex: 0 0 100px; text-align: right; }
+
+/* Body */
+.study-list__body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================
+   STUDY ITEM ROW
+   ========================================== */
+.study-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--bs-border-color-translucent);
+    transition: background-color 0.15s ease;
+}
+
+.study-item:last-child {
+    border-bottom: none;
+}
+
+.study-item:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+/* Item Columns */
+.study-item__col {
+    display: flex;
+    align-items: center;
+}
+
+.study-item__col--code   { flex: 0 0 120px; }
+.study-item__col--name   { flex: 1; min-width: 0; padding: 0 1rem; }
+.study-item__col--status { flex: 0 0 100px; }
+.study-item__col--date   { flex: 0 0 130px; }
+.study-item__col--action { flex: 0 0 100px; justify-content: flex-end; }
+
+/* Code Badge */
+.study-item__code-badge {
+    display: inline-flex;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: var(--bs-font-monospace);
+    color: var(--color-midnight-navy-500);
+    background-color: rgba(var(--color-midnight-navy-500), 0.1);
+    border-radius: var(--bs-border-radius-lg);
+}
+
+/* Name */
+.study-item__name {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--bs-body-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Date */
+.study-item__date {
+    font-size: 0.8125rem;
+    color: var(--bs-secondary-color);
+    display: flex;
+    align-items: center;
+}
+
+.study-item__date i {
+    font-size: 0.75rem;
+    opacity: 0.6;
+}
+
+/* ==========================================
+   STATUS BADGE - Use Bootstrap badge styles
+   ========================================== */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 50rem;
+}
+
+.status-badge__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+.status-badge--active {
+    color: var(--bs-success);
+    background-color: var(--bs-success-bg-subtle);
+}
+
+.status-badge--archived {
+    color: var(--bs-warning-text-emphasis);
+    background-color: var(--bs-warning-bg-subtle);
+}
+
+.status-badge--draft {
+    color: var(--bs-secondary-color);
+    background-color: var(--bs-secondary-bg-subtle);
+}
+
+/* ==========================================
+   ENTER BUTTON
+   ========================================== */
+.study-item__form {
+    margin: 0;
+}
+
+.btn-enter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #fff;
+    background-color: var(--color-midnight-navy-500);
+    border: none;
+    border-radius: var(--bs-border-radius-lg);
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-enter:hover {
+    background-color: var(--bs-primary-text-emphasis);
+    transform: translateY(-1px);
+}
+
+.btn-enter:active {
+    transform: translateY(0);
+}
+
+.btn-enter__icon {
+    font-size: 0.875rem;
+    transition: transform 0.15s ease;
+}
+
+.btn-enter:hover .btn-enter__icon {
+    transform: translateX(2px);
+}
+
+/* ==========================================
+   EMPTY STATE
+   ========================================== */
+.study-list__empty {
+    padding: 4rem 2rem;
+}
+
+.empty-state {
+    text-align: center;
+}
+
+.empty-state__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 1.25rem;
+    background-color: var(--bs-tertiary-bg);
+    border-radius: 50%;
+}
+
+.empty-state__icon i {
+    font-size: 1.75rem;
+    color: var(--bs-secondary-color);
+}
+
+.empty-state__title {
+    margin: 0 0 0.375rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+.empty-state__text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--bs-secondary-color);
+}
+
+/* ==========================================
+   PAGINATION FOOTER
+   ========================================== */
+.study-page__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--bs-body-bg);
+    min-height: 56px;
+}
+
+.pagination-info {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--bs-secondary-color);
+}
+
+.pagination-info__icon {
+    font-size: 1rem;
+    opacity: 0.6;
+}
+
+.pagination-info__numbers,
+.pagination-info__total {
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+/* Right group: page size + pagination controls */
+.pagination-right-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Divider between page size and pagination */
+.pagination-divider {
+    width: 1px;
+    height: 20px;
+    background-color: var(--bs-border-color);
+}
+
+/* Page Size Selector */
+.page-size-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-size-selector__label {
+    font-size: 0.875rem;
+    color: var(--bs-secondary-color);
+    margin: 0;
+}
+
+.page-size-selector__select {
+    padding: 0.375rem 2rem 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--bs-body-color);
+    background-color: var(--bs-body-bg);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 12px;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    appearance: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.page-size-selector__select:focus {
+    border-color: var(--bs-primary);
+    outline: none;
+}
+
+/* Use Bootstrap pagination styles */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pagination-controls .page-item .page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--bs-body-color);
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
+    text-decoration: none;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.pagination-controls .page-item .page-link:hover {
+    color: var(--color-midnight-navy-500);
+    background-color: var(--bs-tertiary-bg);
+    border-color: var(--bs-border-color);
+}
+
+.pagination-controls .page-item.active .page-link {
+    color: #fff;
+    background-color: var(--color-midnight-navy-500);
+    border-color: var(--color-midnight-navy-500);
+}
+
+.pagination-controls .page-item.disabled .page-link {
+    color: var(--bs-secondary-color);
+    background-color: var(--bs-tertiary-bg);
+    border-color: var(--bs-border-color);
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 991.98px) {
+    .study-list__col--status,
+    .study-item__col--status { 
+        display: none !important; 
+    }
+}
+
+@media (max-width: 767.98px) {
+    .study-page {
+        padding: 1.5rem 1rem 2rem;
+    }
+
+    .study-page__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .study-page__title {
+        font-size: 1.5rem;
+    }
+
+    .study-page__search {
+        flex: 1 1 100%;
+    }
+
+    .study-list__header {
+        display: none;
+    }
+
+    .study-item {
+        flex-wrap: wrap;
+        gap: 0.625rem;
+        padding: 0.875rem 1rem;
+    }
+
+    .study-item__col--code { flex: 0 0 auto; }
+    .study-item__col--name { 
+        flex: 1 1 100%; 
+        order: -1; 
+        padding: 0 0 0.375rem 0;
+    }
+    .study-item__col--date { flex: 1; }
+    .study-item__col--action { flex: 0 0 auto; }
+
+    .study-item__name {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .study-page__footer {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.75rem;
+    }
+
+    .pagination-right-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .pagination-divider {
+        display: none;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .study-page {
+        padding: 1rem 0.75rem 1.5rem;
+    }
+
+    .study-item {
+        padding: 0.75rem;
+    }
+
+    .study-item__code-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    .btn-enter {
+        padding: 0.4rem 0.75rem;
+    }
+
+    .btn-enter__text {
+        display: none !important;
+    }
 }
 
