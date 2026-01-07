@@ -286,7 +286,7 @@ def audit_log_detail(request, log_id):
         try:
             user = User.objects.using('default').get(id=log.user_id)
         except User.DoesNotExist:
-            logger.warning(f"⚠️ User {log.user_id} not found")
+            logger.warning(f"User {log.user_id} not found")
     
     # ==========================================
     # 5. VERIFY INTEGRITY

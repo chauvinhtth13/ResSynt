@@ -93,7 +93,7 @@ class Command(BaseCommand):
             result = backup_manager.create_backup(database)
             
             if result['status'] == 'success':
-                self.stdout.write(self.style.SUCCESS("\n✓ Backup created successfully!"))
+                self.stdout.write(self.style.SUCCESS("\nBackup created successfully!"))
                 self.stdout.write(f"  Database:  {result['database']}")
                 self.stdout.write(f"  Path:      {result['path']}")
                 self.stdout.write(f"  Size:      {backup_manager._format_size(result['size'])}")
@@ -132,7 +132,7 @@ class Command(BaseCommand):
                 
                 if result['status'] == 'success':
                     self.stdout.write(self.style.SUCCESS(
-                        f"  ✓ {result['path']}\n"
+                        f"  {result['path']}\n"
                         f"  Size: {backup_manager._format_size(result['size'])}"
                     ))
                     
@@ -183,7 +183,7 @@ class Command(BaseCommand):
         result = backup_manager.verify_backup(backup_path)
         
         if result.get('valid'):
-            self.stdout.write(self.style.SUCCESS("\n✓ Backup is valid!"))
+            self.stdout.write(self.style.SUCCESS("\nBackup is valid!"))
             self.stdout.write(f"  Checksum: {result['checksum'][:32]}...")
             self.stdout.write(f"  Size:     {backup_manager._format_size(result['size'])}")
         else:
@@ -193,13 +193,13 @@ class Command(BaseCommand):
 
     def encrypt_backup(self, backup_manager, backup_path, password, remove_original):
             """Encrypt backup with GPG"""
-            self.stdout.write(f"\n🔒 Encrypting backup...")
+            self.stdout.write(f"\nEncrypting backup...")
             self.stdout.write("─" * 60)
             
             result = backup_manager.encrypt_backup(backup_path, password, remove_original)
             
             if result['status'] == 'success':
-                self.stdout.write(self.style.SUCCESS("\n✓ Encrypted successfully!"))
+                self.stdout.write(self.style.SUCCESS("\nEncrypted successfully!"))
                 self.stdout.write(f"  Path: {result['encrypted_path']}")
                 self.stdout.write(f"  Size: {backup_manager._format_size(result['size'])}")
                 if result['removed_original']:
@@ -223,7 +223,7 @@ class Command(BaseCommand):
             result = backup_manager.decrypt_backup(encrypted_path, password)
             
             if result['status'] == 'success':
-                self.stdout.write(self.style.SUCCESS("\n✓ Decrypted successfully!"))
+                self.stdout.write(self.style.SUCCESS("\nDecrypted successfully!"))
                 self.stdout.write(f"  Path: {result['decrypted_path']}")
                 self.stdout.write(f"  Size: {backup_manager._format_size(result['size'])}")
             else:

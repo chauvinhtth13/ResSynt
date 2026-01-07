@@ -67,7 +67,7 @@ def screening_case_create(request):
         messages.error(request, f'Site ID không hợp lệ: {siteid}')
         return redirect('study_43en:screening_case_list')
     
-    # 🔒 SECURITY FIX: Check user's ACTUAL site permissions (not just session)
+    # SECURITY FIX: Check user's ACTUAL site permissions (not just session)
     if not check_site_permission(request, siteid):
         user_sites = getattr(request, 'user_sites', set())
         logger.warning(

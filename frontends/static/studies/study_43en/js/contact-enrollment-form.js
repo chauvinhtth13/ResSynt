@@ -323,7 +323,7 @@
     
     //  Read-only mode
     if (state.isReadonly) {
-      console.log('🔒 Applying read-only mode...');
+      console.log('Applying read-only mode...');
       
       $('input, select, textarea').not('[type="hidden"]').prop('disabled', true);
       $('button[type="submit"]').hide();

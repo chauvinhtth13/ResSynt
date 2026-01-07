@@ -49,15 +49,17 @@ except ImportError:
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # =============================================================================
-# AXES (Disable in development for easier testing)
+# AXES (Development - enable verbose logging)
 # =============================================================================
 
-# Option 1: Completely disable AXES in dev
-# AXES_ENABLED = False
+AXES_VERBOSE = True  # Enable verbose logging for debugging
 
-# Option 2: Keep AXES but whitelist localhost (recommended for testing lockout UI)
-AXES_NEVER_LOCKOUT_WHITELIST = True
-AXES_IP_WHITELIST = ["127.0.0.1", "::1", "localhost"]
+# Bypass lockout for superusers in dev (still tracks attempts)
+AXES_LOCKOUT_CALLABLE = "backends.api.base.account.lockout.dev_lockout_response"
+
+# Fix IP detection for localhost (axes shows "None" without this)
+AXES_IPWARE_PROXY_COUNT = 0
+AXES_IPWARE_META_PRECEDENCE_ORDER = ["REMOTE_ADDR"]
 
 
 # =============================================================================

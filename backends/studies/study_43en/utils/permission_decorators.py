@@ -148,7 +148,7 @@ def check_site_access(get_site_from: str = 'instance'):
 
 def check_site_permission(request, siteid: str) -> bool:
     """
-    🔒 SECURITY: Check if user has permission to access/create for a specific site
+    SECURITY: Check if user has permission to access/create for a specific site
     
     This is a HELPER function that returns True/False without side effects.
     Use for validation in views and APIs.
@@ -173,7 +173,7 @@ def check_site_permission(request, siteid: str) -> bool:
 
 def check_instance_site_access(request, instance, redirect_to: str = None):
     """
-    🔒 SECURITY FIX: Check if user ACTUALLY has permission to access this site
+    SECURITY FIX: Check if user ACTUALLY has permission to access this site
     
     ❌ OLD LOGIC: Only checked session['selected_site_id'] → BYPASS-able!
      NEW LOGIC: Check against user's actual site permissions from middleware

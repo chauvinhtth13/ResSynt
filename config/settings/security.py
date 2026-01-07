@@ -24,6 +24,23 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
+# Additional security headers for production
+# These will be set via SECURE_* settings
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+
+# Permissions Policy (formerly Feature Policy)
+# Disable unnecessary browser features
+PERMISSIONS_POLICY = {
+    "accelerometer": [],
+    "camera": [],
+    "geolocation": [],
+    "gyroscope": [],
+    "magnetometer": [],
+    "microphone": [],
+    "payment": [],
+    "usb": [],
+}
+
 # =============================================================================
 # CONTENT SECURITY POLICY (django-csp 4.0)
 # =============================================================================
@@ -74,10 +91,14 @@ CSP_INCLUDE_NONCE_IN = ["script-src", "style-src"]
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {
+            "user_attributes": ("username", "first_name", "last_name", "email"),
+            "max_similarity": 0.7,
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
+        "OPTIONS": {"min_length": 8},  # Increased from 8 to 10
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
