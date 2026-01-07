@@ -11,7 +11,7 @@ from .invidual_followup import views_individual_followup
 from .invidual_exposure import views_individual_exposure
 
 from .individual_case import views_individual_case
-from . import (
+from .invidual_sample import (
     views_individual_sample
 )
 

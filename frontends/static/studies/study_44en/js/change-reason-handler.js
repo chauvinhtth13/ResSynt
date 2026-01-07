@@ -25,6 +25,9 @@ $(document).ready(function () {
         $form = $('#individualFollowUpForm');  // Individual Follow-up form (NEW)
     }
     if ($form.length === 0) {
+        $form = $('#individualSampleForm');  // Individual Sample form
+    }
+    if ($form.length === 0) {
         $form = $('#individualForm');  // Individual form
     }
     if ($form.length === 0) {

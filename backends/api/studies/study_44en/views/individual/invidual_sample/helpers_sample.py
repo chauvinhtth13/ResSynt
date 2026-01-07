@@ -3,6 +3,13 @@
 """
 Helper functions for Individual Sample views
 Handles sample collection for 4 visit times: baseline, day_14, day_28, day_90
+
+ORGANIZATION:
+1. Constants - Sample Time Mapping
+2. Utility functions
+3. Save functions
+4. Load functions
+5. ✅ NEW: Change Detection Functions for Audit Log
 """
 
 import logging
@@ -182,9 +189,171 @@ def load_samples(individual):
     return data
 
 
+# ==========================================
+# ✅ NEW: CHANGE DETECTION FOR AUDIT LOG
+# ==========================================
+
+def detect_sample_flat_field_changes(request, individual):
+    """
+    ✅ Detect changes in sample flat fields (4 visit times x 4 fields each)
+    
+    Compares POST data with database data for:
+    - sample_{time} (radio: yes/no/na)
+    - stool_date_{time} (date)
+    - throat_date_{time} (date)
+    - reason_{time} (text)
+    
+    For each of 4 visit times: enrollment, day14, day28, day90
+    
+    Returns:
+        list: List of change dicts [{field, old_value, new_value, old_display, new_display}]
+    """
+    changes = []
+    
+    # Load old data from database
+    old_sample_data = load_samples(individual)
+    
+    logger.info("=" * 60)
+    logger.info("🔍 DEBUG: Detecting sample changes...")
+    logger.info(f"   old_sample_data = {old_sample_data}")
+    logger.info("=" * 60)
+    
+    # Process each visit time
+    for form_prefix in SAMPLE_TIME_MAPPING.keys():
+        # ==========================================
+        # 1. sample_{time} radio (yes/no/na)
+        # ==========================================
+        field_name = f'sample_{form_prefix}'
+        old_val = str(old_sample_data.get(field_name, '') or '').strip().lower()
+        
+        if field_name in request.POST:
+            new_val = request.POST.get(field_name, '').strip().lower()
+        else:
+            new_val = old_val
+        
+        logger.info(f"🔍 {field_name}: old='{old_val}', new='{new_val}', in_POST={field_name in request.POST}")
+        
+        if old_val != new_val:
+            changes.append({
+                'field': field_name,
+                'old_value': old_val or '(trống)',
+                'new_value': new_val or '(trống)',
+                'old_display': old_val or '(trống)',
+                'new_display': new_val or '(trống)',
+            })
+        
+        # ==========================================
+        # 2. stool_date_{time} (date)
+        # ==========================================
+        date_field = f'stool_date_{form_prefix}'
+        old_date = old_sample_data.get(date_field, '')
+        
+        if date_field in request.POST:
+            new_date = request.POST.get(date_field, '').strip()
+        else:
+            new_date = old_date
+        
+        if str(old_date or '').strip() != str(new_date or '').strip():
+            changes.append({
+                'field': date_field,
+                'old_value': old_date or '(trống)',
+                'new_value': new_date or '(trống)',
+                'old_display': old_date or '(trống)',
+                'new_display': new_date or '(trống)',
+            })
+        
+        # ==========================================
+        # 3. throat_date_{time} (date)
+        # ==========================================
+        throat_field = f'throat_date_{form_prefix}'
+        old_throat = old_sample_data.get(throat_field, '')
+        
+        if throat_field in request.POST:
+            new_throat = request.POST.get(throat_field, '').strip()
+        else:
+            new_throat = old_throat
+        
+        if str(old_throat or '').strip() != str(new_throat or '').strip():
+            changes.append({
+                'field': throat_field,
+                'old_value': old_throat or '(trống)',
+                'new_value': new_throat or '(trống)',
+                'old_display': old_throat or '(trống)',
+                'new_display': new_throat or '(trống)',
+            })
+        
+        # ==========================================
+        # 4. reason_{time} (text)
+        # ==========================================
+        reason_field = f'reason_{form_prefix}'
+        old_reason = old_sample_data.get(reason_field, '')
+        
+        if reason_field in request.POST:
+            new_reason = request.POST.get(reason_field, '').strip()
+        else:
+            new_reason = old_reason
+        
+        if str(old_reason or '').strip() != str(new_reason or '').strip():
+            changes.append({
+                'field': reason_field,
+                'old_value': old_reason or '(trống)',
+                'new_value': new_reason or '(trống)',
+                'old_display': old_reason or '(trống)',
+                'new_display': new_reason or '(trống)',
+            })
+    
+    logger.info(f"🔍 detect_sample_flat_field_changes: Found {len(changes)} changes")
+    return changes
+
+
+def detect_food_frequency_form_changes(old_data, new_data):
+    """
+    ✅ Detect changes in FoodFrequency form fields
+    
+    Args:
+        old_data: Dict of old values from detector.extract_old_data()
+        new_data: Dict of new values from detector.extract_new_data()
+    
+    Returns:
+        list: List of change dicts
+    """
+    changes = []
+    
+    # Get all fields from both old and new data
+    all_fields = set(old_data.keys()) | set(new_data.keys())
+    
+    for field in all_fields:
+        old_val = old_data.get(field)
+        new_val = new_data.get(field)
+        
+        # Normalize for comparison
+        old_norm = str(old_val or '').strip().lower() if old_val is not None else ''
+        new_norm = str(new_val or '').strip().lower() if new_val is not None else ''
+        
+        if old_norm != new_norm:
+            changes.append({
+                'field': field,
+                'old_value': old_val if old_val is not None else '(trống)',
+                'new_value': new_val if new_val is not None else '(trống)',
+                'old_display': str(old_val) if old_val is not None else '(trống)',
+                'new_display': str(new_val) if new_val is not None else '(trống)',
+            })
+    
+    logger.info(f"🔍 detect_food_frequency_form_changes: Found {len(changes)} changes")
+    return changes
+
+
+# ==========================================
+# EXPORTS
+# ==========================================
+
 __all__ = [
     'set_audit_metadata',
     'make_form_readonly',
+    'parse_date_string',
     'save_samples',
     'load_samples',
+    # ✅ NEW: Change detection for audit log
+    'detect_sample_flat_field_changes',
+    'detect_food_frequency_form_changes',
 ]

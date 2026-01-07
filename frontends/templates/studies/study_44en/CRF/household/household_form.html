@@ -5,7 +5,7 @@
 {% block dashboard_content %}
 <div class="container-fluid">
     <h4 class="text-center fw-bold mb-4">A – HOUSEHOLD QUESTIONNAIRE</h4>
-
+    
     <!-- Display form errors -->
     {% if household_form.errors or member_formset.errors or member_formset.non_form_errors %}
     <div class="alert alert-danger" role="alert">
@@ -18,7 +18,7 @@
             {% endfor %}
         </ul>
         {% endif %}
-
+        
         {% if household_form.errors %}
         <p><strong>Household form errors:</strong></p>
         <ul>
@@ -27,7 +27,7 @@
             {% endfor %}
         </ul>
         {% endif %}
-
+        
         {% if member_formset.non_form_errors %}
         <p><strong>Member formset errors:</strong></p>
         <ul>
@@ -36,14 +36,14 @@
             {% endfor %}
         </ul>
         {% endif %}
-
+        
         {% if member_formset.errors %}
         <p><strong>Member errors:</strong></p>
         <ul>
             {% for form_errors in member_formset.errors %}
-            {% if form_errors %}
-            <li>{{ form_errors }}</li>
-            {% endif %}
+                {% if form_errors %}
+                <li>{{ form_errors }}</li>
+                {% endif %}
             {% endfor %}
         </ul>
         {% endif %}
@@ -52,17 +52,17 @@
 
     <form method="post" action="" id="householdCaseForm">
         {% csrf_token %}
-
+        
         <!-- Hidden required fields -->
         <input type="hidden" name="STUDYID" value="44EN">
         <input type="hidden" name="CITY" value="Ho Chi Minh City">
-
+        
         <!-- HHID field - leave empty for auto-generation -->
         <input type="hidden" name="HHID" value="{{ household.HHID|default:'' }}">
-
+        
         <!-- Member formset management form (REQUIRED for formset to work) -->
         {{ member_formset.management_form }}
-
+        
         {% if household and household.HHID %}
         <div class="mb-4">
             <span class="fw-bold">Household ID: {{ household.HHID }}</span>
@@ -75,427 +75,364 @@
 
         <hr class="my-4">
 
-        <!-- Respondent Member Number - auto-selected from member list -->
-        <input type="hidden" name="RESPONDENT_MEMBER_NUM"
-            value="{% if household_form.RESPONDENT_MEMBER_NUM.value %}{{ household_form.RESPONDENT_MEMBER_NUM.value }}{% elif household.RESPONDENT_MEMBER_NUM %}{{ household.RESPONDENT_MEMBER_NUM }}{% endif %}">
-        <div class="mb-3 text-muted">
-            <small><em>Note: Respondent will be selected from the member list below by checking "Is
-                    Respondent"</em></small>
-        </div>
+            <!-- Respondent Member Number - auto-selected from member list -->
+            <input type="hidden" name="RESPONDENT_MEMBER_NUM" value="{% if household_form.RESPONDENT_MEMBER_NUM.value %}{{ household_form.RESPONDENT_MEMBER_NUM.value }}{% elif household.RESPONDENT_MEMBER_NUM %}{{ household.RESPONDENT_MEMBER_NUM }}{% endif %}">
+            <div class="mb-3 text-muted">
+                <small><em>Note: Respondent will be selected from the member list below by checking "Is Respondent"</em></small>
+            </div>
 
-        <div class="mb-3">
-            <p class="fw-bold mb-2">2. Household Address:</p>
-            <div class="ms-md-3">
-                <div class="mb-2 d-flex align-items-end">
-                    <label class="text-nowrap me-2">House No., Street, Hamlet:</label>
-                    <input type="text" name="STREET"
-                        class="form-control border-0 border-bottom rounded-0 px-1 shadow-none"
-                        value="{% if household_form.STREET.value %}{{ household_form.STREET.value }}{% elif household.STREET %}{{ household.STREET }}{% endif %}">
+            <div class="mb-3">
+                <p class="fw-bold mb-2">2. Household Address:</p>
+                <div class="ms-md-3">
+                    <div class="mb-2 d-flex align-items-end">
+                        <label class="text-nowrap me-2">House No., Street, Hamlet:</label>
+                        <input type="text" name="STREET" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" value="{% if household_form.STREET.value %}{{ household_form.STREET.value }}{% elif household.STREET %}{{ household.STREET }}{% endif %}">
+                    </div>
+                    {% if household_form.STREET.errors %}
+                      <div class="text-danger small mt-1">{{ household_form.STREET.errors.0 }}</div>
+                    {% endif %}
+                    
+                    <div class="mb-2 d-flex align-items-end">
+                        <label class="text-nowrap me-2">Ward/Commune:</label>
+                        <input type="text" name="WARD" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" value="{% if household_form.WARD.value %}{{ household_form.WARD.value }}{% elif household.WARD %}{{ household.WARD }}{% endif %}">
+                    </div>
+                    {% if household_form.WARD.errors %}
+                      <div class="text-danger small mt-1">{{ household_form.WARD.errors.0 }}</div>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <strong>Ho Chi Minh City</strong>
+                    </div>
                 </div>
-                {% if household_form.STREET.errors %}
-                <div class="text-danger small mt-1">{{ household_form.STREET.errors.0 }}</div>
+            </div>
+
+            <div class="mb-3 d-flex align-items-center">
+                <p class="fw-bold mb-0 me-3">3. Total number of household members:</p>
+                <input type="number" class="form-control text-center d-inline-block" name="TOTAL_MEMBERS" value="{% if household_form.TOTAL_MEMBERS.value %}{{ household_form.TOTAL_MEMBERS.value }}{% elif household.TOTAL_MEMBERS %}{{ household.TOTAL_MEMBERS }}{% endif %}" min="1" max="10" style="width: 100px;">
+            </div>
+
+            <div class="mb-4">
+                <p class="fw-bold mb-2">4. Description of all household members:</p>
+
+                <div class="table-responsive mb-4 ms-md-3">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 40px;">#</th>
+                                <th style="width: 220px;">Mối quan hệ với chủ hộ</th>
+                                <th style="width: 120px;" class="text-center">Năm sinh</th>
+                                <th style="width: 120px;" class="text-center">Giới tính</th>
+                                <th style="width: 120px;" class="text-center">Là người trả lời</th>
+                            </tr>
+                        </thead>
+                        <tbody id="members-table-body">
+                            {% for form in member_formset %}
+                            <tr class="member-row" data-form-index="{{ forloop.counter0 }}">
+                                <td class="text-center">
+                                    {{ form.id }}  {# Django formset management field #}
+                                    {{ form.MEMBERID }}  {# Hidden field for MEMBERID - will be auto-generated if empty #}
+                                    <input type="hidden" name="{{ form.MEMBER_NUM.html_name }}" value="{{ form.MEMBER_NUM.value|default:forloop.counter }}" class="member-num-input">
+                                    <input type="hidden" name="{{ form.CHILD_ORDER.html_name }}" value="{{ form.CHILD_ORDER.value|default:'' }}" class="child-order-input">
+                                    {{ forloop.counter }}
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm relationship-select" name="{{ form.RELATIONSHIP.html_name }}" id="{{ form.RELATIONSHIP.id_for_label }}">
+                                        <option value="">Chọn mối quan hệ...</option>
+                                        <option value="A" {% if form.RELATIONSHIP.value == 'A' %}selected{% endif %}>A. Chủ hộ</option>
+                                        <option value="B" {% if form.RELATIONSHIP.value == 'B' %}selected{% endif %}>B. Vợ</option>
+                                        <option value="C" {% if form.RELATIONSHIP.value == 'C' %}selected{% endif %}>C. Chồng</option>
+                                        <option value="D" {% if form.RELATIONSHIP.value == 'D' %}selected{% endif %} class="child-option">D. Con</option>
+                                        <option value="E" {% if form.RELATIONSHIP.value == 'E' %}selected{% endif %}>E. Bố/Mẹ</option>
+                                        <option value="F" {% if form.RELATIONSHIP.value == 'F' %}selected{% endif %}>F. Ông/Bà</option>
+                                        <option value="G" {% if form.RELATIONSHIP.value == 'G' %}selected{% endif %}>G. Khác</option>
+                                    </select>
+                                </td>
+                                <td>{% localize off %}<input type="text" class="form-control form-control-sm text-center" name="{{ form.BIRTH_YEAR.html_name }}" id="{{ form.BIRTH_YEAR.id_for_label }}" value="{{ form.BIRTH_YEAR.value|default:'' }}" pattern="[0-9]{4}" maxlength="4" placeholder="YYYY">{% endlocalize %}</td>
+                                <td>
+                                    <select class="form-select form-select-sm" name="{{ form.GENDER.html_name }}" id="{{ form.GENDER.id_for_label }}">
+                                        <option value="">Chọn...</option>
+                                        <option value="Male" {% if form.GENDER.value == 'Male' %}selected{% endif %}>Nam</option>
+                                        <option value="Female" {% if form.GENDER.value == 'Female' %}selected{% endif %}>Nữ</option>
+                                    </select>
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input" name="{{ form.ISRESPONDENT.html_name }}" id="{{ form.ISRESPONDENT.id_for_label }}" value="1" {% if form.ISRESPONDENT.value %}checked{% endif %}>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Average Monthly Income -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">5. What is the average monthly income of your household?</p>
+                <div class="ms-md-3 row">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="MONTHLY_INCOME" value="<15" class="form-check-input" id="income1" {% if household_form.MONTHLY_INCOME.value == '<15' %}checked{% endif %}>
+                            <label class="form-check-label" for="income1">&lt; 15 million VND</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="MONTHLY_INCOME" value="15-30" class="form-check-input" id="income2" {% if household_form.MONTHLY_INCOME.value == '15-30' %}checked{% endif %}>
+                            <label class="form-check-label" for="income2">15 - 30 million VND</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="MONTHLY_INCOME" value="31-50" class="form-check-input" id="income3" {% if household_form.MONTHLY_INCOME.value == '31-50' %}checked{% endif %}>
+                            <label class="form-check-label" for="income3">31 - 50 million VND</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="MONTHLY_INCOME" value=">50" class="form-check-input" id="income4" {% if household_form.MONTHLY_INCOME.value == '>50' %}checked{% endif %}>
+                            <label class="form-check-label" for="income4">&gt; 50 million VND</label>
+                        </div>
+                    </div>
+                </div>
+                {% if household_form.MONTHLY_INCOME.errors %}
+                  <div class="text-danger small mt-1">{{ household_form.MONTHLY_INCOME.errors.0 }}</div>
                 {% endif %}
+            </div>
 
-                <div class="mb-2 d-flex align-items-end">
-                    <label class="text-nowrap me-2">Ward/Commune:</label>
-                    <input type="text" name="WARD"
-                        class="form-control border-0 border-bottom rounded-0 px-1 shadow-none"
-                        value="{% if household_form.WARD.value %}{{ household_form.WARD.value }}{% elif household.WARD %}{{ household.WARD }}{% endif %}">
+            <!-- Ownership -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">6. Does your household own this house?</p>
+                <div class="ms-md-3">
+                    <div class="form-check form-check-inline">
+                        <input type="radio" name="OWNERSHIP" value="owned" class="form-check-input" id="ownership1" {% if household_form.OWNERSHIP.value == 'owned' %}checked{% endif %}>
+                        <label class="form-check-label" for="ownership1">Owned</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="radio" name="OWNERSHIP" value="rented" class="form-check-input" id="ownership2" {% if household_form.OWNERSHIP.value == 'rented' %}checked{% endif %}>
+                        <label class="form-check-label" for="ownership2">Rented</label>
+                    </div>
                 </div>
-                {% if household_form.WARD.errors %}
-                <div class="text-danger small mt-1">{{ household_form.WARD.errors.0 }}</div>
+                {% if household_form.OWNERSHIP.errors %}
+                  <div class="text-danger small mt-1">{{ household_form.OWNERSHIP.errors.0 }}</div>
                 {% endif %}
+            </div>
 
-                <div class="mt-3">
-                    <strong>Ho Chi Minh City</strong>
+            <!-- House Details -->
+            <div class="mb-3 d-flex align-items-center">
+                <p class="fw-bold mb-0 me-3">7. What is the approximate area of your house?</p>
+                <div class="d-flex align-items-center">
+                    {{ household_form.LAND_AREA }}
+                    <span class="ms-2 text-muted">m²</span>
                 </div>
             </div>
-        </div>
-
-        <div class="mb-3 d-flex align-items-center">
-            <p class="fw-bold mb-0 me-3">3. Total number of household members:</p>
-            <input type="number" class="form-control text-center d-inline-block" name="TOTAL_MEMBERS"
-                value="{% if household_form.TOTAL_MEMBERS.value %}{{ household_form.TOTAL_MEMBERS.value }}{% elif household.TOTAL_MEMBERS %}{{ household.TOTAL_MEMBERS }}{% endif %}"
-                min="1" max="10" style="width: 100px;">
-        </div>
-
-        <div class="mb-4">
-            <p class="fw-bold mb-2">4. Description of all household members:</p>
-
-            <div class="table-responsive mb-4 ms-md-3">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width: 40px;">#</th>
-                            <th style="width: 220px;">Mối quan hệ với chủ hộ</th>
-                            <th style="width: 120px;" class="text-center">Năm sinh</th>
-                            <th style="width: 120px;" class="text-center">Giới tính</th>
-                            <th style="width: 120px;" class="text-center">Là người trả lời</th>
-                        </tr>
-                    </thead>
-                    <tbody id="members-table-body">
-                        {% for form in member_formset %}
-                        <tr class="member-row" data-form-index="{{ forloop.counter0 }}">
-                            <td class="text-center">
-                                {{ form.id }} {# Django formset management field #}
-                                {{ form.MEMBERID }} {# Hidden field for MEMBERID - will be auto-generated if empty #}
-                                <input type="hidden" name="{{ form.MEMBER_NUM.html_name }}"
-                                    value="{{ form.MEMBER_NUM.value|default:forloop.counter }}"
-                                    class="member-num-input">
-                                <input type="hidden" name="{{ form.CHILD_ORDER.html_name }}"
-                                    value="{{ form.CHILD_ORDER.value|default:'' }}" class="child-order-input">
-                                {{ forloop.counter }}
-                            </td>
-                            <td>
-                                <select class="form-select form-select-sm relationship-select"
-                                    name="{{ form.RELATIONSHIP.html_name }}" id="{{ form.RELATIONSHIP.id_for_label }}">
-                                    <option value="">Chọn mối quan hệ...</option>
-                                    <option value="A" {% if form.RELATIONSHIP.value=='A' %}selected{% endif %}>A. Chủ hộ
-                                    </option>
-                                    <option value="B" {% if form.RELATIONSHIP.value=='B' %}selected{% endif %}>B. Vợ
-                                    </option>
-                                    <option value="C" {% if form.RELATIONSHIP.value=='C' %}selected{% endif %}>C. Chồng
-                                    </option>
-                                    <option value="D" {% if form.RELATIONSHIP.value=='D' %}selected{% endif %}
-                                        class="child-option">D. Con</option>
-                                    <option value="E" {% if form.RELATIONSHIP.value=='E' %}selected{% endif %}>E. Bố/Mẹ
-                                    </option>
-                                    <option value="F" {% if form.RELATIONSHIP.value=='F' %}selected{% endif %}>F. Ông/Bà
-                                    </option>
-                                    <option value="G" {% if form.RELATIONSHIP.value=='G' %}selected{% endif %}>G. Khác
-                                    </option>
-                                </select>
-                            </td>
-                            <td>{% localize off %}<input type="text" class="form-control form-control-sm text-center"
-                                    name="{{ form.BIRTH_YEAR.html_name }}" id="{{ form.BIRTH_YEAR.id_for_label }}"
-                                    value="{{ form.BIRTH_YEAR.value|default:'' }}" pattern="[0-9]{4}" maxlength="4"
-                                    placeholder="YYYY">{% endlocalize %}</td>
-                            <td>
-                                <select class="form-select form-select-sm" name="{{ form.GENDER.html_name }}"
-                                    id="{{ form.GENDER.id_for_label }}">
-                                    <option value="">Chọn...</option>
-                                    <option value="Male" {% if form.GENDER.value=='Male' %}selected{% endif %}>Nam
-                                    </option>
-                                    <option value="Female" {% if form.GENDER.value=='Female' %}selected{% endif %}>Nữ
-                                    </option>
-                                </select>
-                            </td>
-                            <td class="text-center">
-                                <input type="checkbox" class="form-check-input" name="{{ form.ISRESPONDENT.html_name }}"
-                                    id="{{ form.ISRESPONDENT.id_for_label }}" value="1" {% if form.ISRESPONDENT.value
-                                    %}checked{% endif %}>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Average Monthly Income -->
-        <div class="mb-4">
-            <p class="fw-bold mb-2">5. What is the average monthly income of your household?</p>
-            <div class="ms-md-3 row">
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="MONTHLY_INCOME" value="<15" class="form-check-input" id="income1" {%
-                            if household_form.MONTHLY_INCOME.value=='<15' %}checked{% endif %}>
-                        <label class="form-check-label" for="income1">&lt; 15 million VND</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="MONTHLY_INCOME" value="15-30" class="form-check-input" id="income2" {%
-                            if household_form.MONTHLY_INCOME.value=='15-30' %}checked{% endif %}>
-                        <label class="form-check-label" for="income2">15 - 30 million VND</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="MONTHLY_INCOME" value="31-50" class="form-check-input" id="income3" {%
-                            if household_form.MONTHLY_INCOME.value=='31-50' %}checked{% endif %}>
-                        <label class="form-check-label" for="income3">31 - 50 million VND</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="MONTHLY_INCOME" value=">50" class="form-check-input" id="income4" {%
-                            if household_form.MONTHLY_INCOME.value=='>50' %}checked{% endif %}>
-                        <label class="form-check-label" for="income4">&gt; 50 million VND</label>
-                    </div>
-                </div>
-            </div>
-            {% if household_form.MONTHLY_INCOME.errors %}
-            <div class="text-danger small mt-1">{{ household_form.MONTHLY_INCOME.errors.0 }}</div>
+            {% if household_form.LAND_AREA.errors %}
+              <div class="text-danger small mt-1">{{ household_form.LAND_AREA.errors.0 }}</div>
             {% endif %}
-        </div>
 
-        <!-- Ownership -->
-        <div class="mb-4">
-            <p class="fw-bold mb-2">6. Does your household own this house?</p>
-            <div class="ms-md-3">
-                <div class="form-check form-check-inline">
-                    <input type="radio" name="OWNERSHIP" value="owned" class="form-check-input" id="ownership1" {% if
-                        household_form.OWNERSHIP.value=='owned' %}checked{% endif %}>
-                    <label class="form-check-label" for="ownership1">Owned</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input type="radio" name="OWNERSHIP" value="rented" class="form-check-input" id="ownership2" {% if
-                        household_form.OWNERSHIP.value=='rented' %}checked{% endif %}>
-                    <label class="form-check-label" for="ownership2">Rented</label>
-                </div>
+            <div class="mb-3 d-flex align-items-center">
+                <p class="fw-bold mb-0 me-3">8. How many floors does your house have?:</p>
+                <input type="number" name="NUM_FLOORS" class="form-control text-center d-inline-block" style="width: 60px;" value="{% if household_form.NUM_FLOORS.value %}{{ household_form.NUM_FLOORS.value }}{% elif household.NUM_FLOORS %}{{ household.NUM_FLOORS }}{% endif %}" min="1">
             </div>
-            {% if household_form.OWNERSHIP.errors %}
-            <div class="text-danger small mt-1">{{ household_form.OWNERSHIP.errors.0 }}</div>
+            {% if household_form.NUM_FLOORS.errors %}
+              <div class="text-danger small mt-1">{{ household_form.NUM_FLOORS.errors.0 }}</div>
             {% endif %}
-        </div>
 
-        <!-- House Details -->
-        <div class="mb-3 d-flex align-items-center">
-            <p class="fw-bold mb-0 me-3">7. What is the approximate area of your house? (m²):</p>
-            <input type="number" name="LAND_AREA" class="form-control text-center d-inline-block" style="width: 100px;"
-                value="{% if household_form.LAND_AREA.value != None and household_form.LAND_AREA.value != '' %}{{ household_form.LAND_AREA.value|stringformat:'g' }}{% elif household.LAND_AREA != None %}{{ household.LAND_AREA|stringformat:'g' }}{% else %}{% endif %}"
-                min="0" step="0.1">
-            <div class="text-muted small"></div>
-        </div>
-        {% if household_form.LAND_AREA.errors %}
-        <div class="text-danger small mt-1">{{ household_form.LAND_AREA.errors.0 }}</div>
-        {% endif %}
-
-        <div class="mb-3 d-flex align-items-center">
-            <p class="fw-bold mb-0 me-3">8. How many floors does your house have?:</p>
-            <input type="number" name="NUM_FLOORS" class="form-control text-center d-inline-block" style="width: 60px;"
-                value="{% if household_form.NUM_FLOORS.value %}{{ household_form.NUM_FLOORS.value }}{% elif household.NUM_FLOORS %}{{ household.NUM_FLOORS }}{% endif %}"
-                min="1">
-        </div>
-        {% if household_form.NUM_FLOORS.errors %}
-        <div class="text-danger small mt-1">{{ household_form.NUM_FLOORS.errors.0 }}</div>
-        {% endif %}
-
-        <div class="mb-4 d-flex align-items-center">
-            <p class="fw-bold mb-0 me-3">9. How many rooms does your house have? (including bedrooms, living room,
-                kitchen):</p>
-            <input type="number" name="NUM_ROOMS" class="form-control text-center d-inline-block" style="width: 60px;"
-                value="{% if household_form.NUM_ROOMS.value %}{{ household_form.NUM_ROOMS.value }}{% elif household.NUM_ROOMS %}{{ household.NUM_ROOMS }}{% endif %}"
-                min="0">
-        </div>
-        {% if household_form.NUM_ROOMS.errors %}
-        <div class="text-danger small mt-1">{{ household_form.NUM_ROOMS.errors.0 }}</div>
-        {% endif %}
-
-        <!-- House Type -->
-        <div class="mb-4">
-            <p class="fw-bold mb-2">10. What type of house do you live in?</p>
-            <div class="ms-md-3 row">
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="HOUSING_TYPE" value="permanent" class="form-check-input" id="house1"
-                            {% if household_form.HOUSING_TYPE.value=='permanent' %}checked{% endif %}>
-                        <label class="form-check-label" for="house1">Permanent House</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="HOUSING_TYPE" value="temporary" class="form-check-input" id="house2"
-                            {% if household_form.HOUSING_TYPE.value=='temporary' %}checked{% endif %}>
-                        <label class="form-check-label" for="house2">Temporary / Rudimentary House</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="HOUSING_TYPE" value="other" class="form-check-input" id="house3" {% if
-                            household_form.HOUSING_TYPE.value=='other' %}checked{% endif %}>
-                        <label class="form-check-label" for="house3">Other</label>
-                    </div>
-                </div>
+            <div class="mb-4 d-flex align-items-center">
+                <p class="fw-bold mb-0 me-3">9. How many rooms does your house have? (including bedrooms, living room, kitchen):</p>
+                <input type="number" name="NUM_ROOMS" class="form-control text-center d-inline-block" style="width: 60px;" value="{% if household_form.NUM_ROOMS.value %}{{ household_form.NUM_ROOMS.value }}{% elif household.NUM_ROOMS %}{{ household.NUM_ROOMS }}{% endif %}" min="0">
             </div>
-            {% if household_form.HOUSING_TYPE.errors %}
-            <div class="text-danger small mt-1">{{ household_form.HOUSING_TYPE.errors.0 }}</div>
+            {% if household_form.NUM_ROOMS.errors %}
+              <div class="text-danger small mt-1">{{ household_form.NUM_ROOMS.errors.0 }}</div>
             {% endif %}
-        </div>
 
-        <!-- Floor Material -->
-        <div class="mb-4">
-            <p class="fw-bold mb-2">11. What is the main material of the floor?</p>
-            <div class="ms-md-3 row">
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="FLOOR_MATERIAL" value="ceramic" class="form-check-input" id="floor1"
-                            {% if household_form.FLOOR_MATERIAL.value=='ceramic' %}checked{% endif %}>
-                        <label class="form-check-label" for="floor1">Ceramic / Granite Tiles</label>
+            <!-- House Type -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">10. What type of house do you live in?</p>
+                <div class="ms-md-3 row">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="HOUSING_TYPE" value="permanent" class="form-check-input" id="house1" {% if household_form.HOUSING_TYPE.value == 'permanent' %}checked{% endif %}>
+                            <label class="form-check-label" for="house1">Permanent House</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="HOUSING_TYPE" value="temporary" class="form-check-input" id="house2" {% if household_form.HOUSING_TYPE.value == 'temporary' %}checked{% endif %}>
+                            <label class="form-check-label" for="house2">Temporary / Rudimentary House</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="HOUSING_TYPE" value="other" class="form-check-input" id="house3" {% if household_form.HOUSING_TYPE.value == 'other' %}checked{% endif %}>
+                            <label class="form-check-label" for="house3">Other</label>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="FLOOR_MATERIAL" value="concrete" class="form-check-input" id="floor2"
-                            {% if household_form.FLOOR_MATERIAL.value=='concrete' %}checked{% endif %}>
-                        <label class="form-check-label" for="floor2">Concrete / Cement</label>
+                {% if household_form.HOUSING_TYPE.errors %}
+                  <div class="text-danger small mt-1">{{ household_form.HOUSING_TYPE.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Floor Material -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">11. What is the main material of the floor?</p>
+                <div class="ms-md-3 row">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="FLOOR_MATERIAL" value="ceramic" class="form-check-input" id="floor1" {% if household_form.FLOOR_MATERIAL.value == 'ceramic' %}checked{% endif %}>
+                            <label class="form-check-label" for="floor1">Ceramic / Granite Tiles</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="FLOOR_MATERIAL" value="concrete" class="form-check-input" id="floor2" {% if household_form.FLOOR_MATERIAL.value == 'concrete' %}checked{% endif %}>
+                            <label class="form-check-label" for="floor2">Concrete / Cement</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="FLOOR_MATERIAL" value="wood" class="form-check-input" id="floor3" {% if household_form.FLOOR_MATERIAL.value == 'wood' %}checked{% endif %}>
+                            <label class="form-check-label" for="floor3">Wooden Floor</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="FLOOR_MATERIAL" value="other" class="form-check-input" id="floor4" {% if household_form.FLOOR_MATERIAL.value == 'other' %}checked{% endif %}>
+                            <label class="form-check-label" for="floor4">Other</label>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="FLOOR_MATERIAL" value="wood" class="form-check-input" id="floor3" {%
-                            if household_form.FLOOR_MATERIAL.value=='wood' %}checked{% endif %}>
-                        <label class="form-check-label" for="floor3">Wooden Floor</label>
+                {% if household_form.FLOOR_MATERIAL.errors %}
+                  <div class="text-danger small mt-1">{{ household_form.FLOOR_MATERIAL.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Roof Material -->
+            <div class="mb-4">
+                <p class="fw-bold mb-2">12. What is the main material of the roof?</p>
+                <div class="ms-md-3 row">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="ROOF_MATERIAL" value="concrete" class="form-check-input" id="roof1" {% if household_form.ROOF_MATERIAL.value == 'concrete' %}checked{% endif %}>
+                            <label class="form-check-label" for="roof1">Reinforced Concrete</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="ROOF_MATERIAL" value="metal" class="form-check-input" id="roof2" {% if household_form.ROOF_MATERIAL.value == 'metal' %}checked{% endif %}>
+                            <label class="form-check-label" for="roof2">Metal Sheets / Corrugated Iron</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="ROOF_MATERIAL" value="tile" class="form-check-input" id="roof3" {% if household_form.ROOF_MATERIAL.value == 'tile' %}checked{% endif %}>
+                            <label class="form-check-label" for="roof3">Tiles</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="radio" name="ROOF_MATERIAL" value="other" class="form-check-input" id="roof4" {% if household_form.ROOF_MATERIAL.value == 'other' %}checked{% endif %}>
+                            <label class="form-check-label" for="roof4">Other</label>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="FLOOR_MATERIAL" value="other" class="form-check-input" id="floor4" {%
-                            if household_form.FLOOR_MATERIAL.value=='other' %}checked{% endif %}>
-                        <label class="form-check-label" for="floor4">Other</label>
+                {% if household_form.ROOF_MATERIAL.errors %}
+                  <div class="text-danger small mt-1">{{ household_form.ROOF_MATERIAL.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Assets -->
+            <div class="mb-5">
+                <p class="fw-bold mb-2">13. Which of the following does your household own?</p>
+                <div class="ms-md-3 row">
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="TV" value="1" class="form-check-input" id="asset1" {% if household_form.TV.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset1">Television</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="AC" value="1" class="form-check-input" id="asset2" {% if household_form.AC.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset2">Air Conditioner</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="COMPUTER" value="1" class="form-check-input" id="asset3" {% if household_form.COMPUTER.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset3">Desktop/Laptop</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="REFRIGERATOR" value="1" class="form-check-input" id="asset4" {% if household_form.REFRIGERATOR.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset4">Refrigerator</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="INTERNET" value="1" class="form-check-input" id="asset5" {% if household_form.INTERNET.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset5">Internet Access</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="WASHING_MACHINE" value="1" class="form-check-input" id="asset6" {% if household_form.WASHING_MACHINE.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset6">Washing Machine</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="MOBILE_PHONE" value="1" class="form-check-input" id="asset7" {% if household_form.MOBILE_PHONE.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset7">Mobile Phone</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="WATER_HEATER" value="1" class="form-check-input" id="asset8" {% if household_form.WATER_HEATER.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset8">Water Heater</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="BICYCLE" value="1" class="form-check-input" id="asset9" {% if household_form.BICYCLE.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset9">Bicycle</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="GAS_STOVE" value="1" class="form-check-input" id="asset10" {% if household_form.GAS_STOVE.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset10">Gas Stove</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="MOTORCYCLE" value="1" class="form-check-input" id="asset11" {% if household_form.MOTORCYCLE.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset11">Motorcycle</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="INDUCTION_COOKER" value="1" class="form-check-input" id="asset12" {% if household_form.INDUCTION_COOKER.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset12">Induction Cooker</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="CAR" value="1" class="form-check-input" id="asset13" {% if household_form.CAR.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset13">Car</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="RICE_COOKER" value="1" class="form-check-input" id="asset14" {% if household_form.RICE_COOKER.value %}checked{% endif %}>
+                            <label class="form-check-label" for="asset14">Rice Cooker</label>
+                        </div>
                     </div>
                 </div>
             </div>
-            {% if household_form.FLOOR_MATERIAL.errors %}
-            <div class="text-danger small mt-1">{{ household_form.FLOOR_MATERIAL.errors.0 }}</div>
-            {% endif %}
-        </div>
 
-        <!-- Roof Material -->
-        <div class="mb-4">
-            <p class="fw-bold mb-2">12. What is the main material of the roof?</p>
-            <div class="ms-md-3 row">
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="ROOF_MATERIAL" value="concrete" class="form-check-input" id="roof1" {%
-                            if household_form.ROOF_MATERIAL.value=='concrete' %}checked{% endif %}>
-                        <label class="form-check-label" for="roof1">Reinforced Concrete</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="ROOF_MATERIAL" value="metal" class="form-check-input" id="roof2" {% if
-                            household_form.ROOF_MATERIAL.value=='metal' %}checked{% endif %}>
-                        <label class="form-check-label" for="roof2">Metal Sheets / Corrugated Iron</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="ROOF_MATERIAL" value="tile" class="form-check-input" id="roof3" {% if
-                            household_form.ROOF_MATERIAL.value=='tile' %}checked{% endif %}>
-                        <label class="form-check-label" for="roof3">Tiles</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check">
-                        <input type="radio" name="ROOF_MATERIAL" value="other" class="form-check-input" id="roof4" {% if
-                            household_form.ROOF_MATERIAL.value=='other' %}checked{% endif %}>
-                        <label class="form-check-label" for="roof4">Other</label>
-                    </div>
-                </div>
-            </div>
-            {% if household_form.ROOF_MATERIAL.errors %}
-            <div class="text-danger small mt-1">{{ household_form.ROOF_MATERIAL.errors.0 }}</div>
-            {% endif %}
-        </div>
-
-        <!-- Assets -->
-        <div class="mb-5">
-            <p class="fw-bold mb-2">13. Which of the following does your household own?</p>
-            <div class="ms-md-3 row">
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="TV" value="1" class="form-check-input" id="asset1" {% if
-                            household_form.TV.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset1">Television</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="AC" value="1" class="form-check-input" id="asset2" {% if
-                            household_form.AC.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset2">Air Conditioner</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="COMPUTER" value="1" class="form-check-input" id="asset3" {% if
-                            household_form.COMPUTER.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset3">Desktop/Laptop</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="REFRIGERATOR" value="1" class="form-check-input" id="asset4" {% if
-                            household_form.REFRIGERATOR.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset4">Refrigerator</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="INTERNET" value="1" class="form-check-input" id="asset5" {% if
-                            household_form.INTERNET.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset5">Internet Access</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="WASHING_MACHINE" value="1" class="form-check-input" id="asset6" {%
-                            if household_form.WASHING_MACHINE.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset6">Washing Machine</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="MOBILE_PHONE" value="1" class="form-check-input" id="asset7" {% if
-                            household_form.MOBILE_PHONE.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset7">Mobile Phone</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="WATER_HEATER" value="1" class="form-check-input" id="asset8" {% if
-                            household_form.WATER_HEATER.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset8">Water Heater</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="BICYCLE" value="1" class="form-check-input" id="asset9" {% if
-                            household_form.BICYCLE.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset9">Bicycle</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="GAS_STOVE" value="1" class="form-check-input" id="asset10" {% if
-                            household_form.GAS_STOVE.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset10">Gas Stove</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="MOTORCYCLE" value="1" class="form-check-input" id="asset11" {% if
-                            household_form.MOTORCYCLE.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset11">Motorcycle</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="INDUCTION_COOKER" value="1" class="form-check-input" id="asset12"
-                            {% if household_form.INDUCTION_COOKER.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset12">Induction Cooker</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="CAR" value="1" class="form-check-input" id="asset13" {% if
-                            household_form.CAR.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset13">Car</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check mb-2">
-                        <input type="checkbox" name="RICE_COOKER" value="1" class="form-check-input" id="asset14" {% if
-                            household_form.RICE_COOKER.value %}checked{% endif %}>
-                        <label class="form-check-label" for="asset14">Rice Cooker</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Submit Buttons -->
+<!-- Submit Buttons -->
         <div class="mt-5 text-center">
             <button type="submit" class="btn btn-primary btn-lg px-5 me-2">Save & Continue to Part B</button>
             <a href="{% url 'study_44en:household:list' %}" class="btn btn-secondary btn-lg px-5">Cancel</a>
@@ -504,59 +441,59 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Auto-number children (D1, D2, D3...) based on selection
-        const memberRows = document.querySelectorAll('.member-row');
-
-        memberRows.forEach(function (row) {
-            const relationshipSelect = row.querySelector('.relationship-select');
-
-            relationshipSelect.addEventListener('change', function () {
-                if (this.value === 'D') {
-                    // Count existing children before this row
-                    let childCount = 0;
-                    const allRows = document.querySelectorAll('.member-row');
-                    const currentIndex = parseInt(row.getAttribute('data-form-index'));
-
-                    allRows.forEach(function (r) {
-                        const idx = parseInt(r.getAttribute('data-form-index'));
-                        if (idx < currentIndex) {
-                            const rel = r.querySelector('.relationship-select').value;
-                            if (rel === 'D') {
-                                childCount++;
-                            }
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-number children (D1, D2, D3...) based on selection
+    const memberRows = document.querySelectorAll('.member-row');
+    
+    memberRows.forEach(function(row) {
+        const relationshipSelect = row.querySelector('.relationship-select');
+        
+        relationshipSelect.addEventListener('change', function() {
+            if (this.value === 'D') {
+                // Count existing children before this row
+                let childCount = 0;
+                const allRows = document.querySelectorAll('.member-row');
+                const currentIndex = parseInt(row.getAttribute('data-form-index'));
+                
+                allRows.forEach(function(r) {
+                    const idx = parseInt(r.getAttribute('data-form-index'));
+                    if (idx < currentIndex) {
+                        const rel = r.querySelector('.relationship-select').value;
+                        if (rel === 'D') {
+                            childCount++;
                         }
-                    });
-
-                    // Set the next child number
-                    const nextChildNum = childCount + 1;
-                    const childOrderInput = row.querySelector('.child-order-input');
-                    if (childOrderInput) {
-                        childOrderInput.value = nextChildNum;
                     }
-
-                    // Update the display text to show D1, D2, D3...
-                    const childOption = relationshipSelect.querySelector('.child-option');
-                    if (childOption) {
-                        childOption.textContent = `D${nextChildNum}. Con (thứ ${nextChildNum})`;
-                        childOption.selected = true;
-                    }
-                } else {
-                    // Clear child order for non-children
-                    const childOrderInput = row.querySelector('.child-order-input');
-                    if (childOrderInput) {
-                        childOrderInput.value = '';
-                    }
+                });
+                
+                // Set the next child number
+                const nextChildNum = childCount + 1;
+                const childOrderInput = row.querySelector('.child-order-input');
+                if (childOrderInput) {
+                    childOrderInput.value = nextChildNum;
                 }
-            });
+                
+                // Update the display text to show D1, D2, D3...
+                const childOption = relationshipSelect.querySelector('.child-option');
+                if (childOption) {
+                    childOption.textContent = `D${nextChildNum}. Con (thứ ${nextChildNum})`;
+                    childOption.selected = true;
+                }
+            } else {
+                // Clear child order for non-children
+                const childOrderInput = row.querySelector('.child-order-input');
+                if (childOrderInput) {
+                    childOrderInput.value = '';
+                }
+            }
         });
-
-        // Show change reason modal if changes detected
-        {% if show_reason_form and detected_changes %}
-        console.log('🔔 Changes detected, showing reason modal');
-        $('#changeReasonModal').modal('show');
-        {% endif %}
     });
+    
+    // Show change reason modal if changes detected
+    {% if show_reason_form and detected_changes %}
+    console.log('🔔 Changes detected, showing reason modal');
+    $('#changeReasonModal').modal('show');
+    {% endif %}
+});
 </script>
 
 <!-- Change Reason Modal -->
@@ -571,14 +508,14 @@
 
 {# Scripts Debug #}
 <script>
-    console.log('=== HOUSEHOLD FORM SCRIPTS DEBUG ===');
-    console.log('jQuery loaded:', typeof jQuery !== 'undefined');
-    console.log('show_reason_form:', {{ show_reason_form|default: "false" | lower }});
-    console.log('detected_changes count:', {{ detected_changes| length |default: 0 }});
-    {% if detected_changes %}
-    console.log('Changes:', {{ detected_changes| safe }});
-    {% endif %}
-    console.log('=====================================');
+console.log('=== HOUSEHOLD FORM SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('show_reason_form:', {{ show_reason_form|default:"false"|lower }});
+console.log('detected_changes count:', {{ detected_changes|length|default:0 }});
+{% if detected_changes %}
+console.log('Changes:', {{ detected_changes|safe }});
+{% endif %}
+console.log('=====================================');
 </script>
 
 {% endblock %}

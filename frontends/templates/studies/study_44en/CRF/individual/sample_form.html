@@ -14,7 +14,7 @@
 
     <hr class="my-4">
 
-    <form method="post" action="">
+    <form method="post" action="" id="individualSampleForm">
         {% csrf_token %}
         
         <!-- Sample Collection Table -->
@@ -203,6 +203,20 @@
 {% endblock %}
 
 {% block extra_js_dashboard %}
-{# Datepicker Scripts #}
+
 {% include 'studies/study_44en/CRF/includes/datepicker_scripts.html' %}
+
+
+<script src="{% static 'studies/study_44en/js/change-reason-handler.js' %}"></script>
+
+<script>
+console.log('=== FOLLOWUP FORM SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('show_reason_form:', {{ show_reason_form|default:"false"|lower }});
+console.log('detected_changes count:', {{ detected_changes|length|default:0 }});
+{% if detected_changes %}
+console.log('Changes:', {{ detected_changes|safe }});
+{% endif %}
+console.log('=====================================');
+</script>
 {% endblock %}
