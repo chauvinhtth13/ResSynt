@@ -319,9 +319,9 @@
             </div>
             <div class="col-6 text-center">
                 <label class="fw-bold d-block">Date of completion:</label>
-                <input type="date" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" 
+                <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2 datepicker" 
                        name="completion_date" 
-                       value="{% now 'Y-m-d' %}" 
+                       value="{% now 'd/m/Y' %}" 
                        readonly>
                 <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
             </div>
@@ -349,4 +349,9 @@
 <!-- Change Reason Modal -->
 {% include 'default/change_reason_modal.html' %}
 
+{% endblock %}
+
+{% block extra_js_dashboard %}
+{# Datepicker Scripts #}
+{% include 'studies/study_44en/CRF/includes/datepicker_scripts.html' %}
 {% endblock %}

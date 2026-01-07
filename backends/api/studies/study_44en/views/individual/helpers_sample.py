@@ -6,6 +6,7 @@ Handles sample collection for 4 visit times: baseline, day_14, day_28, day_90
 """
 
 import logging
+from datetime import datetime
 from backends.studies.study_44en.models.individual import Individual_Sample
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,27 @@ def make_form_readonly(form):
         field.disabled = True
 
 
+def parse_date_string(date_str):
+    """
+    Parse date string from dd/mm/yyyy or yyyy-mm-dd format to date object.
+    Returns None if parsing fails or input is empty.
+    """
+    if not date_str:
+        return None
+    
+    date_str = date_str.strip()
+    
+    # Try dd/mm/yyyy format first (datepicker format)
+    for fmt in ['%d/%m/%Y', '%Y-%m-%d']:
+        try:
+            return datetime.strptime(date_str, fmt).date()
+        except ValueError:
+            continue
+    
+    logger.warning(f"Could not parse date: {date_str}")
+    return None
+
+
 # ==========================================
 # SAVE FUNCTIONS
 # ==========================================
@@ -66,8 +88,8 @@ def save_samples(request, individual):
     for form_prefix, model_time in SAMPLE_TIME_MAPPING.items():
         # Get data from POST
         collected = request.POST.get(f'sample_{form_prefix}', '').strip()
-        stool_date = request.POST.get(f'stool_date_{form_prefix}', '').strip()
-        throat_date = request.POST.get(f'throat_date_{form_prefix}', '').strip()
+        stool_date_str = request.POST.get(f'stool_date_{form_prefix}', '').strip()
+        throat_date_str = request.POST.get(f'throat_date_{form_prefix}', '').strip()
         reason = request.POST.get(f'reason_{form_prefix}', '').strip()
         
         # Only create record if user selected something
@@ -78,13 +100,21 @@ def save_samples(request, individual):
                 SAMPLE_COLLECTED=collected,
             )
             
-            # Add stool date if provided
-            if stool_date:
-                sample.STOOL_DATE = stool_date
+            # Add stool date if provided (parse string to date object)
+            if stool_date_str:
+                stool_date = parse_date_string(stool_date_str)
+                if stool_date:
+                    sample.STOOL_DATE = stool_date
+                else:
+                    logger.warning(f"Could not parse stool date: {stool_date_str}")
             
-            # Add throat swab date if provided
-            if throat_date:
-                sample.THROAT_SWAB_DATE = throat_date
+            # Add throat swab date if provided (parse string to date object)
+            if throat_date_str:
+                throat_date = parse_date_string(throat_date_str)
+                if throat_date:
+                    sample.THROAT_SWAB_DATE = throat_date
+                else:
+                    logger.warning(f"Could not parse throat date: {throat_date_str}")
             
             # Add reason if provided
             if reason:
@@ -94,7 +124,7 @@ def save_samples(request, individual):
             sample.save()
             samples_created += 1
             
-            logger.info(f"Saved sample {model_time}: collected={collected}, stool={stool_date or 'N/A'}, throat={throat_date or 'N/A'}")
+            logger.info(f"Saved sample {model_time}: collected={collected}, stool={stool_date_str or 'N/A'}, throat={throat_date_str or 'N/A'}")
     
     logger.info(f"📊 Total samples created: {samples_created}/4")
     return samples_created
@@ -135,13 +165,13 @@ def load_samples(individual):
         # Set collected value (yes/no/na)
         data[f'sample_{form_prefix}'] = sample.SAMPLE_COLLECTED
         
-        # Set stool date
+        # Set stool date (format dd/mm/yyyy for datepicker)
         if sample.STOOL_DATE:
-            data[f'stool_date_{form_prefix}'] = sample.STOOL_DATE.strftime('%Y-%m-%d')
+            data[f'stool_date_{form_prefix}'] = sample.STOOL_DATE.strftime('%d/%m/%Y')
         
-        # Set throat swab date
+        # Set throat swab date (format dd/mm/yyyy for datepicker)
         if sample.THROAT_SWAB_DATE:
-            data[f'throat_date_{form_prefix}'] = sample.THROAT_SWAB_DATE.strftime('%Y-%m-%d')
+            data[f'throat_date_{form_prefix}'] = sample.THROAT_SWAB_DATE.strftime('%d/%m/%Y')
         
         # Set reason
         if sample.NOT_COLLECTED_REASON:

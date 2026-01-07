@@ -141,36 +141,28 @@
     return num.toLocaleString('en-US');
   };
 
-  // Format date for Vietnamese (DD/MM/YYYY)
+  // Format date (DD/MM/YYYY) - consistent format across all languages
   const formatDate = (date) => {
     const d = new Date(date);
-    const lang = getCurrentLanguage();
+    if (isNaN(d.getTime())) return ''; // Invalid date
     
-    if (lang === 'vi') {
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return `${day}/${month}/${year}`;
-    }
-    
-    return d.toLocaleDateString('en-US');
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
-  // Format datetime for Vietnamese
+  // Format datetime (DD/MM/YYYY HH:MM) - consistent format across all languages
   const formatDateTime = (date) => {
     const d = new Date(date);
-    const lang = getCurrentLanguage();
+    if (isNaN(d.getTime())) return ''; // Invalid date
     
-    if (lang === 'vi') {
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
-    }
-    
-    return d.toLocaleString('en-US');
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
   // Format time

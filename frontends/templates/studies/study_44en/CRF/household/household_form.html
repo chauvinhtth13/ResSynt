@@ -76,7 +76,7 @@
         <hr class="my-4">
 
             <!-- Respondent Member Number - auto-selected from member list -->
-            <input type="hidden" name="RESPONDENT_MEMBER_NUM" value="{{ household_form.RESPONDENT_MEMBER_NUM.value|default:'' }}">
+            <input type="hidden" name="RESPONDENT_MEMBER_NUM" value="{% if household_form.RESPONDENT_MEMBER_NUM.value %}{{ household_form.RESPONDENT_MEMBER_NUM.value }}{% elif household.RESPONDENT_MEMBER_NUM %}{{ household.RESPONDENT_MEMBER_NUM }}{% endif %}">
             <div class="mb-3 text-muted">
                 <small><em>Note: Respondent will be selected from the member list below by checking "Is Respondent"</em></small>
             </div>
@@ -86,7 +86,7 @@
                 <div class="ms-md-3">
                     <div class="mb-2 d-flex align-items-end">
                         <label class="text-nowrap me-2">House No., Street, Hamlet:</label>
-                        <input type="text" name="STREET" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" value="{{ household_form.STREET.value|default:'' }}">
+                        <input type="text" name="STREET" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" value="{% if household_form.STREET.value %}{{ household_form.STREET.value }}{% elif household.STREET %}{{ household.STREET }}{% endif %}">
                     </div>
                     {% if household_form.STREET.errors %}
                       <div class="text-danger small mt-1">{{ household_form.STREET.errors.0 }}</div>
@@ -94,7 +94,7 @@
                     
                     <div class="mb-2 d-flex align-items-end">
                         <label class="text-nowrap me-2">Ward/Commune:</label>
-                        <input type="text" name="WARD" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" value="{{ household_form.WARD.value|default:'' }}">
+                        <input type="text" name="WARD" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" value="{% if household_form.WARD.value %}{{ household_form.WARD.value }}{% elif household.WARD %}{{ household.WARD }}{% endif %}">
                     </div>
                     {% if household_form.WARD.errors %}
                       <div class="text-danger small mt-1">{{ household_form.WARD.errors.0 }}</div>
@@ -108,7 +108,7 @@
 
             <div class="mb-3 d-flex align-items-center">
                 <p class="fw-bold mb-0 me-3">3. Total number of household members:</p>
-                <input type="number" class="form-control text-center d-inline-block" name="TOTAL_MEMBERS" value="{{ household_form.TOTAL_MEMBERS.value|default:'' }}" min="1" max="10" style="width: 100px;">
+                <input type="number" class="form-control text-center d-inline-block" name="TOTAL_MEMBERS" value="{% if household_form.TOTAL_MEMBERS.value %}{{ household_form.TOTAL_MEMBERS.value }}{% elif household.TOTAL_MEMBERS %}{{ household.TOTAL_MEMBERS }}{% endif %}" min="1" max="10" style="width: 100px;">
             </div>
 
             <div class="mb-4">
@@ -220,7 +220,10 @@
             <!-- House Details -->
             <div class="mb-3 d-flex align-items-center">
                 <p class="fw-bold mb-0 me-3">7. What is the approximate area of your house? (m²):</p>
-                <input type="number" name="LAND_AREA" class="form-control text-center d-inline-block" style="width: 100px;" value="{{ household_form.LAND_AREA.value|default:'' }}" min="0" step="0.1">
+                <input type="number" name="LAND_AREA" class="form-control text-center d-inline-block" style="width: 100px;"
+                    value="{% if household_form.LAND_AREA.value != None and household_form.LAND_AREA.value != '' %}{{ household_form.LAND_AREA.value|stringformat:'g' }}{% elif household.LAND_AREA != None %}{{ household.LAND_AREA|stringformat:'g' }}{% else %}{% endif %}"
+                    min="0" step="0.1">
+                <div class="text-muted small"></div>
             </div>
             {% if household_form.LAND_AREA.errors %}
               <div class="text-danger small mt-1">{{ household_form.LAND_AREA.errors.0 }}</div>
@@ -228,7 +231,7 @@
 
             <div class="mb-3 d-flex align-items-center">
                 <p class="fw-bold mb-0 me-3">8. How many floors does your house have?:</p>
-                <input type="number" name="NUM_FLOORS" class="form-control text-center d-inline-block" style="width: 60px;" value="{{ household_form.NUM_FLOORS.value|default:'' }}" min="1">
+                <input type="number" name="NUM_FLOORS" class="form-control text-center d-inline-block" style="width: 60px;" value="{% if household_form.NUM_FLOORS.value %}{{ household_form.NUM_FLOORS.value }}{% elif household.NUM_FLOORS %}{{ household.NUM_FLOORS }}{% endif %}" min="1">
             </div>
             {% if household_form.NUM_FLOORS.errors %}
               <div class="text-danger small mt-1">{{ household_form.NUM_FLOORS.errors.0 }}</div>
@@ -236,7 +239,7 @@
 
             <div class="mb-4 d-flex align-items-center">
                 <p class="fw-bold mb-0 me-3">9. How many rooms does your house have? (including bedrooms, living room, kitchen):</p>
-                <input type="number" name="NUM_ROOMS" class="form-control text-center d-inline-block" style="width: 60px;" value="{{ household_form.NUM_ROOMS.value|default:'' }}" min="0">
+                <input type="number" name="NUM_ROOMS" class="form-control text-center d-inline-block" style="width: 60px;" value="{% if household_form.NUM_ROOMS.value %}{{ household_form.NUM_ROOMS.value }}{% elif household.NUM_ROOMS %}{{ household.NUM_ROOMS }}{% endif %}" min="0">
             </div>
             {% if household_form.NUM_ROOMS.errors %}
               <div class="text-danger small mt-1">{{ household_form.NUM_ROOMS.errors.0 }}</div>

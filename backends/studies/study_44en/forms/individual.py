@@ -42,11 +42,13 @@ class IndividualForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': _('Name initials')
             }),
-            'DATE_OF_BIRTH': forms.DateInput(attrs={
-                'class': 'form-control datepicker',
-                'placeholder': 'YYYY-MM-DD',
-                'type': 'date'
-            }),
+            'DATE_OF_BIRTH': forms.DateInput(
+                format='%d/%m/%Y',
+                attrs={
+                    'class': 'form-control datepicker',
+                    'placeholder': 'dd/mm/yyyy'
+                }
+            ),
             'AGE': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': 0,
@@ -77,6 +79,8 @@ class IndividualForm(forms.ModelForm):
         # Make DATE_OF_BIRTH and AGE optional (but one must be provided)
         self.fields['DATE_OF_BIRTH'].required = False
         self.fields['AGE'].required = False
+        # Set input formats for date fields
+        self.fields['DATE_OF_BIRTH'].input_formats = ['%d/%m/%Y', '%Y-%m-%d']
     
     def clean(self):
         """Validate demographics"""
@@ -297,10 +301,13 @@ class Individual_FollowUpForm(forms.ModelForm):
             
             # Assessment
             'ASSESSED': forms.Select(attrs={'class': 'form-select'}),
-            'ASSESSMENT_DATE': forms.DateInput(attrs={
-                'class': 'form-control datepicker',
-                'type': 'date'
-            }),
+            'ASSESSMENT_DATE': forms.DateInput(
+                format='%d/%m/%Y',
+                attrs={
+                    'class': 'form-control datepicker',
+                    'placeholder': 'dd/mm/yyyy'
+                }
+            ),
             
             # Symptoms
             'HAS_SYMPTOMS': forms.Select(attrs={'class': 'form-select'}),
@@ -321,6 +328,8 @@ class Individual_FollowUpForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['ASSESSMENT_DATE'].required = False
+        # Set input formats for date fields
+        self.fields['ASSESSMENT_DATE'].input_formats = ['%d/%m/%Y', '%Y-%m-%d']
     
     def clean(self):
         """Validate follow-up data"""
@@ -399,14 +408,20 @@ class Individual_SampleForm(forms.ModelForm):
         widgets = {
             'SAMPLE_TIME': forms.Select(attrs={'class': 'form-select'}),
             'SAMPLE_COLLECTED': forms.Select(attrs={'class': 'form-select'}),
-            'STOOL_DATE': forms.DateInput(attrs={
-                'class': 'form-control datepicker',
-                'type': 'date'
-            }),
-            'THROAT_SWAB_DATE': forms.DateInput(attrs={
-                'class': 'form-control datepicker',
-                'type': 'date'
-            }),
+            'STOOL_DATE': forms.DateInput(
+                format='%d/%m/%Y',
+                attrs={
+                    'class': 'form-control datepicker',
+                    'placeholder': 'dd/mm/yyyy'
+                }
+            ),
+            'THROAT_SWAB_DATE': forms.DateInput(
+                format='%d/%m/%Y',
+                attrs={
+                    'class': 'form-control datepicker',
+                    'placeholder': 'dd/mm/yyyy'
+                }
+            ),
             'NOT_COLLECTED_REASON': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
@@ -419,6 +434,9 @@ class Individual_SampleForm(forms.ModelForm):
         self.fields['STOOL_DATE'].required = False
         self.fields['THROAT_SWAB_DATE'].required = False
         self.fields['NOT_COLLECTED_REASON'].required = False
+        # Set input formats for date fields
+        self.fields['STOOL_DATE'].input_formats = ['%d/%m/%Y', '%Y-%m-%d']
+        self.fields['THROAT_SWAB_DATE'].input_formats = ['%d/%m/%Y', '%Y-%m-%d']
     
     def clean(self):
         """Validate sample collection"""

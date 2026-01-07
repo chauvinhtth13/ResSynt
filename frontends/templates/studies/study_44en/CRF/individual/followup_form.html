@@ -47,7 +47,11 @@
             <div class="collapse {% if followup.ASSESSED == 'yes' %}show{% endif %} ms-md-4 mt-3" id="assessmentDetails">
                 <div class="card card-body bg-light">
                     <label class="fw-bold mb-2">If Yes, assessment date (dd/mm/yyyy):</label>
-                    <input type="date" class="form-control" name="ASSESSMENT_DATE" style="max-width: 250px;" value="{{ followup.ASSESSMENT_DATE|date:'Y-m-d'|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                    {% with post_value=request.POST.ASSESSMENT_DATE|default:'' ad_value=followup.ASSESSMENT_DATE %}
+                    <input type="text" class="form-control datepicker" name="ASSESSMENT_DATE" style="max-width: 250px;" placeholder="dd/mm/yyyy" 
+                        value="{% if post_value %}{{ post_value }}{% elif ad_value %}{% if ad_value|date:'d/m/Y' %}{{ ad_value|date:'d/m/Y' }}{% else %}{{ ad_value }}{% endif %}{% endif %}"
+                        {% if is_readonly %}disabled{% endif %}>
+                    {% endwith %}
                 </div>
             </div>
         </div>
@@ -336,9 +340,9 @@
             </div>
             <div class="col-6 text-center">
                 <label class="fw-bold d-block">Date of completion:</label>
-                <input type="date" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" 
+                <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2 datepicker" 
                        name="completion_date" 
-                       value="{% now 'Y-m-d' %}" 
+                       value="{% now 'd/m/Y' %}" 
                        readonly>
                 <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
             </div>
@@ -362,4 +366,9 @@
 <!-- Change Reason Modal -->
 {% include 'default/change_reason_modal.html' %}
 
+{% endblock %}
+
+{% block extra_js_dashboard %}
+{# Datepicker Scripts #}
+{% include 'studies/study_44en/CRF/includes/datepicker_scripts.html' %}
 {% endblock %}

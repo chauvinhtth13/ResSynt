@@ -8,7 +8,7 @@ REFACTORED: Separated UPDATE and VIEW (split from detail)
 """
 
 import logging
-from datetime import date
+from datetime import date, datetime
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -35,8 +35,28 @@ from backends.studies.study_44en.utils.permission_decorators import (
 )
 
 
-
 logger = logging.getLogger(__name__)
+
+
+def parse_date_string(date_str):
+    """
+    Parse date string from dd/mm/yyyy or yyyy-mm-dd format to date object.
+    Returns None if parsing fails or input is empty.
+    """
+    if not date_str:
+        return None
+    
+    date_str = date_str.strip()
+    
+    # Try dd/mm/yyyy format first (datepicker format)
+    for fmt in ['%d/%m/%Y', '%Y-%m-%d']:
+        try:
+            return datetime.strptime(date_str, fmt).date()
+        except ValueError:
+            continue
+    
+    logger.warning(f"Could not parse date: {date_str}")
+    return None
 
 
 # ==========================================
@@ -122,9 +142,13 @@ def individual_followup_create(request, subjectid):
                 
                 # Handle ASSESSMENT_DATE based on ASSESSED value
                 if assessed == 'yes':
-                    assessment_date = request.POST.get('ASSESSMENT_DATE', '').strip()
-                    if not assessment_date:
+                    assessment_date_str = request.POST.get('ASSESSMENT_DATE', '').strip()
+                    if not assessment_date_str:
                         raise ValueError('Assessment date is required when participant is assessed')
+                    # Parse date string to date object
+                    assessment_date = parse_date_string(assessment_date_str)
+                    if not assessment_date:
+                        raise ValueError(f'Invalid date format: {assessment_date_str}. Use dd/mm/yyyy format.')
                     followup.ASSESSMENT_DATE = assessment_date
                 else:
                     # Clear assessment date if not assessed
@@ -235,9 +259,13 @@ def individual_followup_update(request, subjectid, followup_id):
                 
                 # Handle ASSESSMENT_DATE based on ASSESSED value
                 if assessed == 'yes':
-                    assessment_date = request.POST.get('ASSESSMENT_DATE', '').strip()
-                    if not assessment_date:
+                    assessment_date_str = request.POST.get('ASSESSMENT_DATE', '').strip()
+                    if not assessment_date_str:
                         raise ValueError('Assessment date is required when participant is assessed')
+                    # Parse date string to date object
+                    assessment_date = parse_date_string(assessment_date_str)
+                    if not assessment_date:
+                        raise ValueError(f'Invalid date format: {assessment_date_str}. Use dd/mm/yyyy format.')
                     followup.ASSESSMENT_DATE = assessment_date
                 else:
                     # Clear assessment date if not assessed

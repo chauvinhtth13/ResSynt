@@ -1,62 +1,65 @@
 {% load static %}
 
-<!-- Datepicker Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap Datepicker CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
 
-<script>
-  // Initialize date inputs with proper format
-  document.addEventListener('DOMContentLoaded', function() {
-    // Find all date inputs
-    const dateInputs = document.querySelectorAll('input[type="date"]');
-    
-    dateInputs.forEach(input => {
-      // Set max date to today (prevent future dates)
-      const today = new Date().toISOString().split('T')[0];
-      if (!input.hasAttribute('data-allow-future')) {
-        input.setAttribute('max', today);
-      }
-    });
+<!-- Bootstrap Datepicker JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/locales/bootstrap-datepicker.vi.min.js"></script>
 
-    // Handle text date inputs with dd/mm/yyyy format
-    const textDateInputs = document.querySelectorAll('input[name*="dob"], input[name*="date"]');
-    
-    textDateInputs.forEach(input => {
-      if (input.type === 'text') {
-        // Add placeholder
-        input.setAttribute('placeholder', 'dd/mm/yyyy');
-        
-        // Add validation on blur
-        input.addEventListener('blur', function() {
-          const value = this.value.trim();
-          if (value && !isValidDate(value)) {
-            this.classList.add('is-invalid');
-          } else {
-            this.classList.remove('is-invalid');
-          }
+<script nonce="{{ request.csp_nonce }}">
+    $(document).ready(function() {
+        // Check jQuery
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery is not loaded. Datepicker requires jQuery.');
+            return;
+        }
+
+        if (typeof $.fn.datepicker === 'undefined') {
+            console.error('Bootstrap Datepicker is not loaded.');
+            return;
+        }
+
+        // Reusable initializer for dynamically inserted inputs
+        function initDatepicker($el) {
+            var $items = $el || $('.datepicker');
+            $items.each(function() {
+                var $this = $(this);
+                if ($this.data('datepicker-initialized')) return;
+
+                $this.datepicker({
+                    format: 'dd/mm/yyyy',
+                    autoclose: true,
+                    todayHighlight: true,
+                    clearBtn: true,
+                    language: 'vi',
+                    defaultViewDate: new Date(),
+                    startDate: '-100y',
+                    endDate: '+10y',
+                    forceParse: false
+                });
+
+                // Mark as initialized
+                $this.data('datepicker-initialized', true);
+            });
+        }
+
+        // Initialize on DOM ready
+        initDatepicker();
+
+        // Initialize when a datepicker input receives focus (useful for dynamically added elements)
+        $(document).on('focus', '.datepicker', function() {
+            var $this = $(this);
+            if (!$this.data('datepicker-initialized')) {
+                initDatepicker($this);
+                try { $this.datepicker('show'); } catch (e) { /* ignore */ }
+            }
         });
-      }
-    });
-  });
 
-  // Validate dd/mm/yyyy format
-  function isValidDate(dateString) {
-    const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-    const match = dateString.match(regex);
-    
-    if (!match) return false;
-    
-    const day = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10);
-    const year = parseInt(match[3], 10);
-    
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
-    if (year < 1900 || year > new Date().getFullYear()) return false;
-    
-    // Check day validity for the month
-    const daysInMonth = new Date(year, month, 0).getDate();
-    if (day > daysInMonth) return false;
-    
-    return true;
-  }
+        // Initialize datepickers inside Bootstrap modals when they are shown
+        $(document).on('shown.bs.modal', function(e) {
+            var $modal = $(e.target);
+            initDatepicker($modal.find('.datepicker'));
+        });
+    });
 </script>

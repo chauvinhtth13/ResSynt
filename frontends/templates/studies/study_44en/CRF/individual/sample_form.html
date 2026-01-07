@@ -52,10 +52,10 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <input type="date" class="form-control form-control-sm" name="stool_date_enrollment" value="{{ sample_data.stool_date_enrollment|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                                <input type="text" class="form-control form-control-sm datepicker" name="stool_date_enrollment" placeholder="dd/mm/yyyy" value="{{ sample_data.stool_date_enrollment|default:'' }}" {% if is_readonly %}disabled{% endif %}>
                             </td>
                             <td class="text-center">
-                                <input type="date" class="form-control form-control-sm" name="throat_date_enrollment" value="{{ sample_data.throat_date_enrollment|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                                <input type="text" class="form-control form-control-sm datepicker" name="throat_date_enrollment" placeholder="dd/mm/yyyy" value="{{ sample_data.throat_date_enrollment|default:'' }}" {% if is_readonly %}disabled{% endif %}>
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm" name="reason_enrollment" value="{{ sample_data.reason_enrollment|default:'' }}" placeholder="Reason if no sample..." {% if is_readonly %}disabled{% endif %}>
@@ -82,10 +82,10 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <input type="date" class="form-control form-control-sm" name="stool_date_day14" value="{{ sample_data.stool_date_day14|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                                <input type="text" class="form-control form-control-sm datepicker" name="stool_date_day14" placeholder="dd/mm/yyyy" value="{{ sample_data.stool_date_day14|default:'' }}" {% if is_readonly %}disabled{% endif %}>
                             </td>
                             <td class="text-center">
-                                <input type="date" class="form-control form-control-sm" name="throat_date_day14" value="{{ sample_data.throat_date_day14|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                                <input type="text" class="form-control form-control-sm datepicker" name="throat_date_day14" placeholder="dd/mm/yyyy" value="{{ sample_data.throat_date_day14|default:'' }}" {% if is_readonly %}disabled{% endif %}>
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm" name="reason_day14" value="{{ sample_data.reason_day14|default:'' }}" placeholder="Reason if no sample..." {% if is_readonly %}disabled{% endif %}>
@@ -112,10 +112,10 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <input type="date" class="form-control form-control-sm" name="stool_date_day28" value="{{ sample_data.stool_date_day28|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                                <input type="text" class="form-control form-control-sm datepicker" name="stool_date_day28" placeholder="dd/mm/yyyy" value="{{ sample_data.stool_date_day28|default:'' }}" {% if is_readonly %}disabled{% endif %}>
                             </td>
                             <td class="text-center">
-                                <input type="date" class="form-control form-control-sm" name="throat_date_day28" value="{{ sample_data.throat_date_day28|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                                <input type="text" class="form-control form-control-sm datepicker" name="throat_date_day28" placeholder="dd/mm/yyyy" value="{{ sample_data.throat_date_day28|default:'' }}" {% if is_readonly %}disabled{% endif %}>
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm" name="reason_day28" value="{{ sample_data.reason_day28|default:'' }}" placeholder="Reason if no sample..." {% if is_readonly %}disabled{% endif %}>
@@ -142,10 +142,10 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <input type="date" class="form-control form-control-sm" name="stool_date_day90" value="{{ sample_data.stool_date_day90|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                                <input type="text" class="form-control form-control-sm datepicker" name="stool_date_day90" placeholder="dd/mm/yyyy" value="{{ sample_data.stool_date_day90|default:'' }}" {% if is_readonly %}disabled{% endif %}>
                             </td>
                             <td class="text-center">
-                                <input type="date" class="form-control form-control-sm" name="throat_date_day90" value="{{ sample_data.throat_date_day90|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                                <input type="text" class="form-control form-control-sm datepicker" name="throat_date_day90" placeholder="dd/mm/yyyy" value="{{ sample_data.throat_date_day90|default:'' }}" {% if is_readonly %}disabled{% endif %}>
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm" name="reason_day90" value="{{ sample_data.reason_day90|default:'' }}" placeholder="Reason if no sample..." {% if is_readonly %}disabled{% endif %}>
@@ -174,9 +174,9 @@
             </div>
             <div class="col-6 text-center">
                 <label class="fw-bold d-block">Date of completion:</label>
-                <input type="date" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" 
+                <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2 datepicker" 
                        name="completion_date" 
-                       value="{% now 'Y-m-d' %}" 
+                       value="{% now 'd/m/Y' %}" 
                        readonly>
                 <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
             </div>
@@ -200,4 +200,9 @@
 <!-- Change Reason Modal -->
 {% include 'default/change_reason_modal.html' %}
 
+{% endblock %}
+
+{% block extra_js_dashboard %}
+{# Datepicker Scripts #}
+{% include 'studies/study_44en/CRF/includes/datepicker_scripts.html' %}
 {% endblock %}
