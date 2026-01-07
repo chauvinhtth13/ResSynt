@@ -7,6 +7,7 @@ ORGANIZATION:
 2. Utility functions  
 3. Save functions - Symptoms, Hospitalizations, Medications
 4. Load functions - Symptoms, Hospitalizations, Medications
+5. ✅ NEW: Change Detection Functions for Audit Log
 """
 
 import logging
@@ -316,6 +317,275 @@ def load_followup_medications(followup):
     return med_data
 
 
+# ==========================================
+# ✅ NEW: CHANGE DETECTION FOR AUDIT LOG
+# ==========================================
+
+def detect_followup_form_field_changes(request, followup):
+    """
+    ✅ Detect changes in follow-up form fields (VISIT_TIME, ASSESSED, ASSESSMENT_DATE)
+    
+    Returns:
+        list: List of change dicts [{field, old_value, new_value, old_display, new_display}]
+    """
+    changes = []
+    
+    # ✅ CRITICAL: Refresh from DB to get actual stored values
+    followup.refresh_from_db()
+    
+    # VISIT_TIME
+    old_visit_time = str(getattr(followup, 'VISIT_TIME', '') or '').strip()
+    if 'VISIT_TIME' in request.POST:
+        new_visit_time = request.POST.get('VISIT_TIME', '').strip()
+    else:
+        new_visit_time = old_visit_time
+    
+    if old_visit_time != new_visit_time:
+        changes.append({
+            'field': 'VISIT_TIME',
+            'old_value': old_visit_time or '(trống)',
+            'new_value': new_visit_time or '(trống)',
+            'old_display': old_visit_time or '(trống)',
+            'new_display': new_visit_time or '(trống)',
+        })
+    
+    # ASSESSED
+    old_assessed = str(getattr(followup, 'ASSESSED', '') or '').strip().lower()
+    if 'ASSESSED' in request.POST:
+        new_assessed = request.POST.get('ASSESSED', '').strip().lower()
+    else:
+        new_assessed = old_assessed
+    
+    if old_assessed != new_assessed:
+        changes.append({
+            'field': 'ASSESSED',
+            'old_value': old_assessed or '(trống)',
+            'new_value': new_assessed or '(trống)',
+            'old_display': old_assessed or '(trống)',
+            'new_display': new_assessed or '(trống)',
+        })
+    
+    # ASSESSMENT_DATE
+    old_date = getattr(followup, 'ASSESSMENT_DATE', None)
+    old_date_str = old_date.strftime('%d/%m/%Y') if old_date else ''
+    
+    if 'ASSESSMENT_DATE' in request.POST:
+        new_date_str = request.POST.get('ASSESSMENT_DATE', '').strip()
+    else:
+        new_date_str = old_date_str
+    
+    if old_date_str != new_date_str:
+        changes.append({
+            'field': 'ASSESSMENT_DATE',
+            'old_value': old_date_str or '(trống)',
+            'new_value': new_date_str or '(trống)',
+            'old_display': old_date_str or '(trống)',
+            'new_display': new_date_str or '(trống)',
+        })
+    
+    return changes
+
+
+def detect_followup_flat_field_changes(request, followup):
+    """
+    ✅ Detect changes in follow-up flat fields (symptoms, hospitalizations, medications)
+    
+    Compares POST data with database data for:
+    - Symptoms (has_symptoms radio + checkboxes)
+    - Hospitalizations (hospitalized_since radio + checkboxes + duration)
+    - Medications (medication_since radio + checkboxes + text)
+    
+    ⚠️ CRITICAL: The followup object passed in may have been modified by Django form binding.
+    We MUST refresh from DB to get the actual stored values.
+    
+    Returns:
+        list: List of change dicts [{field, old_value, new_value, old_display, new_display}]
+    """
+    changes = []
+    
+    # ✅ CRITICAL FIX: Refresh followup from database to get actual stored values
+    followup.refresh_from_db()
+    
+    # Load old data from database
+    old_symptom_data = load_symptoms(followup)
+    old_hosp_data = load_followup_hospitalizations(followup)
+    old_med_data = load_followup_medications(followup)
+    
+    # ==========================================
+    # 1. Symptoms
+    # ==========================================
+    
+    # has_symptoms radio
+    old_has_symptoms = str(old_symptom_data.get('has_symptoms', '') or '').strip().lower()
+    if 'has_symptoms' in request.POST:
+        new_has_symptoms = request.POST.get('has_symptoms', '').strip().lower()
+    else:
+        new_has_symptoms = old_has_symptoms
+    
+    logger.info(f"🔍 has_symptoms: old='{old_has_symptoms}', new='{new_has_symptoms}', in_POST={'has_symptoms' in request.POST}")
+    
+    if old_has_symptoms != new_has_symptoms:
+        changes.append({
+            'field': 'has_symptoms',
+            'old_value': old_has_symptoms or '(trống)',
+            'new_value': new_has_symptoms or '(trống)',
+            'old_display': old_has_symptoms or '(trống)',
+            'new_display': new_has_symptoms or '(trống)',
+        })
+    
+    # Symptom checkboxes
+    for symptom_key in SYMPTOM_MAPPING.keys():
+        field_name = f'symptom_{symptom_key}'
+        old_val = old_symptom_data.get(field_name, False)
+        new_val = request.POST.get(field_name) == 'on'
+        
+        if old_val != new_val:
+            changes.append({
+                'field': field_name,
+                'old_value': old_val,
+                'new_value': new_val,
+                'old_display': 'Có' if old_val else 'Không',
+                'new_display': 'Có' if new_val else 'Không',
+            })
+    
+    # Symptom other text
+    old_symptom_other = old_symptom_data.get('symptom_other_text', '')
+    new_symptom_other = request.POST.get('symptom_other_text', '').strip()
+    if str(old_symptom_other or '').strip() != str(new_symptom_other or '').strip():
+        changes.append({
+            'field': 'symptom_other_text',
+            'old_value': old_symptom_other,
+            'new_value': new_symptom_other,
+            'old_display': old_symptom_other or '(trống)',
+            'new_display': new_symptom_other or '(trống)',
+        })
+    
+    # ==========================================
+    # 2. Hospitalizations
+    # ==========================================
+    
+    # hospitalized_since radio
+    old_hospitalized = str(old_hosp_data.get('hospitalized_since', '') or '').strip().lower()
+    if 'hospitalized_since' in request.POST:
+        new_hospitalized = request.POST.get('hospitalized_since', '').strip().lower()
+    else:
+        new_hospitalized = old_hospitalized
+    
+    logger.info(f"🔍 hospitalized_since: old='{old_hospitalized}', new='{new_hospitalized}', in_POST={'hospitalized_since' in request.POST}")
+    
+    if old_hospitalized != new_hospitalized:
+        changes.append({
+            'field': 'hospitalized_since',
+            'old_value': old_hospitalized or '(trống)',
+            'new_value': new_hospitalized or '(trống)',
+            'old_display': old_hospitalized or '(trống)',
+            'new_display': new_hospitalized or '(trống)',
+        })
+    
+    # Hospital checkboxes and duration
+    for hosp_key in FOLLOWUP_HOSPITAL_MAPPING.keys():
+        # Checkbox
+        field_name = f'fu_hosp_{hosp_key}'
+        old_val = old_hosp_data.get(field_name, False)
+        new_val = request.POST.get(field_name) == 'on'
+        
+        if old_val != new_val:
+            changes.append({
+                'field': field_name,
+                'old_value': old_val,
+                'new_value': new_val,
+                'old_display': 'Có' if old_val else 'Không',
+                'new_display': 'Có' if new_val else 'Không',
+            })
+        
+        # Duration radio
+        duration_field = f'fu_hosp_{hosp_key}_duration'
+        old_duration = old_hosp_data.get(duration_field, '')
+        new_duration = request.POST.get(duration_field, '').strip()
+        if str(old_duration or '').strip() != str(new_duration or '').strip():
+            changes.append({
+                'field': duration_field,
+                'old_value': old_duration,
+                'new_value': new_duration,
+                'old_display': old_duration or '(trống)',
+                'new_display': new_duration or '(trống)',
+            })
+    
+    # Hospital other text
+    old_hosp_other = old_hosp_data.get('fu_hosp_other_text', '')
+    new_hosp_other = request.POST.get('fu_hosp_other_text', '').strip()
+    if str(old_hosp_other or '').strip() != str(new_hosp_other or '').strip():
+        changes.append({
+            'field': 'fu_hosp_other_text',
+            'old_value': old_hosp_other,
+            'new_value': new_hosp_other,
+            'old_display': old_hosp_other or '(trống)',
+            'new_display': new_hosp_other or '(trống)',
+        })
+    
+    # ==========================================
+    # 3. Medications
+    # ==========================================
+    
+    # medication_since radio
+    old_medication = str(old_med_data.get('medication_since', '') or '').strip().lower()
+    if 'medication_since' in request.POST:
+        new_medication = request.POST.get('medication_since', '').strip().lower()
+    else:
+        new_medication = old_medication
+    
+    logger.info(f"🔍 medication_since: old='{old_medication}', new='{new_medication}', in_POST={'medication_since' in request.POST}")
+    
+    if old_medication != new_medication:
+        changes.append({
+            'field': 'medication_since',
+            'old_value': old_medication or '(trống)',
+            'new_value': new_medication or '(trống)',
+            'old_display': old_medication or '(trống)',
+            'new_display': new_medication or '(trống)',
+        })
+    
+    # Medication checkboxes and text fields
+    med_fields = [
+        ('med_antibiotics_fu', 'med_antibiotics_type'),
+        ('med_steroids_fu', 'med_steroids_type'),
+        ('med_other_fu', 'med_other_type'),
+    ]
+    
+    for checkbox_field, text_field in med_fields:
+        # Checkbox
+        old_checked = old_med_data.get(checkbox_field, False)
+        new_checked = request.POST.get(checkbox_field) == 'on'
+        
+        if old_checked != new_checked:
+            changes.append({
+                'field': checkbox_field,
+                'old_value': old_checked,
+                'new_value': new_checked,
+                'old_display': 'Có' if old_checked else 'Không',
+                'new_display': 'Có' if new_checked else 'Không',
+            })
+        
+        # Text field
+        old_text = old_med_data.get(text_field, '')
+        new_text = request.POST.get(text_field, '').strip()
+        if str(old_text or '').strip() != str(new_text or '').strip():
+            changes.append({
+                'field': text_field,
+                'old_value': old_text,
+                'new_value': new_text,
+                'old_display': old_text or '(trống)',
+                'new_display': new_text or '(trống)',
+            })
+    
+    logger.info(f"🔍 detect_followup_flat_field_changes: Found {len(changes)} changes")
+    return changes
+
+
+# ==========================================
+# EXPORTS
+# ==========================================
+
 __all__ = [
     'set_audit_metadata',
     'make_form_readonly',
@@ -325,4 +595,7 @@ __all__ = [
     'load_symptoms',
     'load_followup_hospitalizations',
     'load_followup_medications',
+    # ✅ NEW: Change detection for audit log
+    'detect_followup_form_field_changes',
+    'detect_followup_flat_field_changes',
 ]

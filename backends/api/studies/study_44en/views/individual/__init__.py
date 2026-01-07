@@ -5,8 +5,8 @@ Individual Views for Study 44EN
 """
 
 from .individual_case.views_individual_case import *
-from .views_individual_exposure import *
-from .views_individual_followup import *
+from .invidual_exposure.views_individual_exposure import *
+from .invidual_followup.views_individual_followup import *
 from .views_individual_sample import *
 
 __all__ = [

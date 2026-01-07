@@ -19,7 +19,16 @@ $(document).ready(function () {
         $form = $('#householdExposureForm');  // Household Exposure form
     }
     if ($form.length === 0) {
+        $form = $('#individualExposureForm');  // Individual Exposure form (NEW)
+    }
+    if ($form.length === 0) {
+        $form = $('#individualFollowUpForm');  // Individual Follow-up form (NEW)
+    }
+    if ($form.length === 0) {
         $form = $('#individualForm');  // Individual form
+    }
+    if ($form.length === 0) {
+        $form = $('#hiddenEditIndividualForm');  // Individual edit form
     }
     if ($form.length === 0) {
         $form = $('#hiddenEditCultureForm');  // Culture form

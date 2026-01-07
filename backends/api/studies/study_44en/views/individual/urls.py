@@ -6,10 +6,13 @@ Following 43EN pattern with both 'edit' and 'update' aliases
 
 from django.urls import path
 
+from .invidual_followup import views_individual_followup
+
+from .invidual_exposure import views_individual_exposure
+
 from .individual_case import views_individual_case
 from . import (
-    views_individual_exposure,
-    views_individual_followup, views_individual_sample
+    views_individual_sample
 )
 
 app_name = 'individual'
