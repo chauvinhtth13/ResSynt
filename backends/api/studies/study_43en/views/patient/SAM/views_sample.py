@@ -21,14 +21,14 @@ from backends.studies.study_43en.models.patient import (
 )
 
 # Import audit utilities
-from backends.studies.study_43en.utils.audit.decorators import audit_log
-from backends.studies.study_43en.utils.audit.processors import (
+from backends.audit_log.utils.decorators import audit_log
+from backends.audit_log.utils.processors import (
     process_crf_update,
     process_crf_create,
 )
 
 # Import permission utilities
-from backends.studies.study_43en.utils.permission_decorators import (
+from backends.audit_log.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,
@@ -373,15 +373,15 @@ def sample_collection_view(request, usubjid, sample_type):
     
     Permission: view_samplecollection
     
-    CRITICAL: This view BLOCKS all POST requests for security
+    ⚠️ CRITICAL: This view BLOCKS all POST requests for security
     """
     logger.info(f"=== SAMPLE COLLECTION VIEW (READ-ONLY) ===")
     logger.info(f"User: {request.user.username}, USUBJID: {usubjid}, Type: {sample_type}, Method: {request.method}")
     
     #  BLOCK POST requests in readonly mode
     if request.method == 'POST':
-        logger.warning(f"POST attempt blocked in readonly mode by {request.user.username}")
-        messages.error(request, 'Chế độ chỉ xem - không thể chỉnh sửa!')
+        logger.warning(f"⚠️ POST attempt blocked in readonly mode by {request.user.username}")
+        messages.error(request, '⚠️ Chế độ chỉ xem - không thể chỉnh sửa!')
         return redirect('study_43en:sample_collection_view', usubjid=usubjid, sample_type=sample_type)
     
     # Validate sample type

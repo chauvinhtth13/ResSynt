@@ -183,8 +183,7 @@ def _save_rehospitalization_formset(formset, followup_case, user):
         set_audit_metadata(instance, user)
         instance.save()
     
-    for obj in formset.deleted_objects:
-        obj.delete()
+
     
     formset.save_m2m()
     logger.info(f"Saved {len(instances)} rehospitalizations (Day 90)")
@@ -199,8 +198,7 @@ def _save_antibiotic_formset(formset, followup_case, user):
         set_audit_metadata(instance, user)
         instance.save()
     
-    for obj in formset.deleted_objects:
-        obj.delete()
+
     
     formset.save_m2m()
     logger.info(f"Saved {len(instances)} antibiotics (Day 90)")

@@ -30,11 +30,11 @@
                 if ($this.data('datepicker-initialized')) return;
 
                 $this.datepicker({
-                    format: 'yyyy-mm-dd',
+                    format: 'dd/mm/yyyy',
                     autoclose: true,
                     todayHighlight: true,
                     clearBtn: true,
-                    // language removed to avoid dd/mm conflict
+                    language: 'vi',
                     defaultViewDate: new Date(),
                     startDate: '-100y',
                     endDate: '+10y',

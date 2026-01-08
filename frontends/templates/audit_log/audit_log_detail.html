@@ -195,7 +195,7 @@
                                     {{ change.new_display|safe }}
                                 </div>
                             </td>
-                            <td class="text-left">
+                            <td class="text-center">
                                 {% if change.reason %}
                                     <div class="reason-box">
                                         <small>{{ change.reason|escape }}</small>
@@ -264,7 +264,7 @@
                     <td>
                         <code class="text-monospace small">{{ log.checksum }}</code>
                         {% if is_verified %}
-                            <span class="badge badge-success ml-2">Verified</span>
+                            <span class="badge badge-success ml-2">✓ Verified</span>
                         {% else %}
                             <span class="badge badge-danger ml-2">✗ Invalid</span>
                         {% endif %}

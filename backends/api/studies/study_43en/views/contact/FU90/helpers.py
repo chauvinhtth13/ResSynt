@@ -167,8 +167,7 @@ def _save_medication_formset(formset, followup_case, user):
         set_audit_metadata(instance, user)
         instance.save()
     
-    for obj in formset.deleted_objects:
-        obj.delete()
+
     
     formset.save_m2m()
     logger.info(f"Saved {len(instances)} medications (Day 90)")

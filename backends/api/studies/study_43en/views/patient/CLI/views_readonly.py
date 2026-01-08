@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
 # Import audit decorator
-from backends.studies.study_43en.utils.audit.decorators import audit_log
+from backends.audit_log.utils.decorators import audit_log
 
 # Import forms
 from backends.studies.study_43en.forms.patient.CLI import (
@@ -28,7 +28,7 @@ from backends.studies.study_43en.forms.patient.CLI import (
 )
 
 # Import utilities
-from backends.studies.study_43en.utils.permission_decorators import (
+from backends.audit_log.utils.permission_decorators import (
     require_crf_view,
     check_instance_site_access,
 )

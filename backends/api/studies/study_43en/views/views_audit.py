@@ -18,12 +18,15 @@ from django.contrib import messages
 from datetime import datetime
 from django.contrib.auth import get_user_model
 
-from backends.studies.study_43en.models.audit_log import AuditLog, AuditLogDetail
-from backends.studies.study_43en.utils.permission_decorators import require_crf_view
+from backends.audit_log.models.audit_log import AuditLog, AuditLogDetail
+from backends.audit_log.utils.permission_decorators import require_crf_view
 from backends.studies.study_43en.utils.site_utils import (
     get_site_filter_params,
     get_filtered_queryset
 )
+
+# ✅ NEW: Use base audit_log models instead (for new studies)
+# from backends.audit_log.models import AuditLog, AuditLogDetail
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -53,11 +56,12 @@ def audit_log_list(request):
     """
     logger.info(f"=== AUDIT LOG LIST ===")
     logger.info(f"User: {request.user.username}")
+    filters = {}
     
     # ==========================================
     # 1. GET DATABASE ALIAS
     # ==========================================
-    study_db = getattr(request, 'study_db_alias', 'db_study_43en')
+    study_db = getattr(request, 'study_db_alias', '')
     
     # ==========================================
     # 2. APPLY SITE FILTERING
@@ -72,7 +76,7 @@ def audit_log_list(request):
     # ==========================================
     # 3. APPLY USER FILTERS
     # ==========================================
-    filters = {}
+    study_code = getattr(request, 'study_code', '').lower()
     
     # Filter by user
     user_id = request.GET.get('user', '').strip()
@@ -184,6 +188,7 @@ def audit_log_list(request):
     # ==========================================
     # 6. RENDER TEMPLATE
     # ==========================================
+    study_code = getattr(request, 'study_code', '43en')
     context = {
         'page_obj': page_obj,
         'filters': filters,
@@ -192,9 +197,10 @@ def audit_log_list(request):
         'model_names': list(model_names), #  Convert to list
         'site_filter': site_filter,
         'filter_type': filter_type,
+        'study_code': study_code,
     }
     
-    return render(request, 'studies/study_43en/audit_log/audit_log_list.html', context)
+    return render(request, 'audit_log/audit_log_list.html', context)
 
 
 # ==========================================
@@ -221,7 +227,8 @@ def audit_log_detail(request, log_id):
     # ==========================================
     # 1. GET AUDIT LOG
     # ==========================================
-    log = get_object_or_404(AuditLog, id=log_id)
+    study_db = getattr(request, 'study_db_alias', '')
+    log = get_object_or_404(AuditLog.objects.using(study_db), id=log_id)
     
     logger.info(f"📄 Log: {log.action} on {log.model_name} by {log.username}")
     
@@ -286,7 +293,7 @@ def audit_log_detail(request, log_id):
         try:
             user = User.objects.using('default').get(id=log.user_id)
         except User.DoesNotExist:
-            logger.warning(f"User {log.user_id} not found")
+            logger.warning(f"⚠️ User {log.user_id} not found")
     
     # ==========================================
     # 5. VERIFY INTEGRITY
@@ -312,7 +319,7 @@ def audit_log_detail(request, log_id):
         'filter_type': filter_type,
     }
     
-    return render(request, 'studies/study_43en/audit_log/audit_log_detail.html', context)
+    return render(request, 'audit_log/audit_log_detail.html', context)
 
 
 # ==========================================
