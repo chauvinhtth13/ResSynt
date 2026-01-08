@@ -303,7 +303,7 @@ class LAB_Microbiology(AuditFieldsMixin):
         constraints = [
             # If positive, must have IFPOSITIVE
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(RESULT='Positive') |
                     models.Q(IFPOSITIVE__isnull=False)
                 ),
@@ -311,7 +311,7 @@ class LAB_Microbiology(AuditFieldsMixin):
             ),
             # If IFPOSITIVE is Other, must specify organism name
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(IFPOSITIVE='Other') |
                     models.Q(SPECIFYOTHERSPECIMEN__isnull=False)
                 ),
@@ -319,7 +319,7 @@ class LAB_Microbiology(AuditFieldsMixin):
             ),
             # Isolation date must be after or equal to collection date
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(SPECSAMPDATE__isnull=True) |
                     models.Q(BACSTRAINISOLDATE__isnull=True) |
                     models.Q(BACSTRAINISOLDATE__gte=models.F('SPECSAMPDATE'))

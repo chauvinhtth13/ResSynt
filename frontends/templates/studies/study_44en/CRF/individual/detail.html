@@ -1,0 +1,247 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">Individual Details</h3>
+                    <h4 class="text-primary">{{ individual.SUBJECTID }}</h4>
+                    {% if individual.INITIALS %}
+                    <p class="text-muted mb-0">Initials: {{ individual.INITIALS }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <a href="{% url 'study_44en:individual:update' subjectid=individual.SUBJECTID %}" 
+                       class="btn btn-primary me-2">
+                        <i class="bi bi-pencil"></i> Edit Individual
+                    </a>
+                    <a href="{% url 'study_44en:individual:list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PART A: Individual Information -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">PART A – DEMOGRAPHIC INFORMATION</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 40%;">Subject ID:</th>
+                            <td>{{ individual.SUBJECTID }}</td>
+                        </tr>
+                        <tr>
+                            <th>Household Member:</th>
+                            <td>
+                                {% if individual.MEMBER %}
+                                    {{ individual.MEMBER.MEMBER_NUM }} - {{ individual.MEMBER.FIRST_NAME }} {{ individual.MEMBER.LAST_NAME }} <small class="text-muted">{{ individual.MEMBER.get_GENDER_display }}</small>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Name Initials:</th>
+                            <td>{{ individual.INITIALS|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date of Birth:</th>
+                            <td>{{ individual.DATE_OF_BIRTH|date:"Y-m-d"|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Age:</th>
+                            <td>
+                                {% if individual.calculated_age %}
+                                    {{ individual.calculated_age|floatformat:0 }} years
+                                    <small class="text-muted">({{ individual.age_category }})</small>
+                                {% elif individual.AGE %}
+                                    {{ individual.AGE }} years (provided)
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Ethnicity:</th>
+                            <td>
+                                {% if individual.ETHNICITY == 'other' %}
+                                    Other: {{ individual.ETHNICITY_OTHER|default:"-" }}
+                                {% else %}
+                                    {{ individual.get_ETHNICITY_display|default:"-" }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 40%;">Education:</th>
+                            <td>{{ individual.get_EDUCATION_display|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Occupation:</th>
+                            <td>
+                                {{ individual.get_OCCUPATION_display|default:"-" }}
+                                {% if individual.OCCUPATION_DETAIL %}
+                                    <br><small class="text-muted">{{ individual.OCCUPATION_DETAIL }}</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Monthly Income:</th>
+                            <td>{{ individual.get_INDIVIDUAL_INCOME_display|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Health Insurance:</th>
+                            <td>
+                                {% if individual.HAS_HEALTH_INSURANCE == 'yes' %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% elif individual.HAS_HEALTH_INSURANCE == 'no' %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Last Modified:</th>
+                            <td>{{ individual.last_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Modified By:</th>
+                            <td>{{ individual.last_modified_by_username|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PART B: Related Data Summary -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-clipboard-data"></i> Exposure
+                    </h5>
+                    <h2 class="text-primary">{{ exposure_count }}</h2>
+                    <a href="{% url 'study_44en:individual:exposure_list' subjectid=individual.SUBJECTID %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        View All Exposures
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-calendar-check"></i> Follow-ups
+                    </h5>
+                    <h2 class="text-primary">{{ followup_count }}</h2>
+                    <a href="{% url 'study_44en:individual:followup_list' subjectid=individual.SUBJECTID %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-droplet"></i> Samples
+                    </h5>
+                    <h2 class="text-primary">{{ sample_count }}</h2>
+                    <a href="{% url 'study_44en:individual:sample' subjectid=individual.SUBJECTID %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        View Samples
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Quick Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">Data Collection</h6>
+                    <div class="list-group">
+                        <a href="{% url 'study_44en:individual:exposure_list' subjectid=individual.SUBJECTID %}" 
+                           class="list-group-item list-group-item-action">
+                            <i class="bi bi-clipboard-data"></i> Exposure Factors (All Parts)
+                        </a>
+                        <a href="{% url 'study_44en:individual:followup_create' subjectid=individual.SUBJECTID %}" 
+                           class="list-group-item list-group-item-action">
+                            <i class="bi bi-calendar-plus"></i> New Follow-up
+                        </a>
+                        <a href="{% url 'study_44en:individual:sample' subjectid=individual.SUBJECTID %}" 
+                           class="list-group-item list-group-item-action">
+                            <i class="bi bi-droplet"></i> Sample Collection
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">View & Reports</h6>
+                    <div class="list-group">
+                        <a href="{% url 'study_44en:individual:followup_list' subjectid=individual.SUBJECTID %}" 
+                           class="list-group-item list-group-item-action">
+                            <i class="bi bi-list-check"></i> All Follow-ups
+                        </a>
+                        <a href="{% if individual.MEMBER %}{% url 'study_44en:household:detail' hhid=individual.MEMBER.HHID %}{% else %}#{% endif %}" 
+                           class="list-group-item list-group-item-action {% if not individual.MEMBER %}disabled{% endif %}">
+                            <i class="bi bi-house"></i> View Household
+                        </a>
+                        <a href="{% url 'study_44en:individual:update' subjectid=individual.SUBJECTID %}" 
+                           class="list-group-item list-group-item-action">
+                            <i class="bi bi-pencil-square"></i> Edit Demographics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .list-group-item {
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    
+    .list-group-item:hover {
+        border-left-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+</style>
+
+{% endblock %}

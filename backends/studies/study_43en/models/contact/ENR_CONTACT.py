@@ -1,26 +1,29 @@
-# backends/studies/study_43en/models/contact/Enrollment.py
+# backends/studies/study_43en/models/contact/enr_contact_updated.py
+"""
+UPDATED ENR_CONTACT Model - After PII Migration
+
+Changes:
+- Removed: FULLNAME, PHONE
+- Added: property access to personal_data relationship
+"""
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.functional import cached_property
-from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 from backends.studies.study_43en.models.base_models import AuditFieldsMixin
+from backends.studies.study_43en.models.contact.PER_CONTACT_DATA import PERSONAL_CONTACT_DATA
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
 
 class ENR_CONTACT(AuditFieldsMixin):
     """
-    Contact enrollment information with optimized queries and validation
+    Contact enrollment information (NON-PII fields only)
     
-    Similar to patient enrollment but for contacts (household members)
-    
-    Inherits from AuditFieldsMixin:
-    - version: Optimistic locking version control
-    - last_modified_by_id: User ID who last modified
-    - last_modified_by_username: Username backup for audit
-    - last_modified_at: Timestamp of last modification
+    PII fields moved to PERSONAL_CONTACT_DATA model for better security
+    Access via: enrollment_contact.personal_data.FULLNAME, etc.
     """
     
     # ==========================================
@@ -34,28 +37,6 @@ class ENR_CONTACT(AuditFieldsMixin):
         YES = 'yes', _('Yes')
         NO = 'no', _('No')
         UNKNOWN = 'unknown', _('Unknown')
-    
-    # ==========================================
-    # MANAGERS
-    # ==========================================
-        
-
-
-    FULLNAME = models.CharField(
-        max_length=200,
-        null=True,
-        blank=True,
-        verbose_name=_('Full Name'),
-        help_text=_('Contact full name (confidential)')
-    )
-
-    PHONE = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True,
-        verbose_name=_('Phone Number'),
-        help_text=_('Contact phone number')
-    )
     
     # ==========================================
     # PRIMARY KEY
@@ -85,13 +66,13 @@ class ENR_CONTACT(AuditFieldsMixin):
         max_length=100,
         null=True,
         blank=True,
-        db_index=True,  # For relationship analysis
+        db_index=True,
         verbose_name=_('Relationship to Patient'),
         help_text=_('e.g., spouse, child, parent, sibling')
     )
     
     # ==========================================
-    # BIRTH INFORMATION - SIMPLIFIED VALIDATION
+    # BIRTH INFORMATION
     # ==========================================
     DAYOFBIRTH = models.IntegerField(
         null=True,
@@ -234,15 +215,39 @@ class ENR_CONTACT(AuditFieldsMixin):
         verbose_name_plural = _('Contact Enrollments')
         ordering = ['-ENRDATE']
         indexes = [
-            models.Index(fields=['ENRDATE'], name='idx_cenr_date'),  #  Changed
-            models.Index(fields=['last_modified_by_id', '-last_modified_at'], name='idx_cenr_modified'),  #  Changed
-            models.Index(fields=['SEX', 'ENRDATE'], name='idx_cenr_sex_date'),  #  Changed
-            models.Index(fields=['RELATIONSHIP'], name='idx_cenr_relationship'),  #  Changed
-            models.Index(fields=['UNDERLYINGCONDS', 'ENRDATE'], name='idx_cenr_conds_date'),  #  Changed
+            models.Index(fields=['ENRDATE'], name='idx_cenr_date'),
+            models.Index(fields=['last_modified_by_id', '-last_modified_at'], name='idx_cenr_modified'),
+            models.Index(fields=['SEX', 'ENRDATE'], name='idx_cenr_sex_date'),
+            models.Index(fields=['RELATIONSHIP'], name='idx_cenr_relationship'),
+            models.Index(fields=['UNDERLYINGCONDS', 'ENRDATE'], name='idx_cenr_conds_date'),
         ]
     
     def __str__(self):
         return f"{self.USUBJID.USUBJID}"
+    
+    # ==========================================
+    #  NEW: PII ACCESS PROPERTIES
+    # ==========================================
+    
+    @property
+    def FULLNAME(self):
+        """Access full name from personal_data (backward compatibility)"""
+        try:
+            return self.personal_data.FULLNAME
+        except:
+            return None
+    
+    @property
+    def PHONE(self):
+        """Access phone from personal_data (backward compatibility)"""
+        try:
+            return self.personal_data.PHONE
+        except:
+            return None
+    
+    # ==========================================
+    # EXISTING PROPERTIES
+    # ==========================================
     
     @cached_property
     def SITEID(self):
@@ -258,10 +263,7 @@ class ENR_CONTACT(AuditFieldsMixin):
     
     @cached_property
     def calculated_age(self):
-        """
-        Calculate age from DOB or return provided age
-        Returns: (age: float, is_calculated: bool)
-        """
+        """Calculate age from DOB or return provided age"""
         if all([self.DAYOFBIRTH, self.MONTHOFBIRTH, self.YEAROFBIRTH]):
             try:
                 birth_date = date(self.YEAROFBIRTH, self.MONTHOFBIRTH, self.DAYOFBIRTH)
@@ -319,7 +321,7 @@ class ENR_CONTACT(AuditFieldsMixin):
         if hasattr(self, '_related_patient_usubjid'):
             del self._related_patient_usubjid
         
-        # Auto-set UNDERLYINGCONDS flag if underlying condition exists
+        # Auto-set UNDERLYINGCONDS flag
         if self.pk:
             try:
                 underlying = self.underlying_condition

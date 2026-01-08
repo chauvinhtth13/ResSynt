@@ -268,7 +268,7 @@ class SAM_CONTACT(AuditFieldsMixin):
         constraints = [
             # If no sample collected, reason must be provided
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(SAMPLE=True) |
                     models.Q(REASONIFNO__isnull=False)
                 ),
@@ -276,7 +276,7 @@ class SAM_CONTACT(AuditFieldsMixin):
             ),
             # If stool collected, date must be provided
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(STOOL=True) |
                     models.Q(STOOLDATE__isnull=False)
                 ),
@@ -284,7 +284,7 @@ class SAM_CONTACT(AuditFieldsMixin):
             ),
             # If rectal swab collected, date must be provided
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(RECTSWAB=True) |
                     models.Q(RECTSWABDATE__isnull=False)
                 ),
@@ -292,7 +292,7 @@ class SAM_CONTACT(AuditFieldsMixin):
             ),
             # If throat swab collected, date must be provided
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(THROATSWAB=True) |
                     models.Q(THROATSWABDATE__isnull=False)
                 ),
@@ -300,7 +300,7 @@ class SAM_CONTACT(AuditFieldsMixin):
             ),
             # If blood collected, date must be provided
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(BLOOD=True) |
                     models.Q(BLOODDATE__isnull=False)
                 ),
@@ -308,21 +308,21 @@ class SAM_CONTACT(AuditFieldsMixin):
             ),
             # If other organism found, must specify
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(OTHERRES_1=True) |
                     models.Q(OTHERRESSPECIFY_1__isnull=False)
                 ),
                 name='csam_specify_other_stool'
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(OTHERRES_2=True) |
                     models.Q(OTHERRESSPECIFY_2__isnull=False)
                 ),
                 name='csam_specify_other_rect'
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(OTHERRES_3=True) |
                     models.Q(OTHERRESSPECIFY_3__isnull=False)
                 ),
@@ -330,21 +330,21 @@ class SAM_CONTACT(AuditFieldsMixin):
             ),
             # If Klebsiella found, culture result must be positive
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(KLEBPNEU_1=True) |
                     models.Q(CULTRES_1='Pos')
                 ),
                 name='csam_kleb_requires_pos_stool'
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(KLEBPNEU_2=True) |
                     models.Q(CULTRES_2='Pos')
                 ),
                 name='csam_kleb_requires_pos_rect'
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(KLEBPNEU_3=True) |
                     models.Q(CULTRES_3='Pos')
                 ),

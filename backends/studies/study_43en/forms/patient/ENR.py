@@ -1,4 +1,14 @@
-# backends/studies/study_43en/forms/ENR.py
+# backends/studies/study_43en/forms/patient/ENR_updated.py
+
+"""
+UPDATED Enrollment Forms - Integrated with Personal Data
+=========================================================
+
+Key Changes:
+- Personal data fields removed from EnrollmentCaseForm
+- Personal data handled separately via PersonalDataForm
+- Views will manage both forms together
+"""
 
 from django import forms
 from django.utils.translation import gettext_lazy as _
@@ -6,28 +16,23 @@ from datetime import date
 from django.forms import inlineformset_factory, BaseInlineFormSet
 from django.core.exceptions import ValidationError
 
-# Import models
 from backends.studies.study_43en.models.patient import (
     ENR_CASE, ENR_CASE_MedHisDrug, UnderlyingCondition
 )
 from backends.studies.study_43en.models.base_models import get_department_choices
 
-# ==========================================
-# COMMON CHOICES
-# ==========================================
-
-SITEID_CHOICES = [
-    ('003', '003'),
-    ('011', '011'),
-    ('020', '020'),
-]
 
 # ==========================================
-# ENROLLMENT FORMS
+# UPDATED ENROLLMENT FORM (WITHOUT PII FIELDS)
 # ==========================================
 
 class EnrollmentCaseForm(forms.ModelForm):
-    """Enrollment form with optimistic locking"""
+    """
+    Enrollment form WITHOUT personal data fields
+    
+    Personal data (FULLNAME, PHONE, MEDRECORDID, addresses) 
+    are now handled by PersonalDataForm
+    """
 
     version = forms.IntegerField(
         required=False,
@@ -37,23 +42,16 @@ class EnrollmentCaseForm(forms.ModelForm):
 
     class Meta:
         model = ENR_CASE
-        exclude = ['USUBJID']
+        exclude = [
+            'USUBJID',
+            #  These fields are now in PERSONAL_DATA model:
+            # 'FULLNAME', 'PHONE', 'MEDRECORDID',
+            # 'STREET_NEW', 'WARD_NEW', 'CITY_NEW',
+            # 'STREET', 'WARD', 'DISTRICT', 'PROVINCECITY',
+            # 'PRIMARY_ADDRESS'
+        ]
         widgets = {
-
-            'FULLNAME': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': _('Enter full name')
-            }),
-            'PHONE': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': _('Enter phone number')
-            }),
-
-            'MEDRECORDID': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': _('Enter medical record number')
-            }),
-
+            # Dates
             'ENRDATE': forms.DateInput(attrs={
                 'class': 'datepicker form-control',
                 'placeholder': 'YYYY-MM-DD'
@@ -62,6 +60,8 @@ class EnrollmentCaseForm(forms.ModelForm):
                 'class': 'datepicker form-control',
                 'placeholder': 'YYYY-MM-DD'
             }),
+            
+            # Birth information
             'DAYOFBIRTH': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'DD',
@@ -87,9 +87,13 @@ class EnrollmentCaseForm(forms.ModelForm):
                 'max': 150,
                 'step': 0.1
             }),
+            
+            # Demographics
             'SEX': forms.Select(attrs={'class': 'form-control'}),
             'RESIDENCETYPE': forms.Select(attrs={'class': 'form-control'}),
             'WORKPLACETYPE': forms.Select(attrs={'class': 'form-control'}),
+            
+            # Risk factors
             'HOSP2D6M': forms.Select(attrs={'class': 'form-control'}),
             'DIAL3M': forms.Select(attrs={'class': 'form-control'}),
             'CATHETER3M': forms.Select(attrs={'class': 'form-control'}),
@@ -97,6 +101,7 @@ class EnrollmentCaseForm(forms.ModelForm):
             'HOME_WOUND_CARE': forms.Select(attrs={'class': 'form-control'}),
             'LONG_TERM_CARE': forms.Select(attrs={'class': 'form-control'}),
             'CORTICOIDPPI': forms.Select(attrs={'class': 'form-control'}),
+            
             'TOILETNUM': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': 0,
@@ -113,51 +118,6 @@ class EnrollmentCaseForm(forms.ModelForm):
             'ETHNICITY': forms.TextInput(attrs={'class': 'form-control'}),
             'OCCUPATION': forms.TextInput(attrs={'class': 'form-control'}),
             'HEALFACILITYNAME': forms.TextInput(attrs={'class': 'form-control'}),
-            
-            'PRIMARY_ADDRESS': forms.RadioSelect(
-                choices=[
-                    ('new', 'Chỉ địa chỉ mới'),
-                    ('old', 'Chỉ địa chỉ cũ'),
-                    ('both', 'Cả hai địa chỉ')
-                ],
-                attrs={'class': 'primary-address-radio'}
-            ),
-            
-            # NEW ADDRESS FIELDS
-            'STREET_NEW': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ví dụ: 123 Đường Nguyễn Văn Linh'
-            }),
-            'WARD_NEW': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ví dụ: Phường Tân Thuận Đông'
-            }),
-            'DISTRICT_NEW': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ví dụ: Quận 7'
-            }),
-            'CITY_NEW': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ví dụ: TP. Hồ Chí Minh'
-            }),
-            
-            # OLD ADDRESS FIELDS
-            'STREET': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ví dụ: 123 Đường Trần Hưng Đạo'
-            }),
-            'WARD': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ví dụ: Phường Bến Nghé (cũ)'
-            }),
-            'DISTRICT': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ví dụ: Quận 1 (cũ)'
-            }),
-            'PROVINCECITY': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ví dụ: TP. Hồ Chí Minh'
-            }),
             
             'FROMOTHERHOSPITAL': forms.RadioSelect(
                 choices=[
@@ -176,16 +136,15 @@ class EnrollmentCaseForm(forms.ModelForm):
         # Get version for optimistic locking
         if self.instance and self.instance.pk:
             self.fields['version'].initial = self.instance.version
-            # Get SITEID from instance if not provided
             if not siteid:
                 siteid = self.instance.SITEID
         
         # Set department choices based on SITEID
-        dept_choices = [('', '---------')]  # Empty choice first
+        dept_choices = [('', '---------')]
         dept_choices.extend(get_department_choices(siteid))
         self.fields['RECRUITDEPT'].widget.choices = dept_choices
         
-        # Apply form-control class to all fields
+        # Apply form-control class
         for field in self.fields.values():
             if not isinstance(field.widget, (forms.CheckboxInput, forms.CheckboxSelectMultiple, forms.RadioSelect)):
                 if 'class' not in field.widget.attrs:
@@ -194,6 +153,7 @@ class EnrollmentCaseForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         
+        # Optimistic locking check
         if self.instance and self.instance.pk:
             submitted_version = cleaned_data.get('version')
             if submitted_version is not None and submitted_version != self.instance.version:
@@ -206,11 +166,11 @@ class EnrollmentCaseForm(forms.ModelForm):
 
 
 # ==========================================
-# UNDERLYING CONDITION FORM
+# UNCHANGED FORMS (keep as-is)
 # ==========================================
 
 class UnderlyingConditionForm(forms.ModelForm):
-    """Simplified underlying conditions form"""
+    """Unchanged - no PII fields"""
     
     class Meta:
         model = UnderlyingCondition
@@ -247,12 +207,8 @@ class UnderlyingConditionForm(forms.ModelForm):
         return cleaned_data
 
 
-# ==========================================
-# MEDICATION HISTORY FORM
-# ==========================================
-
 class MedHisDrugForm(forms.ModelForm):
-    """Individual medication form"""
+    """Unchanged - no PII fields"""
 
     class Meta:
         model = ENR_CASE_MedHisDrug
@@ -293,12 +249,8 @@ class MedHisDrugForm(forms.ModelForm):
         return drugname.title()
 
 
-# ==========================================
-# MEDICATION FORMSET (NO DELETE)
-# ==========================================
-
 class BaseMedHisDrugFormSet(BaseInlineFormSet):
-    """Formset with duplicate detection - NO DELETE"""
+    """Unchanged - no PII fields"""
     
     def clean(self):
         if any(self.errors):
@@ -306,7 +258,6 @@ class BaseMedHisDrugFormSet(BaseInlineFormSet):
         
         drug_names = []
         for form in self.forms:
-            # all forms are considered active
             if form.cleaned_data:
                 drug_name = form.cleaned_data.get('DRUGNAME')
                 if drug_name:
@@ -320,14 +271,13 @@ class BaseMedHisDrugFormSet(BaseInlineFormSet):
                     drug_names.append(drug_name_lower)
 
 
-#  FORMSET WITHOUT DELETE CAPABILITY
 MedHisDrugFormSet = inlineformset_factory(
     ENR_CASE,
     ENR_CASE_MedHisDrug,
     form=MedHisDrugForm,
     formset=BaseMedHisDrugFormSet,
     extra=1,
-    can_delete=False,  #  NO DELETE
+    can_delete=False,
     can_delete_extra=False,
     min_num=0,
     validate_min=False,

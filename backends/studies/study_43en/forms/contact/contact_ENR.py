@@ -47,15 +47,6 @@ class EnrollmentContactForm(forms.ModelForm):
         exclude = ['USUBJID']
         widgets = {
 
-            'FULLNAME': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': _('Enter full name')
-            }),
-            'PHONE': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': _('Enter phone number')
-            }),
-
             # Dates
             'ENRDATE': forms.DateInput(attrs={
                 'class': 'datepicker form-control',

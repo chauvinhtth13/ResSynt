@@ -1,0 +1,154 @@
+<!-- frontends/templates/studies/study_44en/sidebar.html -->
+{% load static i18n %}
+
+<aside class="sidebar bg-royal-blue-900 border-end text-white shadow-sm" id="sidebar" aria-label="Study sidebar">
+  
+  <!-- Header - Study Logo & Title -->
+  <header class="d-flex sidebar-header border-bottom align-items-center">
+    <div class="d-flex p-1 align-items-center justify-content-center rounded bg-white" 
+         style="width: 56px; height: 56px; flex-shrink: 0;">
+      <img src="{% static 'studies/study_44en/images/logo.webp' %}" 
+           alt="44EN Study" 
+           class="logo-image"
+           style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+      
+      <div class="logo-fallback d-none fw-bold text-primary" style="font-size: 24px;">
+        44
+      </div>
+    </div>
+    
+    <div class="flex-grow-1 min-w-0 ms-3">
+      <h5 class="mb-0 fw-semibold text-truncate">
+        44EN Study
+      </h5>
+    </div>
+  </header>
+
+  <!-- Navigation Menu -->
+  <nav class="flex-grow-1 p-3" style="overflow-y: auto;">
+
+    <!-- DASHBOARD SECTION -->
+    <div class="mb-2">
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
+        {% trans "Dashboard" %}
+      </h6>
+
+      <ul class="list-unstyled mt-2">
+        <li class="mb-1">
+          <a href="{% url 'study_44en:dashboard' %}" class="sidebar-link">
+            <i class="bi bi-speedometer2"></i>
+            <span>{% trans "Overview" %}</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <hr class="my-3 border-white opacity-25">
+
+    <!-- HOUSEHOLD SECTION -->
+    <div class="mb-2">
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
+        {% trans "Household" %}
+      </h6>
+
+      <div class="sidebar-card mt-3">
+        <div class="sidebar-card-header">
+          <i class="bi bi-house-door-fill me-2"></i>
+          <span class="sidebar-card-title">{% trans "Household Data" %}</span>
+        </div>
+        <div class="p-2">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-1">
+              <a href="{% url 'study_44en:household:list' %}" class="sidebar-link small">
+                <i class="bi bi-card-list"></i>
+                <span>{% trans "Household List" %}</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'study_44en:household:create' %}" class="sidebar-link small">
+                <i class="bi bi-plus-circle"></i>
+                <span>{% trans "New Household" %}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-3 border-white opacity-25">
+
+    <!-- INDIVIDUAL SECTION -->
+    <div class="mb-2">
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
+        {% trans "Individual" %}
+      </h6>
+
+      <div class="sidebar-card mt-3">
+        <div class="sidebar-card-header">
+          <i class="bi bi-person-fill me-2"></i>
+          <span class="sidebar-card-title">{% trans "Individual Data" %}</span>
+        </div>
+        <div class="p-2">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-1">
+              <a href="{% url 'study_44en:individual:list' %}" class="sidebar-link small">
+                <i class="bi bi-card-list"></i>
+                <span>{% trans "Individual List" %}</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'study_44en:individual:create' %}" class="sidebar-link small">
+                <i class="bi bi-plus-circle"></i>
+                <span>{% trans "New Individual" %}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ACTIVITY LOG SECTION -->
+    <div class="mb-2">
+      <h6 class="sidebar-section-title fw-bolder text-uppercase small opacity-75">
+        {% trans "Activity Log" %}
+      </h6>
+
+      <ul class="list-unstyled mt-2">
+        <li class="mb-1">
+          <a href="{% url 'study_44en:audit_log_list' %}" class="sidebar-link">
+            <i class="bi bi-activity"></i>
+            <span>{% trans "Data Log" %}</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Logo Error Handling -->
+  <script nonce="{{ request.csp_nonce }}">
+  (function() {
+    'use strict';
+    
+    function initLogoFallback() {
+      const logoImg = document.querySelector('.logo-image');
+      const logoFallback = document.querySelector('.logo-fallback');
+      
+      if (!logoImg || !logoFallback) return;
+      
+      logoImg.addEventListener('error', function() {
+        this.classList.add('d-none');
+        logoFallback.classList.remove('d-none');
+      });
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLogoFallback);
+    } else {
+      initLogoFallback();
+    }
+    
+  })();
+  </script>
+
+</aside>

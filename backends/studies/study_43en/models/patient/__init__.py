@@ -56,6 +56,9 @@ from .FU_Rehospital_90 import Rehospitalization90
 from .DISCH_CASE import DISCH_CASE, DischargeICD
 from .EndCaseCRF import EndCaseCRF
 
+# Personal Data
+from .PER_DATA import PERSONAL_DATA
+
 
 # Export all models
 __all__ = [
@@ -105,4 +108,7 @@ __all__ = [
     'DISCH_CASE',
     'DischargeICD',
     'EndCaseCRF',
+
+    # Personal Data
+    'PERSONAL_DATA',
 ]

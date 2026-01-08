@@ -33,7 +33,7 @@ class ScreeningContactForm(forms.ModelForm):
      NEW: SITEID and STUDYID are locked (readonly)
     """
     
-    # SITEID field - will be configured in __init__
+    # ⚠️ SITEID field - will be configured in __init__
     SITEID = forms.ChoiceField(
         choices=SITEID_CHOICES,
         label=_("Mã cơ sở"),
@@ -84,7 +84,7 @@ class ScreeningContactForm(forms.ModelForm):
         ]
         widgets = {
             'STUDYID': forms.TextInput(attrs={
-                'readonly': 'readonly',  # Only readonly, NOT disabled
+                'readonly': 'readonly',  # ⚠️ Only readonly, NOT disabled
                 'class': 'form-control',
                 'style': 'background-color: #e9ecef;'
             }),
@@ -96,14 +96,14 @@ class ScreeningContactForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # FIX: STUDYID is readonly but must be included in POST
+        # ⚠️ FIX: STUDYID is readonly but must be included in POST
         self.fields['STUDYID'].widget.attrs.update({
             'readonly': 'readonly',
             'style': 'background-color: #e9ecef;'
         })
         self.fields['STUDYID'].required = True
         
-        # FIX: SITEID is readonly but must be included in POST
+        # ⚠️ FIX: SITEID is readonly but must be included in POST
         # Lock SITEID field (cannot be changed after creation)
         if self.instance.SITEID:
             self.fields['SITEID'].widget.attrs.update({

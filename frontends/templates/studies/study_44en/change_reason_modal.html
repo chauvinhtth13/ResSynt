@@ -1,0 +1,98 @@
+{% load i18n %}
+{% load dict_filters %}
+
+<!--  Modal - NO hidden fields here -->
+{% if show_reason_form and detected_changes %}
+<div class="modal fade" id="changeReasonModal" 
+     tabindex="-1" 
+     role="dialog" 
+     data-backdrop="static" 
+     data-keyboard="false"
+     data-cancel-url="{% url 'study_44en:household:list' %}">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle"></i>
+          {% trans "Xác nhận thay đổi dữ liệu" %}
+        </h5>
+      </div>
+      
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i>
+          {% trans "Bạn đã thay đổi các trường sau. Vui lòng cung cấp lý do cho mỗi thay đổi:" %}
+        </div>
+        
+        <!-- Backend-detected changes -->
+        {% for change in detected_changes %}
+        <div class="card mb-3">
+          <div class="card-header">
+            <strong>
+              {% if change.display_name %}
+                {{ change.display_name }}
+              {% elif change.field_label %}
+                {{ change.field_label }}
+              {% else %}
+                {{ change.field }}
+              {% endif %}
+            </strong>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-5">
+                <label class="text-muted">{% trans "Giá trị cũ:" %}</label>
+                <div class="p-2 bg-light border rounded">
+                  {{ change.old_display|default:"<em>(Trống)</em>"|safe }}
+                </div>
+              </div>
+              <div class="col-md-2 text-center">
+                <i class="fas fa-arrow-right" style="margin-top: 20px;"></i>
+              </div>
+              <div class="col-md-5">
+                <label class="text-muted">{% trans "Giá trị mới:" %}</label>
+                <div class="p-2 bg-light border rounded">
+                  {{ change.new_display|default:"<em>(Trống)</em>"|safe }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group mt-3 mb-0">
+              <label for="reason_{{ change.field }}">
+                {% trans "Lý do thay đổi" %} <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control reason-input 
+                        {% if reason_errors|has_key:change.field %}is-invalid{% endif %}" 
+                        id="modal_reason_{{ change.field }}"
+                        data-field="{{ change.field }}"
+                        rows="2"
+                        maxlength="500"
+                        placeholder="{% trans 'Nhập lý do thay đổi (tối thiểu 3 ký tự)' %}"
+                        required>{% if submitted_reasons|has_key:change.field %}{{ submitted_reasons|get_item:change.field }}{% endif %}</textarea>
+              <small class="form-text text-muted">
+                {% trans "Tối thiểu 3 ký tự" %}
+              </small>
+              
+              {% if reason_errors|has_key:change.field %}
+              <div class="invalid-feedback d-block">
+                {{ reason_errors|get_item:change.field|escape }}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelReason">
+          <i class="fas fa-times"></i> {% trans "Hủy" %}
+        </button>
+        <button type="button" class="btn btn-primary" id="confirmReason">
+          <i class="fas fa-check"></i> {% trans "Xác nhận" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}

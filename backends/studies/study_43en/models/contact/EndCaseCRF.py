@@ -206,7 +206,7 @@ class ContactEndCaseCRF(AuditFieldsMixin):
         constraints = [
             # If withdrawn, must have withdrawal date
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(WITHDRAWREASON='na') |
                     models.Q(WITHDRAWDATE__isnull=False)
                 ),
@@ -214,7 +214,7 @@ class ContactEndCaseCRF(AuditFieldsMixin):
             ),
             # If incomplete due to other reason, must specify
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(INCOMPLETE='yes') |
                     models.Q(INCOMPLETEDEATH=True) |
                     models.Q(INCOMPLETEMOVED=True) |
@@ -224,7 +224,7 @@ class ContactEndCaseCRF(AuditFieldsMixin):
             ),
             # If lost to follow-up YES, must have date
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(LOSTTOFOLLOWUP='yes') |
                     models.Q(LOSTTOFOLLOWUPDATE__isnull=False)
                 ),

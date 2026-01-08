@@ -148,7 +148,7 @@ class ScreeningCaseForm(forms.ModelForm):
         
         super().__init__(*args, **kwargs)
         
-        # FIX: STUDYID is readonly but must be included in POST
+        # ⚠️ FIX: STUDYID is readonly but must be included in POST
         # Remove disabled=True, use readonly only
         self.fields['STUDYID'].widget.attrs['readonly'] = 'readonly'
         self.fields['STUDYID'].widget.attrs['style'] = 'background-color: #e9ecef;'

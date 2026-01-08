@@ -1,0 +1,308 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">
+                        {% if household and household.HHID %}
+                            Edit Household
+                        {% else %}
+                            Create New Household
+                        {% endif %}
+                    </h3>
+                    {% if household.HHID %}
+                        <h4 class="text-primary">{{ household.HHID }}</h4>
+                    {% endif %}
+                </div>
+                <div>
+                    <!-- NEW: Use proper update URL -->
+                    {% if household and household.HHID %}
+                        <a href="{% url 'study_44en:household:update' hhid=household.HHID %}" 
+                        class="btn btn-primary me-2">
+                            <i class="bi bi-pencil"></i> Edit Household
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'study_44en:household:list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PART A: Household Information -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">PART A – HOUSEHOLD INFORMATION</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 40%;">Household ID:</th>
+                            <td>{{ household.HHID }}</td>
+                        </tr>
+                        <tr>
+                            <th>Interview Date:</th>
+                            <td>{{ household.INTERVIEW_DATE|date:"Y-m-d"|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Ward/Commune:</th>
+                            <td>{{ household.WARD|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>District:</th>
+                            <td>{{ household.DISTRICT|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Province/City:</th>
+                            <td>{{ household.CITY|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 40%;">Total Members:</th>
+                            <td>{{ household.TOTAL_MEMBERS|default:"0" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Respondent Member #:</th>
+                            <td>{{ household.RESPONDENT_MEMBER_NUM|default:"-" }}</td>
+                        </tr>
+                        {% if respondent %}
+                        <tr>
+                            <th>Respondent Name:</th>
+                            <td>{{ respondent.FIRST_NAME }} {{ respondent.LAST_NAME }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>Last Modified:</th>
+                            <td>{{ household.last_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Modified By:</th>
+                            <td>{{ household.last_modified_by_username|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Household Members -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Description of all household members</h5>
+            <span class="badge bg-light text-dark">{{ total_members }} member{{ total_members|pluralize }}</span>
+        </div>
+        <div class="card-body">
+            {% if members %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Gender</th>
+                            <th>DOB</th>
+                            <th>Age</th>
+                            <th>Relation to Respondent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in members %}
+                        <tr {% if member.MEMBER_NUM == household.RESPONDENT_MEMBER_NUM %}class="table-warning"{% endif %}>
+                            <td>{{ member.MEMBER_NUM }}</td>
+                            <td>{{ member.FIRST_NAME }}</td>
+                            <td>{{ member.LAST_NAME }}</td>
+                            <td>{{ member.get_GENDER_display|default:member.GENDER }}</td>
+                            <td>{{ member.DOB|date:"Y-m-d"|default:"-" }}</td>
+                            <td>{{ member.AGE|default:"-" }}</td>
+                            <td>{{ member.get_RELATIONSHIP_display|default:member.RELATIONSHIP }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted small mb-0 mt-2">
+                <i class="bi bi-info-circle"></i> Highlighted row indicates the respondent.
+            </p>
+            {% else %}
+            <p class="text-muted text-center py-4 mb-0">No household members recorded.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- PART B: Exposure Factors -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">PART B – EXPOSURE FACTORS</h5>
+            
+            {% if exposure %}
+                <!-- Has data - show Update and View -->
+                <div>
+                    <a href="{% url 'study_44en:household:exposure_update' hhid=household.HHID %}" 
+                    class="btn btn-light btn-sm me-1">
+                        <i class="bi bi-pencil"></i> Update
+                    </a>
+                    <a href="{% url 'study_44en:household:exposure_view' hhid=household.HHID %}" 
+                    class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </div>
+            {% else %}
+                <!-- No data - show Create button -->
+                <a href="{% url 'study_44en:household:exposure_create' hhid=household.HHID %}" 
+                class="btn btn-light btn-sm">
+                    <i class="bi bi-plus-circle"></i> Add Exposure Data
+                </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if exposure %}
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">Basic Information</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 50%;">Toilet Type:</th>
+                            <td>{{ exposure.get_TOILET_TYPE_display|default:exposure.TOILET_TYPE|default:"-" }}</td>
+                        </tr>
+                        {% if exposure.TOILET_TYPE == 'other' and exposure.TOILET_TYPE_OTHER %}
+                        <tr>
+                            <th>Toilet Type (Other):</th>
+                            <td>{{ exposure.TOILET_TYPE_OTHER }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>Number of Toilets:</th>
+                            <td>{{ exposure.NUM_TOILETS|default:"0" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cooking Fuel:</th>
+                            <td>{{ exposure.get_COOKING_FUEL_display|default:exposure.COOKING_FUEL|default:"-" }}</td>
+                        </tr>
+                        {% if exposure.COOKING_FUEL == 'other' and exposure.COOKING_FUEL_OTHER %}
+                        <tr>
+                            <th>Cooking Fuel (Other):</th>
+                            <td>{{ exposure.COOKING_FUEL_OTHER }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">Water & Animals</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 50%;">Water Treatment:</th>
+                            <td>{{ exposure.get_WATER_TREATMENT_display|default:exposure.WATER_TREATMENT|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Raises Animals:</th>
+                            <td>{{ exposure.get_RAISES_ANIMALS_display|default:exposure.RAISES_ANIMALS|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            {% if water_sources %}
+            <h6 class="fw-bold mt-4 mb-3">Water Sources</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Source Type</th>
+                            <th class="text-center">Drinking</th>
+                            <th class="text-center">Living</th>
+                            <th class="text-center">Irrigation</th>
+                            <th>Other Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ws in water_sources %}
+                        <tr>
+                            <td>{{ ws.get_SOURCE_TYPE_display|default:ws.SOURCE_TYPE }}</td>
+                            <td class="text-center">{% if ws.DRINKING %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}-{% endif %}</td>
+                            <td class="text-center">{% if ws.LIVING %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}-{% endif %}</td>
+                            <td class="text-center">{% if ws.IRRIGATION %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}-{% endif %}</td>
+                            <td>{{ ws.OTHER_PURPOSE|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if water_treatments %}
+            <h6 class="fw-bold mt-4 mb-3">Water Treatment Methods</h6>
+            <ul class="list-group list-group-flush">
+                {% for wt in water_treatments %}
+                <li class="list-group-item">
+                    {{ wt.get_TREATMENT_TYPE_display|default:wt.TREATMENT_TYPE }}
+                    {% if wt.TREATMENT_TYPE == 'other' and wt.TREATMENT_TYPE_OTHER %}
+                    - {{ wt.TREATMENT_TYPE_OTHER }}
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if animals %}
+            <h6 class="fw-bold mt-4 mb-3">Animals Raised</h6>
+            <ul class="list-group list-group-flush">
+                {% for animal in animals %}
+                <li class="list-group-item">
+                    {{ animal.get_ANIMAL_TYPE_display|default:animal.ANIMAL_TYPE }}
+                    {% if animal.ANIMAL_TYPE == 'other' and animal.ANIMAL_TYPE_OTHER %}
+                    - {{ animal.ANIMAL_TYPE_OTHER }}
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% else %}
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle"></i> No exposure data recorded yet. 
+                <a href="{% url 'study_44en:household:exposure_create' hhid=household.HHID %}" 
+                   class="alert-link">
+                    Click here to add exposure data.
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{# ========== CHANGE REASON MODAL ========== #}
+{% if show_reason_form and detected_changes %}
+    {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+
+{# Custom Scripts #}
+<script src="{% static 'studies/study_44en/js/change-reason-handler.js' %}"></script>
+
+{# Scripts Debug #}
+<script>
+console.log('=== HOUSEHOLD DETAIL SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('show_reason_form:', {{ show_reason_form|default:"false"|lower }});
+console.log('detected_changes count:', {{ detected_changes|length|default:0 }});
+{% if detected_changes %}
+console.log('Changes:', {{ detected_changes|safe|escapejs }});
+{% endif %}
+console.log('=====================================');
+</script>
+
+{% endblock %}

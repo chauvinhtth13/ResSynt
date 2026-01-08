@@ -325,7 +325,7 @@ class AntibioticSensitivity(AuditFieldsMixin):
             ),
             # If OTHER antibiotic, must specify name
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(ANTIBIOTIC_NAME='Other') |
                     models.Q(OTHER_ANTIBIOTIC_NAME__isnull=False)
                 ),
@@ -333,7 +333,7 @@ class AntibioticSensitivity(AuditFieldsMixin):
             ),
             # MIC numeric must be positive if provided
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(MIC_NUMERIC__isnull=True) |
                     models.Q(MIC_NUMERIC__gt=0)
                 ),
@@ -341,7 +341,7 @@ class AntibioticSensitivity(AuditFieldsMixin):
             ),
             # Test date cannot be in future
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(TESTDATE__isnull=True) |
                     models.Q(TESTDATE__lte=models.functions.Now())
                 ),
