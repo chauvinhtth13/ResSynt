@@ -23,6 +23,9 @@ from .EndCaseCRF import ContactEndCaseCRF
 # Underlying Conditions
 from .UnderlyingCondition import ContactUnderlyingCondition
 
+# Personal Data
+from .PER_CONTACT_DATA import PERSONAL_CONTACT_DATA
+
 # Export all models
 __all__ = [
     'SCR_CONTACT',
@@ -35,4 +38,5 @@ __all__ = [
     'ContactMedicationHistory90',
     'ContactEndCaseCRF',
     'ContactUnderlyingCondition',
+    'PERSONAL_CONTACT_DATA',
 ]

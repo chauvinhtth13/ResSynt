@@ -1,0 +1,222 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<main class="container py-4" style="max-width: 1100px;">
+    
+    <h4 class="text-center fw-bold mb-4">SAMPLE (SAM 1/1)</h4>
+
+    {% if individual %}
+    <div class="mb-3 text-center">
+        <span class="badge bg-primary fs-6">Subject ID: {{ subjectid }}</span>
+    </div>
+    {% endif %}
+
+    <hr class="my-4">
+
+    <form method="post" action="" id="individualSampleForm">
+        {% csrf_token %}
+        
+        <!-- Sample Collection Table -->
+        <div class="mb-5">
+            <h5 class="fw-bold mb-3">Sample Collection Schedule</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle">
+                    <thead class="table-success text-white">
+                        <tr>
+                            <th style="width: 15%;">Visit Time</th>
+                            <th style="width: 20%;" class="text-center">Sample Collected?</th>
+                            <th style="width: 18%;" class="text-center">Stool Sample Date</th>
+                            <th style="width: 18%;" class="text-center">Throat Swab Date</th>
+                            <th style="width: 29%;">Reason if NO sample (if applicable)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Enrollment + 3 days -->
+                        <tr>
+                            <td class="fw-bold">Enrollment + 3 days</td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_enrollment" id="sample_enr_yes" value="yes" {% if sample_data.sample_enrollment == 'yes' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_enr_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_enrollment" id="sample_enr_no" value="no" {% if sample_data.sample_enrollment == 'no' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_enr_no">No</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_enrollment" id="sample_enr_na" value="na" {% if sample_data.sample_enrollment == 'na' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_enr_na">N/A</label>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm datepicker" name="stool_date_enrollment" placeholder="dd/mm/yyyy" value="{{ sample_data.stool_date_enrollment|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm datepicker" name="throat_date_enrollment" placeholder="dd/mm/yyyy" value="{{ sample_data.throat_date_enrollment|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="reason_enrollment" value="{{ sample_data.reason_enrollment|default:'' }}" placeholder="Reason if no sample..." {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                        </tr>
+
+                        <!-- Day 14 ± 3 -->
+                        <tr>
+                            <td class="fw-bold">Day 14 ± 3</td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day14" id="sample_d14_yes" value="yes" {% if sample_data.sample_day14 == 'yes' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d14_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day14" id="sample_d14_no" value="no" {% if sample_data.sample_day14 == 'no' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d14_no">No</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day14" id="sample_d14_na" value="na" {% if sample_data.sample_day14 == 'na' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d14_na">N/A</label>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm datepicker" name="stool_date_day14" placeholder="dd/mm/yyyy" value="{{ sample_data.stool_date_day14|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm datepicker" name="throat_date_day14" placeholder="dd/mm/yyyy" value="{{ sample_data.throat_date_day14|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="reason_day14" value="{{ sample_data.reason_day14|default:'' }}" placeholder="Reason if no sample..." {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                        </tr>
+
+                        <!-- Day 28 ± 3 -->
+                        <tr>
+                            <td class="fw-bold">Day 28 ± 3</td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day28" id="sample_d28_yes" value="yes" {% if sample_data.sample_day28 == 'yes' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d28_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day28" id="sample_d28_no" value="no" {% if sample_data.sample_day28 == 'no' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d28_no">No</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day28" id="sample_d28_na" value="na" {% if sample_data.sample_day28 == 'na' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d28_na">N/A</label>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm datepicker" name="stool_date_day28" placeholder="dd/mm/yyyy" value="{{ sample_data.stool_date_day28|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm datepicker" name="throat_date_day28" placeholder="dd/mm/yyyy" value="{{ sample_data.throat_date_day28|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="reason_day28" value="{{ sample_data.reason_day28|default:'' }}" placeholder="Reason if no sample..." {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                        </tr>
+
+                        <!-- Day 90 ± 3 -->
+                        <tr>
+                            <td class="fw-bold">Day 90 ± 3</td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day90" id="sample_d90_yes" value="yes" {% if sample_data.sample_day90 == 'yes' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d90_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day90" id="sample_d90_no" value="no" {% if sample_data.sample_day90 == 'no' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d90_no">No</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="sample_day90" id="sample_d90_na" value="na" {% if sample_data.sample_day90 == 'na' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label small" for="sample_d90_na">N/A</label>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm datepicker" name="stool_date_day90" placeholder="dd/mm/yyyy" value="{{ sample_data.stool_date_day90|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm datepicker" name="throat_date_day90" placeholder="dd/mm/yyyy" value="{{ sample_data.throat_date_day90|default:'' }}" {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="reason_day90" value="{{ sample_data.reason_day90|default:'' }}" placeholder="Reason if no sample..." {% if is_readonly %}disabled{% endif %}>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Additional Notes -->
+        <div class="mb-4">
+            <label class="form-label fw-bold">Additional Notes/Comments:</label>
+            <textarea class="form-control" name="additional_notes" rows="4" placeholder="Any additional information about sample collection..." {% if is_readonly %}disabled{% endif %}></textarea>
+        </div>
+
+        <!-- Completion Information -->
+        <div class="row mt-5">
+            <div class="col-6 text-center">
+                <label class="fw-bold d-block">Completed by:</label>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" 
+                       name="completed_by" 
+                       value="{{ request.user.username }}" 
+                       readonly>
+                <div class="fst-italic small text-muted mt-1">(Signature and Initials)</div>
+            </div>
+            <div class="col-6 text-center">
+                <label class="fw-bold d-block">Date of completion:</label>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2 datepicker" 
+                       name="completion_date" 
+                       value="{% now 'd/m/Y' %}" 
+                       readonly>
+                <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-5 text-center">
+            {% if not is_readonly %}
+            <button type="submit" class="btn btn-success btn-lg px-5">Submit Form</button>
+            {% endif %}
+            <a href="{% url 'study_44en:individual:detail' subjectid=subjectid %}" 
+               class="btn btn-secondary btn-lg px-5 {% if not is_readonly %}ms-3{% endif %}">
+               {% if is_readonly %}Back{% else %}Cancel{% endif %}
+            </a>
+        </div>
+
+    </form>
+
+</main>
+
+<!-- Change Reason Modal -->
+{% include 'default/change_reason_modal.html' %}
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+
+{% include 'studies/study_44en/CRF/includes/datepicker_scripts.html' %}
+
+
+<script src="{% static 'studies/study_44en/js/change-reason-handler.js' %}"></script>
+
+<script>
+console.log('=== FOLLOWUP FORM SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('show_reason_form:', {{ show_reason_form|default:"false"|lower }});
+console.log('detected_changes count:', {{ detected_changes|length|default:0 }});
+{% if detected_changes %}
+console.log('Changes:', {{ detected_changes|safe }});
+{% endif %}
+console.log('=====================================');
+</script>
+{% endblock %}

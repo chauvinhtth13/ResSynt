@@ -5,7 +5,7 @@
 # 🎯 PURPOSE:
 # Auto-inject site filtering context into request object using TenancyUtils.
 
-# ✨ REFACTORED:
+#  REFACTORED:
 # - Uses TenancyUtils.get_user_sites() instead of custom caching
 # - Uses User.get_study_membership() instead of custom query
 # - Removed duplicate code
@@ -43,7 +43,7 @@
 # from typing import Set
 # from django.http import HttpRequest, HttpResponse
 
-# # ✨ REFACTORED: Import TenancyUtils instead of rewriting logic
+# #  REFACTORED: Import TenancyUtils instead of rewriting logic
 # from backends.tenancy.utils import TenancyUtils
 
 # logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@
 #     """
 #     Lightweight middleware to inject site context into request
     
-#     ✨ REFACTORED: Uses TenancyUtils for all data access
+#      REFACTORED: Uses TenancyUtils for all data access
     
 #     Requirements:
 #     - Must be placed AFTER UnifiedTenancyMiddleware
@@ -104,7 +104,7 @@
     
 #     def _inject_site_context(self, request: HttpRequest):
 #         """
-#         ✨ REFACTORED: Inject site filtering context using TenancyUtils
+#          REFACTORED: Inject site filtering context using TenancyUtils
         
 #         Sets the following attributes:
 #         - request.user_membership: StudyMembership object (from User model)
@@ -154,12 +154,12 @@
 #             self._set_default_context(request)
     
 #     # ==========================================
-#     # ✨ REMOVED: _get_user_membership() 
+#     #  REMOVED: _get_user_membership() 
 #     # → Now using User.get_study_membership()
 #     # ==========================================
     
 #     # ==========================================
-#     # ✨ REMOVED: _get_all_study_sites()
+#     #  REMOVED: _get_all_study_sites()
 #     # → Now using TenancyUtils.get_user_sites()
 #     # ==========================================
     
@@ -172,7 +172,7 @@
 #         """
 #         Get or initialize selected site from session
         
-#         ✨ KEPT: This logic is specific to site selection UI behavior
+#          KEPT: This logic is specific to site selection UI behavior
         
 #         Auto-selection logic:
 #         - If can_access_all: default to 'all'
@@ -240,7 +240,7 @@
 
 # def clear_site_cache(user_id: int = None, study_id: int = None):
 #     """
-#     ✨ REFACTORED: Wrapper to TenancyUtils cache clearing
+#      REFACTORED: Wrapper to TenancyUtils cache clearing
     
 #     Clear site context cache using TenancyUtils
     

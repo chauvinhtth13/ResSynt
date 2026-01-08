@@ -187,7 +187,7 @@ class ContactUnderlyingCondition(AuditFieldsMixin):
         ]
         constraints = [
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(OTHERDISEASE=True) |
                     models.Q(OTHERDISEASESPECIFY__isnull=False)
                 ),

@@ -123,7 +123,7 @@ class FU_CONTACT_90(AuditFieldsMixin):
         constraints = [
             # If assessed YES, must have assessment date
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(ASSESSED='Yes') |
                     models.Q(ASSESSDATE__isnull=False)
                 ),

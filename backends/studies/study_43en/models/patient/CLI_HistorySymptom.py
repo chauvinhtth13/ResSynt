@@ -91,7 +91,7 @@ class HistorySymptom(AuditFieldsMixin):
         ]
         constraints = [
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(OTHERSYMPTOM=True) |
                     models.Q(SPECIFYOTHERSYMPTOM__isnull=False)
                 ),

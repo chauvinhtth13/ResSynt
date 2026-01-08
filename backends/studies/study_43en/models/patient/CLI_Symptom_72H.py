@@ -108,7 +108,7 @@ class Symptom_72H(AuditFieldsMixin):
         ]
         constraints = [
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(OTHERSYMPTOM_2=True) |
                     models.Q(SPECIFYOTHERSYMPTOM_2__isnull=False)
                 ),

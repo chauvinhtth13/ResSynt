@@ -1,0 +1,293 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+  <div class="card shadow-lg mb-4">
+    <!-- Header -->
+    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-notes-medical"></i>
+          Follow-up Visits - {{ individual.SUBJECTID }}
+        </h5>
+        <a href="{% url 'study_44en:individual:detail' subjectid=subjectid %}" class="btn btn-light">
+          <i class="fas fa-arrow-left"></i> Back
+        </a>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <!-- Individual Info -->
+      <div class="card mb-4">
+        <div class="card-body bg-light">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label class="font-weight-bold mb-1">Subject ID:</label>
+                <p class="mb-0">{{ subjectid }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label class="font-weight-bold mb-1">Total Follow-ups:</label>
+                <p class="mb-0">{{ total_followups }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Follow-up List Table -->
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead style="background: linear-gradient(135deg, #374151 0%, #1f2937 100%); color: white;">
+            <tr>
+              <th class="text-center" style="width: 25%;">Visit Time</th>
+              <th class="text-center" style="width: 15%;">Status</th>
+              <th class="text-center" style="width: 20%;">Assessment Date</th>
+              <th class="text-center" style="width: 15%;">Assessed</th>
+              <th class="text-center" style="width: 25%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Day 14 ± 3 -->
+            <tr class="followup-table-row" style="transition: background-color 0.2s ease;">
+              <td class="text-center" style="font-weight: 600; color: #374151; font-size: 1rem;">
+                <i class="fas fa-calendar-check"></i> Day 14 ± 3
+              </td>
+              
+              {% with followup=followups_by_time.day_14 %}
+                {% if followup %}
+                  <!-- Follow-up EXISTS -->
+                  <td class="text-center">
+                    <span class="badge" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.875rem;">
+                      <i class="fas fa-check-circle"></i> Created
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    {% if followup.ASSESSMENT_DATE %}
+                      <span style="background: #f0f9ff; border-left: 3px solid #0891b2; padding: 6px 12px; border-radius: 4px; display: inline-block; font-size: 0.9rem;">
+                        <i class="fas fa-calendar-alt"></i> {{ followup.ASSESSMENT_DATE|date:"d/m/Y" }}
+                      </span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if followup.ASSESSED == 'yes' %}
+                      <span class="badge badge-success text-dark">
+                        <i class="fas fa-user-check"></i> Yes
+                      </span>
+                    {% elif followup.ASSESSED == 'no' %}
+                      <span class="badge badge-secondary text-dark">
+                        <i class="fas fa-user-times"></i> No
+                      </span>
+                    {% elif followup.ASSESSED == 'na' %}
+                      <span class="badge badge-warning text-dark">
+                        <i class="fas fa-question"></i> N/A
+                      </span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                      <a href="{% url 'study_44en:individual:followup_view' subjectid=subjectid followup_id=followup.FUID %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none; color: white;">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <a href="{% url 'study_44en:individual:followup_update' subjectid=subjectid followup_id=followup.FUID %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); border: none; color: white;">
+                        <i class="fas fa-edit"></i> Edit
+                      </a>
+                    </div>
+                  </td>
+                {% else %}
+                  <!-- Follow-up DOES NOT EXIST -->
+                  <td class="text-center">
+                    <span class="badge badge-secondary" style="padding: 6px 12px; font-size: 0.875rem;">
+                      <i class="fas fa-question-circle"></i> Not Created
+                    </span>
+                  </td>
+                  <td class="text-center"><span class="text-muted">--</span></td>
+                  <td class="text-center"><span class="text-muted">--</span></td>
+                  <td class="text-center">
+                    <a href="{% url 'study_44en:individual:followup_create' subjectid=subjectid %}?visit_time=day_14" 
+                       class="btn btn-sm" 
+                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white;">
+                      <i class="fas fa-plus"></i> Create
+                    </a>
+                  </td>
+                {% endif %}
+              {% endwith %}
+            </tr>
+
+            <!-- Day 28 ± 3 -->
+            <tr class="followup-table-row" style="transition: background-color 0.2s ease;">
+              <td class="text-center" style="font-weight: 600; color: #374151; font-size: 1rem;">
+                <i class="fas fa-calendar-check"></i> Day 28 ± 3
+              </td>
+              
+              {% with followup=followups_by_time.day_28 %}
+                {% if followup %}
+                  <td class="text-center">
+                    <span class="badge" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.875rem;">
+                      <i class="fas fa-check-circle"></i> Created
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    {% if followup.ASSESSMENT_DATE %}
+                      <span style="background: #f0f9ff; border-left: 3px solid #0891b2; padding: 6px 12px; border-radius: 4px; display: inline-block; font-size: 0.9rem;">
+                        <i class="fas fa-calendar-alt"></i> {{ followup.ASSESSMENT_DATE|date:"d/m/Y" }}
+                      </span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if followup.ASSESSED == 'yes' %}
+                      <span class="badge badge-success text-dark">
+                        <i class="fas fa-user-check"></i> Yes
+                      </span>
+                    {% elif followup.ASSESSED == 'no' %}
+                      <span class="badge badge-secondary text-dark">
+                        <i class="fas fa-user-times"></i> No
+                      </span>
+                    {% elif followup.ASSESSED == 'na' %}
+                      <span class="badge badge-warning text-dark">
+                        <i class="fas fa-question"></i> N/A
+                      </span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                      <a href="{% url 'study_44en:individual:followup_view' subjectid=subjectid followup_id=followup.FUID %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none; color: white;">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <a href="{% url 'study_44en:individual:followup_update' subjectid=subjectid followup_id=followup.FUID %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); border: none; color: white;">
+                        <i class="fas fa-edit"></i> Edit
+                      </a>
+                    </div>
+                  </td>
+                {% else %}
+                  <td class="text-center">
+                    <span class="badge badge-secondary" style="padding: 6px 12px; font-size: 0.875rem;">
+                      <i class="fas fa-question-circle"></i> Not Created
+                    </span>
+                  </td>
+                  <td class="text-center"><span class="text-muted">--</span></td>
+                  <td class="text-center"><span class="text-muted">--</span></td>
+                  <td class="text-center">
+                    <a href="{% url 'study_44en:individual:followup_create' subjectid=subjectid %}?visit_time=day_28" 
+                       class="btn btn-sm" 
+                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white;">
+                      <i class="fas fa-plus"></i> Create
+                    </a>
+                  </td>
+                {% endif %}
+              {% endwith %}
+            </tr>
+
+            <!-- Day 90 ± 3 -->
+            <tr class="followup-table-row" style="transition: background-color 0.2s ease;">
+              <td class="text-center" style="font-weight: 600; color: #374151; font-size: 1rem;">
+                <i class="fas fa-calendar-check"></i> Day 90 ± 3
+              </td>
+              
+              {% with followup=followups_by_time.day_90 %}
+                {% if followup %}
+                  <td class="text-center">
+                    <span class="badge" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.875rem;">
+                      <i class="fas fa-check-circle"></i> Created
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    {% if followup.ASSESSMENT_DATE %}
+                      <span style="background: #f0f9ff; border-left: 3px solid #0891b2; padding: 6px 12px; border-radius: 4px; display: inline-block; font-size: 0.9rem;">
+                        <i class="fas fa-calendar-alt"></i> {{ followup.ASSESSMENT_DATE|date:"d/m/Y" }}
+                      </span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if followup.ASSESSED == 'yes' %}
+                      <span class="badge badge-success text-dark">
+                        <i class="fas fa-user-check"></i> Yes
+                      </span>
+                    {% elif followup.ASSESSED == 'no' %}
+                      <span class="badge badge-secondary text-dark">
+                        <i class="fas fa-user-times"></i> No
+                      </span>
+                    {% elif followup.ASSESSED == 'na' %}
+                      <span class="badge badge-warning text-dark">
+                        <i class="fas fa-question"></i> N/A
+                      </span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                      <a href="{% url 'study_44en:individual:followup_view' subjectid=subjectid followup_id=followup.FUID %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none; color: white;">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <a href="{% url 'study_44en:individual:followup_update' subjectid=subjectid followup_id=followup.FUID %}" 
+                         class="btn btn-sm" 
+                         style="background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); border: none; color: white;">
+                        <i class="fas fa-edit"></i> Edit
+                      </a>
+                    </div>
+                  </td>
+                {% else %}
+                  <td class="text-center">
+                    <span class="badge badge-secondary" style="padding: 6px 12px; font-size: 0.875rem;">
+                      <i class="fas fa-question-circle"></i> Not Created
+                    </span>
+                  </td>
+                  <td class="text-center"><span class="text-muted">--</span></td>
+                  <td class="text-center"><span class="text-muted">--</span></td>
+                  <td class="text-center">
+                    <a href="{% url 'study_44en:individual:followup_create' subjectid=subjectid %}?visit_time=day_90" 
+                       class="btn btn-sm" 
+                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white;">
+                      <i class="fas fa-plus"></i> Create
+                    </a>
+                  </td>
+                {% endif %}
+              {% endwith %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .followup-table-row:hover {
+    background-color: rgba(102, 126, 234, 0.03);
+  }
+  
+  .btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  
+  .gap-2 {
+    gap: 0.5rem;
+  }
+</style>
+{% endblock %}

@@ -81,6 +81,7 @@ def upcoming_appointments(request):
         }
     
     from backends.studies.study_43en.models.schedule import FollowUpStatus
+    # ✅ FIX: Import from correct location (study utils, not audit_log utils)
     from backends.studies.study_43en.utils.site_utils import get_site_filter_params, get_filtered_queryset
     
     # ==========================================

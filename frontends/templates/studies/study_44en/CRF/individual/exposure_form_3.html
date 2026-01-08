@@ -1,0 +1,240 @@
+{% extends 'default/dashboard.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<main class="container py-4" style="max-width: 1000px;">
+    
+    <h4 class="text-center fw-bold mb-4">EXPOSURE FACTORS (EXP 3/3)</h4>
+
+    {% if individual %}
+    <div class="mb-3 text-center">
+        <span class="badge bg-primary fs-6">Subject ID: {{ individual.SUBJECTID }}</span>
+    </div>
+    {% endif %}
+
+    <hr class="my-4">
+
+    <form id="individualExposureForm" method="post" action="">
+        {% csrf_token %}
+        
+        <!-- Question 1: Food Consumption Frequency -->
+        <div class="mb-5">
+            <p class="fw-bold mb-2">1. How often do you consume the following foods?</p>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped text-center align-middle table-sm">
+                    <thead class="table-dark text-white">
+                        <tr>
+                            <th class="text-start" style="width: 25%;">Food Type</th>
+                            <th>Never</th>
+                            <th>1-3 times<br>/month</th>
+                            <th>1-2 times<br>/week</th>
+                            <th>3-5 times<br>/week</th>
+                            <th>1 time<br>/day</th>
+                            <th>2+ times<br>/day</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-start fw-bold">Rice, noodles, pho, pasta</td>
+                            <td><input type="radio" name="freq_rice" value="0" {% if food_data.freq_rice == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_rice" value="1" {% if food_data.freq_rice == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_rice" value="2" {% if food_data.freq_rice == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_rice" value="3" {% if food_data.freq_rice == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_rice" value="4" {% if food_data.freq_rice == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_rice" value="5" {% if food_data.freq_rice == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Red meat (pork, beef, etc.)</td>
+                            <td><input type="radio" name="freq_red_meat" value="0" {% if food_data.freq_red_meat == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_red_meat" value="1" {% if food_data.freq_red_meat == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_red_meat" value="2" {% if food_data.freq_red_meat == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_red_meat" value="3" {% if food_data.freq_red_meat == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_red_meat" value="4" {% if food_data.freq_red_meat == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_red_meat" value="5" {% if food_data.freq_red_meat == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Poultry</td>
+                            <td><input type="radio" name="freq_poultry" value="0" {% if food_data.freq_poultry == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_poultry" value="1" {% if food_data.freq_poultry == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_poultry" value="2" {% if food_data.freq_poultry == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_poultry" value="3" {% if food_data.freq_poultry == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_poultry" value="4" {% if food_data.freq_poultry == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_poultry" value="5" {% if food_data.freq_poultry == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Fish, seafood</td>
+                            <td><input type="radio" name="freq_seafood" value="0" {% if food_data.freq_seafood == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_seafood" value="1" {% if food_data.freq_seafood == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_seafood" value="2" {% if food_data.freq_seafood == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_seafood" value="3" {% if food_data.freq_seafood == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_seafood" value="4" {% if food_data.freq_seafood == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_seafood" value="5" {% if food_data.freq_seafood == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Eggs</td>
+                            <td><input type="radio" name="freq_eggs" value="0" {% if food_data.freq_eggs == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_eggs" value="1" {% if food_data.freq_eggs == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_eggs" value="2" {% if food_data.freq_eggs == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_eggs" value="3" {% if food_data.freq_eggs == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_eggs" value="4" {% if food_data.freq_eggs == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_eggs" value="5" {% if food_data.freq_eggs == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Raw vegetables, salads</td>
+                            <td><input type="radio" name="freq_raw_veg" value="0" {% if food_data.freq_raw_veg == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_raw_veg" value="1" {% if food_data.freq_raw_veg == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_raw_veg" value="2" {% if food_data.freq_raw_veg == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_raw_veg" value="3" {% if food_data.freq_raw_veg == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_raw_veg" value="4" {% if food_data.freq_raw_veg == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_raw_veg" value="5" {% if food_data.freq_raw_veg == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Stir-fried/cooked/boiled vegetables</td>
+                            <td><input type="radio" name="freq_cooked_veg" value="0" {% if food_data.freq_cooked_veg == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_cooked_veg" value="1" {% if food_data.freq_cooked_veg == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_cooked_veg" value="2" {% if food_data.freq_cooked_veg == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_cooked_veg" value="3" {% if food_data.freq_cooked_veg == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_cooked_veg" value="4" {% if food_data.freq_cooked_veg == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_cooked_veg" value="5" {% if food_data.freq_cooked_veg == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Dairy products</td>
+                            <td><input type="radio" name="freq_dairy" value="0" {% if food_data.freq_dairy == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_dairy" value="1" {% if food_data.freq_dairy == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_dairy" value="2" {% if food_data.freq_dairy == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_dairy" value="3" {% if food_data.freq_dairy == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_dairy" value="4" {% if food_data.freq_dairy == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_dairy" value="5" {% if food_data.freq_dairy == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Fermented foods</td>
+                            <td><input type="radio" name="freq_fermented" value="0" {% if food_data.freq_fermented == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_fermented" value="1" {% if food_data.freq_fermented == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_fermented" value="2" {% if food_data.freq_fermented == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_fermented" value="3" {% if food_data.freq_fermented == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_fermented" value="4" {% if food_data.freq_fermented == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_fermented" value="5" {% if food_data.freq_fermented == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Beer</td>
+                            <td><input type="radio" name="freq_beer" value="0" {% if food_data.freq_beer == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_beer" value="1" {% if food_data.freq_beer == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_beer" value="2" {% if food_data.freq_beer == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_beer" value="3" {% if food_data.freq_beer == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_beer" value="4" {% if food_data.freq_beer == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_beer" value="5" {% if food_data.freq_beer == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Alcohol/Liquor</td>
+                            <td><input type="radio" name="freq_alcohol" value="0" {% if food_data.freq_alcohol == '0' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_alcohol" value="1" {% if food_data.freq_alcohol == '1' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_alcohol" value="2" {% if food_data.freq_alcohol == '2' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_alcohol" value="3" {% if food_data.freq_alcohol == '3' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_alcohol" value="4" {% if food_data.freq_alcohol == '4' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="freq_alcohol" value="5" {% if food_data.freq_alcohol == '5' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Question 2: Travel History -->
+        <div class="mb-5">
+            <p class="fw-bold mb-2">2. In the past 3 months, have you frequently traveled for work, tourism, or other purposes?</p>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-start" style="width: 30%;">Destination</th>
+                            <th>Every day</th>
+                            <th>1-2 times/week</th>
+                            <th>1-2 times/month</th>
+                            <th>&lt;1 time/month</th>
+                            <th>No travel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-start fw-bold">International (abroad)</td>
+                            <td><input type="radio" name="travel_international" value="daily" {% if travel_data.travel_international == 'daily' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="travel_international" value="1-2_week" {% if travel_data.travel_international == '1-2_week' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="travel_international" value="1-2_month" {% if travel_data.travel_international == '1-2_month' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="travel_international" value="less_month" {% if travel_data.travel_international == 'less_month' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="travel_international" value="no" {% if travel_data.travel_international == 'no' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start fw-bold">Domestic (other provinces/cities)</td>
+                            <td><input type="radio" name="travel_domestic" value="daily" {% if travel_data.travel_domestic == 'daily' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="travel_domestic" value="1-2_week" {% if travel_data.travel_domestic == '1-2_week' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="travel_domestic" value="1-2_month" {% if travel_data.travel_domestic == '1-2_month' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="travel_domestic" value="less_month" {% if travel_data.travel_domestic == 'less_month' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                            <td><input type="radio" name="travel_domestic" value="no" {% if travel_data.travel_domestic == 'no' %}checked{% endif %} {% if is_readonly %}disabled{% endif %}></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Completion Information -->
+        <div class="row mt-5">
+            <div class="col-6 text-center">
+                <label class="fw-bold d-block">Completed by:</label>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2" 
+                       name="completed_by" 
+                       value="{{ request.user.username }}" 
+                       readonly>
+                <div class="fst-italic small text-muted mt-1">(Signature and Initials)</div>
+            </div>
+            <div class="col-6 text-center">
+                <label class="fw-bold d-block">Date of completion:</label>
+                <input type="text" class="form-control border-0 border-bottom rounded-0 d-inline-block w-75 shadow-none mt-2 datepicker" 
+                       name="completion_date" 
+                       value="{% now 'd/m/Y' %}" 
+                       readonly>
+                <div class="fst-italic small text-muted mt-1">(dd/mm/yyyy)</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-5 text-center">
+            <a href="{% url 'study_44en:individual:exposure_2_create' subjectid=individual.SUBJECTID %}" 
+               class="btn btn-outline-primary btn-lg px-5">
+               ← Back to EXP 2/3
+            </a>
+            {% if not is_readonly %}
+            <button type="submit" class="btn btn-success btn-lg px-5 ms-3">Submit Form</button>
+            {% endif %}
+            <a href="{% url 'study_44en:individual:detail' subjectid=individual.SUBJECTID %}" 
+               class="btn btn-secondary btn-lg px-5 ms-3">
+               {% if is_readonly %}Back to Detail{% else %}Cancel{% endif %}
+            </a>
+        </div>
+
+    </form>
+
+</main>
+
+<!-- Change Reason Modal -->
+<!-- Change Reason Modal -->
+{% include 'default/change_reason_modal.html' %}
+
+{% endblock %}
+
+{% block extra_js_dashboard %}
+
+{# Custom Scripts #}
+<script src="{% static 'studies/study_44en/js/change-reason-handler.js' %}"></script>
+
+{# Scripts Debug #}
+<script>
+console.log('=== FORM SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('show_reason_form:', {{ show_reason_form|default:"false"|lower }});
+console.log('detected_changes count:', {{ detected_changes|length|default:0 }});
+{% if detected_changes %}
+console.log('Changes:', {{ detected_changes|safe }});
+{% endif %}
+console.log('=====================================');
+</script>
+
+{% endblock %}

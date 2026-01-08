@@ -1,0 +1,65 @@
+{% load static %}
+
+<!-- Bootstrap Datepicker CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
+
+<!-- Bootstrap Datepicker JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/locales/bootstrap-datepicker.vi.min.js"></script>
+
+<script nonce="{{ request.csp_nonce }}">
+    $(document).ready(function() {
+        // Check jQuery
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery is not loaded. Datepicker requires jQuery.');
+            return;
+        }
+
+        if (typeof $.fn.datepicker === 'undefined') {
+            console.error('Bootstrap Datepicker is not loaded.');
+            return;
+        }
+
+        // Reusable initializer for dynamically inserted inputs
+        function initDatepicker($el) {
+            var $items = $el || $('.datepicker');
+            $items.each(function() {
+                var $this = $(this);
+                if ($this.data('datepicker-initialized')) return;
+
+                $this.datepicker({
+                    format: 'dd/mm/yyyy',
+                    autoclose: true,
+                    todayHighlight: true,
+                    clearBtn: true,
+                    language: 'vi',
+                    defaultViewDate: new Date(),
+                    startDate: '-100y',
+                    endDate: '+10y',
+                    forceParse: false
+                });
+
+                // Mark as initialized
+                $this.data('datepicker-initialized', true);
+            });
+        }
+
+        // Initialize on DOM ready
+        initDatepicker();
+
+        // Initialize when a datepicker input receives focus (useful for dynamically added elements)
+        $(document).on('focus', '.datepicker', function() {
+            var $this = $(this);
+            if (!$this.data('datepicker-initialized')) {
+                initDatepicker($this);
+                try { $this.datepicker('show'); } catch (e) { /* ignore */ }
+            }
+        });
+
+        // Initialize datepickers inside Bootstrap modals when they are shown
+        $(document).on('shown.bs.modal', function(e) {
+            var $modal = $(e.target);
+            initDatepicker($modal.find('.datepicker'));
+        });
+    });
+</script>
