@@ -1,7 +1,7 @@
 # backends/studies/study_44en/utils/permission_decorators.py
 """
 Permission decorators for CRF views
-✅ FIXED: Use TenancyUtils for permission checking
+FIXED: Use TenancyUtils for permission checking
 """
 import logging
 from functools import wraps
@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
 
-from backends.tenancy.utils import TenancyUtils  # ✅ IMPORT
+from backends.tenancy.utils import TenancyUtils  # IMPORT
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def require_study_permission(permission_codename: str, redirect_to: str = None):
                 messages.error(request, 'No study context found')
                 return redirect('select_study')
             
-            # ✅ Use TenancyUtils
+            # Use TenancyUtils
             has_permission = TenancyUtils.user_has_permission(
                 request.user, 
                 study, 
@@ -148,7 +148,7 @@ def check_site_access(get_site_from: str = 'instance'):
 
 def check_site_permission(request, siteid: str) -> bool:
     """
-    🔒 SECURITY: Check if user has permission to access/create for a specific site
+    SECURITY: Check if user has permission to access/create for a specific site
     
     This is a HELPER function that returns True/False without side effects.
     Use for validation in views and APIs.
@@ -173,10 +173,10 @@ def check_site_permission(request, siteid: str) -> bool:
 
 def check_instance_site_access(request, instance, redirect_to: str = None):
     """
-    🔒 SECURITY FIX: Check if user ACTUALLY has permission to access this site
+    SECURITY FIX: Check if user ACTUALLY has permission to access this site
     
     ❌ OLD LOGIC: Only checked session['selected_site_id'] → BYPASS-able!
-    ✅ NEW LOGIC: Check against user's actual site permissions from middleware
+    NEW LOGIC: Check against user's actual site permissions from middleware
     
     Args:
         request: HttpRequest with site context (from middleware)

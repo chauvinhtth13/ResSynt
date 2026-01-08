@@ -115,7 +115,7 @@ def upcoming_appointments(request):
         return _EMPTY_NOTIFICATIONS
     
     from backends.studies.study_43en.models.schedule import FollowUpStatus
-    # ✅ FIX: Import from correct location (study utils, not audit_log utils)
+    # FIX: Import from correct location (study utils, not audit_log utils)
     from backends.studies.study_43en.utils.site_utils import get_site_filter_params, get_filtered_queryset
     
     # ==========================================

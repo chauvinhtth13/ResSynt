@@ -1,6 +1,6 @@
 # backends/api/studies/study_44en/views/household/views_household_food.py
 """
-✅ REFACTORED: Household Food Views - Using Separate Helpers + Universal Audit
+REFACTORED: Household Food Views - Using Separate Helpers + Universal Audit
 
 Following Django development rules:
 - Backend-first approach
@@ -31,9 +31,9 @@ from backends.studies.study_44en.forms.household import (
     HH_FoodSourceForm
 )
 
-# ✅ Import Universal Audit System
-from backends.audit_log.utils.decorators import audit_log
-from backends.audit_log.utils.processors import process_crf_update
+# Import Universal Audit System
+from backends.audit_logs.utils.decorators import audit_log
+from backends.audit_logs.utils.processors import process_crf_update
 
 # Import permission decorators
 from backends.studies.study_44en.utils.permission_decorators import (
@@ -42,7 +42,7 @@ from backends.studies.study_44en.utils.permission_decorators import (
     require_crf_change,
 )
 
-# ✅ Import helpers from separate file
+# Import helpers from separate file
 from .food_helpers import (
     get_household_with_food,
     save_food_data,
@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 @require_crf_add('hh_foodfrequency')
 def household_food_create(request, hhid):
     """
-    ✅ Create new food data for household
+    Create new food data for household
     
     Following rules:
     - Django Forms handle validation (backend)
@@ -79,7 +79,7 @@ def household_food_create(request, hhid):
     logger.info("="*80)
     logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
     
-    # ✅ Use helper to get household and check existing data
+    # Use helper to get household and check existing data
     household, food_frequency, food_source = get_household_with_food(request, hhid)
     
     # Check if food data already exists
@@ -132,7 +132,7 @@ def household_food_create(request, hhid):
     
     logger.info("📝 Validating forms...")
     
-    # ✅ Backend validation (Django Forms)
+    # Backend validation (Django Forms)
     freq_valid = food_frequency_form.is_valid()
     source_valid = food_source_form.is_valid()
     
@@ -142,7 +142,7 @@ def household_food_create(request, hhid):
     if freq_valid and source_valid:
         logger.info("💾 All forms valid - Calling save helper...")
         
-        # ✅ Prepare forms_dict for save helper
+        # Prepare forms_dict for save helper
         forms_dict = {
             'main': food_frequency_form,
             'related': {
@@ -150,7 +150,7 @@ def household_food_create(request, hhid):
             }
         }
         
-        # ✅ Use helper to save in transaction
+        # Use helper to save in transaction
         food_frequency = save_food_data(
             request,
             forms_dict,
@@ -160,7 +160,7 @@ def household_food_create(request, hhid):
         
         if food_frequency:
             logger.info("="*80)
-            logger.info(f"=== ✅ FOOD CREATE SUCCESS: {hhid} ===")
+            logger.info(f"=== FOOD CREATE SUCCESS: {hhid} ===")
             logger.info("="*80)
             
             messages.success(
@@ -172,7 +172,7 @@ def household_food_create(request, hhid):
             logger.error("❌ Save helper returned None")
             messages.error(request, 'Lỗi khi lưu dữ liệu. Vui lòng thử lại.')
     else:
-        # ✅ Use helper to log errors
+        # Use helper to log errors
         forms_with_errors = log_all_form_errors({
             'Food Frequency Form': food_frequency_form,
             'Food Source Form': food_source_form,
@@ -211,7 +211,7 @@ def household_food_create(request, hhid):
 @audit_log(model_name='HH_FOODFREQUENCY', get_patient_id_from='hhid')
 def household_food_update(request, hhid):
     """
-    ✅ Update food data WITH UNIVERSAL AUDIT SYSTEM (Tier 2)
+    Update food data WITH UNIVERSAL AUDIT SYSTEM (Tier 2)
     
     Following rules:
     - Use Universal Audit System for change tracking
@@ -224,7 +224,7 @@ def household_food_update(request, hhid):
     logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
     logger.info("="*80)
     
-    # ✅ Use helper to get household and food data
+    # Use helper to get household and food data
     household, food_frequency, food_source = get_household_with_food(request, hhid)
     
     # If neither exists, redirect to create
@@ -253,7 +253,7 @@ def household_food_update(request, hhid):
         
         logger.info(f"   Forms initialized with existing data")
         
-        # ✅ Use helper to get summary
+        # Use helper to get summary
         summary = get_food_summary(household)
         
         context = {
@@ -278,12 +278,12 @@ def household_food_update(request, hhid):
             context
         )
     
-    # ✅ POST - USE UNIVERSAL AUDIT SYSTEM (Tier 2)
+    # POST - USE UNIVERSAL AUDIT SYSTEM (Tier 2)
     logger.info("="*80)
-    logger.info("🔄 Using Universal Audit System (Tier 2 - Multi-Form)")
+    logger.info("Using Universal Audit System (Tier 2 - Multi-Form)")
     logger.info("="*80)
     
-    # ✅ Configure forms for Universal Audit
+    # Configure forms for Universal Audit
     forms_config = {
         'main': {
             'class': HH_FoodFrequencyForm,
@@ -299,7 +299,7 @@ def household_food_update(request, hhid):
         }
     }
     
-    # ✅ Define save callback using helper
+    # Define save callback using helper
     def save_callback(request, forms_dict):
         """Save callback - uses helper function"""
         return save_food_data(
@@ -309,7 +309,7 @@ def household_food_update(request, hhid):
             is_create=False
         )
     
-    # ✅ Use Universal Audit System
+    # Use Universal Audit System
     logger.info("🚀 Calling process_crf_update...")
     
     return process_crf_update(
@@ -338,7 +338,7 @@ def household_food_update(request, hhid):
 @require_crf_view('hh_foodfrequency')
 def household_food_view(request, hhid):
     """
-    ✅ View food data (read-only)
+    View food data (read-only)
     
     Following rules:
     - Use backend logic to make readonly
@@ -348,7 +348,7 @@ def household_food_view(request, hhid):
     logger.info(f"=== 👁️ HOUSEHOLD FOOD VIEW (READ-ONLY): {hhid} ===")
     logger.info("="*80)
     
-    # ✅ Use helper to get household and food data
+    # Use helper to get household and food data
     household, food_frequency, food_source = get_household_with_food(request, hhid)
     
     # If neither exists, redirect to detail
@@ -366,13 +366,13 @@ def household_food_view(request, hhid):
         prefix='source'
     )
     
-    # ✅ Use helper to make all forms readonly
+    # Use helper to make all forms readonly
     make_form_readonly(food_frequency_form)
     make_form_readonly(food_source_form)
     
     logger.info(f"   Forms made readonly")
     
-    # ✅ Use helper to get summary
+    # Use helper to get summary
     summary = get_food_summary(household)
     
     context = {
@@ -410,7 +410,7 @@ def household_food(request, hhid):
     
     This is kept for backward compatibility with old URLs
     """
-    # ✅ Use helper to check if food data exists
+    # Use helper to check if food data exists
     household, food_frequency, food_source = get_household_with_food(request, hhid)
     
     if food_frequency or food_source:

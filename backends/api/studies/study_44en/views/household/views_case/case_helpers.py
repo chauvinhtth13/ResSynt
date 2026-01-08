@@ -1,12 +1,12 @@
 # backends/api/studies/study_44en/views/household/case_helpers.py
 """
-🔧 Household Case Helper Functions - FIXED
+Household Case Helper Functions - FIXED
 
 Shared utilities for household case CRUD views.
 Following Django development rules: Backend-first approach.
 
-✅ FIXED: Removed deleted_objects (custom formset handles deletion internally)
-✅ SIMPLIFIED: Removed unnecessary logic
+FIXED: Removed deleted_objects (custom formset handles deletion internally)
+SIMPLIFIED: Removed unnecessary logic
 """
 
 import logging
@@ -15,7 +15,7 @@ from django.db import transaction
 from django.contrib import messages
 
 from backends.studies.study_44en.models.household import HH_CASE, HH_Member
-from backends.audit_log.models import AuditLog, AuditLogDetail
+from backends.audit_logs.models import AuditLog, AuditLogDetail
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def save_household_and_related(request, household_form, member_formset, is_creat
     """
     Save household and members in transaction
     
-    ✅ SIMPLIFIED: Custom formset already handles deletion internally
+    SIMPLIFIED: Custom formset already handles deletion internally
     
     Args:
         request: HttpRequest
@@ -134,14 +134,14 @@ def save_household_and_related(request, household_form, member_formset, is_creat
             
             household.save()
             
-            logger.info(f"   ✅ Saved household: {household.HHID}")
+            logger.info(f"   Saved household: {household.HHID}")
             
             # ===================================
             # 2. SAVE MEMBER FORMSET
             # ===================================
             logger.info("📝 Step 2: Saving members...")
             
-            # ✅ FIX: Custom formset.save() already handles:
+            # FIX: Custom formset.save() already handles:
             # - Filtering empty forms
             # - Deleting marked forms
             # - Setting audit metadata (if needed)
@@ -155,9 +155,9 @@ def save_household_and_related(request, household_form, member_formset, is_creat
                 member.HHID = household
                 set_audit_metadata(member, request.user)
                 member.save()
-                logger.info(f"      ✅ Saved member: {member.MEMBER_NUM}")
+                logger.info(f"      Saved member: {member.MEMBER_NUM}")
             
-            logger.info(f"   ✅ Saved {len(saved_members)} members")
+            logger.info(f"   Saved {len(saved_members)} members")
             
             # ===================================
             # 3. SAVE AUDIT LOG (if reasons provided)
@@ -200,7 +200,7 @@ def save_household_and_related(request, household_form, member_formset, is_creat
                 }
                 
                 audit_log.save()
-                logger.info(f"      ✅ Created main audit log entry #{audit_log.id}")
+                logger.info(f"      Created main audit log entry #{audit_log.id}")
                 
                 # Create detail entries for each field change
                 for change in all_changes:
@@ -215,12 +215,12 @@ def save_household_and_related(request, household_form, member_formset, is_creat
                         reason=reason,
                     )
                     detail.save()
-                    logger.info(f"      ✅ Saved detail for {field_name}")
+                    logger.info(f"      Saved detail for {field_name}")
                 
-                logger.info(f"   ✅ Saved audit log with {len(all_changes)} detail entries")
+                logger.info(f"   Saved audit log with {len(all_changes)} detail entries")
             
             logger.info("="*80)
-            logger.info(f"✅ SAVE COMPLETE - Household {household.HHID}")
+            logger.info(f"SAVE COMPLETE - Household {household.HHID}")
             logger.info("="*80)
             
             return household

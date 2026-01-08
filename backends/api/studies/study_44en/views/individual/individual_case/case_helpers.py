@@ -1,6 +1,6 @@
 # backends/api/studies/study_44en/views/individual/individual_helpers.py
 """
-✅ Individual Helper Functions - Following Household Pattern
+Individual Helper Functions - Following Household Pattern
 
 Shared utilities for individual CRUD views with audit support.
 """
@@ -11,7 +11,7 @@ from django.db import transaction
 from django.contrib import messages
 
 from backends.studies.study_44en.models.individual import Individual
-from backends.audit_log.models import AuditLog, AuditLogDetail
+from backends.audit_logs.models import AuditLog, AuditLogDetail
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ def save_individual(request, individual_form, is_create=False, change_reasons=No
             individual.save()
             
             subjectid = individual.MEMBERID.MEMBERID if individual.MEMBERID else individual.SUBJECTID
-            logger.info(f"   ✅ Saved individual: {subjectid}")
+            logger.info(f"   Saved individual: {subjectid}")
             
             # ===================================
             # 2. SAVE AUDIT LOG (if reasons provided)
@@ -148,7 +148,7 @@ def save_individual(request, individual_form, is_create=False, change_reasons=No
                 }
                 
                 audit_log.save()
-                logger.info(f"      ✅ Created main audit log entry #{audit_log.id}")
+                logger.info(f"      Created main audit log entry #{audit_log.id}")
                 
                 # Create detail entries for each field change
                 for change in all_changes:
@@ -163,12 +163,12 @@ def save_individual(request, individual_form, is_create=False, change_reasons=No
                         reason=reason,
                     )
                     detail.save()
-                    logger.info(f"      ✅ Saved detail for {field_name}")
+                    logger.info(f"      Saved detail for {field_name}")
                 
-                logger.info(f"   ✅ Saved audit log with {len(all_changes)} detail entries")
+                logger.info(f"   Saved audit log with {len(all_changes)} detail entries")
             
             logger.info("="*80)
-            logger.info(f"✅ SAVE COMPLETE - Individual {subjectid}")
+            logger.info(f"SAVE COMPLETE - Individual {subjectid}")
             logger.info("="*80)
             
             return individual

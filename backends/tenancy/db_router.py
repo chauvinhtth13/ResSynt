@@ -1,9 +1,4 @@
-"""
-Database Router for Multi-Tenant Study System.
-
-Handles routing between management database and study-specific databases
-with thread-local context and optimized caching.
-"""
+# backends/tenancy/db_router.py - PRODUCTION-READY VERSION
 import logging
 import threading
 from typing import Any, Dict, Optional, Set

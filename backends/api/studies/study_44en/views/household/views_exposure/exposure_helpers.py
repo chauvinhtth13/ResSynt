@@ -5,7 +5,7 @@ Helper utilities for household exposure:
 - Change detection for flat fields
 - Display label extraction from model choices
 
-✅ Uses model choices instead of hard-coded labels
+Uses model choices instead of hard-coded labels
 """
 import logging
 from backends.studies.study_44en.models.household import (
@@ -87,7 +87,7 @@ def save_water_treatment(request, exposure):
         )
         set_audit_metadata(wt, request.user)
         wt.save()
-        logger.info(f"✅ Saved water treatment: {treatment_method}")
+        logger.info(f"Saved water treatment: {treatment_method}")
         return True
     else:
         logger.warning("⚠️ No TREATMENT_METHOD found in POST data")
@@ -131,9 +131,9 @@ def save_animals(request, exposure):
             set_audit_metadata(animal, request.user)
             animal.save()
             count += 1
-            logger.info(f"✅ Saved animal: {animal_type}")
+            logger.info(f"Saved animal: {animal_type}")
     
-    logger.info(f"✅ Saved {count} animals in total")
+    logger.info(f"Saved {count} animals in total")
     return count
 
 
@@ -193,7 +193,7 @@ def load_animal_data(exposure):
             animal_data['other_text'] = animal.ANIMAL_TYPE_OTHER
             logger.info(f"📝 Other animal text: {animal.ANIMAL_TYPE_OTHER}")
     
-    logger.info(f"✅ Loaded animal data: {animal_data}")
+    logger.info(f"Loaded animal data: {animal_data}")
     return animal_data
 
 
@@ -205,7 +205,7 @@ def detect_flat_field_changes(request, exposure):
     """
     Detect changes in water sources, treatment, animals, and food
     
-    ✅ Uses model choices for display labels (DRY principle)
+    Uses model choices for display labels (DRY principle)
     
     Returns:
         list: List of change dictionaries
@@ -241,7 +241,7 @@ def detect_flat_field_changes(request, exposure):
             'drink': False, 'use': False, 'irrigate': False, 'other': ''
         })
         
-        # ✅ Use model choices for source type display
+        # Use model choices for source type display
         db_source_key = 'bottled' if source_key == 'bottle' else source_key
         source_display = get_water_source_display(db_source_key)
         
@@ -298,7 +298,7 @@ def detect_flat_field_changes(request, exposure):
             'field_label': 'Phương pháp xử lý nước',
             'old_value': old_treatment_method or 'None',
             'new_value': new_treatment_method or 'None',
-            # ✅ Use model choices for display
+            # Use model choices for display
             'old_display': get_treatment_display(old_treatment_method),
             'new_display': get_treatment_display(new_treatment_method),
         })
@@ -325,7 +325,7 @@ def detect_flat_field_changes(request, exposure):
         
         # Check animal presence change
         if old_has_animal != new_has_animal:
-            # ✅ Use model choices for display
+            # Use model choices for display
             animal_display = get_animal_display(animal_key)
             changes.append({
                 'field': f'animal_{animal_key}',
@@ -367,7 +367,7 @@ def detect_flat_field_changes(request, exposure):
                 'field_label': f'Tần suất tiêu thụ - {field_label}',
                 'old_value': old_value or 'None',
                 'new_value': new_value or 'None',
-                # ✅ Use model choices for display
+                # Use model choices for display
                 'old_display': get_frequency_display(old_value),
                 'new_display': get_frequency_display(new_value),
             })
@@ -388,7 +388,7 @@ def detect_flat_field_changes(request, exposure):
                 'field_label': f'Nguồn gốc thực phẩm - {field_label}',
                 'old_value': old_value or 'None',
                 'new_value': new_value or 'None',
-                # ✅ Use model choices for display
+                # Use model choices for display
                 'old_display': get_frequency_display(old_value),
                 'new_display': get_frequency_display(new_value),
             })

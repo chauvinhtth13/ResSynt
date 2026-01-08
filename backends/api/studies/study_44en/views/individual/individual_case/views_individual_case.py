@@ -1,7 +1,7 @@
 # backends/api/studies/study_44en/views/individual/views_individual_case.py
 
 """
-✅ REFACTORED: Individual Case Views with Full Audit Support
+REFACTORED: Individual Case Views with Full Audit Support
 
 Following household pattern:
 - Manual change detection
@@ -23,11 +23,11 @@ from backends.studies.study_44en.models.individual import Individual
 from backends.studies.study_44en.forms.individual import IndividualForm
 
 # Import audit utilities
-from backends.audit_log.utils.detector import ChangeDetector
-from backends.audit_log.utils.validator import ReasonValidator
-from backends.audit_log.utils.decorators import audit_log
+from backends.audit_logs.utils.detector import ChangeDetector
+from backends.audit_logs.utils.validator import ReasonValidator
+from backends.audit_logs.utils.decorators import audit_log
 
-# ✅ Import helpers from separate file
+# Import helpers from separate file
 from .case_helpers import (
     get_individual_with_related,
     save_individual,
@@ -104,10 +104,10 @@ def individual_detail(request, subjectid):
     logger.info(f"=== 👁️ INDIVIDUAL DETAIL: {subjectid} ===")
     logger.info("="*80)
     
-    # ✅ Use helper to get individual
+    # Use helper to get individual
     individual = get_individual_with_related(request, subjectid)
     
-    # ✅ Use helper to get summary
+    # Use helper to get summary
     summary = get_individual_summary(individual)
     
     context = {
@@ -131,7 +131,7 @@ def individual_detail(request, subjectid):
 @require_crf_add('individual')
 def individual_create(request):
     """
-    ✅ Create new individual
+    Create new individual
     
     Following rules:
     - Django Forms handle validation (backend)
@@ -152,11 +152,11 @@ def individual_create(request):
         
         logger.info("🔍 Validating form...")
         
-        # ✅ Validate form (Backend validation)
+        # Validate form (Backend validation)
         if individual_form.is_valid():
             logger.info("💾 Form valid - Calling save helper...")
             
-            # ✅ Use helper to save in transaction
+            # Use helper to save in transaction
             individual = save_individual(
                 request=request,
                 individual_form=individual_form,
@@ -166,7 +166,7 @@ def individual_create(request):
             if individual:
                 subjectid = individual.MEMBERID.MEMBERID if individual.MEMBERID else individual.SUBJECTID
                 logger.info("="*80)
-                logger.info(f"=== ✅ INDIVIDUAL CREATE SUCCESS: {subjectid} ===")
+                logger.info(f"=== INDIVIDUAL CREATE SUCCESS: {subjectid} ===")
                 logger.info("="*80)
                 
                 messages.success(
@@ -178,7 +178,7 @@ def individual_create(request):
                 logger.error("❌ Save helper returned None")
                 messages.error(request, 'Lỗi khi lưu dữ liệu. Vui lòng thử lại.')
         else:
-            # ✅ Use helper to log errors
+            # Use helper to log errors
             log_form_errors(individual_form, 'Individual Form')
             messages.error(request, '❌ Vui lòng kiểm tra lại các trường bị lỗi')
     
@@ -215,7 +215,7 @@ def individual_create(request):
 @audit_log(model_name='Individual', get_patient_id_from='subjectid')
 def individual_update(request, subjectid):
     """
-    ✅ UPDATE with MANUAL AUDIT handling
+    UPDATE with MANUAL AUDIT handling
     
     Following household pattern:
     1. Capture old data BEFORE creating form
@@ -228,7 +228,7 @@ def individual_update(request, subjectid):
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     logger.info("="*80)
     
-    # ✅ Use helper to get individual
+    # Use helper to get individual
     individual = get_individual_with_related(request, subjectid)
     logger.info(f"   Individual found: {individual.SUBJECTID}")
     
@@ -275,7 +275,7 @@ def individual_update(request, subjectid):
     
     # Validate form
     if individual_form.is_valid():
-        logger.info("✅ Form valid")
+        logger.info("Form valid")
         
         # ===================================
         # STEP 1: DETECT CHANGES
@@ -344,11 +344,11 @@ def individual_update(request, subjectid):
                 'is_create': False,
                 'is_readonly': False,
                 'today': date.today(),
-                'show_reason_form': True,  # ✅ CRITICAL: Enable modal
-                'detected_changes': all_changes,  # ✅ CRITICAL: Pass changes to template
+                'show_reason_form': True,  # CRITICAL: Enable modal
+                'detected_changes': all_changes,  # CRITICAL: Pass changes to template
                 'submitted_reasons': reasons_data,  # Preserve submitted reasons
                 'cancel_url': reverse('study_44en:individual:detail', kwargs={'subjectid': subjectid}),
-                'edit_post_data': dict(request.POST.items()),  # ✅ Pass POST data for resubmission
+                'edit_post_data': dict(request.POST.items()),  # Pass POST data for resubmission
             }
             
             logger.info("="*80)
@@ -393,13 +393,13 @@ def individual_update(request, subjectid):
             request=request,
             individual_form=individual_form,
             is_create=False,
-            change_reasons=sanitized_reasons,  # ✅ Pass reasons for audit log
-            all_changes=all_changes  # ✅ Pass change details for audit log
+            change_reasons=sanitized_reasons,  # Pass reasons for audit log
+            all_changes=all_changes  # Pass change details for audit log
         )
         
         if individual:
             logger.info("="*80)
-            logger.info(f"=== ✅ INDIVIDUAL UPDATE SUCCESS: {individual.SUBJECTID} ===")
+            logger.info(f"=== INDIVIDUAL UPDATE SUCCESS: {individual.SUBJECTID} ===")
             logger.info("="*80)
             
             messages.success(request, f'Cập nhật individual {individual.SUBJECTID} thành công!')
@@ -438,19 +438,19 @@ def individual_update(request, subjectid):
 @require_crf_view('individual')
 def individual_view(request, subjectid):
     """
-    ✅ View individual (read-only mode)
+    View individual (read-only mode)
     """
     logger.info("="*80)
     logger.info(f"=== 👁️ INDIVIDUAL VIEW (READ-ONLY): {subjectid} ===")
     logger.info("="*80)
     
-    # ✅ Use helper to get individual
+    # Use helper to get individual
     individual = get_individual_with_related(request, subjectid)
     
     # Create readonly form
     individual_form = IndividualForm(instance=individual)
     
-    # ✅ Use helper to make form readonly
+    # Use helper to make form readonly
     make_form_readonly(individual_form)
     
     logger.info(f"   Form made readonly")

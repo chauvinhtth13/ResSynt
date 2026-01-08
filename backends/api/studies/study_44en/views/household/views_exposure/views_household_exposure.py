@@ -4,7 +4,7 @@
 Household Exposure Views for Study 44EN
 Handles exposure, water sources, treatments, and animals
 
-✅ FINAL FIX: Merge detection into save_callback (no detect_callback parameter)
+FINAL FIX: Merge detection into save_callback (no detect_callback parameter)
 """
 
 import logging
@@ -28,12 +28,12 @@ from ..helpers import (
     make_form_readonly,
 )
 
-# ✅ Import Universal Audit System
-from backends.audit_log.utils.decorators import audit_log
-from backends.audit_log.utils.detector import ChangeDetector
-from backends.audit_log.utils.validator import ReasonValidator
+# Import Universal Audit System
+from backends.audit_logs.utils.decorators import audit_log
+from backends.audit_logs.utils.detector import ChangeDetector
+from backends.audit_logs.utils.validator import ReasonValidator
 
-# ✅ Import exposure-specific helpers
+# Import exposure-specific helpers
 from backends.api.studies.study_44en.views.household.views_exposure.exposure_helpers import (
     # Save/Load functions
     save_water_sources,
@@ -123,7 +123,7 @@ def household_exposure_create(request, hhid):
                 set_audit_metadata(food_source, request.user)
                 food_source.save()
                 
-                logger.info("=== ✅ EXPOSURE CREATE SUCCESS ===")
+                logger.info("=== EXPOSURE CREATE SUCCESS ===")
                 messages.success(request, f'Created exposure for {hhid}')
                 return redirect('study_44en:household:detail', hhid=hhid)
                 
@@ -158,7 +158,7 @@ def household_exposure_create(request, hhid):
 @audit_log(model_name='HH_EXPOSURE', get_patient_id_from='hhid')
 def household_exposure_update(request, hhid):
     """
-    ✅ UPDATE with MANUAL AUDIT handling
+    UPDATE with MANUAL AUDIT handling
     
     We handle audit manually because flat fields are not in forms
     """
@@ -216,8 +216,8 @@ def household_exposure_update(request, hhid):
         }
         return render(request, 'studies/study_44en/CRF/household/household_exposure_form.html', context)
     
-    # ✅ POST - Manual audit handling
-    logger.info("🔄 POST - Manual audit handling")
+    # POST - Manual audit handling
+    logger.info("POST - Manual audit handling")
     
     # DEBUG: Log POST data
     logger.info("="*80)
@@ -300,7 +300,7 @@ def household_exposure_update(request, hhid):
         # Show reason modal
         messages.warning(request, 'Please provide reasons for all changes')
         
-        # ✅ PRESERVE NEW POST DATA (not old database values)
+        # PRESERVE NEW POST DATA (not old database values)
         # Extract NEW water source values from POST (preserve user checkbox changes)
         water_data = {}
         source_types = ['tap', 'bottle', 'well', 'rain', 'river', 'pond', 'other']
@@ -349,7 +349,7 @@ def household_exposure_update(request, hhid):
             'show_reason_form': True,
             'submitted_reasons': reasons_data,
             'cancel_url': cancel_url,
-            'edit_post_data': request.POST,  # ✅ Pass POST data for template to use
+            'edit_post_data': request.POST,  # Pass POST data for template to use
         }
         return render(request, 'studies/study_44en/CRF/household/household_exposure_form.html', context)
     
@@ -376,7 +376,7 @@ def household_exposure_update(request, hhid):
             exposure = exposure_form.save(commit=False)
             set_audit_metadata(exposure, request.user)
             exposure.save()
-            logger.info(f"✅ Saved exposure for {hhid}")
+            logger.info(f"Saved exposure for {hhid}")
             
             # 2. Save water sources (flat fields)
             save_water_sources(request, exposure)
@@ -397,7 +397,7 @@ def household_exposure_update(request, hhid):
             food_freq_obj.HHID = household
             set_audit_metadata(food_freq_obj, request.user)
             food_freq_obj.save()
-            logger.info(f"✅ Saved food frequency for {hhid}")
+            logger.info(f"Saved food frequency for {hhid}")
             
             # 6. Validate and save food source
             food_source_form = HH_FoodSourceForm(request.POST, instance=food_source)
@@ -409,13 +409,13 @@ def household_exposure_update(request, hhid):
             food_source_obj.HHID = household
             set_audit_metadata(food_source_obj, request.user)
             food_source_obj.save()
-            logger.info(f"✅ Saved food source for {hhid}")
+            logger.info(f"Saved food source for {hhid}")
             
-            # ✅ Audit log will be created automatically by @audit_log decorator
+            # Audit log will be created automatically by @audit_log decorator
             # because we set request.audit_data above
             
             logger.info("="*80)
-            logger.info(f"=== ✅ UPDATE SUCCESS WITH AUDIT: {hhid} ===")
+            logger.info(f"=== UPDATE SUCCESS WITH AUDIT: {hhid} ===")
             logger.info("="*80)
             
             messages.success(request, f'Cập nhật thành công exposure cho hộ {hhid}!')

@@ -116,8 +116,8 @@ def handle_failed_login(sender, credentials, request, **kwargs):
 def handle_axes_lockout(request, credentials, **kwargs):
     """
     Handle axes lockout event
-    ✅ FIXED: Updated signature for axes 8.0.0 compatibility
-    ✅ ENHANCED: Using Celery for async email alerts
+    FIXED: Updated signature for axes 8.0.0 compatibility
+    ENHANCED: Using Celery for async email alerts
     
     Axes 8.0.0 sends: request, credentials (dict with 'username'), **kwargs
     """
@@ -142,7 +142,7 @@ def handle_axes_lockout(request, credentials, **kwargs):
             ).strip()
             user.save(update_fields=['notes'])
             
-            # ✅ Send async email alert via Celery
+            # Send async email alert via Celery
             send_security_alert.delay(
                 alert_type='user_lockout',
                 details={
@@ -157,7 +157,7 @@ def handle_axes_lockout(request, credentials, **kwargs):
             # Log attempt for non-existent user
             logger.info(f"Lockout attempt for non-existent user: {username}")
             
-            # ✅ Send async alert for non-existent user (potential attack)
+            # Send async alert for non-existent user (potential attack)
             send_security_alert.delay(
                 alert_type='invalid_user_attempt',
                 details={

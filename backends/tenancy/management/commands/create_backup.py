@@ -100,7 +100,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"  Checksum:  {result['checksum'][:32]}...")
                 self.stdout.write(f"  Timestamp: {result['timestamp']}")
                 
-                # ✅ NEW: Encrypt if requested
+                # NEW: Encrypt if requested
                 if options.get('encrypt'):
                     self.encrypt_backup(
                         backup_manager,
@@ -136,7 +136,7 @@ class Command(BaseCommand):
                         f"  Size: {backup_manager._format_size(result['size'])}"
                     ))
                     
-                    # ✅ NEW: Encrypt if requested
+                    # NEW: Encrypt if requested
                     if options.get('encrypt'):
                         self.encrypt_backup(
                             backup_manager,

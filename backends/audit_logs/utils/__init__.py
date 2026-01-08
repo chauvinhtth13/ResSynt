@@ -1,6 +1,6 @@
 # backends/audit_log/utils/__init__.py
 """
-🌐 BASE Audit Log Utils - Shared across all studies
+BASE Audit Log Utils - Shared across all studies
 
 Export all utility classes and functions
 """

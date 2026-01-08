@@ -1,6 +1,6 @@
 # backends/audit_log/utils/validator.py
 """
-🌐 BASE Reason Validator - Shared across all studies
+BASE Reason Validator - Shared across all studies
 
 Enhanced reason validator with security sanitization
 """
@@ -20,7 +20,7 @@ class ReasonValidator:
             min_length: Minimum character length (default 3)
         """
         self.min_length = min_length
-        self.sanitizer = SecuritySanitizer(min_length=min_length)  # ✅ Pass min_length
+        self.sanitizer = SecuritySanitizer(min_length=min_length)  # Pass min_length
     
     def validate_reason(self, reason: str, field_name: str = '') -> Dict:
         """
@@ -34,7 +34,7 @@ class ReasonValidator:
                 'warnings': List[str]
             }
         """
-        # ✅ Sanitize first
+        # Sanitize first
         result = self.sanitizer.sanitize(reason, field_name)
         
         if not result['valid']:
@@ -66,7 +66,7 @@ class ReasonValidator:
                 'warnings': List[str]
             }
         """
-        # ✅ Sanitize all at once
+        # Sanitize all at once
         sanitize_result = self.sanitizer.sanitize_dict(reasons)
         
         if not sanitize_result['valid']:
@@ -88,7 +88,7 @@ class ReasonValidator:
         is_valid = len(missing) == 0
         
         logger.info(
-            f"✅ Validated {len(required_fields)} reasons: "
+            f"Validated {len(required_fields)} reasons: "
             f"valid={is_valid}, missing={len(missing)}, "
             f"warnings={len(sanitize_result['warnings'])}"
         )

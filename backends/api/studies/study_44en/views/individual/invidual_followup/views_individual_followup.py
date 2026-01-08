@@ -4,7 +4,7 @@
 Individual Follow-up Views for Study 44EN
 Handles follow-up visits with symptoms and hospitalization data
 
-✅ REFACTORED: Full Audit Log Support (following exposure pattern)
+REFACTORED: Full Audit Log Support (following exposure pattern)
 - Manual change detection for flat fields
 - Reason modal workflow
 - Audit log creation via decorator
@@ -22,11 +22,11 @@ from backends.studies.study_44en.models.individual import Individual, Individual
 from backends.studies.study_44en.forms.individual import Individual_FollowUpForm
 from backends.api.studies.study_44en.views.views_base import get_filtered_individuals
 
-# ✅ Import audit utilities
-from backends.audit_log.utils.decorators import audit_log
-from backends.audit_log.utils.validator import ReasonValidator
+# Import audit utilities
+from backends.audit_logs.utils.decorators import audit_log
+from backends.audit_logs.utils.validator import ReasonValidator
 
-# ✅ Import followup helpers with change detection
+# Import followup helpers with change detection
 from .helpers_followup import (
     set_audit_metadata,
     make_form_readonly,
@@ -36,7 +36,7 @@ from .helpers_followup import (
     load_symptoms,
     load_followup_hospitalizations,
     load_followup_medications,
-    # ✅ NEW: Change detection for audit log
+    # NEW: Change detection for audit log
     detect_followup_form_field_changes,
     detect_followup_flat_field_changes,
 )
@@ -122,7 +122,7 @@ def individual_followup_create(request, subjectid):
     """
     CREATE new follow-up visit
     
-    ✅ No audit log for CREATE (following project rules)
+    No audit log for CREATE (following project rules)
     """
     logger.info("=" * 80)
     logger.info("=== 🌱 INDIVIDUAL FOLLOW-UP CREATE START ===")
@@ -184,7 +184,7 @@ def individual_followup_create(request, subjectid):
                 save_followup_medications(request, followup)
                 
                 logger.info("=" * 80)
-                logger.info("=== ✅ FOLLOW-UP CREATE SUCCESS ===")
+                logger.info("=== FOLLOW-UP CREATE SUCCESS ===")
                 logger.info("=" * 80)
                 
                 messages.success(request, f'Follow-up visit created successfully')
@@ -237,7 +237,7 @@ def individual_followup_update(request, subjectid, followup_id):
     """
     UPDATE existing follow-up visit
     
-    ✅ MANUAL AUDIT handling for flat fields (following exposure pattern)
+    MANUAL AUDIT handling for flat fields (following exposure pattern)
     
     Flow:
     1. Capture old data BEFORE form
@@ -286,12 +286,12 @@ def individual_followup_update(request, subjectid, followup_id):
         
         return render(request, 'studies/study_44en/CRF/individual/followup_form.html', context)
     
-    # ✅ POST - Manual audit handling
-    logger.info("🔄 POST - Manual audit handling")
+    # POST - Manual audit handling
+    logger.info("POST - Manual audit handling")
     
-    # ✅ IMPORTANT: Refresh followup from database to get latest values
+    # IMPORTANT: Refresh followup from database to get latest values
     followup.refresh_from_db()
-    logger.info(f"🔄 Refreshed followup from DB: HAS_SYMPTOMS={followup.HAS_SYMPTOMS}, HOSPITALIZED={followup.HOSPITALIZED}")
+    logger.info(f"Refreshed followup from DB: HAS_SYMPTOMS={followup.HAS_SYMPTOMS}, HOSPITALIZED={followup.HOSPITALIZED}")
     
     # ===================================
     # STEP 1: Detect ALL changes
@@ -310,7 +310,7 @@ def individual_followup_update(request, subjectid, followup_id):
     all_changes.extend(flat_changes)
     logger.info(f"📝 Flat field changes: {len(flat_changes)}")
     
-    # ✅ Filter out changes where values are actually the same after normalization
+    # Filter out changes where values are actually the same after normalization
     def normalize_for_compare(val):
         """Normalize value for comparison - handle None, empty, lowercase"""
         if val is None:
@@ -487,7 +487,7 @@ def individual_followup_update(request, subjectid, followup_id):
             
             set_audit_metadata(followup, request.user)
             followup.save()
-            logger.info(f"✅ Updated follow-up {followup.FUID}")
+            logger.info(f"Updated follow-up {followup.FUID}")
             
             # Update related data using helpers
             save_symptoms(request, followup)
@@ -495,7 +495,7 @@ def individual_followup_update(request, subjectid, followup_id):
             save_followup_medications(request, followup)
             
             logger.info("=" * 80)
-            logger.info(f"=== ✅ FOLLOW-UP UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
+            logger.info(f"=== FOLLOW-UP UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
             logger.info("=" * 80)
             
             messages.success(request, f'Cập nhật thành công follow-up cho {subjectid}!')

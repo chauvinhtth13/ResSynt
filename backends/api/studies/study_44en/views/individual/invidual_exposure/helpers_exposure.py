@@ -11,7 +11,7 @@ ORGANIZATION:
 6. Load functions (EXP 2/3)
 7. Save functions (EXP 3/3) - Food & Travel
 8. Load functions (EXP 3/3)
-9. ✅ NEW: Change Detection Functions for Audit Log
+9. NEW: Change Detection Functions for Audit Log
 """
 
 import logging
@@ -370,7 +370,7 @@ def load_treatment_data(exposure):
     """
     treatment_data = {}
     
-    # ✅ FIX: Read water_treatment from model field first
+    # FIX: Read water_treatment from model field first
     if exposure.WATER_TREATMENT:
         treatment_data['water_treatment'] = exposure.WATER_TREATMENT.lower()
     
@@ -395,7 +395,7 @@ def load_comorbidity_data(exposure):
     """
     comorbidity_data = {}
     
-    # ✅ FIX: Read has_conditions from model field first
+    # FIX: Read has_conditions from model field first
     if exposure.HAS_COMORBIDITY:
         comorbidity_data['has_conditions'] = exposure.HAS_COMORBIDITY.lower()
     
@@ -759,12 +759,12 @@ def load_travel_history(individual):
 
 
 # ==========================================
-# ✅ NEW: CHANGE DETECTION FOR AUDIT LOG
+# NEW: CHANGE DETECTION FOR AUDIT LOG
 # ==========================================
 
 def detect_exp1_flat_field_changes(request, exposure):
     """
-    ✅ Detect changes in EXP 1/3 flat fields (Water & Comorbidities)
+    Detect changes in EXP 1/3 flat fields (Water & Comorbidities)
     
     Compares POST data with database data for:
     - Water sources (checkboxes)
@@ -783,7 +783,7 @@ def detect_exp1_flat_field_changes(request, exposure):
     """
     changes = []
     
-    # ✅ CRITICAL FIX: Refresh exposure from database to get actual stored values
+    # CRITICAL FIX: Refresh exposure from database to get actual stored values
     # The exposure object may have been modified by Django form binding
     exposure.refresh_from_db()
     
@@ -797,7 +797,7 @@ def detect_exp1_flat_field_changes(request, exposure):
     # ⚠️ These are hardcoded HTML, not in Django form
     # ==========================================
     
-    # ✅ DEBUG: Log actual database values
+    # DEBUG: Log actual database values
     logger.info("=" * 60)
     logger.info("🔍 DEBUG: Reading radio button values from database:")
     logger.info(f"   exposure.SHARED_TOILET = {repr(getattr(exposure, 'SHARED_TOILET', 'NOT_FOUND'))}")
@@ -809,7 +809,7 @@ def detect_exp1_flat_field_changes(request, exposure):
     old_shared_toilet_raw = getattr(exposure, 'SHARED_TOILET', None)
     old_shared_toilet = str(old_shared_toilet_raw or '').strip().lower()
     
-    # ✅ FIX: Check if field is in POST (user actually submitted it)
+    # FIX: Check if field is in POST (user actually submitted it)
     if 'shared_toilet' in request.POST:
         new_shared_toilet = request.POST.get('shared_toilet', '').strip().lower()
     else:
@@ -827,7 +827,7 @@ def detect_exp1_flat_field_changes(request, exposure):
             'new_display': new_shared_toilet or '(trống)',
         })
     
-    # ✅ WATER_TREATMENT radio - Read from old_treatment_data (derived from Individual_WaterTreatment table)
+    # WATER_TREATMENT radio - Read from old_treatment_data (derived from Individual_WaterTreatment table)
     old_water_treatment = str(old_treatment_data.get('water_treatment', '') or '').strip().lower()
     
     if 'water_treatment' in request.POST:
@@ -847,7 +847,7 @@ def detect_exp1_flat_field_changes(request, exposure):
             'new_display': new_water_treatment or '(trống)',
         })
     
-    # ✅ HAS_COMORBIDITY radio - Read from old_comorbidity_data (derived from Individual_Comorbidity table)
+    # HAS_COMORBIDITY radio - Read from old_comorbidity_data (derived from Individual_Comorbidity table)
     old_has_comorbidity = str(old_comorbidity_data.get('has_conditions', '') or '').strip().lower()
     
     if 'has_conditions' in request.POST:
@@ -990,7 +990,7 @@ def detect_exp1_flat_field_changes(request, exposure):
 
 def detect_exp2_flat_field_changes(request, exposure):
     """
-    ✅ Detect changes in EXP 2/3 flat fields (Vaccination & Hospitalization)
+    Detect changes in EXP 2/3 flat fields (Vaccination & Hospitalization)
     
     Compares POST data with database data for:
     - Vaccination history (radio)
@@ -1011,7 +1011,7 @@ def detect_exp2_flat_field_changes(request, exposure):
     """
     changes = []
     
-    # ✅ CRITICAL FIX: Refresh exposure from database to get actual stored values
+    # CRITICAL FIX: Refresh exposure from database to get actual stored values
     # The exposure object may have been modified by Django form binding
     exposure.refresh_from_db()
     
@@ -1025,7 +1025,7 @@ def detect_exp2_flat_field_changes(request, exposure):
     # ==========================================
     old_vax_history = str(old_vaccine_data.get('vaccination_history', '') or '').strip().lower()
     
-    # ✅ FIX: Check if field is in POST
+    # FIX: Check if field is in POST
     if 'vaccination_history' in request.POST:
         new_vax_history = request.POST.get('vaccination_history', '').strip().lower()
     else:
@@ -1077,7 +1077,7 @@ def detect_exp2_flat_field_changes(request, exposure):
     # ==========================================
     old_has_hosp = str(old_hosp_data.get('has_hospitalization', '') or '').strip().lower()
     
-    # ✅ FIX: Check if field is in POST
+    # FIX: Check if field is in POST
     if 'has_hospitalization' in request.POST:
         new_has_hosp = request.POST.get('has_hospitalization', '').strip().lower()
     else:
@@ -1140,7 +1140,7 @@ def detect_exp2_flat_field_changes(request, exposure):
     # ==========================================
     old_has_med = str(old_med_data.get('has_medication', '') or '').strip().lower()
     
-    # ✅ FIX: Check if field is in POST
+    # FIX: Check if field is in POST
     if 'has_medication' in request.POST:
         new_has_med = request.POST.get('has_medication', '').strip().lower()
     else:
@@ -1205,7 +1205,7 @@ def detect_exp2_flat_field_changes(request, exposure):
 
 def detect_exp3_flat_field_changes(request, individual):
     """
-    ✅ Detect changes in EXP 3/3 flat fields (Food & Travel)
+    Detect changes in EXP 3/3 flat fields (Food & Travel)
     
     Compares POST data with database data for:
     - Food frequency (radio buttons)
@@ -1228,7 +1228,7 @@ def detect_exp3_flat_field_changes(request, individual):
         new_val = request.POST.get(template_field, '').strip()
         
         if str(old_val or '').strip() != str(new_val or '').strip():
-            # ✅ Convert numeric values to display names
+            # Convert numeric values to display names
             old_display = FOOD_FREQ_MAPPING.get(str(old_val), old_val) if old_val else '(trống)'
             new_display = FOOD_FREQ_MAPPING.get(str(new_val), new_val) if new_val else '(trống)'
             
@@ -1291,7 +1291,7 @@ __all__ = [
     'load_food_frequency',
     'load_travel_history',
     
-    # ✅ NEW: Change detection for audit log
+    # NEW: Change detection for audit log
     'detect_exp1_flat_field_changes',
     'detect_exp2_flat_field_changes',
     'detect_exp3_flat_field_changes',

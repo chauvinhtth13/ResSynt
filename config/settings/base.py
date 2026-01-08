@@ -66,7 +66,6 @@ THIRD_PARTY_APPS = [
     "allauth.usersessions",
     "axes",
     "csp",
-    #"encrypted_model_fields",
     "health_check",
     "health_check.db",
     "health_check.cache",
@@ -75,6 +74,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "backends.tenancy",
+    "backends.audit_logs",
     "backends.api",
     "backends.studies",
 ]
@@ -134,10 +134,10 @@ DATABASE_ROUTERS = ["backends.tenancy.db_router.TenantRouter"]
 # CACHE & SESSION
 # =============================================================================
 
-# Use Redis if available, otherwise fall back to file-based cache
+# Use Redis if available, otherwise fall back to in-memory cache
 REDIS_URL = env("REDIS_URL", default=None)
 
-if not REDIS_URL is None:
+if REDIS_URL:  # Fixed: was "if not REDIS_URL is None"
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",

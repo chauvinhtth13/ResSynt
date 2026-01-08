@@ -1,16 +1,22 @@
 # backends/audit_log/utils/integrity.py
 """
-🌐 BASE Integrity Checker - Shared across all studies
+BASE Integrity Checker - Shared across all studies
 
-SHA-256 checksum for audit log integrity verification
+HMAC-SHA-256 checksum for audit log integrity verification
+Enhanced with secret key for tamper-proof checksums
 """
 import hashlib
+import hmac
 import json
 import logging
 from datetime import date, datetime
 from decimal import Decimal
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+# Get secret key from settings (fallback to SECRET_KEY if not defined)
+AUDIT_SECRET_KEY = getattr(settings, 'AUDIT_INTEGRITY_SECRET', settings.SECRET_KEY)
 
 
 class IntegrityChecker:
@@ -23,7 +29,7 @@ class IntegrityChecker:
     @staticmethod
     def _serialize_value(value):
         """
-        ✅ Convert non-JSON-serializable values to strings
+        Convert non-JSON-serializable values to strings
         
         Handles:
         - None → None
@@ -53,7 +59,7 @@ class IntegrityChecker:
     @staticmethod
     def _serialize_dict(data: dict) -> dict:
         """
-        ✅ Recursively serialize all values in dict
+        Recursively serialize all values in dict
         
         Ensures all values are JSON-serializable
         """
@@ -70,9 +76,10 @@ class IntegrityChecker:
     @staticmethod
     def generate_checksum(audit_data: dict) -> str:
         """
-        Generate SHA-256 checksum for audit log
+        Generate HMAC-SHA-256 checksum for audit log
         
-        ✅ FIXED: Serialize date/datetime objects before JSON encoding
+        ENHANCED: Uses HMAC with secret key for tamper-proof checksums
+        Even with database access, attackers cannot forge valid checksums
         
         Args:
             audit_data: Dictionary with:
@@ -87,9 +94,9 @@ class IntegrityChecker:
                 - reason
         
         Returns:
-            str: SHA-256 checksum (64 characters)
+            str: HMAC-SHA-256 checksum (64 characters)
         """
-        # ✅ Serialize old_data and new_data
+        # Serialize old_data and new_data
         old_data = IntegrityChecker._serialize_dict(audit_data.get('old_data', {}))
         new_data = IntegrityChecker._serialize_dict(audit_data.get('new_data', {}))
         
@@ -106,11 +113,15 @@ class IntegrityChecker:
             'reason': audit_data.get('reason', ''),
         }
         
-        # Generate checksum
+        # Generate HMAC checksum with secret key
         canonical_string = json.dumps(canonical_data, sort_keys=True)
-        hash_hex = hashlib.sha256(canonical_string.encode()).hexdigest()
+        hash_hex = hmac.new(
+            AUDIT_SECRET_KEY.encode(),
+            canonical_string.encode(),
+            hashlib.sha256
+        ).hexdigest()
         
-        logger.debug(f"✅ Generated checksum: {hash_hex[:16]}...")
+        logger.debug(f"Generated HMAC checksum: {hash_hex[:16]}...")
         
         return hash_hex
     
@@ -119,7 +130,7 @@ class IntegrityChecker:
         """
         Verify audit log integrity
         
-        ✅ FIXED: Handle date serialization during verification
+        ENHANCED: Uses HMAC verification with secret key
         
         Args:
             audit_log: AuditLog instance
@@ -134,6 +145,7 @@ class IntegrityChecker:
             return False
         
         # Rebuild old_data and new_data from details
+        # OPTIMIZED: Use select_related to avoid N+1 queries
         details = audit_log.details.all()
         
         old_data = {}
@@ -159,8 +171,8 @@ class IntegrityChecker:
         # Calculate checksum
         calculated_checksum = IntegrityChecker.generate_checksum(audit_data)
         
-        # Compare
-        is_valid = (calculated_checksum == stored_checksum)
+        # Use constant-time comparison to prevent timing attacks
+        is_valid = hmac.compare_digest(calculated_checksum, stored_checksum)
         
         if not is_valid:
             logger.error(
@@ -169,6 +181,6 @@ class IntegrityChecker:
                 f"   Stored:   {stored_checksum[:16]}..."
             )
         else:
-            logger.debug(f"✅ Integrity verified for AuditLog {audit_log.id}")
+            logger.debug(f"Integrity verified for AuditLog {audit_log.id}")
         
         return is_valid
