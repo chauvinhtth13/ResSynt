@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def handle_allauth_login(request, user, **kwargs):
     """
     Handle successful login via allauth.
-    Reset axes attempts for THIS USER only.
+    Reset axes attempts for THIS USER only (even if < 7 failures).
     """
     try:
         # Regenerate session to prevent fixation attack
@@ -36,7 +36,21 @@ def handle_allauth_login(request, user, **kwargs):
         
         # Reset axes attempts for this user only
         from axes.utils import reset
+        from axes.models import AccessAttempt
+        
+        # Check current failures before reset (for logging)
+        current_failures = AccessAttempt.objects.filter(
+            username__iexact=user.username
+        ).values_list('failures_since_start', flat=True).first() or 0
+        
+        # Reset all attempts for this username
         reset(username=user.username)
+        
+        if current_failures > 0:
+            logger.info(
+                f"User {user.username} logged in successfully. "
+                f"Reset {current_failures} failed attempt(s)."
+            )
         
         # Update last login
         user.last_login = timezone.now()

@@ -44,16 +44,19 @@ class SecureLoginView(LoginView):
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         
-        # Check PRG redirect errors
+        # Check PRG redirect errors from session first (fast path)
         login_errors = self.request.session.pop('login_errors', None)
         if login_errors:
+            # Use cached session data instead of DB query
             context['is_locked_out'] = login_errors.get('is_locked', False)
             context['is_rate_limited'] = login_errors.get('is_rate_limited', False)
             context['prg_has_errors'] = login_errors.get('has_errors', False)
             context['prg_username'] = login_errors.get('username', '')
         else:
-            context['is_locked_out'] = AxesProxyHandler.is_locked(self.request)
-            context['is_rate_limited'] = self._is_rate_limited()
+            # Fresh GET request - skip all expensive checks
+            # Both axes lockout and rate limit will be checked on POST
+            context['is_locked_out'] = False
+            context['is_rate_limited'] = False
         
         return context
     
