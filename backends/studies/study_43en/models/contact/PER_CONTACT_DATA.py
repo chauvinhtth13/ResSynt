@@ -6,7 +6,7 @@ Personal Data Models - Separated for Better Security
 
 CRITICAL SECURITY NOTES:
 - These models contain PII (Personally Identifiable Information)
-- All sensitive fields use EncryptedCharField
+- All sensitive fields use EncryptedCharField (django-fernet-encrypted-fields)
 - OneToOne relationship with ENR_CASE/ENR_CONTACT
 - Separate database routing recommended for production
 """
@@ -14,8 +14,9 @@ CRITICAL SECURITY NOTES:
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from encrypted_model_fields.fields import EncryptedCharField
+from encrypted_fields.fields import EncryptedCharField
 from backends.studies.study_43en.models.base_models import AuditFieldsMixin
+
 
 # ==========================================
 # CONTACT PERSONAL DATA
@@ -47,7 +48,7 @@ class PERSONAL_CONTACT_DATA(AuditFieldsMixin):
     # PERSONAL IDENTIFIERS (ENCRYPTED)
     # ==========================================
     FULLNAME = EncryptedCharField(
-        max_length=200,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Full Name'),
@@ -55,7 +56,7 @@ class PERSONAL_CONTACT_DATA(AuditFieldsMixin):
     )
     
     PHONE = EncryptedCharField(
-        max_length=20,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Phone Number'),
