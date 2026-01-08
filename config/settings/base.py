@@ -134,12 +134,33 @@ DATABASE_ROUTERS = ["backends.tenancy.db_router.TenantRouter"]
 # CACHE & SESSION
 # =============================================================================
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-        "LOCATION": BASE_DIR / ".cache",
+# Use Redis if available, otherwise fall back to file-based cache
+REDIS_URL = env("REDIS_URL", default=None)
+
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "KEY_PREFIX": "resync",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,  # Graceful degradation if Redis unavailable
+                "CONNECTION_POOL_CLASS_KWARGS": {
+                    "max_connections": 20,
+                    "timeout": 10,
+                },
+            },
+        }
     }
-}
+else:
+    # Fallback for development without Redis
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+            "LOCATION": BASE_DIR / ".cache",
+        }
+    }
 
 CACHE_MIDDLEWARE_ALIAS = "default"
 CACHE_MIDDLEWARE_SECONDS = 600

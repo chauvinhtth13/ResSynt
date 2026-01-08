@@ -57,15 +57,15 @@ from backends.studies.study_43en.utils.site_utils import (
 
 @login_required
 def patient_list(request):
-    """Danh sách các bệnh nhân -  WITH NEW SITE FILTERING"""
+    """Danh sách các bệnh nhân - OPTIMIZED: Batch queries to avoid N+1"""
     query = request.GET.get('q', '')
     
-    #  NEW: Get site filter với 3 strategies
+    # Get site filter với 3 strategies
     site_filter, filter_type = get_site_filter_params(request)
     
     logger.info(f"patient_list - User: {request.user.username}, Site: {site_filter}, Type: {filter_type}")
     
-    #  NEW: Get filtered queryset (hỗ trợ all/single/multiple)
+    # Get filtered queryset (hỗ trợ all/single/multiple)
     cases = get_filtered_queryset(SCR_CASE, site_filter, filter_type).filter(
         is_confirmed=True
     ).order_by('USUBJID')
@@ -85,18 +85,65 @@ def patient_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    #  Process status với site filtering
-    for case in page_obj:
-        try:
-            #  Use site filtering for related queries
-            enrollment = get_filtered_queryset(ENR_CASE, site_filter, filter_type).filter(USUBJID=case).first()
-            case.has_enrollment = enrollment is not None
-            # Add enrollment date to case
-            case.enrollment_date = enrollment.ENRDATE if enrollment else None
-        except:
-            case.has_enrollment = False
-            enrollment = None
-            case.enrollment_date = None
+    # ==========================================
+    # OPTIMIZED: Batch fetch all related data
+    # ==========================================
+    case_list = list(page_obj)
+    case_pks = [case.pk for case in case_list]
+    
+    # Batch fetch enrollments (1 query instead of N)
+    enrollments = get_filtered_queryset(ENR_CASE, site_filter, filter_type).filter(
+        USUBJID__in=case_pks
+    ).select_related('USUBJID')
+    enrollment_map = {enr.USUBJID_id: enr for enr in enrollments}
+    
+    # Get enrollment PKs for further queries
+    enrollment_pks = [enr.pk for enr in enrollments]
+    
+    # Batch fetch EndCaseCRF (1 query)
+    endcase_enrollment_ids = set(
+        get_filtered_queryset(EndCaseCRF, site_filter, filter_type)
+        .filter(USUBJID__in=enrollment_pks)
+        .values_list('USUBJID_id', flat=True)
+    )
+    
+    # Batch fetch other CRFs existence (6 queries instead of N*6)
+    clinical_ids = set(
+        get_filtered_queryset(CLI_CASE, site_filter, filter_type)
+        .filter(USUBJID__in=enrollment_pks)
+        .values_list('USUBJID_id', flat=True)
+    )
+    discharge_ids = set(
+        get_filtered_queryset(DISCH_CASE, site_filter, filter_type)
+        .filter(USUBJID__in=enrollment_pks)
+        .values_list('USUBJID_id', flat=True)
+    )
+    fu28_ids = set(
+        get_filtered_queryset(FU_CASE_28, site_filter, filter_type)
+        .filter(USUBJID__in=enrollment_pks)
+        .values_list('USUBJID_id', flat=True)
+    )
+    fu90_ids = set(
+        get_filtered_queryset(FU_CASE_90, site_filter, filter_type)
+        .filter(USUBJID__in=enrollment_pks)
+        .values_list('USUBJID_id', flat=True)
+    )
+    sample_ids = set(
+        get_filtered_queryset(SAM_CASE, site_filter, filter_type)
+        .filter(USUBJID__in=enrollment_pks)
+        .values_list('USUBJID_id', flat=True)
+    )
+    lab_ids = set(
+        get_filtered_queryset(LaboratoryTest, site_filter, filter_type)
+        .filter(USUBJID__in=enrollment_pks)
+        .values_list('USUBJID_id', flat=True)
+    )
+    
+    # Process status using batched data (no additional queries)
+    for case in case_list:
+        enrollment = enrollment_map.get(case.pk)
+        case.has_enrollment = enrollment is not None
+        case.enrollment_date = enrollment.ENRDATE if enrollment else None
         
         if not case.has_enrollment:
             case.process_status = 'not_enrolled'
@@ -104,39 +151,30 @@ def patient_list(request):
             case.process_badge = 'secondary'
             continue
         
-        # Check EndCaseCRF
-        try:
-            has_endcase = get_filtered_queryset(EndCaseCRF, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-        except:
-            has_endcase = False
+        enr_pk = enrollment.pk
         
-        if has_endcase:
+        # Check EndCaseCRF
+        if enr_pk in endcase_enrollment_ids:
             case.process_status = 'completed'
             case.process_label = 'Study Completed'
             case.process_badge = 'success'
             continue
         
-        # Check other CRFs
-        try:
-            has_clinical = get_filtered_queryset(CLI_CASE, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_discharge = get_filtered_queryset(DISCH_CASE, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_fu28 = get_filtered_queryset(FU_CASE_28, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_fu90 = get_filtered_queryset(FU_CASE_90, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_sample = get_filtered_queryset(SAM_CASE, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            has_lab = get_filtered_queryset(LaboratoryTest, site_filter, filter_type).filter(USUBJID=enrollment).exists()
-            
-            all_completed = all([has_clinical, has_discharge, has_fu28, has_fu90, has_sample, has_lab])
-            
-            if all_completed:
-                case.process_status = 'completed'
-                case.process_label = 'Study Completed'
-                case.process_badge = 'success'
-            else:
-                case.process_status = 'ongoing'
-                case.process_label = 'Ongoing'
-                case.process_badge = 'primary'
-        except Exception as e:
-            logger.error(f"Error checking status for {case.USUBJID}: {e}")
+        # Check all CRFs completion
+        has_clinical = enr_pk in clinical_ids
+        has_discharge = enr_pk in discharge_ids
+        has_fu28 = enr_pk in fu28_ids
+        has_fu90 = enr_pk in fu90_ids
+        has_sample = enr_pk in sample_ids
+        has_lab = enr_pk in lab_ids
+        
+        all_completed = all([has_clinical, has_discharge, has_fu28, has_fu90, has_sample, has_lab])
+        
+        if all_completed:
+            case.process_status = 'completed'
+            case.process_label = 'Study Completed'
+            case.process_badge = 'success'
+        else:
             case.process_status = 'ongoing'
             case.process_label = 'Ongoing'
             case.process_badge = 'primary'
@@ -147,8 +185,8 @@ def patient_list(request):
         'query': query,
         'view_type': 'patients',
         'is_paginated': page_obj.has_other_pages(),
-        'site_filter': site_filter,  #  For debugging
-        'filter_type': filter_type,  #  For debugging
+        'site_filter': site_filter,
+        'filter_type': filter_type,
     }
     
     return render(request, 'studies/study_43en/CRF/base/patient_list.html', context)
@@ -160,110 +198,117 @@ def patient_list(request):
 
 @login_required
 def patient_detail(request, usubjid):
-    """View chi tiết bệnh nhân -  WITH NEW SITE FILTERING"""
+    """View chi tiết bệnh nhân - OPTIMIZED: Batch queries"""
     
-    #  NEW: Get site filter
+    # Get site filter
     site_filter, filter_type = get_site_filter_params(request)
     
     logger.info(f"patient_detail - USUBJID: {usubjid}, Site: {site_filter}, Type: {filter_type}")
     
-    #  NEW: Get screening case với permission check
+    # Get screening case với permission check
     screeningcase = get_site_filtered_object_or_404(SCR_CASE, site_filter, filter_type, USUBJID=usubjid)
     
     # ==========================================
-    # ENR_CASE - Enrollment
+    # OPTIMIZED: Batch fetch enrollment and all related data
     # ==========================================
-    try:
-        enrollmentcase = get_filtered_queryset(ENR_CASE, site_filter, filter_type).get(USUBJID=screeningcase)
-        has_enrollment = True
-        
-        # Expected dates
-        try:
-            expecteddates = get_filtered_queryset(ExpectedDates, site_filter, filter_type).get(USUBJID=enrollmentcase)
-        except ExpectedDates.DoesNotExist:
-            expecteddates = None
-    except ENR_CASE.DoesNotExist:
-        enrollmentcase = None
-        has_enrollment = False
-        expecteddates = None
+    enrollmentcase = None
+    has_enrollment = False
+    expecteddates = None
     
-    # ==========================================
-    # CLI_CASE - Clinical
-    # ==========================================
+    # Try to get enrollment
+    enrollment_qs = get_filtered_queryset(ENR_CASE, site_filter, filter_type).filter(
+        USUBJID=screeningcase
+    )
+    enrollmentcase = enrollment_qs.first()
+    has_enrollment = enrollmentcase is not None
+    
+    # Initialize all variables with defaults
     clinicalcase = None
     has_clinical = False
-    if enrollmentcase:
-        try:
-            clinicalcase = get_filtered_queryset(CLI_CASE, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_clinical = True
-        except CLI_CASE.DoesNotExist:
-            pass
-    
-    # ==========================================
-    # Laboratory, Microbiology, Sample
-    # ==========================================
-    if enrollmentcase:
-        laboratory_count = get_filtered_queryset(LaboratoryTest, site_filter, filter_type).filter(USUBJID=enrollmentcase).count()
-        microbiology_count = get_filtered_queryset(LAB_Microbiology, site_filter, filter_type).filter(USUBJID=enrollmentcase).count()
-        sample_count = get_filtered_queryset(SAM_CASE, site_filter, filter_type).filter(USUBJID=enrollmentcase).count()
-        
-        latest_laboratory = get_filtered_queryset(LaboratoryTest, site_filter, filter_type).filter(USUBJID=enrollmentcase).order_by('-last_modified_at').first()
-        latest_microbiology = get_filtered_queryset(LAB_Microbiology, site_filter, filter_type).filter(USUBJID=enrollmentcase).order_by('-last_modified_at').first()
-        latest_sample = get_filtered_queryset(SAM_CASE, site_filter, filter_type).filter(USUBJID=enrollmentcase).order_by('-last_modified_at').first()
-    else:
-        laboratory_count = microbiology_count = sample_count = 0
-        latest_laboratory = latest_microbiology = latest_sample = None
-    
-    has_laboratory_tests = laboratory_count > 0
-    has_microbiology_cultures = microbiology_count > 0
-    
-    # ==========================================
-    # Follow-ups
-    # ==========================================
-    fu_case_28 = None
-    has_followup = False
-    if enrollmentcase:
-        try:
-            fu_case_28 = get_filtered_queryset(FU_CASE_28, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_followup = True
-        except FU_CASE_28.DoesNotExist:
-            pass
-    
-    fu_case_90 = None
-    has_followup90 = False
-    if enrollmentcase:
-        try:
-            fu_case_90 = get_filtered_queryset(FU_CASE_90, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_followup90 = True
-        except FU_CASE_90.DoesNotExist:
-            pass
-    
-    # ==========================================
-    # Discharge
-    # ==========================================
+    laboratory_count = microbiology_count = sample_count = 0
+    latest_laboratory = latest_microbiology = latest_sample = None
+    has_laboratory_tests = has_microbiology_cultures = False
+    fu_case_28 = fu_case_90 = None
+    has_followup = has_followup90 = False
     disch_case = None
     has_discharge = False
-    if enrollmentcase:
-        try:
-            disch_case = get_filtered_queryset(DISCH_CASE, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_discharge = True
-        except DISCH_CASE.DoesNotExist:
-            pass
-    
-    # ==========================================
-    # End Case
-    # ==========================================
     endcasecrf = None
     has_endcasecrf = False
+    
     if enrollmentcase:
-        try:
-            endcasecrf = get_filtered_queryset(EndCaseCRF, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_endcasecrf = True
-        except EndCaseCRF.DoesNotExist:
-            pass
+        enr_pk = enrollmentcase.pk
+        
+        # ==========================================
+        # BATCH QUERY: Fetch all related CRFs in parallel-style queries
+        # ==========================================
+        
+        # Expected dates
+        expecteddates = get_filtered_queryset(
+            ExpectedDates, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase).first()
+        
+        # Clinical case
+        clinicalcase = get_filtered_queryset(
+            CLI_CASE, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase).first()
+        has_clinical = clinicalcase is not None
+        
+        # Follow-ups
+        fu_case_28 = get_filtered_queryset(
+            FU_CASE_28, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase).first()
+        has_followup = fu_case_28 is not None
+        
+        fu_case_90 = get_filtered_queryset(
+            FU_CASE_90, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase).first()
+        has_followup90 = fu_case_90 is not None
+        
+        # Discharge
+        disch_case = get_filtered_queryset(
+            DISCH_CASE, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase).first()
+        has_discharge = disch_case is not None
+        
+        # End case
+        endcasecrf = get_filtered_queryset(
+            EndCaseCRF, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase).first()
+        has_endcasecrf = endcasecrf is not None
+        
+        # ==========================================
+        # Laboratory, Microbiology, Sample - Use aggregation
+        # ==========================================
+        from django.db.models import Count, Max
+        
+        # Laboratory - count and latest in single query
+        lab_qs = get_filtered_queryset(
+            LaboratoryTest, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase)
+        laboratory_count = lab_qs.count()
+        has_laboratory_tests = laboratory_count > 0
+        if has_laboratory_tests:
+            latest_laboratory = lab_qs.order_by('-last_modified_at').first()
+        
+        # Microbiology - count and latest in single query
+        micro_qs = get_filtered_queryset(
+            LAB_Microbiology, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase)
+        microbiology_count = micro_qs.count()
+        has_microbiology_cultures = microbiology_count > 0
+        if has_microbiology_cultures:
+            latest_microbiology = micro_qs.order_by('-last_modified_at').first()
+        
+        # Sample - count and latest in single query
+        sample_qs = get_filtered_queryset(
+            SAM_CASE, site_filter, filter_type
+        ).filter(USUBJID=enrollmentcase)
+        sample_count = sample_qs.count()
+        if sample_count > 0:
+            latest_sample = sample_qs.order_by('-last_modified_at').first()
     
     # ==========================================
-    # Death Status
+    # Death Status (no DB queries needed)
     # ==========================================
     is_deceased = False
     death_form = None
@@ -283,7 +328,7 @@ def patient_detail(request, usubjid):
         death_date = fu_case_90.DeathDate
     
     # ==========================================
-    # Calculated Fields
+    # Calculated Fields (no DB queries needed)
     # ==========================================
     days_since_enrollment = 0
     if has_enrollment and enrollmentcase and enrollmentcase.ENRDATE:

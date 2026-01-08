@@ -14,6 +14,10 @@ DEBUG = False
 # SECURITY HARDENING
 # =============================================================================
 
+# Enforce backup encryption password in production
+if not BACKUP_ENCRYPTION_PASSWORD:
+    raise ValueError("BACKUP_ENCRYPTION_PASSWORD must be set in production")
+
 # HTTPS
 SECURE_SSL_REDIRECT = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
