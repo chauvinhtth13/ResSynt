@@ -1,32 +1,24 @@
 # backends/api/base/account/views.py
 """
 Secure authentication views with django-axes integration.
-
-This module provides enhanced login views that:
-1. Integrate properly with django-axes for brute force protection
-2. Show remaining attempts before lockout
-3. Handle lockout gracefully with inline errors
-4. Include additional security measures (honeypot, rate limiting awareness)
-5. Implement PRG (Post-Redirect-Get) pattern to prevent form resubmission
 """
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth import signals as auth_signals
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 
 from allauth.account.views import LoginView
-from axes.decorators import axes_dispatch, axes_form_invalid
+from axes.decorators import axes_dispatch
+from axes.handlers.proxy import AxesProxyHandler
+from axes.helpers import get_credentials
 
-from .forms import LockoutAwareLoginForm
+from .forms import AxesLoginForm
+from ..utils import get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -35,230 +27,104 @@ logger = logging.getLogger(__name__)
 @method_decorator(csrf_protect, name='dispatch')
 @method_decorator(never_cache, name='dispatch')
 @method_decorator(axes_dispatch, name='dispatch')
-@method_decorator(axes_form_invalid, name='form_invalid')
 class SecureLoginView(LoginView):
     """
-    Enhanced login view with comprehensive security features.
-    
-    Security features:
-    - django-axes integration for brute force protection
-    - CSRF protection
-    - Sensitive data protection in debug
-    - Never cached
-    - Remaining attempts display
-    - Honeypot field for bot detection
-    
-    Axes integration:
-    - axes_dispatch: Checks if user is locked before processing
-    - axes_form_invalid: Tracks failed attempts when form is invalid
+    Login view with axes brute-force protection.
+    Uses PRG pattern to prevent form resubmission.
     """
     
-    form_class = LockoutAwareLoginForm
+    form_class = AxesLoginForm
     template_name = 'account/login.html'
     
     def get_form_kwargs(self) -> Dict[str, Any]:
-        """Add request to form kwargs for lockout awareness."""
         kwargs = super().get_form_kwargs()
         kwargs['request'] = self.request
         return kwargs
     
     def get_context_data(self, **kwargs) -> Dict[str, Any]:
-        """
-        Add security-related context data.
-        
-        SECURITY: We only expose minimal lockout info to prevent
-        attackers from gaining intelligence about the system.
-        
-        PRG Pattern: Retrieves error info from session if redirected.
-        """
         context = super().get_context_data(**kwargs)
         
-        # Check for PRG redirect errors in session
+        # Check PRG redirect errors
         login_errors = self.request.session.pop('login_errors', None)
-        
         if login_errors:
-            # Restore error state from session (PRG pattern)
-            context.update({
-                'is_locked_out': login_errors.get('is_locked', False),
-                'prg_has_errors': login_errors.get('has_errors', False),
-                'prg_username': login_errors.get('username', ''),
-            })
+            context['is_locked_out'] = login_errors.get('is_locked', False)
+            context['is_rate_limited'] = login_errors.get('is_rate_limited', False)
+            context['prg_has_errors'] = login_errors.get('has_errors', False)
+            context['prg_username'] = login_errors.get('username', '')
         else:
-            # Normal GET request - check lockout status
-            lockout_info = self._get_lockout_info()
-            context.update({
-                'is_locked_out': lockout_info.get('is_locked', False),
-            })
+            context['is_locked_out'] = AxesProxyHandler.is_locked(self.request)
+            context['is_rate_limited'] = self._is_rate_limited()
         
         return context
     
     def get_initial(self) -> Dict[str, Any]:
-        """
-        Provide initial form data.
-        
-        PRG Pattern: Restore username from session after redirect.
-        """
         initial = super().get_initial()
-        
-        # Check if we have username from PRG redirect (peek, don't pop)
         login_errors = self.request.session.get('login_errors', {})
         if login_errors.get('username'):
-            initial['login'] = login_errors.get('username', '')
-        
+            initial['login'] = login_errors['username']
         return initial
     
-    def form_valid(self, form: LockoutAwareLoginForm) -> HttpResponse:
-        """
-        Handle successful form validation.
+    def post(self, request, *args, **kwargs):
+        """Check if locked or rate limited before processing."""
+        # Check axes lockout first
+        if AxesProxyHandler.is_locked(request):
+            from .lockout import lockout_response
+            return lockout_response(request, get_credentials(request))
         
-        Note: Actual authentication happens in parent class.
-        This method adds logging and security tracking.
-        """
-        login_value = form.cleaned_data.get('login', 'unknown')
-        logger.info(f"Login form valid for: {login_value}")
+        # Check rate limit (5/min)
+        if self._is_rate_limited():
+            self.request.session['login_errors'] = {
+                'has_errors': False,
+                'is_locked': False,
+                'is_rate_limited': True,
+                'username': request.POST.get('login', ''),
+            }
+            return HttpResponseRedirect(reverse('account_login'))
         
-        return super().form_valid(form)
+        return super().post(request, *args, **kwargs)
     
-    def form_invalid(self, form: LockoutAwareLoginForm) -> HttpResponse:
-        """
-        Handle invalid form submission with PRG pattern.
+    def form_invalid(self, form: AxesLoginForm) -> HttpResponse:
+        """PRG pattern with rate limiting."""
+        login_value = form.data.get('login', '')
+        is_locked = AxesProxyHandler.is_locked(self.request)
         
-        PRG (Post-Redirect-Get) Pattern:
-        - Store error info in session
-        - Redirect to GET to prevent form resubmission dialog on refresh
-        - This prevents accidental login attempts when user refreshes
+        # Check rate limit (5 attempts per minute)
+        is_rate_limited = self._check_rate_limit()
         
-        Enhanced to:
-        - Log failed attempts (internal only)
-        - Track credentials for axes
-        - Redirect to prevent resubmission
-        
-        SECURITY: We intentionally DON'T show remaining attempts to users
-        to prevent attackers from knowing how close they are to lockout.
-        """
-        login_value = form.data.get('login', 'unknown')
-        ip_address = self._get_client_ip()
-        
-        # Log for security monitoring (not shown to user)
-        logger.warning(
-            f"Login form invalid for '{login_value}' from {ip_address}"
-        )
-        
-        # Get updated lockout info after this attempt (internal tracking only)
-        lockout_info = self._get_lockout_info(username=login_value)
-        
-        # Store error info in session for PRG pattern
         self.request.session['login_errors'] = {
             'has_errors': True,
-            'is_locked': lockout_info.get('is_locked', False),
-            'username': login_value if not lockout_info.get('is_locked', False) else '',
+            'is_locked': is_locked,
+            'is_rate_limited': is_rate_limited,
+            'username': login_value,
         }
         
-        # PRG Pattern: Redirect to prevent form resubmission on refresh
-        # This eliminates "Confirm Form Resubmission" dialog
         return HttpResponseRedirect(reverse('account_login'))
     
-    def _get_lockout_info(self, username: Optional[str] = None) -> Dict[str, Any]:
+    def _check_rate_limit(self) -> bool:
         """
-        Get current lockout status and remaining attempts.
-        
-        Args:
-            username: Username to check (if not provided, extracts from request)
-            
-        Returns:
-            Dict with lockout information
+        Check and enforce rate limit: 5 attempts per minute per IP.
+        Increments counter and returns True if rate limited.
         """
-        try:
-            from axes.models import AccessAttempt
-            from axes.conf import settings as axes_settings
-            
-            # Get username from form or request
-            if not username:
-                username = self.request.POST.get('login', '')
-            
-            if not username:
-                return {'remaining_attempts': None, 'is_locked': False}
-            
-            # Get failure limit
-            failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 5)
-            
-            # Get current attempts
-            attempt = AccessAttempt.objects.filter(
-                username=username
-            ).order_by('-attempt_time').first()
-            
-            if not attempt:
-                return {
-                    'remaining_attempts': failure_limit,
-                    'is_locked': False,
-                    'show_warning': False,
-                }
-            
-            failures = attempt.failures_since_start
-            remaining = max(0, failure_limit - failures)
-            is_locked = failures >= failure_limit
-            
-            # Check cooloff
-            if is_locked:
-                cooloff = getattr(settings, 'AXES_COOLOFF_TIME', None)
-                if cooloff:
-                    cooloff_expiry = attempt.attempt_time + cooloff
-                    if timezone.now() > cooloff_expiry:
-                        # Cooloff expired
-                        return {
-                            'remaining_attempts': failure_limit,
-                            'is_locked': False,
-                            'show_warning': False,
-                        }
-            
-            return {
-                'remaining_attempts': remaining,
-                'is_locked': is_locked,
-                'show_warning': 0 < remaining <= 3,
-                'failures': failures,
-                'message': self._get_lockout_message() if is_locked else '',
-            }
-            
-        except Exception as e:
-            logger.error(f"Error getting lockout info: {e}")
-            return {'remaining_attempts': None, 'is_locked': False}
+        from django.core.cache import cache
+        
+        ip = get_client_ip(self.request)
+        cache_key = f"login_rate:{ip}"
+        
+        # Get current attempts in this minute
+        attempts = cache.get(cache_key, 0)
+        attempts += 1
+        
+        # Store with 60 second expiry
+        cache.set(cache_key, attempts, 60)
+        
+        # Rate limit after 5 attempts
+        return attempts > 5
     
-    def _get_lockout_message(self) -> str:
-        """Get user-friendly lockout message."""
-        from django.utils.translation import gettext as _
+    def _is_rate_limited(self) -> bool:
+        """Check if currently rate limited (without incrementing)."""
+        from django.core.cache import cache
         
-        cooloff = getattr(settings, 'AXES_COOLOFF_TIME', None)
-        if cooloff:
-            minutes = int(cooloff.total_seconds() / 60)
-            return _(
-                "Your account has been temporarily locked. "
-                "Please try again in %(minutes)d minutes."
-            ) % {'minutes': minutes}
-        
-        return _(
-            "Your account has been locked. "
-            "Please contact support to unlock your account."
-        )
-    
-    def _get_client_ip(self) -> str:
-        """Get client IP address."""
-        if hasattr(self.request, 'axes_ip_address'):
-            return self.request.axes_ip_address
-        
-        xff = self.request.META.get('HTTP_X_FORWARDED_FOR')
-        if xff:
-            return xff.split(',')[0].strip()
-        
-        return self.request.META.get('REMOTE_ADDR', 'unknown')
-
-
-# =============================================================================
-# ADDITIONAL SECURE VIEWS
-# =============================================================================
-
-class SecureLogoutView:
-    """
-    Placeholder for custom logout view if needed.
-    Currently allauth's logout is sufficient.
-    """
-    pass
+        ip = get_client_ip(self.request)
+        cache_key = f"login_rate:{ip}"
+        attempts = cache.get(cache_key, 0)
+        return attempts > 5

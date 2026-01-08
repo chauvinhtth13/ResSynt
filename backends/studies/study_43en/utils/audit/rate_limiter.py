@@ -69,7 +69,7 @@ def rate_limit(key_prefix: str, max_requests: int = 10, window: int = 60):
                             ),
                             fail_silently=True
                         )
-                        logger.info(f"✓ Alert email sent for rate limit: {ip}")
+                        logger.info(f"Alert email sent for rate limit: {ip}")
                         cache.set(alert_key, True, 300)  # Don't spam alerts
                     except Exception as e:
                         logger.error(f"Failed to send alert email: {e}")

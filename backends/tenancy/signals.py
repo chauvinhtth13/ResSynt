@@ -26,16 +26,15 @@ logger = logging.getLogger(__name__)
 @receiver(allauth_logged_in)
 def handle_allauth_login(request, user, **kwargs):
     """
-    Handle successful login via allauth
-    Reset axes attempts on successful login
-    🔒 SECURITY FIX: Added session regeneration to prevent session fixation
+    Handle successful login via allauth.
+    Reset axes attempts for THIS USER only.
     """
     try:
-        # 🔒 CRITICAL: Regenerate session key to prevent session fixation attack
+        # Regenerate session to prevent fixation attack
         if hasattr(request, 'session'):
             request.session.cycle_key()
         
-        # Reset axes attempts for this user
+        # Reset axes attempts for this user only
         from axes.utils import reset
         reset(username=user.username)
         
@@ -43,23 +42,10 @@ def handle_allauth_login(request, user, **kwargs):
         user.last_login = timezone.now()
         user.save(update_fields=['last_login'])
         
-        # Track login IP
-        ip_address = request.META.get('REMOTE_ADDR', 'unknown')
-        
-        logger.info(
-            f"User {user.username} logged in via allauth from {ip_address}"
-        )
-        
-        # Clear any cached blocked status
-        cache_keys = [
-            f'axes:{user.username}',
-            f'axes:user:{user.pk}',
-            f'user_blocked_{user.username}',
-        ]
-        cache.delete_many(cache_keys)
+        logger.info(f"User {user.username} logged in from {request.META.get('REMOTE_ADDR', 'unknown')}")
         
     except Exception as e:
-        logger.error(f"Error handling allauth login for {user.username}: {e}")
+        logger.error(f"Error in handle_allauth_login: {e}")
 
 
 @receiver(allauth_logged_out)
@@ -84,49 +70,28 @@ def handle_allauth_logout(request, user, **kwargs):
 
 
 # ==========================================
-# FAILED LOGIN HANDLING
+# FAILED LOGIN HANDLING  
 # ==========================================
 
 @receiver(user_login_failed)
 def handle_failed_login(sender, credentials, request, **kwargs):
     """
-    Handle failed login attempt - Compatible with axes 8.0.0
-    Check if user is manually blocked (is_active=False)
+    Log blocked user login attempts.
+    Axes handles failure tracking automatically via signal.
     """
-    username = credentials.get('username', 'unknown')
+    username = credentials.get('login') or credentials.get('username') if isinstance(credentials, dict) else str(credentials or '')
     
+    if not username or username == 'unknown':
+        return
+        
     try:
         from backends.tenancy.models import User
-        
-        # Check if user exists and is manually blocked
-        try:
-            user = User.objects.get(username=username)
-            if not user.is_active:
-                # User is manually blocked - don't let axes count this
-                logger.warning(
-                    f"Blocked user '{username}' attempted login from "
-                    f"{request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'}"
-                )
-                
-                # Add note to user record
-                timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-                user.notes = f"{user.notes}\n[{timestamp}] Login attempt while blocked".strip()
-                user.save(update_fields=['notes'])
-                
-                # Don't process further - user is permanently blocked
-                return
-        except User.DoesNotExist:
-            pass
-        
-        # Let axes handle the failed attempt counting
-        # Axes listens to the same signal so we just log it
-        ip_address = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
-        logger.warning(
-            f"Failed login attempt for '{username}' from {ip_address}"
-        )
-        
-    except Exception as e:
-        logger.error(f"Error handling failed login for '{username}': {e}")
+        user = User.objects.filter(username__iexact=username).first()
+        if user and not user.is_active:
+            ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+            logger.warning(f"Blocked user '{username}' login attempt from {ip}")
+    except Exception:
+        pass
 
 
 # ==========================================
@@ -159,7 +124,7 @@ def handle_axes_lockout(request, credentials, **kwargs):
         try:
             user = User.objects.get(username=username)
             user.notes = (
-                f"{user.notes}\n[{timestamp}] Axes lockout from IP {ip_address}"
+                f"{user.notes}\n[{timestamp}] Lockout from {ip_address}"
             ).strip()
             user.save(update_fields=['notes'])
             
@@ -172,7 +137,7 @@ def handle_axes_lockout(request, credentials, **kwargs):
                     'timestamp': timestamp,
                 }
             )
-            logger.info(f"✓ Queued alert email for lockout: {username}")
+            logger.info(f"Queued alert email for lockout: {username}")
                 
         except User.DoesNotExist:
             # Log attempt for non-existent user
@@ -187,7 +152,7 @@ def handle_axes_lockout(request, credentials, **kwargs):
                     'timestamp': timestamp,
                 }
             )
-            logger.info(f"✓ Queued alert email for non-existent user: {username}")
+            logger.info(f"Queued alert email for non-existent user: {username}")
             
     except Exception as e:
         logger.error(f"Error handling axes lockout: {e}")

@@ -189,7 +189,7 @@ def antibiotic_list(request, usubjid, culture_id):
                 
                 # ✅ FIX 2: Allow empty string but log it
                 if sensitivity == '':
-                    logger.info(f"  ⚠️  WARNING: Empty string value (will be treated as no change)")
+                    logger.info(f"   WARNING: Empty string value (will be treated as no change)")
                     # Don't skip - let detector handle it
                 
                 # Process existing tests (numeric IDs)
@@ -295,7 +295,7 @@ def antibiotic_list(request, usubjid, culture_id):
                                 new_data['IZDIAM'] = float(new_data['IZDIAM'])
                                 logger.info(f"     IZDIAM converted to float: {new_data['IZDIAM']}")
                             except ValueError:
-                                logger.warning(f"     ⚠️  IZDIAM conversion failed: '{new_data['IZDIAM']}'")
+                                logger.warning(f"      IZDIAM conversion failed: '{new_data['IZDIAM']}'")
                                 new_data['IZDIAM'] = None
                         
                         # Detect changes for this test

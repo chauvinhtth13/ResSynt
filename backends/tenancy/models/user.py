@@ -203,93 +203,49 @@ class User(AbstractUser):
         }
 
     # ==========================================
-    # AXES 8.0.0 INTEGRATION
+    # AXES INTEGRATION
     # ==========================================
     
     def is_axes_locked(self) -> bool:
-        """
-        Check if user is locked by django-axes.
-        ✅ SIMPLIFIED: Direct DB check with cooloff support
-        """
+        """Check if user is locked by django-axes."""
         try:
             from axes.models import AccessAttempt
             from django.conf import settings
-            from django.utils import timezone
             
-            # Get latest attempt for this user
-            attempt = AccessAttempt.objects.filter(
-                username=self.username
-            ).order_by('-attempt_time').first()
+            limit = getattr(settings, 'AXES_FAILURE_LIMIT', 7)
+            attempt = AccessAttempt.objects.filter(username__iexact=self.username).first()
             
-            if not attempt:
+            if not attempt or attempt.failures_since_start < limit:
                 return False
             
-            # Get failure limit
-            failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 5)
-            
-            # Check if failures exceed limit
-            if attempt.failures_since_start < failure_limit:
-                return False
-            
-            # Check cooloff period
             cooloff = getattr(settings, 'AXES_COOLOFF_TIME', None)
-            if cooloff:
-                cooloff_expiry = attempt.attempt_time + cooloff
-                if timezone.now() > cooloff_expiry:
-                    # Cooloff expired, user can try again
-                    return False
+            if cooloff and timezone.now() > attempt.attempt_time + cooloff:
+                return False
             
-            # User is locked
             return True
-            
-        except Exception as e:
-            logger.error(f"Error checking axes lock: {e}")
+        except Exception:
             return False
-
 
     def can_authenticate(self) -> bool:
-        """
-        Check if user can authenticate
-        Returns False if manually blocked OR axes locked
-        """
-        # Manually blocked users cannot authenticate
-        if not self.is_active:
-            return False
-        
-        # Axes locked users cannot authenticate
-        if self.is_axes_locked():
-            return False
-        
-        return True
+        """Check if user can authenticate (not blocked and not axes locked)."""
+        return self.is_active and not self.is_axes_locked()
         
     def get_axes_attempts(self) -> int:
-        """
-        Get failed attempts - always fresh from DB
-        """
+        """Get failed login attempts count."""
         try:
             from axes.models import AccessAttempt
-            
-            # Force fresh query
-            attempt = AccessAttempt.objects.filter(
-                username=self.username
-            ).first()
-            
+            attempt = AccessAttempt.objects.filter(username__iexact=self.username).first()
             return attempt.failures_since_start if attempt else 0
-            
-        except Exception as e:
-            logger.error(f"Error getting attempts: {e}")
+        except Exception:
             return 0
         
     def reset_axes_locks(self) -> bool:
-        """
-        Complete axes reset - Fixed version
-        """
+        """Reset axes locks for this user."""
         try:
             from axes.utils import reset
             reset(username=self.username)
             return True
-        except Exception as e:
-            logger.error(f"Error resetting axes locks: {e}", exc_info=True)
+        except Exception:
             return False
 
     def unblock_user(self) -> bool:

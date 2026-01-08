@@ -24,47 +24,22 @@
         <p class="auth-card-subheading">{% trans "Sign in to continue your research journey." %}</p>
     </div>
 
-    <!-- Lockout Alert - High Priority -->
+    <!-- Error Messages -->
     {% if is_locked_out %}
-    <div class="alert alert-danger border-danger d-flex align-items-start px-3 py-3 mb-3" role="alert" aria-live="assertive">
-        <i class="bi bi-shield-lock-fill me-3 fs-4 text-danger" aria-hidden="true"></i>
-        <div>
-            <strong class="d-block mb-1">{% trans "Access Restricted" %}</strong>
-            <p class="small mb-0">
-                {% trans "Access has been temporarily restricted due to security reasons. Please contact administrator for assistance." %}
-            </p>
-        </div>
+    <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
+        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        <span class="small">{% trans "Access restricted. Please contact administrator." %}</span>
     </div>
-    {% elif prg_has_errors or form.errors %}
-    <!-- Standard Error Messages (PRG pattern or form errors) -->
-    <div class="alert alert-danger d-flex align-items-center px-3 py-2" role="alert" aria-live="polite">
-        <i class="bi bi-exclamation-triangle-fill me-3" aria-hidden="true"></i>
-        <div class="small">
-            {% if prg_has_errors %}
-            {% trans "Invalid username or password. Please try again." %}
-            {% else %}
-            {% for error in form.non_field_errors %}
-            {{ error }}
-            {% endfor %}
-            {% endif %}
-        </div>
+    {% elif is_rate_limited %}
+    <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
+        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        <span class="small">{% trans "Too many attempts. Please wait a moment." %}</span>
     </div>
-    {% elif messages %}
-    <!-- Django Messages - only show if no lockout or form errors (avoid duplicates) -->
-    {% with first_message=messages|first %}
-    {% if first_message %}
-    <div class="alert alert-{{ first_message.tags|default:'warning' }} d-flex align-items-center px-3 py-2 mb-3" role="alert" aria-live="polite">
-        {% if 'error' in first_message.tags or 'danger' in first_message.tags %}
-        <i class="bi bi-x-circle-fill me-2" aria-hidden="true"></i>
-        {% elif 'warning' in first_message.tags %}
-        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
-        {% else %}
-        <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>
-        {% endif %}
-        <small>{{ first_message }}</small>
+    {% elif prg_has_errors or form.non_field_errors %}
+    <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
+        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        <span class="small">{% trans "Invalid username or password." %}</span>
     </div>
-    {% endif %}
-    {% endwith %}
     {% endif %}
 
     <!-- Login Form -->
@@ -106,7 +81,7 @@
                             class="password-toggle-btn" 
                             onclick="togglePassword(this)"
                             aria-label="{% trans 'Toggle password visibility' %}"
-                            aria-pressed="false">
+                            aria-pressed="false" tabindex="-1">
                         <i class="fa-regular fa-eye-slash" aria-hidden="true"></i>
                     </button>
                 </div>

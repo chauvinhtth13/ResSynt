@@ -122,7 +122,7 @@ class Command(BaseCommand):
             self.stdout.write("RESULTS:")
             self.stdout.write("─" * 70)
             self.stdout.write(f"Total:          {total}")
-            self.stdout.write(self.style.SUCCESS(f"✓ Valid:        {valid}"))
+            self.stdout.write(self.style.SUCCESS(f"Valid:        {valid}"))
             
             if invalid:
                 self.stdout.write(self.style.ERROR(
@@ -140,14 +140,14 @@ class Command(BaseCommand):
             
             if fix and fixed > 0:
                 self.stdout.write(self.style.SUCCESS(
-                    f"\n✓ Fixed {fixed} checksum(s)"
+                    f"\nFixed {fixed} checksum(s)"
                 ))
             
             # Overall status
             if len(invalid) == 0 and len(no_checksum) == 0:
                 self.stdout.write("\n" + self.style.SUCCESS(
                     "═" * 70 + "\n"
-                    "✓ ALL AUDIT LOGS ARE VALID\n"
+                    "ALL AUDIT LOGS ARE VALID\n"
                     "═" * 70
                 ))
             else:

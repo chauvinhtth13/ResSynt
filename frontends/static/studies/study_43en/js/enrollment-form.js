@@ -365,7 +365,7 @@
     
     // Read-only mode
     if (state.isReadonly) {
-      console.log('🔒 Setting read-only mode');
+      console.log('Setting read-only mode');
       $('input, select, textarea').not('[type="hidden"]').prop('disabled', true);
       $('button[type="submit"]').hide();
       $('.address-system-radio').prop('disabled', true);

@@ -35,7 +35,7 @@ def generate_scrid(request):
             'error': 'Invalid SITEID'
         }, status=400)
     
-    # 🔒 SECURITY FIX: Check user's ACTUAL site permissions
+    # SECURITY FIX: Check user's ACTUAL site permissions
     if not check_site_permission(request, siteid):
         user_sites = getattr(request, 'user_sites', set())
         logger.warning(

@@ -77,6 +77,7 @@ class UserAdmin(BaseUserAdmin):
     actions = [
         'unblock_users',
         'block_users',
+        'reset_axes_attempts',
         'force_password_change',
         'clear_user_cache',
     ]
@@ -100,29 +101,23 @@ class UserAdmin(BaseUserAdmin):
     def axes_status(self, obj):
         """Show axes lock status"""
         if not obj.is_active:
-            return 'INACTIVE'
+            return "INACTIVE"
         elif obj.is_axes_locked():
-            return 'BLOCKED'
-        else:
-            return 'ACTIVE'
-    axes_status.short_description = 'Axes Status'
+            return "BLOCKED"
+        return "OK"
+    axes_status.short_description = 'Status'
 
     def axes_attempts(self, obj):
         """Show failed attempts count"""
+        from django.conf import settings
+        
         try:
-            from axes.conf import settings as axes_settings
-            
             attempts = obj.get_axes_attempts()
-            limit = getattr(axes_settings, 'AXES_FAILURE_LIMIT', 5)
-            
-            if attempts >= limit:
-                return f'{attempts}/{limit} (LOCKED)'
-            elif attempts > 0:
-                return f'{attempts}/{limit} (WARNING)'
-            return f'0/{limit}'
-        except Exception as e:
-            return '-'
-    axes_attempts.short_description = 'Login Attempts'
+            limit = getattr(settings, 'AXES_FAILURE_LIMIT', 7)
+            return f"{attempts}/{limit}"
+        except Exception:
+            return "-"
+    axes_attempts.short_description = 'Attempts'
 
     @admin.action(description='Unblock and reset axes locks')
     def unblock_users(self, request, queryset):
@@ -138,6 +133,31 @@ class UserAdmin(BaseUserAdmin):
                 request,
                 f'Unblocked: {", ".join(success)}',
                 level='SUCCESS'
+            )
+
+    @admin.action(description='Reset failed login attempts (axes)')
+    def reset_axes_attempts(self, request, queryset):
+        """Reset axes failed login attempts without changing user status"""
+        success = []
+        failed = []
+        
+        for user in queryset:
+            if user.reset_axes_locks():
+                success.append(user.username)
+            else:
+                failed.append(user.username)
+        
+        if success:
+            self.message_user(
+                request,
+                f'Reset login attempts for: {", ".join(success)}',
+                level='SUCCESS'
+            )
+        if failed:
+            self.message_user(
+                request,
+                f'Failed to reset for: {", ".join(failed)}',
+                level='ERROR'
             )
 
     @admin.action(description='Block users')  

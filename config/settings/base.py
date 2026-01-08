@@ -178,12 +178,14 @@ ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True
 ACCOUNT_LOGOUT_ON_GET = False  # Require POST for logout (CSRF protection)
 PASSWORD_RESET_TIMEOUT = 900  # 15 minutes
+# Allauth rate limits (first layer of protection)
+# login_failed: 5 attempts per minute per IP - shows allauth rate limit message
 ACCOUNT_RATE_LIMITS = {
     "change_password": "5/m/user",
     "reset_password": "10/m/ip",
     "reset_password_email": "5/m/ip",
     "reset_password_from_key": "20/m/ip",
-    # login rate limiting handled by django-axes
+    "login_failed": "5/m/ip",  # 5 failed logins per minute triggers allauth rate limit
 }
 
 USERSESSIONS_TRACK_ACTIVITY = True
@@ -195,28 +197,40 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/accounts/login/"
 ANONYMOUS_USER_NAME = None
 
-# Axes (brute-force protection)
+# =============================================================================
+# AXES (Brute-force protection)
+# =============================================================================
+# Flow: Wrong password → Allauth rate limit (5/min) → Axes block (7 total)
+
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 7
-# AXES_COOLOFF_TIME = None  # No auto-unlock - admin must manually unblock
-# Block username OR IP separately (either triggers lockout)
-AXES_LOCKOUT_PARAMETERS = [["username"], ["ip_address"]]
-AXES_RESET_ON_SUCCESS = True
+AXES_COOLOFF_TIME = None  # Manual unblock required
+# Lock by username+IP combo (not separately) - prevents locking entire IP
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = False  # We handle reset manually per-username in signals
 AXES_LOCK_OUT_AT_FAILURE = True
 AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
-AXES_VERBOSE = True
-AXES_ENABLE_ACCESS_FAILURE_LOG = True
-# Custom lockout: inline error on login page instead of redirect
+
+# Form field mapping (must match allauth LoginForm)
+AXES_USERNAME_FORM_FIELD = "login"
+AXES_PASSWORD_FORM_FIELD = "password"
+AXES_SENSITIVE_PARAMETERS = ["password"]
+
+# Custom lockout response
 AXES_LOCKOUT_CALLABLE = "backends.api.base.account.lockout.lockout_response"
-AXES_USERNAME_FORM_FIELD = "login"  # Allauth uses 'login' field
+AXES_LOCKOUT_URL = "/accounts/login/"
+
+# IP detection (for reverse proxy)
 AXES_IPWARE_PROXY_COUNT = 1
 AXES_IPWARE_META_PRECEDENCE_ORDER = [
     "HTTP_X_FORWARDED_FOR",
-    "X_FORWARDED_FOR",
+    "X_FORWARDED_FOR", 
     "REMOTE_ADDR",
 ]
-AXES_NEVER_LOCKOUT_WHITELIST = True
-AXES_IP_WHITELIST = ["127.0.0.1", "::1"]
+
+# Logging (disable in production for performance)
+AXES_VERBOSE = False
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
 
 # =============================================================================
 # TEMPLATES
