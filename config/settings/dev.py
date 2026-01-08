@@ -14,13 +14,26 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", ".localhost"]
 
 # =============================================================================
-# CACHE (Force LocMemCache in dev - SKIP Redis for speed)
+# CACHE (Development - No Redis needed)
 # =============================================================================
-# Override base.py cache config to avoid Redis connection delays
+# Force LocMemCache to avoid Redis connection delays during development
+# This overrides base.py even if REDIS_URL is set in .env
+#
+# Benefits:
+# - No Redis installation required
+# - Instant startup (no network connection)
+# - Faster for single-process development
+#
+# Limitations:
+# - Cache not shared between processes
+# - Cache lost on server restart
+#
+# To test with Redis in dev: Comment out this CACHES block
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "resync-dev-cache",
+        "TIMEOUT": 300,  # 5 minutes default
         "OPTIONS": {
             "MAX_ENTRIES": 1000,
         }
