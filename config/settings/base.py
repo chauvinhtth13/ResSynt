@@ -137,7 +137,7 @@ DATABASE_ROUTERS = ["backends.tenancy.db_router.TenantRouter"]
 # Use Redis if available, otherwise fall back to file-based cache
 REDIS_URL = env("REDIS_URL", default=None)
 
-if REDIS_URL:
+if not REDIS_URL is None:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
@@ -146,19 +146,21 @@ if REDIS_URL:
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 "IGNORE_EXCEPTIONS": True,  # Graceful degradation if Redis unavailable
+                "SOCKET_CONNECT_TIMEOUT": 2,  # Connection timeout (seconds)
+                "SOCKET_TIMEOUT": 2,  # Read/Write timeout (seconds)
                 "CONNECTION_POOL_CLASS_KWARGS": {
                     "max_connections": 20,
-                    "timeout": 10,
+                    "timeout": 2,  # Pool timeout (seconds)
                 },
             },
         }
     }
 else:
-    # Fallback for development without Redis
+    # Fallback for development without Redis - use in-memory cache for speed
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-            "LOCATION": BASE_DIR / ".cache",
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "resync-cache",
         }
     }
 
@@ -167,8 +169,8 @@ CACHE_MIDDLEWARE_SECONDS = 600
 CACHE_MIDDLEWARE_KEY_PREFIX = "resync"
 
 SESSION_COOKIE_NAME = env("SESSION_COOKIE_NAME", default="resync_sessionid")
-SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-SESSION_CACHE_ALIAS = "default"
+# Use database sessions (simpler, no cache dependency for critical auth)
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=28800)  # 8 hours
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG

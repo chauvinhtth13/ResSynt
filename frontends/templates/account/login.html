@@ -27,17 +27,17 @@
     <!-- Error Messages -->
     {% if is_locked_out %}
     <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        <i class="bi bi-exclamation-circle-fill me-2" aria-hidden="true"></i>
         <span class="small">{% trans "Access restricted. Please contact administrator." %}</span>
     </div>
     {% elif is_rate_limited %}
     <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        <i class="bi bi-exclamation-circle-fill me-2" aria-hidden="true"></i>
         <span class="small">{% trans "Too many attempts. Please wait a moment." %}</span>
     </div>
     {% elif prg_has_errors or form.non_field_errors %}
     <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        <i class="bi bi-exclamation-circle-fill me-2" aria-hidden="true"></i>
         <span class="small">{% trans "Invalid username or password." %}</span>
     </div>
     {% endif %}

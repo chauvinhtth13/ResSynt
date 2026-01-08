@@ -32,18 +32,45 @@ def site_filter_context(request):
 
 
 # ==========================================
+# EMPTY CONTEXT (for early returns)
+# ==========================================
+_EMPTY_NOTIFICATIONS = {
+    'upcoming_count': 0,
+    'unread_count': 0,
+    'upcoming_patients': []
+}
+
+# Paths that don't need notifications (performance optimization)
+_SKIP_NOTIFICATION_PATHS = (
+    '/accounts/',
+    '/admin/',
+    '/static/',
+    '/media/',
+    '/i18n/',
+    '/health/',
+    '/select-study/',
+    '/password-reset/',
+)
+
+
+# ==========================================
 # UPCOMING APPOINTMENTS (NOTIFICATIONS)
 # ==========================================
 def upcoming_appointments(request):
     """
-     FIXED: Provide upcoming appointments for notification bell WITH PROPER SITE FILTERING
+    Provide upcoming appointments for notification bell WITH PROPER SITE FILTERING
+    
+    PERFORMANCE OPTIMIZED:
+    - Early return for anonymous users (before any DB operations)
+    - Skip non-study paths (login, admin, static, etc.)
+    - Only query database when absolutely necessary
     
     Features:
     - Uses FollowUpStatus (single source of truth)
     - Tracks read/unread status via session
     - Includes PHONE for contact
     - Shows STATUS (LATE/UPCOMING)
-    -  Uses get_site_filter_params() for correct site filtering
+    - Uses get_site_filter_params() for correct site filtering
     
     Returns:
         dict: {
@@ -52,33 +79,40 @@ def upcoming_appointments(request):
             'upcoming_patients': List of notification objects
         }
     """
-    if not request.user.is_authenticated:
-        return {
-            'upcoming_count': 0,
-            'unread_count': 0,
-            'upcoming_patients': []
-        }
+    # ==========================================
+    # FAST PATH: Skip expensive operations for non-study pages
+    # ==========================================
     
-    # Check if study database is configured
+    # 1. Anonymous users - return immediately (no DB check needed)
+    if not request.user.is_authenticated:
+        return _EMPTY_NOTIFICATIONS
+    
+    # 2. Skip non-study paths (login, admin, static files, etc.)
+    path = request.path
+    if any(path.startswith(skip_path) for skip_path in _SKIP_NOTIFICATION_PATHS):
+        return _EMPTY_NOTIFICATIONS
+    
+    # 3. Only process for study-related paths
+    if not path.startswith('/studies/'):
+        # Also allow dashboard which needs notifications
+        if '/dashboard' not in path:
+            return _EMPTY_NOTIFICATIONS
+    
+    # ==========================================
+    # SLOW PATH: Database operations (only for study pages)
+    # ==========================================
     from django.conf import settings
     from django.db import connections
     
+    # Check if study database is configured
     if 'db_study_43en' not in settings.DATABASES:
-        return {
-            'upcoming_count': 0,
-            'unread_count': 0,
-            'upcoming_patients': []
-        }
+        return _EMPTY_NOTIFICATIONS
     
     try:
-        # Test connection
+        # Test connection - only when we actually need it
         connections['db_study_43en'].ensure_connection()
     except Exception:
-        return {
-            'upcoming_count': 0,
-            'unread_count': 0,
-            'upcoming_patients': []
-        }
+        return _EMPTY_NOTIFICATIONS
     
     from backends.studies.study_43en.models.schedule import FollowUpStatus
     # ✅ FIX: Import from correct location (study utils, not audit_log utils)
@@ -112,12 +146,9 @@ def upcoming_appointments(request):
         
     except Exception as e:
         # Fallback if query fails
-        print(f" Error querying FollowUpStatus: {e}")
-        return {
-            'upcoming_count': 0,
-            'unread_count': 0,
-            'upcoming_patients': []
-        }
+        import logging
+        logging.getLogger(__name__).warning(f"Error querying FollowUpStatus: {e}")
+        return _EMPTY_NOTIFICATIONS
     
     # ==========================================
     # BUILD NOTIFICATION LIST
@@ -290,5 +321,6 @@ def dashboard_stats(request):
         }
     
     except Exception as e:
-        print(f" Error computing dashboard stats: {e}")
+        import logging
+        logging.getLogger(__name__).warning(f"Error computing dashboard stats: {e}")
         return {}
