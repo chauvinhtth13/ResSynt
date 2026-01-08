@@ -4,7 +4,7 @@
 Individual Sample Views for Study 44EN
 Handles sample collection (4 visit times) and food frequency data
 
-✅ REFACTORED: Full Audit Log Support (following exposure/followup pattern)
+REFACTORED: Full Audit Log Support (following exposure/followup pattern)
 - Manual change detection for flat fields
 - Reason modal workflow
 - Audit log creation via decorator
@@ -23,18 +23,18 @@ from backends.studies.study_44en.models.individual import (
 from backends.studies.study_44en.forms.individual import Individual_FoodFrequencyForm
 from backends.api.studies.study_44en.views.views_base import get_filtered_individuals
 
-# ✅ Import audit utilities
-from backends.audit_log.utils.decorators import audit_log
-from backends.audit_log.utils.detector import ChangeDetector
-from backends.audit_log.utils.validator import ReasonValidator
+# Import audit utilities
+from backends.audit_logs.utils.decorators import audit_log
+from backends.audit_logs.utils.detector import ChangeDetector
+from backends.audit_logs.utils.validator import ReasonValidator
 
-# ✅ Import sample helpers with change detection
+# Import sample helpers with change detection
 from .helpers_sample import (
     set_audit_metadata,
     make_form_readonly,
     save_samples,
     load_samples,
-    # ✅ NEW: Change detection for audit log
+    # NEW: Change detection for audit log
     detect_sample_flat_field_changes,
     detect_food_frequency_form_changes,
 )
@@ -60,7 +60,7 @@ def individual_sample_create(request, subjectid):
     """
     CREATE new sample and food frequency data
     
-    ✅ No audit log for CREATE (following project rules)
+    No audit log for CREATE (following project rules)
     """
     logger.info("=" * 80)
     logger.info("=== 🌱 INDIVIDUAL SAMPLE CREATE START ===")
@@ -110,7 +110,7 @@ def individual_sample_create(request, subjectid):
                     logger.info(f"Created food frequency for {subjectid}")
                     
                     logger.info("=" * 80)
-                    logger.info("=== ✅ SAMPLE CREATE SUCCESS ===")
+                    logger.info("=== SAMPLE CREATE SUCCESS ===")
                     logger.info("=" * 80)
                     
                     messages.success(request, f'Created sample data for individual {subjectid}')
@@ -161,7 +161,7 @@ def individual_sample_update(request, subjectid):
     """
     UPDATE existing sample and food frequency data
     
-    ✅ MANUAL AUDIT handling for flat fields (following exposure/followup pattern)
+    MANUAL AUDIT handling for flat fields (following exposure/followup pattern)
     
     Flow:
     1. Capture old data BEFORE form
@@ -212,8 +212,8 @@ def individual_sample_update(request, subjectid):
         
         return render(request, 'studies/study_44en/CRF/individual/sample_form.html', context)
     
-    # ✅ POST - Manual audit handling
-    logger.info("🔄 POST - Manual audit handling")
+    # POST - Manual audit handling
+    logger.info("POST - Manual audit handling")
     
     # ===================================
     # STEP 1: Detect ALL changes
@@ -245,7 +245,7 @@ def individual_sample_update(request, subjectid):
         # Creating new food frequency - all fields are "new"
         logger.info("📝 Creating new food frequency - no changes to detect")
     
-    # ✅ Filter out changes where values are actually the same after normalization
+    # Filter out changes where values are actually the same after normalization
     def normalize_for_compare(val):
         """Normalize value for comparison - handle None, empty, lowercase"""
         if val is None:
@@ -393,10 +393,10 @@ def individual_sample_update(request, subjectid):
             food_freq.MEMBERID = individual
             set_audit_metadata(food_freq, request.user)
             food_freq.save()
-            logger.info(f"✅ Updated food frequency for {subjectid}")
+            logger.info(f"Updated food frequency for {subjectid}")
             
             logger.info("=" * 80)
-            logger.info(f"=== ✅ SAMPLE UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
+            logger.info(f"=== SAMPLE UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
             logger.info("=" * 80)
             
             messages.success(request, f'Cập nhật thành công sample data cho {subjectid}!')
@@ -503,11 +503,11 @@ def individual_sample(request, subjectid):
     
     if sample_exists or food_exists:
         # Data exists - redirect to update
-        logger.info(f"🔄 Sample data exists for {subjectid} - redirecting to update")
+        logger.info(f"Sample data exists for {subjectid} - redirecting to update")
         return redirect('study_44en:individual:sample_update', subjectid=subjectid)
     else:
         # No data - redirect to create
-        logger.info(f"🔄 No sample data for {subjectid} - redirecting to create")
+        logger.info(f"No sample data for {subjectid} - redirecting to create")
         return redirect('study_44en:individual:sample_create', subjectid=subjectid)
 
 

@@ -223,7 +223,6 @@ def antibiotic_list(request, usubjid, culture_id):
                         )
                         
                         if is_reverting_to_nd:
-                            logger.info(f"  🔄 REVERT TO ND: {test.SENSITIVITY_LEVEL} → ND (This is a CHANGE!)")
                             is_first_time_fill = False  # Force to detect as change
                         
                         if is_first_time_fill and sensitivity != 'ND':
@@ -260,6 +259,7 @@ def antibiotic_list(request, usubjid, culture_id):
                         
                         # Normal update OR revert to ND → detect changes
                         logger.info(f"  🔄 NORMAL UPDATE/REVERT: {test.AST_ID} - Detect changes + audit")
+                        logger.info(f"  NORMAL UPDATE/REVERT: {test.AST_ID} - Detect changes + audit")
                         
                         # Capture old data
                         old_data = detector.extract_old_data(test)

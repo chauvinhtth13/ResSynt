@@ -1,6 +1,6 @@
 # backends/audit_log/utils/rate_limiter.py
 """
-🌐 BASE Rate Limiter - Shared across all studies
+BASE Rate Limiter - Shared across all studies
 
 Rate limiting for audit log operations with email alerting
 """
@@ -18,7 +18,7 @@ def rate_limit(key_prefix: str, max_requests: int = 10, window: int = 60):
     """
     Rate limit decorator
     
-    ✅ ENHANCED: Added email alerting
+    ENHANCED: Added email alerting
     
     Args:
         key_prefix: Prefix for cache key

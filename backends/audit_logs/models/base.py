@@ -1,21 +1,34 @@
-# backends/studies/study_43en/models/audit_log.py
+# backends/audit_logs/models/base.py
 """
- FIXED: Audit Log Models - Schema handled by schema_editor
+ABSTRACT BASE AUDIT LOG MODELS - For inheritance in study apps
+
+These are ABSTRACT models - they don't create database tables directly.
+Each study app should inherit from these and create their own migrations.
+
+Usage in study app (e.g., study_43en/models/audit.py):
+    from backends.audit_logs.models.base import AbstractAuditLog, AbstractAuditLogDetail
+    
+    class AuditLog(AbstractAuditLog):
+        class Meta(AbstractAuditLog.Meta):
+            app_label = 'study_43en'
+            db_table = 'log"."audit_log'  # Or study-specific table
+    
+    class AuditLogDetail(AbstractAuditLogDetail):
+        audit_log = models.ForeignKey(AuditLog, ...)
+        class Meta(AbstractAuditLogDetail.Meta):
+            app_label = 'study_43en'
 """
 from django.db import models
-from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
-from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 
-class AuditLog(models.Model):
-    """
-    Main audit log entry
-     Schema routing handled automatically by schema_editor
-    """
 
-    objects = models.Manager()
-    site_objects = SiteFilteredManager()
+class AbstractAuditLog(models.Model):
+    """
+    Abstract base audit log entry
+    
+    Inherit this in your study app and set proper app_label
+    """
     
     ACTION_CHOICES = [
         ('CREATE', 'Create'),
@@ -23,7 +36,7 @@ class AuditLog(models.Model):
         ('VIEW', 'View'),
     ]
     
-    # WHO
+    # WHO: User information
     user_id = models.IntegerField(
         db_index=True,
         help_text="User ID from management database"
@@ -35,13 +48,13 @@ class AuditLog(models.Model):
         help_text="Username backup"
     )
     
-    # WHEN
+    # WHEN: Timestamp
     timestamp = models.DateTimeField(
         default=timezone.now,
         db_index=True
     )
     
-    # WHAT
+    # WHAT: Action details
     action = models.CharField(
         max_length=10,
         choices=ACTION_CHOICES,
@@ -57,22 +70,23 @@ class AuditLog(models.Model):
     patient_id = models.CharField(
         max_length=50,
         db_index=True,
-        help_text="Patient identifier"
+        help_text="Patient identifier (USUBJID or SCRID)"
     )
     
     SITEID = models.CharField(
         max_length=10,
         null=True,
         blank=True,
-        db_index=True
+        db_index=True,
+        help_text="Site code for filtering"
     )
     
-    # WHY
+    # WHY: Reason
     reason = models.TextField(
         help_text="Combined change reason"
     )
     
-    # METADATA
+    # METADATA: Context
     ip_address = models.GenericIPAddressField(
         null=True,
         blank=True
@@ -84,48 +98,38 @@ class AuditLog(models.Model):
         blank=True
     )
     
-    # INTEGRITY
+    # INTEGRITY: Checksum
     checksum = models.CharField(
         max_length=64,
-        editable=False
+        editable=False,
+        help_text="SHA-256 checksum for integrity verification"
     )
     
-    is_verified = models.BooleanField(default=True)
+    is_verified = models.BooleanField(
+        default=True,
+        help_text="Integrity status"
+    )
     
     class Meta:
-        #  CHANGED: No schema prefix - let schema_editor handle it
-        db_table = 'audit_log'  # Simple table name
-        
-        #  ADD: Mark this as audit log table using db_table_comment
-        db_table_comment = 'AUDIT_LOG_TABLE'  # Special marker
-        
+        abstract = True  # ← KEY: No database table for this model
         ordering = ['-timestamp']
         verbose_name = 'Audit Log'
         verbose_name_plural = 'Audit Logs'
-        
         default_permissions = ('add', 'view')
-        
-        indexes = [
-            models.Index(fields=['-timestamp'], name='audit_log_time_idx'),
-            models.Index(fields=['patient_id', '-timestamp'], name='audit_log_patient_idx'),
-            models.Index(fields=['user_id', '-timestamp'], name='audit_log_user_idx'),
-            models.Index(fields=['SITEID', '-timestamp'], name='audit_log_site_idx'),
-            models.Index(fields=['model_name', 'action'], name='audit_log_model_idx'),
-        ]
     
     def __str__(self):
         return f"{self.username} {self.action} {self.model_name} at {self.timestamp}"
     
     def delete(self, *args, **kwargs):
+        """Prevent deletion - audit logs are immutable"""
         raise PermissionDenied("Audit logs cannot be deleted")
     
     def save(self, *args, **kwargs):
-        """Generate checksum if not exists"""
+        """Generate checksum and prevent editing"""
         if self.pk:
             raise PermissionDenied("Audit logs are immutable")
         
         if not self.checksum:
-            # NEW: Import from base audit_log
             from backends.audit_logs.utils.integrity import IntegrityChecker
             
             if hasattr(self, '_temp_checksum_data'):
@@ -158,8 +162,7 @@ class AuditLog(models.Model):
         super().save(*args, **kwargs)
     
     def verify_integrity(self) -> bool:
-        """Verify checksum"""
-        # NEW: Import from base audit_log
+        """Verify checksum integrity"""
         from backends.audit_logs.utils.integrity import IntegrityChecker
         
         details = self.details.all()
@@ -184,18 +187,7 @@ class AuditLog(models.Model):
         }
         
         calculated_checksum = IntegrityChecker.generate_checksum(audit_data)
-        is_valid = (calculated_checksum == self.checksum)
-        
-        if not is_valid:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(
-                f" INTEGRITY VIOLATION: AuditLog {self.id} checksum mismatch!\n"
-                f"   Expected: {calculated_checksum}\n"
-                f"   Stored:   {self.checksum}"
-            )
-        
-        return is_valid
+        return calculated_checksum == self.checksum
     
     def get_user(self):
         """Get user from management database"""
@@ -207,17 +199,21 @@ class AuditLog(models.Model):
             return None
 
 
-class AuditLogDetail(models.Model):
+class AbstractAuditLogDetail(models.Model):
     """
-    Field-level change details
-     Schema routing handled automatically by schema_editor
+    Abstract base audit log detail
+    
+    NOTE: When inheriting, you must define the ForeignKey to your concrete AuditLog:
+    
+        class AuditLogDetail(AbstractAuditLogDetail):
+            audit_log = models.ForeignKey(
+                'AuditLog',  # Your concrete model
+                on_delete=models.PROTECT,
+                related_name='details'
+            )
     """
     
-    audit_log = models.ForeignKey(
-        AuditLog,
-        on_delete=models.PROTECT,
-        related_name='details'
-    )
+    # NOTE: audit_log FK must be defined in concrete class
     
     field_name = models.CharField(
         max_length=100,
@@ -241,29 +237,21 @@ class AuditLogDetail(models.Model):
     )
     
     class Meta:
-        #  CHANGED: No schema prefix
-        db_table = 'audit_log_detail'
-        
-        #  ADD: Mark as audit log table
-        db_table_comment = 'AUDIT_LOG_TABLE'
-        
+        abstract = True  # ← KEY: No database table for this model
         ordering = ['field_name']
         verbose_name = 'Audit Log Detail'
         verbose_name_plural = 'Audit Log Details'
-        
         default_permissions = ('add', 'view')
-        
-        indexes = [
-            models.Index(fields=['audit_log', 'field_name'], name='audit_detail_log_idx'),
-        ]
     
     def __str__(self):
         return f"{self.field_name}: {self.old_value} → {self.new_value}"
     
     def delete(self, *args, **kwargs):
+        """Prevent deletion - audit logs are immutable"""
         raise PermissionDenied("Audit log details cannot be deleted")
     
     def save(self, *args, **kwargs):
+        """Prevent editing"""
         if self.pk:
             raise PermissionDenied("Audit log details are immutable")
         super().save(*args, **kwargs)

@@ -7,7 +7,7 @@ ORGANIZATION:
 2. Utility functions  
 3. Save functions - Symptoms, Hospitalizations, Medications
 4. Load functions - Symptoms, Hospitalizations, Medications
-5. ✅ NEW: Change Detection Functions for Audit Log
+5. NEW: Change Detection Functions for Audit Log
 """
 
 import logging
@@ -318,19 +318,19 @@ def load_followup_medications(followup):
 
 
 # ==========================================
-# ✅ NEW: CHANGE DETECTION FOR AUDIT LOG
+# NEW: CHANGE DETECTION FOR AUDIT LOG
 # ==========================================
 
 def detect_followup_form_field_changes(request, followup):
     """
-    ✅ Detect changes in follow-up form fields (VISIT_TIME, ASSESSED, ASSESSMENT_DATE)
+    Detect changes in follow-up form fields (VISIT_TIME, ASSESSED, ASSESSMENT_DATE)
     
     Returns:
         list: List of change dicts [{field, old_value, new_value, old_display, new_display}]
     """
     changes = []
     
-    # ✅ CRITICAL: Refresh from DB to get actual stored values
+    # CRITICAL: Refresh from DB to get actual stored values
     followup.refresh_from_db()
     
     # VISIT_TIME
@@ -388,7 +388,7 @@ def detect_followup_form_field_changes(request, followup):
 
 def detect_followup_flat_field_changes(request, followup):
     """
-    ✅ Detect changes in follow-up flat fields (symptoms, hospitalizations, medications)
+    Detect changes in follow-up flat fields (symptoms, hospitalizations, medications)
     
     Compares POST data with database data for:
     - Symptoms (has_symptoms radio + checkboxes)
@@ -403,7 +403,7 @@ def detect_followup_flat_field_changes(request, followup):
     """
     changes = []
     
-    # ✅ CRITICAL FIX: Refresh followup from database to get actual stored values
+    # CRITICAL FIX: Refresh followup from database to get actual stored values
     followup.refresh_from_db()
     
     # Load old data from database
@@ -595,7 +595,7 @@ __all__ = [
     'load_symptoms',
     'load_followup_hospitalizations',
     'load_followup_medications',
-    # ✅ NEW: Change detection for audit log
+    # NEW: Change detection for audit log
     'detect_followup_form_field_changes',
     'detect_followup_flat_field_changes',
 ]

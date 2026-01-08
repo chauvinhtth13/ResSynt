@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def handle_allauth_login(request, user, **kwargs):
     """
     Handle successful login via allauth.
-    Reset axes attempts for THIS USER only.
+    Reset axes attempts for THIS USER only (even if < 7 failures).
     """
     try:
         # Regenerate session to prevent fixation attack
@@ -36,7 +36,21 @@ def handle_allauth_login(request, user, **kwargs):
         
         # Reset axes attempts for this user only
         from axes.utils import reset
+        from axes.models import AccessAttempt
+        
+        # Check current failures before reset (for logging)
+        current_failures = AccessAttempt.objects.filter(
+            username__iexact=user.username
+        ).values_list('failures_since_start', flat=True).first() or 0
+        
+        # Reset all attempts for this username
         reset(username=user.username)
+        
+        if current_failures > 0:
+            logger.info(
+                f"User {user.username} logged in successfully. "
+                f"Reset {current_failures} failed attempt(s)."
+            )
         
         # Update last login
         user.last_login = timezone.now()
@@ -102,8 +116,8 @@ def handle_failed_login(sender, credentials, request, **kwargs):
 def handle_axes_lockout(request, credentials, **kwargs):
     """
     Handle axes lockout event
-    ✅ FIXED: Updated signature for axes 8.0.0 compatibility
-    ✅ ENHANCED: Using Celery for async email alerts
+    FIXED: Updated signature for axes 8.0.0 compatibility
+    ENHANCED: Using Celery for async email alerts
     
     Axes 8.0.0 sends: request, credentials (dict with 'username'), **kwargs
     """
@@ -128,7 +142,7 @@ def handle_axes_lockout(request, credentials, **kwargs):
             ).strip()
             user.save(update_fields=['notes'])
             
-            # ✅ Send async email alert via Celery
+            # Send async email alert via Celery
             send_security_alert.delay(
                 alert_type='user_lockout',
                 details={
@@ -143,7 +157,7 @@ def handle_axes_lockout(request, credentials, **kwargs):
             # Log attempt for non-existent user
             logger.info(f"Lockout attempt for non-existent user: {username}")
             
-            # ✅ Send async alert for non-existent user (potential attack)
+            # Send async alert for non-existent user (potential attack)
             send_security_alert.delay(
                 alert_type='invalid_user_attempt',
                 details={

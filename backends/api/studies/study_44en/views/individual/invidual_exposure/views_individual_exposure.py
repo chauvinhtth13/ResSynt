@@ -2,7 +2,7 @@
 Individual Exposure Views for Study 44EN
 Handles exposure, comorbidity, vaccine, hospitalization, medication, and travel data
 
-✅ REFACTORED: Full Audit Log Support (following household pattern)
+REFACTORED: Full Audit Log Support (following household pattern)
 - Manual change detection for flat fields
 - Reason modal workflow
 - Audit log creation via decorator
@@ -24,12 +24,12 @@ from backends.studies.study_44en.models.individual import Individual, Individual
 from backends.studies.study_44en.forms.individual import Individual_ExposureForm, Individual_Exposure2Form
 from backends.api.studies.study_44en.views.views_base import get_filtered_individuals
 
-# ✅ Import audit utilities
-from backends.audit_log.utils.decorators import audit_log
-from backends.audit_log.utils.detector import ChangeDetector
-from backends.audit_log.utils.validator import ReasonValidator
+# Import audit utilities
+from backends.audit_logs.utils.decorators import audit_log
+from backends.audit_logs.utils.detector import ChangeDetector
+from backends.audit_logs.utils.validator import ReasonValidator
 
-# ✅ Import exposure helpers with change detection
+# Import exposure helpers with change detection
 from .helpers_exposure import (
     # Utility functions
     set_audit_metadata,
@@ -57,7 +57,7 @@ from .helpers_exposure import (
     load_food_frequency,
     load_travel_history,
     
-    # ✅ NEW: Change detection for audit log
+    # NEW: Change detection for audit log
     detect_exp1_flat_field_changes,
     detect_exp2_flat_field_changes,
     detect_exp3_flat_field_changes,
@@ -83,7 +83,7 @@ logger = logging.getLogger(__name__)
 def individual_exposure_create(request, subjectid):
     """CREATE new exposure data (water sources, treatment, comorbidities)
     
-    ✅ No audit log for CREATE (following project rules)
+    No audit log for CREATE (following project rules)
     """
     logger.info("=" * 80)
     logger.info("=== 🌱 INDIVIDUAL EXPOSURE CREATE START ===")
@@ -153,7 +153,7 @@ def individual_exposure_create(request, subjectid):
                 save_water_treatment(request, exposure)
                 save_comorbidities(request, exposure)
                 
-                logger.info("=== ✅ EXPOSURE CREATE SUCCESS ===")
+                logger.info("=== EXPOSURE CREATE SUCCESS ===")
                 messages.success(request, f'Created exposure data for {subjectid}')
                 return redirect('study_44en:individual:detail', subjectid=subjectid)
                 
@@ -195,7 +195,7 @@ def individual_exposure_create(request, subjectid):
 def individual_exposure_update(request, subjectid):
     """UPDATE existing exposure data
     
-    ✅ MANUAL AUDIT handling for flat fields (following household pattern)
+    MANUAL AUDIT handling for flat fields (following household pattern)
     
     Flow:
     1. Capture old data BEFORE form
@@ -239,17 +239,17 @@ def individual_exposure_update(request, subjectid):
             'water_data': water_data,
             'treatment_data': treatment_data,
             'comorbidity_data': comorbidity_data,
-            # ✅ FIX: Normalize to lowercase for template comparison
+            # FIX: Normalize to lowercase for template comparison
             'shared_toilet': (exposure.SHARED_TOILET or '').lower() if exposure.SHARED_TOILET else '',
         }
         return render(request, 'studies/study_44en/CRF/individual/exposure_form_1.html', context)
     
-    # ✅ POST - Manual audit handling
-    logger.info("🔄 POST - Manual audit handling")
+    # POST - Manual audit handling
+    logger.info("POST - Manual audit handling")
     
-    # ✅ IMPORTANT: Refresh exposure from database to get latest values
+    # IMPORTANT: Refresh exposure from database to get latest values
     exposure.refresh_from_db()
-    logger.info(f"🔄 Refreshed exposure from DB: SHARED_TOILET={exposure.SHARED_TOILET}")
+    logger.info(f"Refreshed exposure from DB: SHARED_TOILET={exposure.SHARED_TOILET}")
     
     # DEBUG: Log POST data
     logger.info("=" * 80)
@@ -271,7 +271,7 @@ def individual_exposure_update(request, subjectid):
     
     all_changes = []
     
-    # ✅ Fields that are handled by flat field detection (hardcoded HTML, not in Django form)
+    # Fields that are handled by flat field detection (hardcoded HTML, not in Django form)
     # These will be detected by detect_exp1_flat_field_changes() instead
     # Include ALL possible variations of field names
     flat_field_names = {
@@ -285,12 +285,12 @@ def individual_exposure_update(request, subjectid):
         new_form_data = detector.extract_new_data(exposure_form)
         form_changes = detector.detect_changes(old_form_data, new_form_data)
         
-        # ✅ DEBUG: Log all form changes before filter
+        # DEBUG: Log all form changes before filter
         logger.info("📝 Form changes BEFORE filter:")
         for c in form_changes:
             logger.info(f"   - {c['field']}: '{c.get('old_value')}' → '{c.get('new_value')}'")
         
-        # ✅ Filter out fields that are handled by flat field detection
+        # Filter out fields that are handled by flat field detection
         # Use case-insensitive comparison
         form_changes = [c for c in form_changes 
                        if c['field'] not in flat_field_names 
@@ -303,7 +303,7 @@ def individual_exposure_update(request, subjectid):
     # Flat field changes (water, treatment, comorbidities + radio buttons)
     flat_changes = detect_exp1_flat_field_changes(request, exposure)
     
-    # ✅ DEBUG: Log flat changes
+    # DEBUG: Log flat changes
     logger.info("📝 Flat changes detected:")
     for c in flat_changes:
         logger.info(f"   - {c['field']}: '{c.get('old_value')}' → '{c.get('new_value')}'")
@@ -311,7 +311,7 @@ def individual_exposure_update(request, subjectid):
     all_changes.extend(flat_changes)
     logger.info(f"📝 Total before final filter: {len(all_changes)}")
     
-    # ✅ IMPROVED: Filter out changes where values are actually the same
+    # IMPROVED: Filter out changes where values are actually the same
     # Normalize both values for comparison
     def normalize_for_compare(val):
         """Normalize value for comparison - handle None, empty, lowercase"""
@@ -474,7 +474,7 @@ def individual_exposure_update(request, subjectid):
             
             set_audit_metadata(exposure, request.user)
             exposure.save()
-            logger.info(f"✅ Saved exposure for {subjectid}")
+            logger.info(f"Saved exposure for {subjectid}")
             
             # 2. Save related data
             save_water_sources(request, exposure)
@@ -482,7 +482,7 @@ def individual_exposure_update(request, subjectid):
             save_comorbidities(request, exposure)
             
             logger.info("=" * 80)
-            logger.info(f"=== ✅ UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
+            logger.info(f"=== UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
             logger.info("=" * 80)
             
             messages.success(request, f'Cập nhật thành công exposure cho {subjectid}!')
@@ -561,7 +561,7 @@ def individual_exposure_view(request, subjectid):
 def individual_exposure_2_create(request, subjectid):
     """CREATE exposure 2 (vaccination & hospitalization)
     
-    ✅ No audit log for CREATE
+    No audit log for CREATE
     """
     logger.info("=" * 80)
     logger.info("=== 💉 EXPOSURE 2 CREATE (VACCINATION & HOSPITALIZATION) ===")
@@ -604,7 +604,7 @@ def individual_exposure_2_create(request, subjectid):
                 # Create new exposure with only EXP 2/3 data
                 exposure = Individual_Exposure(MEMBERID=individual)
                 
-                # ✅ FIX: Don't save raw values directly - let helper functions handle mapping
+                # FIX: Don't save raw values directly - let helper functions handle mapping
                 # exposure.VACCINATION_STATUS, HOSPITALIZED_3M, MEDICATION_3M will be set by helpers
                 
                 set_audit_metadata(exposure, request.user)
@@ -618,7 +618,7 @@ def individual_exposure_2_create(request, subjectid):
                 save_hospitalizations(request, exposure)
                 save_medications(request, exposure)
                 
-                logger.info("=== ✅ EXPOSURE 2 CREATE SUCCESS ===")
+                logger.info("=== EXPOSURE 2 CREATE SUCCESS ===")
                 messages.success(request, f'Created exposure 2 data for {subjectid}')
                 return redirect('study_44en:individual:detail', subjectid=subjectid)
                 
@@ -650,7 +650,7 @@ def individual_exposure_2_create(request, subjectid):
 def individual_exposure_2_update(request, subjectid):
     """UPDATE exposure 2 (vaccination & hospitalization)
     
-    ✅ MANUAL AUDIT handling for flat fields
+    MANUAL AUDIT handling for flat fields
     """
     logger.info("=" * 80)
     logger.info("=== ✏️ EXPOSURE 2 UPDATE (VACCINATION & HOSPITALIZATION) ===")
@@ -690,12 +690,12 @@ def individual_exposure_2_update(request, subjectid):
         }
         return render(request, 'studies/study_44en/CRF/individual/exposure_form_2.html', context)
     
-    # ✅ POST - Manual audit handling
-    logger.info("🔄 POST - Manual audit handling")
+    # POST - Manual audit handling
+    logger.info("POST - Manual audit handling")
     
-    # ✅ IMPORTANT: Refresh exposure from database to get latest values
+    # IMPORTANT: Refresh exposure from database to get latest values
     exposure.refresh_from_db()
-    logger.info(f"🔄 Refreshed exposure from DB: VACCINATION_STATUS={exposure.VACCINATION_STATUS}, HOSPITALIZED_3M={exposure.HOSPITALIZED_3M}, MEDICATION_3M={exposure.MEDICATION_3M}")
+    logger.info(f"Refreshed exposure from DB: VACCINATION_STATUS={exposure.VACCINATION_STATUS}, HOSPITALIZED_3M={exposure.HOSPITALIZED_3M}, MEDICATION_3M={exposure.MEDICATION_3M}")
     
     # ===================================
     # STEP 1: Detect ALL changes
@@ -709,7 +709,7 @@ def individual_exposure_2_update(request, subjectid):
     
     all_changes = []
     
-    # ✅ Fields that are handled by flat field detection (hardcoded HTML, not in Django form)
+    # Fields that are handled by flat field detection (hardcoded HTML, not in Django form)
     flat_field_names = {
         'VACCINATION_STATUS', 'HOSPITALIZED_3M', 'MEDICATION_3M',
         'vaccination_history', 'has_hospitalization', 'has_medication',
@@ -719,7 +719,7 @@ def individual_exposure_2_update(request, subjectid):
         new_form_data = detector.extract_new_data(exposure_form)
         form_changes = detector.detect_changes(old_form_data, new_form_data)
         
-        # ✅ Filter out fields that are handled by flat field detection
+        # Filter out fields that are handled by flat field detection
         # Use case-insensitive comparison
         form_changes = [c for c in form_changes 
                        if c['field'] not in flat_field_names 
@@ -734,7 +734,7 @@ def individual_exposure_2_update(request, subjectid):
     all_changes.extend(flat_changes)
     logger.info(f"📝 Flat changes: {len(flat_changes)}")
     
-    # ✅ IMPROVED: Filter out changes where values are actually the same
+    # IMPROVED: Filter out changes where values are actually the same
     def normalize_for_compare(val):
         """Normalize value for comparison - handle None, empty, lowercase"""
         if val is None:
@@ -764,7 +764,7 @@ def individual_exposure_2_update(request, subjectid):
     if not all_changes:
         try:
             with transaction.atomic(using='db_study_44en'):
-                # ✅ FIX: Let helper functions handle saving with proper mapping
+                # FIX: Let helper functions handle saving with proper mapping
                 # Don't save raw values directly - save_vaccines/hospitalizations/medications will map them
                 
                 set_audit_metadata(exposure, request.user)
@@ -863,12 +863,12 @@ def individual_exposure_2_update(request, subjectid):
     
     try:
         with transaction.atomic(using='db_study_44en'):
-            # ✅ FIX: Let helper functions handle saving with proper mapping
+            # FIX: Let helper functions handle saving with proper mapping
             # Don't save raw values directly - save_vaccines/hospitalizations/medications will map them
             
             set_audit_metadata(exposure, request.user)
             exposure.save(update_fields=['last_modified_by_id', 'last_modified_by_username'])
-            logger.info(f"✅ Saved exposure for {subjectid}")
+            logger.info(f"Saved exposure for {subjectid}")
             
             # Update related data (helper functions will set the status fields with proper mapping)
             save_vaccines(request, exposure)
@@ -876,7 +876,7 @@ def individual_exposure_2_update(request, subjectid):
             save_medications(request, exposure)
             
             logger.info("=" * 80)
-            logger.info(f"=== ✅ UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
+            logger.info(f"=== UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
             logger.info("=" * 80)
             
             messages.success(request, f'Cập nhật thành công exposure 2 cho {subjectid}!')
@@ -951,7 +951,7 @@ def individual_exposure_2_view(request, subjectid):
 def individual_exposure_3_create(request, subjectid):
     """CREATE exposure 3 (food & travel)
     
-    ✅ No audit log for CREATE
+    No audit log for CREATE
     """
     logger.info("=" * 80)
     logger.info("=== 🍽️ EXPOSURE 3 CREATE (FOOD & TRAVEL) ===")
@@ -988,7 +988,7 @@ def individual_exposure_3_create(request, subjectid):
             save_travel_history(request, individual)
             
             logger.info("=" * 80)
-            logger.info("=== ✅ EXPOSURE 3 CREATE SUCCESS ===")
+            logger.info("=== EXPOSURE 3 CREATE SUCCESS ===")
             logger.info("=" * 80)
             
             messages.success(request, f"Created exposure 3 data for {subjectid}")
@@ -1020,7 +1020,7 @@ def individual_exposure_3_create(request, subjectid):
 def individual_exposure_3_update(request, subjectid):
     """UPDATE exposure 3 (food & travel)
     
-    ✅ MANUAL AUDIT handling for flat fields
+    MANUAL AUDIT handling for flat fields
     """
     logger.info("=" * 80)
     logger.info("=== 🍽️ EXPOSURE 3 UPDATE (FOOD & TRAVEL) ===")
@@ -1047,8 +1047,8 @@ def individual_exposure_3_update(request, subjectid):
         }
         return render(request, 'studies/study_44en/CRF/individual/exposure_form_3.html', context)
     
-    # ✅ POST - Manual audit handling
-    logger.info("🔄 POST - Manual audit handling")
+    # POST - Manual audit handling
+    logger.info("POST - Manual audit handling")
     
     # ===================================
     # STEP 1: Detect ALL changes
@@ -1058,7 +1058,7 @@ def individual_exposure_3_update(request, subjectid):
     # Flat field changes (food frequency, travel)
     all_changes = detect_exp3_flat_field_changes(request, individual)
     
-    # ✅ IMPROVED: Filter out changes where values are actually the same
+    # IMPROVED: Filter out changes where values are actually the same
     def normalize_for_compare(val):
         """Normalize value for comparison - handle None, empty, lowercase"""
         if val is None:
@@ -1175,7 +1175,7 @@ def individual_exposure_3_update(request, subjectid):
             save_travel_history(request, individual)
             
             logger.info("=" * 80)
-            logger.info(f"=== ✅ UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
+            logger.info(f"=== UPDATE SUCCESS WITH AUDIT: {subjectid} ===")
             logger.info("=" * 80)
             
             messages.success(request, f"Cập nhật thành công exposure 3 cho {subjectid}!")
@@ -1284,10 +1284,10 @@ def individual_exposure(request, subjectid):
     individual = get_object_or_404(queryset, SUBJECTID=subjectid)
     
     if Individual_Exposure.objects.filter(MEMBERID=individual).exists():
-        logger.info(f"🔄 Redirecting to update for {subjectid}")
+        logger.info(f"Redirecting to update for {subjectid}")
         return redirect('study_44en:individual:exposure_update', subjectid=subjectid)
     else:
-        logger.info(f"🔄 Redirecting to create for {subjectid}")
+        logger.info(f"Redirecting to create for {subjectid}")
         return redirect('study_44en:individual:exposure_create', subjectid=subjectid)
 
 

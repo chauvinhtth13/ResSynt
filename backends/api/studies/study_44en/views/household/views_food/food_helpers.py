@@ -1,6 +1,6 @@
 # backends/api/studies/study_44en/views/household/food_helpers.py
 """
-🔧 Household Food Helper Functions
+Household Food Helper Functions
 
 Shared utilities for household food CRUD views.
 Following Django development rules: Backend-first approach.
@@ -101,7 +101,7 @@ def save_food_data(request, forms_dict, household, is_create=False):
     """
     Save food frequency and food source in transaction
     
-    ✅ COMPATIBLE with Universal Audit System standard structure
+    COMPATIBLE with Universal Audit System standard structure
     
     Args:
         request: HttpRequest
@@ -139,7 +139,7 @@ def save_food_data(request, forms_dict, household, is_create=False):
             
             food_frequency.save()
             
-            logger.info(f"   ✅ Saved food frequency for HHID={household.HHID}")
+            logger.info(f"   Saved food frequency for HHID={household.HHID}")
             
             # ===================================
             # 2. SAVE FOOD SOURCE (RELATED)
@@ -152,10 +152,10 @@ def save_food_data(request, forms_dict, household, is_create=False):
                 set_audit_metadata(food_source, request.user)
                 food_source.save()
                 
-                logger.info(f"   ✅ Saved food source for HHID={household.HHID}")
+                logger.info(f"   Saved food source for HHID={household.HHID}")
             
             logger.info("="*80)
-            logger.info(f"✅ SAVE COMPLETE - Food data for {household.HHID}")
+            logger.info(f"SAVE COMPLETE - Food data for {household.HHID}")
             logger.info("="*80)
             
             return food_frequency

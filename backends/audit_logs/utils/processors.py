@@ -14,10 +14,59 @@ from django.shortcuts import render, redirect
 from django.db import transaction
 from django.contrib import messages
 
-from .detector import ChangeDetector
+from .detector import ChangeDetector, EXCLUDED_METADATA_FIELDS
 from .validator import ReasonValidator
 
 logger = logging.getLogger(__name__)
+
+
+# ==========================================
+# SHARED UTILITIES
+# ==========================================
+
+def get_patient_id_from_instance(instance) -> str:
+    """
+    Extract patient ID from model instance
+    
+    Shared utility used by all processors to avoid code duplication.
+    """
+    # Try USUBJID (most common)
+    if hasattr(instance, 'USUBJID'):
+        usubjid = instance.USUBJID
+        # Handle FK: ENR_CASE.USUBJID.USUBJID
+        if hasattr(usubjid, 'USUBJID'):
+            return usubjid.USUBJID
+        return str(usubjid)
+    
+    # Try SCRID (screening)
+    if hasattr(instance, 'SCRID'):
+        return instance.SCRID
+    
+    # Fallback to PK
+    pk_field = instance._meta.pk.name
+    return str(getattr(instance, pk_field))
+
+
+def filter_metadata_fields(data: Dict) -> Dict:
+    """Remove metadata fields from data dict"""
+    return {k: v for k, v in data.items() if k not in EXCLUDED_METADATA_FIELDS}
+
+
+# Formset name mapping - centralized to avoid long if-elif chains
+FORMSET_CONTEXT_MAPPING = {
+    'medications': ['medhisdrug_formset', 'medication_formset'],
+    'rehospitalizations': ['rehospitalization_formset'],
+    'antibiotics': ['antibiotic_formset'],
+    'icd_codes': ['icd_formset'],
+    'laboratory_tests': ['formset'],
+    'prior_antibiotics': ['prior_antibiotic_formset'],
+    'initial_antibiotics': ['initial_antibiotic_formset'],
+    'main_antibiotics': ['main_antibiotic_formset'],
+    'vaso_drugs': ['vaso_drug_formset'],
+    'hospiprocesses': ['hospi_process_formset'],
+    'ae_hosp_events': ['ae_hosp_event_formset'],
+    'improve_symptoms': ['improve_sympt_formset'],
+}
 
 
 # ==========================================
@@ -30,17 +79,8 @@ class BaseAuditProcessor:
     def __init__(self):
         self.detector = ChangeDetector()
         self.validator = ReasonValidator()
-        
-        # Metadata fields to exclude from change detection
-        self.metadata_fields = [
-            'id',
-            'version',
-            'last_modified_by_id',
-            'last_modified_by_username',
-            'last_modified_at',
-            'created_at',
-            'updated_at',
-        ]
+        # Use shared constant instead of duplicating
+        self.metadata_fields = EXCLUDED_METADATA_FIELDS
     
     def _collect_reasons(self, request, changes: List[Dict]) -> Dict[str, str]:
         """Collect reasons from POST data"""
@@ -135,9 +175,8 @@ class AuditProcessor(BaseAuditProcessor):
         # STEP 1: Capture old data
         old_data = self.detector.extract_old_data(instance)
         
-        # Remove metadata fields
-        old_data = {k: v for k, v in old_data.items() 
-                   if k not in self.metadata_fields}
+        # Remove metadata fields using shared utility
+        old_data = filter_metadata_fields(old_data)
         
         # STEP 2: Validate form
         form = form_class(request.POST, instance=instance, **form_kwargs)
@@ -155,8 +194,7 @@ class AuditProcessor(BaseAuditProcessor):
         
         # STEP 3: Detect changes
         new_data = self.detector.extract_new_data(form)
-        new_data = {k: v for k, v in new_data.items() 
-                   if k not in self.metadata_fields}
+        new_data = filter_metadata_fields(new_data)
         
         changes = self.detector.detect_changes(old_data, new_data)
         
@@ -221,7 +259,7 @@ class AuditProcessor(BaseAuditProcessor):
                 messages.warning(request, warning)
         
         # STEP 6: Set audit data
-        patient_id = self._get_patient_id(instance)
+        patient_id = get_patient_id_from_instance(instance)
         site_id = getattr(instance, 'SITEID', None)
         
         self._set_audit_data(request, patient_id, site_id, changes, sanitized_reasons)
@@ -258,21 +296,6 @@ class AuditProcessor(BaseAuditProcessor):
             logger.error(f"Save failed: {e}", exc_info=True)
             messages.error(request, f'Lỗi khi lưu: {str(e)}')
             return render(request, template_name, {'form': form, **(extra_context or {})})
-    
-    def _get_patient_id(self, instance):
-        """Extract patient ID from instance"""
-        # Try common patterns
-        if hasattr(instance, 'USUBJID'):
-            if hasattr(instance.USUBJID, 'USUBJID'):
-                return instance.USUBJID.USUBJID  # ENR_CASE.USUBJID.USUBJID
-            return str(instance.USUBJID)  # Direct USUBJID
-        
-        if hasattr(instance, 'SCRID'):
-            return instance.SCRID
-        
-        # Fallback to PK
-        pk_field = instance._meta.pk.name
-        return str(getattr(instance, pk_field))
 
 
 # ==========================================
@@ -358,7 +381,7 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
                 messages.warning(request, warning)
         
         # STEP 6: Set audit data
-        patient_id = self._get_patient_id_from_instance(main_instance)
+        patient_id = get_patient_id_from_instance(main_instance)
         site_id = getattr(main_instance, 'SITEID', None)
         
         self._set_audit_data(request, patient_id, site_id, all_changes, sanitized_reasons)
@@ -375,24 +398,16 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
     def _capture_all_old_data(self, main_instance, forms_config):
         """Capture old data from all forms"""
         all_old_data = {
-            'main': self.detector.extract_old_data(main_instance)
-        }
-        
-        # Remove metadata
-        all_old_data['main'] = {
-            k: v for k, v in all_old_data['main'].items()
-            if k not in self.metadata_fields
+            'main': filter_metadata_fields(self.detector.extract_old_data(main_instance))
         }
         
         # Personal form (if present)
         if 'personal' in forms_config:
             instance = forms_config['personal']['instance']
             if instance and instance.pk:
-                old_data = self.detector.extract_old_data(instance)
-                all_old_data['personal'] = {
-                    k: v for k, v in old_data.items()
-                    if k not in self.metadata_fields
-                }
+                all_old_data['personal'] = filter_metadata_fields(
+                    self.detector.extract_old_data(instance)
+                )
             else:
                 all_old_data['personal'] = {}
         
@@ -400,11 +415,9 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
         for name, config in forms_config.get('related', {}).items():
             instance = config['instance']
             if instance and instance.pk:
-                old_data = self.detector.extract_old_data(instance)
-                all_old_data[name] = {
-                    k: v for k, v in old_data.items()
-                    if k not in self.metadata_fields
-                }
+                all_old_data[name] = filter_metadata_fields(
+                    self.detector.extract_old_data(instance)
+                )
             else:
                 all_old_data[name] = {}
         
@@ -471,17 +484,15 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
         all_changes = []
         
         # Main form changes
-        new_main = self.detector.extract_new_data(forms_dict['main'])
-        new_main = {k: v for k, v in new_main.items() if k not in self.metadata_fields}
-        
+        new_main = filter_metadata_fields(self.detector.extract_new_data(forms_dict['main']))
         main_changes = self.detector.detect_changes(all_old_data['main'], new_main)
         all_changes.extend(main_changes)
         
         # Personal form changes (if present)
         if 'personal' in forms_dict:
-            new_personal = self.detector.extract_new_data(forms_dict['personal'])
-            new_personal = {k: v for k, v in new_personal.items() if k not in self.metadata_fields}
-            
+            new_personal = filter_metadata_fields(
+                self.detector.extract_new_data(forms_dict['personal'])
+            )
             old_personal = all_old_data.get('personal', {})
             personal_changes = self.detector.detect_changes(old_personal, new_personal)
             
@@ -493,9 +504,7 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
         
         # Related forms changes
         for name, form in forms_dict.get('related', {}).items():
-            new_data = self.detector.extract_new_data(form)
-            new_data = {k: v for k, v in new_data.items() if k not in self.metadata_fields}
-            
+            new_data = filter_metadata_fields(self.detector.extract_new_data(form))
             old_data = all_old_data.get(name, {})
             
             changes = self.detector.detect_changes(old_data, new_data)
@@ -507,16 +516,6 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
             all_changes.extend(changes)
         
         return all_changes
-    
-    def _get_patient_id_from_instance(self, instance):
-        """Extract patient ID"""
-        if hasattr(instance, 'USUBJID'):
-            if hasattr(instance.USUBJID, 'USUBJID'):
-                return instance.USUBJID.USUBJID
-            return str(instance.USUBJID)
-        
-        pk_field = instance._meta.pk.name
-        return str(getattr(instance, pk_field))
     
     def _build_context(self, forms_dict, extra_context):
         """Build template context with proper form/formset naming"""
@@ -531,16 +530,18 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
             context['form'] = main_form  # Generic alias
             context['main'] = main_form  # Audit system alias
             
-            #  Add CRF-specific aliases based on form class
+            # Add CRF-specific aliases based on form class
             form_class_name = main_form.__class__.__name__
-            if 'FollowUp' in form_class_name:
-                context['followup_form'] = main_form
-            elif 'Enrollment' in form_class_name:
-                context['enrollment_form'] = main_form
-            elif 'Discharge' in form_class_name:
-                context['discharge_form'] = main_form
-            elif 'Clinical' in form_class_name:
-                context['clinical_form'] = main_form
+            form_type_mapping = {
+                'FollowUp': 'followup_form',
+                'Enrollment': 'enrollment_form',
+                'Discharge': 'discharge_form',
+                'Clinical': 'clinical_form',
+            }
+            for keyword, context_key in form_type_mapping.items():
+                if keyword in form_class_name:
+                    context[context_key] = main_form
+                    break
         
         # Add personal form if present
         if 'personal' in forms_dict:
@@ -550,36 +551,11 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
         for name, form in forms_dict.get('related', {}).items():
             context[f'{name}_form'] = form
         
+        # Add formsets using centralized mapping
         for name, formset in forms_dict.get('formsets', {}).items():
-            if name == 'medications':
-                # Support both Patient (medhisdrug_formset) and Contact (medication_formset)
-                context['medhisdrug_formset'] = formset  # Patient FU28/90
-                context['medication_formset'] = formset   # Contact FU28/90
-            elif name == 'rehospitalizations':
-                context['rehospitalization_formset'] = formset
-            elif name == 'antibiotics':
-                context['antibiotic_formset'] = formset
-            elif name == 'icd_codes':
-                context['icd_formset'] = formset
-            elif name == 'laboratory_tests':
-                context['formset'] = formset
-            elif name == 'prior_antibiotics':
-                context['prior_antibiotic_formset'] = formset
-            elif name == 'initial_antibiotics':
-                context['initial_antibiotic_formset'] = formset
-            elif name == 'main_antibiotics':
-                context['main_antibiotic_formset'] = formset
-            elif name == 'vaso_drugs':
-                context['vaso_drug_formset'] = formset
-            elif name == 'hospiprocesses':
-                context['hospi_process_formset'] = formset
-            elif name == 'ae_hosp_events':
-                context['ae_hosp_event_formset'] = formset
-            elif name == 'improve_symptoms':
-                context['improve_sympt_formset'] = formset
-            else:
-                # Default
-                context[f'{name}_formset'] = formset
+            context_keys = FORMSET_CONTEXT_MAPPING.get(name, [f'{name}_formset'])
+            for key in context_keys:
+                context[key] = formset
         
         return context
     
@@ -719,7 +695,7 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                 messages.warning(request, warning)
         
         # STEP 6: Set audit data
-        patient_id = self._get_patient_id_from_instance(main_instance)
+        patient_id = get_patient_id_from_instance(main_instance)
         site_id = getattr(main_instance, 'SITEID', None)
         
         self._set_audit_data(request, patient_id, site_id, all_changes, sanitized_reasons)
@@ -744,32 +720,28 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
         for name, config in forms_config.get('formsets', {}).items():
             formset_old_data = {}
             
-            #  Support both InlineFormSet (instance+related_name) and ModelFormSet (queryset)
+            # Support both InlineFormSet (instance+related_name) and ModelFormSet (queryset)
             instance = config.get('instance')
             queryset = config.get('queryset')
             
             if instance:
-                # InlineFormSet pattern: use related_name to get manager
                 related_name = config.get('related_name', name)
                 manager = getattr(instance, related_name, None)
                 
                 if manager:
                     for obj in manager.all():
-                        old_data = self.detector.extract_old_data(obj)
-                        old_data = {k: v for k, v in old_data.items() 
-                                   if k not in self.metadata_fields}
-                        formset_old_data[obj.pk] = old_data
+                        formset_old_data[obj.pk] = filter_metadata_fields(
+                            self.detector.extract_old_data(obj)
+                        )
             
             elif queryset is not None:
-                # ModelFormSet pattern: iterate queryset directly
                 for obj in queryset:
-                    old_data = self.detector.extract_old_data(obj)
-                    old_data = {k: v for k, v in old_data.items() 
-                               if k not in self.metadata_fields}
-                    formset_old_data[obj.pk] = old_data
+                    formset_old_data[obj.pk] = filter_metadata_fields(
+                        self.detector.extract_old_data(obj)
+                    )
             
             all_old_data['formsets'][name] = formset_old_data
-            logger.info(f" Captured {len(formset_old_data)} old {name}")
+            logger.debug("Captured %d old %s", len(formset_old_data), name)
         
         return all_old_data
     
@@ -789,24 +761,10 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
             queryset = config.get('queryset')  # ← Optional for ModelFormSet
             formset_kwargs = config.get('kwargs', {})  # Get extra kwargs
             
-            #  THÊM: Log formset initialization
-            logger.info(f" Initializing formset '{name}':")
-            logger.info(f"   Class: {formset_class}")
-            logger.info(f"   Prefix: {prefix}")
-            logger.info(f"   Instance: {instance}")
-            logger.info(f"   Queryset: {queryset}")
-            
-            #  THÊM: Log POST data for this formset
-            if prefix:
-                post_keys = [k for k in request.POST.keys() if k.startswith(f'{prefix}-')]
-                logger.info(f"   POST keys with prefix '{prefix}': {len(post_keys)}")
-                for key in post_keys[:5]:  # Show first 5
-                    logger.info(f"      {key}: {request.POST[key]}")
-            else:
-                post_keys = [k for k in request.POST.keys() if k.startswith('form-')]
-                logger.info(f"   POST keys with default prefix 'form-': {len(post_keys)}")
-                for key in post_keys[:5]:  # Show first 5
-                    logger.info(f"      {key}: {request.POST[key]}")
+            # DEBUG level logging to reduce overhead
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("Initializing formset '%s': class=%s, prefix=%s",
+                           name, formset_class, prefix)
             
             #  Support both InlineFormSet (instance) and ModelFormSet (queryset)
             kwargs = {'prefix': prefix} if prefix else {}
@@ -823,10 +781,10 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
             
             forms_dict['formsets'][name] = formset_class(request.POST, **kwargs)
             
-            #  THÊM: Log formset after creation
-            formset = forms_dict['formsets'][name]
-            logger.info(f"   Created with {len(formset.forms)} forms")
-            logger.info(f"   Management form TOTAL_FORMS: {formset.management_form['TOTAL_FORMS'].value()}")
+            # Log formset creation at DEBUG level
+            if logger.isEnabledFor(logging.DEBUG):
+                formset = forms_dict['formsets'][name]
+                logger.debug("Created formset '%s' with %d forms", name, len(formset.forms))
         
         return forms_dict
     
@@ -835,36 +793,26 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
         # Validate main + related
         valid = self._validate_all_forms(forms_dict)
         
-        # Log main form
-        logger.info(f" Main form valid: {forms_dict['main'].is_valid()}")
+        # Log only errors to reduce overhead
         if not forms_dict['main'].is_valid():
-            logger.error(f" Main form errors: {forms_dict['main'].errors}")
+            logger.error("Main form errors: %s", forms_dict['main'].errors)
         
-        # Log related forms
+        # Log related forms errors only
         for name, form in forms_dict.get('related', {}).items():
-            is_valid = form.is_valid()
-            logger.info(f" Related '{name}' valid: {is_valid}")
-            if not is_valid:
-                logger.error(f" Related '{name}' errors: {form.errors}")
+            if not form.is_valid():
+                logger.error("Related '%s' errors: %s", name, form.errors)
         
-        #  FIX: Validate formsets
-        for name, formset in forms_dict.get('formsets', {}).items():  # ← .items()
+        # Validate formsets
+        for name, formset in forms_dict.get('formsets', {}).items():
             formset_valid = formset.is_valid()
-            logger.info(f" Formset '{name}' valid: {formset_valid}")
             
             if not formset_valid:
-                logger.error(f" Formset '{name}' errors: {formset.errors}")
-                logger.error(f" Formset '{name}' non_form_errors: {formset.non_form_errors()}")
-                
-                # Log management form
-                mgmt = formset.management_form
-                logger.error(f" Management form:")
-                logger.error(f"   TOTAL_FORMS: {mgmt['TOTAL_FORMS'].value()}")
-                logger.error(f"   INITIAL_FORMS: {mgmt['INITIAL_FORMS'].value()}")
+                logger.error("Formset '%s' errors: %s", name, formset.errors)
+                logger.error("Formset '%s' non_form_errors: %s", name, formset.non_form_errors())
             
             valid = formset_valid and valid
         
-        logger.info(f" Overall validation result: {valid}")
+        logger.debug("Overall validation result: %s", valid)
         return valid
     
     def _detect_complex_changes(self, all_old_data, forms_dict):
@@ -897,12 +845,9 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                 # Check existing item changes
                 if instance.pk and instance.pk in formset_old_data:
                     old_data = formset_old_data[instance.pk]
-                    new_data = self.detector.extract_new_data(form)
-                    new_data = {k: v for k, v in new_data.items() 
-                               if k not in self.metadata_fields}
+                    new_data = filter_metadata_fields(self.detector.extract_new_data(form))
                     
-                    #  FIX: Only compare fields present in the form
-                    # Filter old_data to match new_data fields
+                    # Only compare fields present in the form
                     old_data_filtered = {k: v for k, v in old_data.items() if k in new_data}
                     
                     changes = self.detector.detect_changes(old_data_filtered, new_data)

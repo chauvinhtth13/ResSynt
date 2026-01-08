@@ -1,27 +1,27 @@
-# backends/audit_log/models/audit_log.py
+# backends/audit_logs/models/audit_logs.py
 """
-🌐 BASE AUDIT LOG MODELS - Shared across all studies
+CONCRETE AUDIT LOG MODELS - Reference implementation
 
 Features:
 - Schema-aware (works with multi-schema PostgreSQL)
 - Immutable audit logs (cannot edit/delete)
-- Checksum-based integrity verification
+- HMAC-SHA-256 checksum for integrity verification
 - Site-based access control
-- Cross-study compatible
 
-Usage in studies:
-    from backends.audit_log.models import AuditLog, AuditLogDetail
+NOTE: These models have managed=False, so Django won't create migrations.
+Study apps should inherit from AbstractAuditLog/AbstractAuditLogDetail in base.py
+and create their own migrations.
 """
+import hmac
 from django.db import models
-from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 
-class AuditLog(models.Model):
+class AuditLogs(models.Model):
     """
     Main audit log entry - BASE MODEL for all studies
     
-    🔄 Schema routing handled automatically by schema_editor
+    Schema routing handled automatically by schema_editor
     """
     
     ACTION_CHOICES = [
@@ -117,14 +117,18 @@ class AuditLog(models.Model):
     )
     
     class Meta:
-        # 🌐 IMPORTANT: Use 'log' schema prefix for audit tables
+        # CRITICAL: managed=False means Django won't create migrations for this model
+        # Study apps should inherit from AbstractAuditLog and create their own models
+        managed = False
+        
+        # IMPORTANT: Use 'log' schema prefix for audit tables
         db_table = 'log"."audit_log'
         
-        # 🔧 Mark this as audit log table using db_table_comment
+        # Mark this as audit log table using db_table_comment
         db_table_comment = 'AUDIT_LOG_TABLE'  # Special marker for schema_editor
         
-        # ✅ CRITICAL: Declare app_label for base models
-        app_label = 'audit_log'
+        # CRITICAL: Declare app_label for base models (must match apps.py label)
+        app_label = 'audit_logs'
         
         ordering = ['-timestamp']
         verbose_name = 'Audit Log'
@@ -144,12 +148,12 @@ class AuditLog(models.Model):
         return f"{self.username} {self.action} {self.model_name} at {self.timestamp}"
     
     def delete(self, *args, **kwargs):
-        """🔒 Prevent deletion - audit logs are immutable"""
+        """Prevent deletion - audit logs are immutable"""
         raise PermissionDenied("Audit logs cannot be deleted")
     
     def save(self, *args, **kwargs):
         """
-        🔒 Generate checksum and prevent editing
+        Generate checksum and prevent editing
         
         Checksum is generated from:
         - User info (user_id, username)
@@ -161,7 +165,7 @@ class AuditLog(models.Model):
             raise PermissionDenied("Audit logs are immutable")
         
         if not self.checksum:
-            from backends.audit_log.utils.integrity import IntegrityChecker
+            from backends.audit_logs.utils.integrity import IntegrityChecker
             
             # Use temp data if available (set by decorator)
             if hasattr(self, '_temp_checksum_data'):
@@ -201,7 +205,7 @@ class AuditLog(models.Model):
         Returns:
             bool: True if checksum matches, False if tampered
         """
-        from backends.audit_log.utils.integrity import IntegrityChecker
+        from backends.audit_logs.utils.integrity import IntegrityChecker
         
         details = self.details.all()
         
@@ -225,7 +229,9 @@ class AuditLog(models.Model):
         }
         
         calculated_checksum = IntegrityChecker.generate_checksum(audit_data)
-        is_valid = (calculated_checksum == self.checksum)
+        
+        # SECURITY: Use constant-time comparison to prevent timing attacks
+        is_valid = hmac.compare_digest(calculated_checksum, self.checksum)
         
         if not is_valid:
             import logging
@@ -253,15 +259,15 @@ class AuditLog(models.Model):
             return None
 
 
-class AuditLogDetail(models.Model):
+class AuditLogsDetail(models.Model):
     """
     Field-level change details - BASE MODEL for all studies
     
-    🔄 Schema routing handled automatically by schema_editor
+    Schema routing handled automatically by schema_editor
     """
     
     audit_log = models.ForeignKey(
-        AuditLog,
+        AuditLogs,
         on_delete=models.PROTECT,
         related_name='details'
     )
@@ -288,14 +294,17 @@ class AuditLogDetail(models.Model):
     )
     
     class Meta:
-        # 🌐 IMPORTANT: Use 'log' schema prefix for audit tables
+        # CRITICAL: managed=False means Django won't create migrations for this model
+        managed = False
+        
+        # IMPORTANT: Use 'log' schema prefix for audit tables
         db_table = 'log"."audit_log_detail'
         
-        # 🔧 Mark as audit log table
+        # Mark as audit log table
         db_table_comment = 'AUDIT_LOG_TABLE'
         
-        # ✅ CRITICAL: Declare app_label for base models
-        app_label = 'audit_log'
+        # CRITICAL: Declare app_label for base models (must match apps.py label)
+        app_label = 'audit_logs'
         
         ordering = ['field_name']
         verbose_name = 'Audit Log Detail'
@@ -311,11 +320,11 @@ class AuditLogDetail(models.Model):
         return f"{self.field_name}: {self.old_value} → {self.new_value}"
     
     def delete(self, *args, **kwargs):
-        """🔒 Prevent deletion - audit logs are immutable"""
+        """Prevent deletion - audit logs are immutable"""
         raise PermissionDenied("Audit log details cannot be deleted")
     
     def save(self, *args, **kwargs):
-        """🔒 Prevent editing"""
+        """Prevent editing"""
         if self.pk:
             raise PermissionDenied("Audit log details are immutable")
         super().save(*args, **kwargs)

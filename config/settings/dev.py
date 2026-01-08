@@ -13,6 +13,20 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", ".localhost"]
 
+# =============================================================================
+# CACHE (Force LocMemCache in dev - SKIP Redis for speed)
+# =============================================================================
+# Override base.py cache config to avoid Redis connection delays
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "resync-dev-cache",
+        "OPTIONS": {
+            "MAX_ENTRIES": 1000,
+        }
+    }
+}
+
 # Database uses PostgreSQL (same as prod for consistency)
 
 # Disable HTTPS requirements

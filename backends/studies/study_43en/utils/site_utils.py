@@ -5,7 +5,7 @@ Site Filtering Utilities for Views
 ===================================
 
 High-level helper functions matching dashboard.py logic
-✅ OPTIMIZED: Redis caching integrated
+OPTIMIZED: Redis caching integrated
 """
 
 from django.db.models import Q
@@ -90,7 +90,7 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):
         # Try to get from cache
         cached_pks = cache.get(cache_key)
         if cached_pks is not None:
-            logger.debug(f"✅ Cache HIT: [{model.__name__}] {len(cached_pks)} objects")
+            logger.debug(f"Cache HIT: [{model.__name__}] {len(cached_pks)} objects")
             # Return queryset filtered by cached PKs
             return model.objects.using(DB_ALIAS).filter(pk__in=cached_pks)
     

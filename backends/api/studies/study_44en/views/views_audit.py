@@ -17,7 +17,7 @@ from django.contrib import messages
 from datetime import datetime
 from django.contrib.auth import get_user_model
 
-from backends.audit_log.models.audit_log import AuditLog, AuditLogDetail
+from backends.audit_logs.models.audit_logs import AuditLog, AuditLogDetail
 from backends.studies.study_44en.utils.permission_decorators import require_crf_view
 
 User = get_user_model()
@@ -118,7 +118,7 @@ def audit_log_list(request):
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     
-    logger.info(f"✅ Found {paginator.count} audit logs")
+    logger.info(f"Found {paginator.count} audit logs")
     
     # Get filter options
     user_ids = AuditLog.objects.using(study_db)\

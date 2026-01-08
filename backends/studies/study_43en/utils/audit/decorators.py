@@ -8,9 +8,9 @@ All new code should import from backends.audit_log
 import logging
 from functools import wraps
 from django.db import transaction
-# ✅ NEW: Import from base audit_log
-from backends.audit_log.models import AuditLog, AuditLogDetail
-from backends.audit_log.utils.helpers import get_client_ip
+# NEW: Import from base audit_log
+from backends.audit_logs.models import AuditLog, AuditLogDetail
+from backends.audit_logs.utils.helpers import get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def audit_log(model_name: str, get_patient_id_from: str = 'usubjid'):
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            # 🔧 FIX: Get patient_id with case-insensitive lookup
+            # FIX: Get patient_id with case-insensitive lookup
             patient_id = kwargs.get(get_patient_id_from)
             
             #  If not found, try case-insensitive search
@@ -109,7 +109,7 @@ def _create_simple_audit_log(request, action, model_name, patient_id):
     Create simple audit log for CREATE/VIEW (no change details)
     Automatically extracts site_id from multiple sources
     """
-    # ✅ Import from base (already imported at top)
+    # Import from base (already imported at top)
     # from backends.audit_log.models import AuditLog
     from backends.studies.study_43en.models.patient import SCR_CASE
     from backends.studies.study_43en.models.contact import SCR_CONTACT
@@ -122,7 +122,7 @@ def _create_simple_audit_log(request, action, model_name, patient_id):
     audit_data = getattr(request, 'audit_data', {})
     site_id = audit_data.get('site_id')
     
-    # 🔧 FIX: Try to query from database with patient_id (USUBJID or SCRID)
+    # FIX: Try to query from database with patient_id (USUBJID or SCRID)
     if not site_id and patient_id:
         try:
             patient_id_str = str(patient_id)

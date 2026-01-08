@@ -1,6 +1,6 @@
 # backends/api/studies/study_44en/views/household/views_household_case.py
 """
-✅ REFACTORED: Household Case CRUD Views - Using Separate Helpers
+REFACTORED: Household Case CRUD Views - Using Separate Helpers
 
 Following Django development rules:
 - Backend-first approach
@@ -29,10 +29,10 @@ from backends.studies.study_44en.forms.household import (
 )
 
 # Import audit utilities
-from backends.audit_log.utils.detector import ChangeDetector
-from backends.audit_log.utils.validator import ReasonValidator
+from backends.audit_logs.utils.detector import ChangeDetector
+from backends.audit_logs.utils.validator import ReasonValidator
 
-# ✅ Import helpers from separate file
+# Import helpers from separate file
 from .case_helpers import (
     get_household_with_related,
     save_household_and_related,
@@ -111,7 +111,7 @@ def household_detail(request, hhid):
     logger.info(f"=== 👁️ HOUSEHOLD DETAIL: {hhid} ===")
     logger.info("="*80)
     
-    # ✅ Use helper to get household and members
+    # Use helper to get household and members
     household, members = get_household_with_related(request, hhid)
     
     # Get respondent info
@@ -138,7 +138,7 @@ def household_detail(request, hhid):
         animals = []
         logger.info(f"⚠️ No exposure data")
     
-    # ✅ Use helper to get summary
+    # Use helper to get summary
     summary = get_household_summary(household)
     
     context = {
@@ -166,7 +166,7 @@ def household_detail(request, hhid):
 @require_crf_add('hh_case')
 def household_create(request):
     """
-    ✅ Create new household with members
+    Create new household with members
     
     Following rules:
     - Django Forms handle validation (backend)
@@ -196,7 +196,7 @@ def household_create(request):
         
         logger.info("📝 Validating forms...")
         
-        # ✅ Validate both forms (Backend validation)
+        # Validate both forms (Backend validation)
         household_valid = household_form.is_valid()
         formset_valid = member_formset.is_valid()
         
@@ -206,7 +206,7 @@ def household_create(request):
         if household_valid and formset_valid:
             logger.info("💾 All forms valid - Calling save helper...")
             
-            # ✅ Use helper to save in transaction
+            # Use helper to save in transaction
             household = save_household_and_related(
                 request=request,
                 household_form=household_form,
@@ -216,7 +216,7 @@ def household_create(request):
             
             if household:
                 logger.info("="*80)
-                logger.info(f"=== ✅ HOUSEHOLD CREATE SUCCESS: {household.HHID} ===")
+                logger.info(f"=== HOUSEHOLD CREATE SUCCESS: {household.HHID} ===")
                 logger.info("="*80)
                 
                 messages.success(
@@ -228,7 +228,7 @@ def household_create(request):
                 logger.error("❌ Save helper returned None")
                 messages.error(request, 'Lỗi khi lưu dữ liệu. Vui lòng thử lại.')
         else:
-            # ✅ Use helper to log errors
+            # Use helper to log errors
             forms_with_errors = log_all_form_errors({
                 'Household Form': household_form,
                 'Member Formset': member_formset,
@@ -273,7 +273,7 @@ def household_create(request):
 
 # backends/api/studies/study_44en/views/household/views_household_case.py
 """
-✅ FIXED: Household Case UPDATE View - Proper Change Detection
+FIXED: Household Case UPDATE View - Proper Change Detection
 
 Issue: ChangeDetector was detecting 0 changes even when fields changed
 Fix: Use correct detector initialization and comparison
@@ -296,10 +296,10 @@ from backends.studies.study_44en.forms.household import (
 )
 
 # Import audit utilities
-from backends.audit_log.utils.detector import ChangeDetector
-from backends.audit_log.utils.validator import ReasonValidator
+from backends.audit_logs.utils.detector import ChangeDetector
+from backends.audit_logs.utils.validator import ReasonValidator
 
-# ✅ Import helpers from separate file
+# Import helpers from separate file
 from .case_helpers import (
     get_household_with_related,
     save_household_and_related,
@@ -328,7 +328,7 @@ logger = logging.getLogger(__name__)
 @require_crf_change('hh_case')
 def household_update(request, hhid):
     """
-    ✅ FIXED: Update household WITH PROPER CHANGE DETECTION
+    FIXED: Update household WITH PROPER CHANGE DETECTION
     
     Issue: Was detecting 0 changes even when fields changed
     Fix: Use correct ChangeDetector initialization with instance and form
@@ -342,7 +342,7 @@ def household_update(request, hhid):
     logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
     logger.info("="*80)
     
-    # ✅ Use helper to get household with members
+    # Use helper to get household with members
     household, members = get_household_with_related(request, hhid)
     logger.info(f"   Household found: {household.HHID}, {members.count()} members")
     
@@ -409,7 +409,7 @@ def household_update(request, hhid):
     logger.info(f"   Member formset: {'VALID ✅' if formset_valid else 'INVALID ❌'}")
     
     if form_valid and formset_valid:
-        logger.info("✅ All forms valid")
+        logger.info("All forms valid")
         
         # ===================================
         # STEP 1: DETECT ALL CHANGES
@@ -533,8 +533,8 @@ def household_update(request, hhid):
                 'is_create': False,
                 'is_readonly': False,
                 'today': date.today(),
-                'show_reason_form': True,  # ✅ CRITICAL: Enable modal
-                'detected_changes': all_changes,  # ✅ CRITICAL: Pass changes to template
+                'show_reason_form': True,  # CRITICAL: Enable modal
+                'detected_changes': all_changes,  # CRITICAL: Pass changes to template
                 'submitted_reasons': reasons_data,  # Preserve submitted reasons
                 'cancel_url': reverse('study_44en:household:detail', kwargs={'hhid': hhid}),
             }
@@ -568,13 +568,13 @@ def household_update(request, hhid):
             household_form=household_form,
             member_formset=member_formset,
             is_create=False,
-            change_reasons=sanitized_reasons,  # ✅ Pass reasons for audit log
-            all_changes=all_changes  # ✅ Pass change details for audit log
+            change_reasons=sanitized_reasons,  # Pass reasons for audit log
+            all_changes=all_changes  # Pass change details for audit log
         )
         
         if household:
             logger.info("="*80)
-            logger.info(f"=== ✅ HOUSEHOLD UPDATE SUCCESS: {household.HHID} ===")
+            logger.info(f"=== HOUSEHOLD UPDATE SUCCESS: {household.HHID} ===")
             logger.info("="*80)
             
             messages.success(request, f'Cập nhật household {household.HHID} thành công!')
@@ -618,7 +618,7 @@ def household_update(request, hhid):
 @require_crf_view('hh_case')
 def household_view(request, hhid):
     """
-    ✅ View household (read-only mode)
+    View household (read-only mode)
     
     Following rules:
     - Use backend logic to make forms readonly
@@ -628,7 +628,7 @@ def household_view(request, hhid):
     logger.info(f"=== 👁️ HOUSEHOLD VIEW (READ-ONLY): {hhid} ===")
     logger.info("="*80)
     
-    # ✅ Use helper to get household with members
+    # Use helper to get household with members
     household, members = get_household_with_related(request, hhid)
     
     # Create readonly forms
@@ -638,7 +638,7 @@ def household_view(request, hhid):
         prefix='members'
     )
     
-    # ✅ Use helpers to make forms readonly
+    # Use helpers to make forms readonly
     make_form_readonly(household_form)
     make_formset_readonly(member_formset)
     

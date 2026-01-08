@@ -9,7 +9,7 @@ ORGANIZATION:
 2. Utility functions
 3. Save functions
 4. Load functions
-5. ✅ NEW: Change Detection Functions for Audit Log
+5. NEW: Change Detection Functions for Audit Log
 """
 
 import logging
@@ -190,12 +190,12 @@ def load_samples(individual):
 
 
 # ==========================================
-# ✅ NEW: CHANGE DETECTION FOR AUDIT LOG
+# NEW: CHANGE DETECTION FOR AUDIT LOG
 # ==========================================
 
 def detect_sample_flat_field_changes(request, individual):
     """
-    ✅ Detect changes in sample flat fields (4 visit times x 4 fields each)
+    Detect changes in sample flat fields (4 visit times x 4 fields each)
     
     Compares POST data with database data for:
     - sample_{time} (radio: yes/no/na)
@@ -308,7 +308,7 @@ def detect_sample_flat_field_changes(request, individual):
 
 def detect_food_frequency_form_changes(old_data, new_data):
     """
-    ✅ Detect changes in FoodFrequency form fields
+    Detect changes in FoodFrequency form fields
     
     Args:
         old_data: Dict of old values from detector.extract_old_data()
@@ -353,7 +353,7 @@ __all__ = [
     'parse_date_string',
     'save_samples',
     'load_samples',
-    # ✅ NEW: Change detection for audit log
+    # NEW: Change detection for audit log
     'detect_sample_flat_field_changes',
     'detect_food_frequency_form_changes',
 ]

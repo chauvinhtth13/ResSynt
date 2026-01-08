@@ -1,6 +1,8 @@
-# backends/audit_log/utils/helpers.py
+# backends/audit_logs/utils/helpers.py
 """
-🌐 BASE Common Helper Functions - Shared across all studies
+BASE Common Helper Functions - Shared across all studies
+
+PERFORMANCE: Pre-compiled regex patterns
 """
 import logging
 import re
@@ -9,17 +11,45 @@ from datetime import date, datetime
 
 logger = logging.getLogger(__name__)
 
+# Pre-compile date pattern for better performance
+_DATE_PATTERN = re.compile(r'^\d{1,2}/\d{1,2}/\d{4}$')
+
 
 def get_client_ip(request) -> str:
     """
     Get client IP address from request
     
     Handles X-Forwarded-For header (for proxies/load balancers)
+    
+    SECURITY: Validates IP format to prevent injection attacks
     """
+    import ipaddress
+    
+    def validate_ip(ip_str: str) -> str:
+        """Validate and sanitize IP address"""
+        if not ip_str or ip_str == 'unknown':
+            return 'unknown'
+        
+        # Remove whitespace
+        ip_str = ip_str.strip()
+        
+        # Validate IPv4 or IPv6 format
+        try:
+            ip_obj = ipaddress.ip_address(ip_str)
+            return str(ip_obj)
+        except ValueError:
+            # Invalid IP format - log and return sanitized version
+            logger.warning(f"Invalid IP format detected: {ip_str[:50]}")
+            return 'invalid'
+    
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
-        return x_forwarded_for.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR', 'unknown')
+        # Get first IP (client), validate it
+        first_ip = x_forwarded_for.split(',')[0].strip()
+        return validate_ip(first_ip)
+    
+    remote_addr = request.META.get('REMOTE_ADDR', 'unknown')
+    return validate_ip(remote_addr)
 
 
 def normalize_value(val: Any) -> str:
@@ -47,7 +77,7 @@ def normalize_value(val: Any) -> str:
     
     v = str(val).strip()
     
-    # ✅ CRITICAL FIX: Don't normalize 'None' string to empty!
+    # CRITICAL FIX: Don't normalize 'None' string to empty!
     # Database might have literal string 'None', keep it as is
     # Only normalize if lowercase AND checking for actual null indicators
     # but 'None' in database is DATA, not null!
@@ -59,8 +89,8 @@ def normalize_value(val: Any) -> str:
     if v.lower() in ['yes', 'true']:
         return '1'
     
-    # Normalize dates (DD/MM/YYYY → YYYY-MM-DD)
-    if re.match(r'^\d{1,2}/\d{1,2}/\d{4}$', v):
+    # Normalize dates (DD/MM/YYYY → YYYY-MM-DD) using pre-compiled pattern
+    if _DATE_PATTERN.match(v):
         parts = v.split('/')
         return f"{parts[2]}-{parts[1].zfill(2)}-{parts[0].zfill(2)}"
     

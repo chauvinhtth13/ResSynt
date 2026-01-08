@@ -1,8 +1,10 @@
-# backends/audit_log/utils/sanitizer.py
+# backends/audit_logs/utils/sanitizer.py
 """
-🌐 BASE Security Sanitizer - Shared across all studies
+BASE Security Sanitizer - Shared across all studies
 
 Prevents XSS, SQL injection, CSV injection, etc.
+
+PERFORMANCE: Regex patterns are pre-compiled at module load time
 """
 import re
 import html
@@ -13,10 +15,69 @@ from typing import Dict, List
 logger = logging.getLogger(__name__)
 
 
+# Pre-compile regex patterns for better performance
+_XSS_PATTERNS = [
+    re.compile(r'<\s*script[^>]*>', re.IGNORECASE | re.DOTALL),
+    re.compile(r'<\s*/\s*script\s*>', re.IGNORECASE),
+    re.compile(r'javascript\s*:', re.IGNORECASE),
+    re.compile(r'on\w+\s*=', re.IGNORECASE),
+    re.compile(r'<\s*iframe', re.IGNORECASE),
+    re.compile(r'<\s*object', re.IGNORECASE),
+    re.compile(r'<\s*embed', re.IGNORECASE),
+    re.compile(r'<\s*img[^>]*(on\w+|src\s*=\s*["\']?\s*javascript)', re.IGNORECASE),
+    re.compile(r'<\s*svg[^>]*on\w+', re.IGNORECASE),
+    re.compile(r'<\s*body[^>]*on\w+', re.IGNORECASE),
+    re.compile(r'expression\s*\(', re.IGNORECASE),
+    re.compile(r'vbscript\s*:', re.IGNORECASE),
+    re.compile(r'data\s*:\s*text/html', re.IGNORECASE),
+    re.compile(r'&#\d+;'),
+    re.compile(r'\\u[0-9a-f]{4}', re.IGNORECASE),
+    re.compile(r'<\s*meta[^>]*http-equiv', re.IGNORECASE),
+]
+
+_SQL_PATTERNS = [
+    re.compile(r'union\s+select', re.IGNORECASE),
+    re.compile(r'select\s+.*\s+from', re.IGNORECASE),
+    re.compile(r'insert\s+into', re.IGNORECASE),
+    re.compile(r'update\s+.*\s+set', re.IGNORECASE),
+    re.compile(r'delete\s+from', re.IGNORECASE),
+    re.compile(r'drop\s+(table|database)', re.IGNORECASE),
+    re.compile(r'create\s+(table|database)', re.IGNORECASE),
+    re.compile(r'alter\s+table', re.IGNORECASE),
+    re.compile(r"'--"),
+    re.compile(r'--'),
+    re.compile(r'/\*.*?\*/'),
+    re.compile(r"'\s*(or|and)\s+'", re.IGNORECASE),
+    re.compile(r'xp_cmdshell', re.IGNORECASE),
+    re.compile(r'sp_executesql', re.IGNORECASE),
+    re.compile(r'0x[0-9a-f]+', re.IGNORECASE),
+    re.compile(r'char\s*\(', re.IGNORECASE),
+    re.compile(r'concat\s*\(', re.IGNORECASE),
+    re.compile(r'benchmark\s*\(', re.IGNORECASE),
+    re.compile(r'sleep\s*\(', re.IGNORECASE),
+    re.compile(r'pg_sleep', re.IGNORECASE),
+    re.compile(r'waitfor\s+delay', re.IGNORECASE),
+    re.compile(r'load_file\s*\(', re.IGNORECASE),
+    re.compile(r'into\s+(out|dump)file', re.IGNORECASE),
+    re.compile(r'information_schema', re.IGNORECASE),
+    re.compile(r'sys\.tables|sysobjects', re.IGNORECASE),
+    re.compile(r'pg_catalog', re.IGNORECASE),
+]
+
+_CMD_PATTERNS = [
+    re.compile(r"[;&|`$]"),
+    re.compile(r"\$\{.*?\}"),
+    re.compile(r"\$\(.*?\)"),
+]
+
+# Pre-compile control char removal regex
+_CONTROL_CHARS_PATTERN = re.compile(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]')
+
+
 class SecuritySanitizer:
     """Comprehensive security sanitizer"""
     
-    # ✅ Enhanced XSS patterns (prevent bypasses)
+    # Enhanced XSS patterns (prevent bypasses)
     XSS_PATTERNS = [
         r'<\s*script[^>]*>',                       # <script> opening tag
         r'<\s*/\s*script\s*>',                     # </script> closing tag
@@ -36,7 +97,7 @@ class SecuritySanitizer:
         r'<\s*meta[^>]*http-equiv',                # <meta http-equiv
     ]
     
-    # ✅ More precise SQL patterns (require SQL context)
+    # More precise SQL patterns (require SQL context)
     SQL_PATTERNS = [
         r'union\s+select',                         # UNION SELECT
         r'select\s+.*\s+from',                     # SELECT ... FROM
@@ -52,6 +113,19 @@ class SecuritySanitizer:
         r"'\s*(or|and)\s+'",                       # '1' or '1'='1
         r'xp_cmdshell',                            # SQL Server xp_cmdshell
         r'sp_executesql',                          # SQL Server sp_executesql
+        # Additional bypass techniques
+        r'0x[0-9a-f]+',                            # Hex encoding
+        r'char\s*\(',                              # CHAR() function
+        r'concat\s*\(',                            # CONCAT() function
+        r'benchmark\s*\(',                         # MySQL benchmark attack
+        r'sleep\s*\(',                             # Time-based blind SQLi
+        r'pg_sleep',                               # PostgreSQL sleep
+        r'waitfor\s+delay',                        # SQL Server waitfor
+        r'load_file\s*\(',                         # MySQL file read
+        r'into\s+(out|dump)file',                  # MySQL file write
+        r'information_schema',                     # Schema discovery
+        r'sys\.tables|sysobjects',                 # SQL Server sys tables
+        r'pg_catalog',                             # PostgreSQL catalog
     ]
     
     CMD_PATTERNS = [
@@ -88,7 +162,7 @@ class SecuritySanitizer:
         if c.isspace():
             return True
         
-        # ✅ Vietnamese Unicode range
+        # Vietnamese Unicode range
         if '\u00C0' <= c <= '\u1EF9':
             return True
         
@@ -123,53 +197,55 @@ class SecuritySanitizer:
         
         original = text
         
-        # ✅ 1. Length check
+        # 1. Length check
         if len(text) > self.max_length:
             errors.append(f'Lý do quá dài (tối đa {self.max_length} ký tự)')
             text = text[:self.max_length]
         
-        # ✅ 2. Strip whitespace
+        # 2. Strip whitespace
         text = text.strip()
         
         if len(text) < self.min_length:
             errors.append(f'Lý do quá ngắn (tối thiểu {self.min_length} ký tự)')
         
-        # ✅ 3. Unicode normalization (prevent Unicode attacks)
+        # 3. Unicode normalization (prevent Unicode attacks)
         text = unicodedata.normalize('NFKC', text)
         
-        # ✅ 4. Remove null bytes & control characters
+        # 4. Remove null bytes & control characters (use pre-compiled pattern)
         text = text.replace('\x00', '')
-        text = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]', '', text)
+        text = _CONTROL_CHARS_PATTERN.sub('', text)
         
-        # ✅ 5. Check XSS patterns
-        text_lower = text.lower()
-        for pattern in self.XSS_PATTERNS:
-            if re.search(pattern, text_lower, re.IGNORECASE | re.DOTALL):
+        # 5. Check XSS patterns (use pre-compiled patterns)
+        xss_detected = False
+        for pattern in _XSS_PATTERNS:
+            if pattern.search(text):
                 errors.append('Lý do chứa mã HTML/JavaScript không hợp lệ')
                 logger.warning(
-                    f"🚨 XSS ATTEMPT blocked: {field_name} = {original[:100]}"
+                    "XSS ATTEMPT blocked: %s = %s", field_name, original[:100]
                 )
+                xss_detected = True
                 break
         
-        # ✅ 6. Check SQL patterns
-        for pattern in self.SQL_PATTERNS:
-            if re.search(pattern, text_lower, re.IGNORECASE):
-                errors.append('Lý do chứa từ khóa SQL không hợp lệ')
-                logger.warning(
-                    f"🚨 SQL INJECTION ATTEMPT blocked: {field_name} = {original[:100]}"
-                )
-                break
+        # 6. Check SQL patterns (use pre-compiled patterns)
+        if not xss_detected:  # Skip if already detected malicious content
+            for pattern in _SQL_PATTERNS:
+                if pattern.search(text):
+                    errors.append('Lý do chứa từ khóa SQL không hợp lệ')
+                    logger.warning(
+                        "SQL INJECTION ATTEMPT blocked: %s = %s", field_name, original[:100]
+                    )
+                    break
         
-        # ✅ 7. Check command injection patterns
-        for pattern in self.CMD_PATTERNS:
-            if re.search(pattern, text):
+        # 7. Check command injection patterns (use pre-compiled patterns)
+        for pattern in _CMD_PATTERNS:
+            if pattern.search(text):
                 errors.append('Lý do chứa ký tự đặc biệt không hợp lệ')
                 logger.warning(
-                    f"🚨 CMD INJECTION ATTEMPT blocked: {field_name} = {original[:100]}"
+                    "CMD INJECTION ATTEMPT blocked: %s = %s", field_name, original[:100]
                 )
                 break
         
-        # ✅ 8. Special character ratio check (Vietnamese-aware)
+        # 8. Special character ratio check (Vietnamese-aware)
         unsafe_chars = sum(1 for c in text if not self._is_safe_char(c))
         
         if len(text) > 0:
@@ -180,15 +256,15 @@ class SecuritySanitizer:
                     f'({ratio*100:.0f}%, tối đa {self.max_special_char_ratio*100:.0f}%)'
                 )
         
-        # ✅ 9. HTML escape (always!)
+        # 9. HTML escape (always!)
         sanitized = html.escape(text, quote=True)
         
-        # ✅ 10. CSV injection prevention
+        # 10. CSV injection prevention
         if sanitized and sanitized[0] in ['=', '+', '-', '@', '\t', '\r']:
             sanitized = "'" + sanitized
             warnings.append('Thêm dấu nháy đơn để đảm bảo an toàn khi export')
         
-        # ✅ 11. Check if modified
+        # 11. Check if modified
         if sanitized != original:
             warnings.append('Lý do đã được làm sạch để đảm bảo an toàn')
         
