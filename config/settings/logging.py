@@ -179,6 +179,11 @@ LOGGING = {
             "propagate": False,
         },
         # Third-party (reduce noise)
+        "axes": {
+            "handlers": ["file_security"],
+            "level": "WARNING",  # Suppress INFO startup messages
+            "propagate": False,
+        },
         "environ": {
             "handlers": [],
             "level": "WARNING",

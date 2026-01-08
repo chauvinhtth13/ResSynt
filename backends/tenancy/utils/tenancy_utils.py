@@ -39,7 +39,7 @@ class TenancyUtils:
         """Generate cache key."""
         key = '_'.join(str(p) for p in parts)
         if len(key) > 200:
-            key = hashlib.md5(key.encode()).hexdigest()
+            key = hashlib.sha256(key.encode()).hexdigest()[:32]
         return f"{cls.CACHE_PREFIX}{key}"
     
     # =========================================================================
