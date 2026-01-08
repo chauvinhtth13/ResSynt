@@ -128,8 +128,14 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background: inherit;
-    background-size: inherit;
+    background: linear-gradient(90deg,
+        var(--color-accent-cyan) 0%,
+        var(--color-accent-teal) 25%,
+        var(--color-accent-purple) 50%,
+        var(--color-accent-pink) 75%,
+        var(--color-accent-cyan) 100%
+    );
+    background-size: 200% 100%;
     border-radius: 2px;
     box-shadow:
         0 0 12px rgba(var(--rgb-accent-cyan), 0.5),
