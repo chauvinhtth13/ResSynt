@@ -384,7 +384,8 @@ RATELIMIT_USE_CACHE = "default"
 # ENCRYPTION & PASSWORDS
 # =============================================================================
 
-FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
+FERNET_KEYS = [env("FIELD_ENCRYPTION_KEY")]
+
 BACKUP_ENCRYPTION_PASSWORD = env("BACKUP_ENCRYPTION_PASSWORD", default=None)
 PASSWORD_RESET_TIMEOUT = 900  # 15 minutes
 

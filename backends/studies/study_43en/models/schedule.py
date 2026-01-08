@@ -6,7 +6,7 @@ Manages expected dates, calendars, and follow-up status tracking
 from datetime import date
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from encrypted_model_fields.fields import EncryptedCharField
+from encrypted_fields.fields import EncryptedCharField
 
 from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 
@@ -34,7 +34,6 @@ class ExpectedDates(models.Model):
     ENROLLMENT_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('Enrollment Date')
     )
     
@@ -52,7 +51,6 @@ class ExpectedDates(models.Model):
     V2_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('V2 Expected Date')
     )
     
@@ -70,7 +68,6 @@ class ExpectedDates(models.Model):
     V3_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('V3 Expected Date')
     )
     
@@ -88,7 +85,6 @@ class ExpectedDates(models.Model):
     V4_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('V4 Expected Date')
     )
     
@@ -189,7 +185,6 @@ class ContactExpectedDates(models.Model):
     ENROLLMENT_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('Enrollment Date')
     )
     
@@ -207,7 +202,6 @@ class ContactExpectedDates(models.Model):
     V2_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('V2 Expected Date')
     )
     
@@ -225,7 +219,6 @@ class ContactExpectedDates(models.Model):
     V3_EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('V3 Expected Date')
     )
     
@@ -311,7 +304,6 @@ class ExpectedCalendar(models.Model):
     # Enrollment date (used as lookup key)
     ENROLLMENT_DATE = models.DateField(
         unique=True,
-        #db_index=True,
         verbose_name=_('Enrollment Date')
     )
     
@@ -411,13 +403,11 @@ class FollowUpStatus(models.Model):
     # Subject identification
     USUBJID = models.CharField(
         max_length=50,
-        #db_index=True,
         verbose_name=_('Subject ID')
     )
     SUBJECT_TYPE = models.CharField(
         max_length=10,
         choices=SUBJECT_TYPE_CHOICES,
-        #db_index=True,
         verbose_name=_('Subject Type')
     )
     INITIAL = models.CharField(
@@ -431,7 +421,6 @@ class FollowUpStatus(models.Model):
     VISIT = models.CharField(
         max_length=10,
         choices=VISIT_CHOICES,
-        #db_index=True,
         verbose_name=_('Visit')
     )
     
@@ -444,13 +433,11 @@ class FollowUpStatus(models.Model):
     EXPECTED_TO = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('Expected To')
     )
     EXPECTED_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('Expected Date')
     )
     
@@ -458,7 +445,6 @@ class FollowUpStatus(models.Model):
     ACTUAL_DATE = models.DateField(
         null=True,
         blank=True,
-        #db_index=True,
         verbose_name=_('Actual Visit Date')
     )
 
@@ -478,13 +464,12 @@ class FollowUpStatus(models.Model):
         max_length=20,
         choices=STATUS_CHOICES,
         default='UPCOMING',
-        #db_index=True,
         verbose_name=_('Status')
     )
     
-    # Contact information
+    # Contact information (ENCRYPTED)
     PHONE = EncryptedCharField(
-        max_length=20,
+        max_length=255,
         blank=True,
         null=True,
         verbose_name=_('Phone Number')
@@ -536,10 +521,8 @@ class FollowUpStatus(models.Model):
         if self.ACTUAL_DATE:
             self.STATUS = 'COMPLETED'
         elif self.MISSED_DATE:
-            #  NEW: Manual missed
             self.STATUS = 'MISSED'
         elif self.EXPECTED_TO and today > self.EXPECTED_TO:
-            #  CHANGED: Past expected_to → LATE (not MISSED)
             self.STATUS = 'LATE'
         elif self.EXPECTED_DATE and today > self.EXPECTED_DATE and today <= self.EXPECTED_TO:
             self.STATUS = 'LATE'

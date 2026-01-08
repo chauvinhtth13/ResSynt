@@ -6,7 +6,7 @@ import django.db.models.deletion
 import django.db.models.expressions
 import django.db.models.functions.datetime
 import django.utils.timezone
-import encrypted_model_fields.fields
+import encrypted_fields.fields
 
 
 class Migration(migrations.Migration):
@@ -330,7 +330,7 @@ class Migration(migrations.Migration):
                 ('EXPECTED_DATE', models.DateField(blank=True, null=True, verbose_name='Expected Date')),
                 ('ACTUAL_DATE', models.DateField(blank=True, null=True, verbose_name='Actual Visit Date')),
                 ('STATUS', models.CharField(choices=[('COMPLETED', 'Completed'), ('LATE', 'Late'), ('MISSED', 'Missed'), ('UPCOMING', 'Upcoming')], default='UPCOMING', max_length=20, verbose_name='Status')),
-                ('PHONE', encrypted_model_fields.fields.EncryptedCharField(blank=True, null=True, verbose_name='Phone Number')),
+                ('PHONE', encrypted_fields.fields.EncryptedCharField(blank=True, null=True, verbose_name='Phone Number')),
                 ('CREATED_AT', models.DateTimeField(auto_now_add=True, verbose_name='Created At')),
                 ('UPDATED_AT', models.DateTimeField(auto_now=True, verbose_name='Updated At')),
             ],
@@ -721,8 +721,8 @@ class Migration(migrations.Migration):
                 ('last_modified_by_id', models.IntegerField(blank=True, db_index=True, editable=False, help_text='User ID who last modified this record', null=True)),
                 ('last_modified_by_username', models.CharField(blank=True, db_index=True, editable=False, help_text='Username backup for audit trail', max_length=150, null=True)),
                 ('last_modified_at', models.DateTimeField(auto_now=True, db_index=True, help_text='Timestamp of last modification')),
-                ('FULLNAME', encrypted_model_fields.fields.EncryptedCharField(blank=True, help_text='Patient full name (confidential)', null=True, verbose_name='Full Name')),
-                ('PHONE', encrypted_model_fields.fields.EncryptedCharField(blank=True, help_text='Phone number', null=True, verbose_name='Phone Number')),
+                ('FULLNAME', encrypted_fields.fields.EncryptedCharField(blank=True, help_text='Patient full name (confidential)', null=True, verbose_name='Full Name')),
+                ('PHONE', encrypted_fields.fields.EncryptedCharField(blank=True, help_text='Phone number', null=True, verbose_name='Phone Number')),
                 ('USUBJID', models.OneToOneField(db_column='USUBJID', on_delete=django.db.models.deletion.CASCADE, primary_key=True, related_name='enrollment_case', serialize=False, to='study_43en.scr_case', to_field='USUBJID', verbose_name='Patient ID')),
                 ('ENRDATE', models.DateField(blank=True, db_index=True, help_text='Enrollment Date', null=True, verbose_name='Enrollment Date')),
                 ('RECRUITDEPT', models.CharField(blank=True, db_index=True, max_length=50, null=True, verbose_name='Recruitment Department')),
@@ -732,7 +732,7 @@ class Migration(migrations.Migration):
                 ('AGEIFDOBUNKNOWN', models.FloatField(blank=True, help_text='Age (if date of birth is unknown', null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(150)], verbose_name='Age (if DOB unknown)')),
                 ('SEX', models.CharField(blank=True, choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], db_index=True, max_length=10, null=True, verbose_name='Sex')),
                 ('ETHNICITY', models.CharField(blank=True, db_index=True, max_length=50, null=True, verbose_name='Ethnicity')),
-                ('MEDRECORDID', encrypted_model_fields.fields.EncryptedCharField(blank=True, null=True, verbose_name='Medical Record Number')),
+                ('MEDRECORDID', encrypted_fields.fields.EncryptedCharField(blank=True, null=True, verbose_name='Medical Record Number')),
                 ('OCCUPATION', models.CharField(blank=True, max_length=100, null=True, verbose_name='Occupation')),
                 ('FROMOTHERHOSPITAL', models.BooleanField(db_index=True, default=False, verbose_name='Transferred from another healthcare facility (HCF)?')),
                 ('PRIORHOSPIADMISDATE', models.DateField(blank=True, null=True, verbose_name='Admission Date at previous HCF')),

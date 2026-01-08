@@ -265,9 +265,7 @@ class DatabaseStudyCreator:
                     if not row:
                         return None
                     
-                    # from .backup_manager import format_size
                     info = dict(row)
-                    # info['size_human'] = format_size(info.get('size_bytes', 0))
                     info['schemas'] = cls.get_schema_info(db_name)
                     return info
                     

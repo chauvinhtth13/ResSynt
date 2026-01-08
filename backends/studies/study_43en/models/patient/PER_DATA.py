@@ -6,7 +6,7 @@ Personal Data Models - Separated for Better Security
 
 CRITICAL SECURITY NOTES:
 - These models contain PII (Personally Identifiable Information)
-- All sensitive fields use EncryptedCharField
+- All sensitive fields use EncryptedCharField (django-fernet-encrypted-fields)
 - OneToOne relationship with ENR_CASE/ENR_CONTACT
 - Separate database routing recommended for production
 """
@@ -14,7 +14,7 @@ CRITICAL SECURITY NOTES:
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from encrypted_model_fields.fields import EncryptedCharField
+from encrypted_fields.fields import EncryptedCharField
 from backends.studies.study_43en.models.base_models import AuditFieldsMixin
 
 
@@ -51,7 +51,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     # PERSONAL IDENTIFIERS (ENCRYPTED)
     # ==========================================
     FULLNAME = EncryptedCharField(
-        max_length=200,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Full Name'),
@@ -59,7 +59,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     )
     
     PHONE = EncryptedCharField(
-        max_length=20,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Phone Number'),
@@ -67,7 +67,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     )
     
     MEDRECORDID = EncryptedCharField(
-        max_length=50,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Medical Record Number'),
@@ -78,7 +78,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     # ADDRESS INFORMATION (NEW SYSTEM)
     # ==========================================
     STREET_NEW = EncryptedCharField(
-        max_length=200,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Street/Road (New Administrative Division)'),
@@ -86,7 +86,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     )
     
     WARD_NEW = EncryptedCharField(
-        max_length=100,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Ward/Commune (New Administrative Division)'),
@@ -94,7 +94,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     )
     
     CITY_NEW = EncryptedCharField(
-        max_length=100,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('City/Province (New Administrative Division)'),
@@ -105,7 +105,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     # ADDRESS INFORMATION (OLD SYSTEM)
     # ==========================================
     STREET = EncryptedCharField(
-        max_length=200,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Street/Road (Old Administrative Division)'),
@@ -113,7 +113,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     )
     
     WARD = EncryptedCharField(
-        max_length=100,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Ward/Commune (Old Administrative Division)'),
@@ -121,7 +121,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     )
     
     DISTRICT = EncryptedCharField(
-        max_length=100,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('District/County (Old Administrative Division)'),
@@ -129,7 +129,7 @@ class PERSONAL_DATA(AuditFieldsMixin):
     )
     
     PROVINCECITY = EncryptedCharField(
-        max_length=100,
+        max_length=255,
         null=True,
         blank=True,
         verbose_name=_('Province/City (Old Administrative Division)'),
@@ -199,5 +199,3 @@ class PERSONAL_DATA(AuditFieldsMixin):
         """Basic validation - allow all fields to be optional"""
         # No strict validation - allow saving with minimal data
         pass
-
-
