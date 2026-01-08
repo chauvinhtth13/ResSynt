@@ -1,13 +1,4 @@
 # backends/api/studies/study_44en/views/household/case_helpers.py
-"""
-Household Case Helper Functions - FIXED
-
-Shared utilities for household case CRUD views.
-Following Django development rules: Backend-first approach.
-
-FIXED: Removed deleted_objects (custom formset handles deletion internally)
-SIMPLIFIED: Removed unnecessary logic
-"""
 
 import logging
 from django.shortcuts import get_object_or_404
@@ -15,101 +6,58 @@ from django.db import transaction
 from django.contrib import messages
 
 from backends.studies.study_44en.models.household import HH_CASE, HH_Member
-from backends.audit_logs.models import AuditLog, AuditLogDetail
+from backends.studies.study_44en.models.per_data import HH_PERSONAL_DATA
+from backends.audit_logs.models import AuditLogs, AuditLogsDetail
 
 logger = logging.getLogger(__name__)
 
 
-# ==========================================
-# AUDIT METADATA (TODO: Move to centralized helpers)
-# ==========================================
-
 def set_audit_metadata(instance, user):
-    """
-    Set audit fields on instance
-    
-    📝 TODO: Move to backends/audit_log/utils/view_helpers.py
-    """
+    """Set audit fields on instance"""
     if hasattr(instance, 'last_modified_by_id'):
         instance.last_modified_by_id = user.id
     if hasattr(instance, 'last_modified_by_username'):
         instance.last_modified_by_username = user.username
 
 
-# ==========================================
-# READ-ONLY HELPERS (TODO: Move to centralized helpers)
-# ==========================================
-
 def make_form_readonly(form):
-    """
-    Make all form fields readonly
-    
-    📝 TODO: Move to backends/audit_log/utils/view_helpers.py
-    """
+    """Make all form fields readonly"""
     for field in form.fields.values():
         field.disabled = True
-        field.widget.attrs.update({
-            'readonly': True,
-            'disabled': True
-        })
+        field.widget.attrs.update({'readonly': True, 'disabled': True})
 
 
 def make_formset_readonly(formset):
-    """
-    Make all formset fields readonly
-    
-    📝 TODO: Move to backends/audit_log/utils/view_helpers.py
-    """
+    """Make all formset fields readonly"""
     for form in formset.forms:
         make_form_readonly(form)
 
 
-# ==========================================
-# DATA RETRIEVAL
-# ==========================================
-
 def get_household_with_related(request, hhid):
-    """
-    Get household with members
-    
-    Returns:
-        tuple: (household, members)
-        
-    Note:
-        - Returns household with all related members
-        - Optimized with order_by
-    """
+    """Get household with members"""
     logger.info(f"📥 Fetching household {hhid} with members...")
     
-    # Get household (with 404 if not found)
     household = get_object_or_404(HH_CASE, HHID=hhid)
-    logger.info(f"   Found household: {household.HHID}")
-    
-    # Get all members
     members = HH_Member.objects.filter(HHID=household).order_by('MEMBER_NUM')
     
-    logger.info(f"   Found {members.count()} members")
+    logger.info(f"   Found household: {household.HHID}, {members.count()} members")
     
     return household, members
 
 
-# ==========================================
-# TRANSACTION HANDLER - SIMPLIFIED
-# ==========================================
-
-def save_household_and_related(request, household_form, member_formset, is_create=False, change_reasons=None, all_changes=None):
+def save_household_and_related(request, household_form, personal_data_form, member_formset, 
+                                is_create=False, change_reasons=None, all_changes=None):
     """
-    Save household and members in transaction
-    
-    SIMPLIFIED: Custom formset already handles deletion internally
+    Save household, personal data, and members in transaction
     
     Args:
         request: HttpRequest
         household_form: HH_CASEForm instance
-        member_formset: HH_MemberFormSet instance (custom with save() method)
-        is_create: bool - True if creating new household
-        change_reasons: dict - Mapping of field_name -> reason (for audit log)
-        all_changes: list - List of change dicts with field, old_value, new_value
+        personal_data_form: HH_PersonalDataForm instance (NEW)
+        member_formset: HH_MemberFormSet instance
+        is_create: bool
+        change_reasons: dict
+        all_changes: list
     
     Returns:
         HH_CASE instance or None on error
@@ -126,31 +74,37 @@ def save_household_and_related(request, household_form, member_formset, is_creat
             logger.info("📝 Step 1: Saving household form...")
             
             household = household_form.save(commit=False)
-            
             set_audit_metadata(household, request.user)
             
             if is_create and hasattr(household, 'version'):
                 household.version = 0
             
             household.save()
-            
             logger.info(f"   Saved household: {household.HHID}")
             
             # ===================================
-            # 2. SAVE MEMBER FORMSET
+            # 2. SAVE PERSONAL DATA (ADDRESS)
             # ===================================
-            logger.info("📝 Step 2: Saving members...")
+            logger.info("📝 Step 2: Saving personal data (address)...")
             
-            # FIX: Custom formset.save() already handles:
-            # - Filtering empty forms
-            # - Deleting marked forms
-            # - Setting audit metadata (if needed)
-            # - Saving valid forms
+            personal_data = personal_data_form.save(commit=False)
+            personal_data.HHID = household
+            set_audit_metadata(personal_data, request.user)
             
-            # Just call save() - formset handles everything
+            # Set default city if empty
+            if not personal_data.CITY:
+                personal_data.CITY = 'Ho Chi Minh City'
+            
+            personal_data.save()
+            logger.info(f"   Saved personal data: STREET={personal_data.STREET}, WARD={personal_data.WARD}")
+            
+            # ===================================
+            # 3. SAVE MEMBER FORMSET
+            # ===================================
+            logger.info("📝 Step 3: Saving members...")
+            
             saved_members = member_formset.save(commit=False)
             
-            # Set HHID and audit metadata for each saved member
             for member in saved_members:
                 member.HHID = household
                 set_audit_metadata(member, request.user)
@@ -160,19 +114,17 @@ def save_household_and_related(request, household_form, member_formset, is_creat
             logger.info(f"   Saved {len(saved_members)} members")
             
             # ===================================
-            # 3. SAVE AUDIT LOG (if reasons provided)
+            # 4. SAVE AUDIT LOG (if reasons provided)
             # ===================================
             if change_reasons and all_changes:
-                logger.info("📝 Step 3: Saving audit log...")
+                logger.info("📝 Step 4: Saving audit log...")
                 
-                # Combine all reasons into one string for main audit log
                 combined_reason = "; ".join([
                     f"{field}: {reason}" 
                     for field, reason in change_reasons.items()
                 ])
                 
-                # Create main audit log entry
-                audit_log = AuditLog(
+                audit_log = AuditLogs(
                     user_id=request.user.id,
                     username=request.user.username,
                     action='UPDATE',
@@ -184,7 +136,6 @@ def save_household_and_related(request, household_form, member_formset, is_creat
                     session_id=request.session.session_key,
                 )
                 
-                # Store temp data for checksum calculation
                 old_data = {change['field']: change['old_value'] for change in all_changes}
                 new_data = {change['field']: change['new_value'] for change in all_changes}
                 
@@ -200,14 +151,12 @@ def save_household_and_related(request, household_form, member_formset, is_creat
                 }
                 
                 audit_log.save()
-                logger.info(f"      Created main audit log entry #{audit_log.id}")
                 
-                # Create detail entries for each field change
                 for change in all_changes:
                     field_name = change['field']
                     reason = change_reasons.get(field_name, 'No reason provided')
                     
-                    detail = AuditLogDetail(
+                    detail = AuditLogsDetail(
                         audit_log=audit_log,
                         field_name=field_name,
                         old_value=str(change.get('old_value', '')),
@@ -215,28 +164,18 @@ def save_household_and_related(request, household_form, member_formset, is_creat
                         reason=reason,
                     )
                     detail.save()
-                    logger.info(f"      Saved detail for {field_name}")
                 
                 logger.info(f"   Saved audit log with {len(all_changes)} detail entries")
             
-            logger.info("="*80)
             logger.info(f"SAVE COMPLETE - Household {household.HHID}")
-            logger.info("="*80)
             
             return household
             
     except Exception as e:
-        logger.error("="*80)
-        logger.error(f"❌ SAVE FAILED: {e}")
-        logger.error("="*80)
-        logger.error(f"Full error:", exc_info=True)
+        logger.error(f"❌ SAVE FAILED: {e}", exc_info=True)
         messages.error(request, f'Lỗi khi lưu: {str(e)}')
         return None
 
-
-# ==========================================
-# VALIDATION HELPERS
-# ==========================================
 
 def log_form_errors(form, form_name):
     """Log form validation errors"""
@@ -247,49 +186,24 @@ def log_form_errors(form, form_name):
 
 
 def log_all_form_errors(forms_dict):
-    """
-    Log all form validation errors
-    
-    Args:
-        forms_dict: Dict of {form_name: form_instance}
-    
-    Returns:
-        list: Names of forms with errors
-    """
+    """Log all form validation errors"""
     forms_with_errors = []
-    
     for name, form in forms_dict.items():
         if log_form_errors(form, name):
             forms_with_errors.append(name)
-    
     return forms_with_errors
 
 
-# ==========================================
-# BUSINESS LOGIC HELPERS
-# ==========================================
-
 def check_household_exists(hhid):
-    """
-    Check if household exists
-    
-    Returns:
-        bool: True if exists, False otherwise
-    """
+    """Check if household exists"""
     return HH_CASE.objects.filter(HHID=hhid).exists()
 
 
 def get_household_summary(household):
-    """
-    Get summary statistics for household
-    
-    Returns:
-        dict: Summary data
-    """
+    """Get summary statistics for household"""
     members = HH_Member.objects.filter(HHID=household)
     
-    # Calculate age for members with birth year
-    current_year = 2025  # or use date.today().year
+    current_year = 2025
     adults = 0
     children = 0
     

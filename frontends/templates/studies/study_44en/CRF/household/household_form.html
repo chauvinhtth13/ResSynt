@@ -7,17 +7,9 @@
     <h4 class="text-center fw-bold mb-4">A – HOUSEHOLD QUESTIONNAIRE</h4>
     
     <!-- Display form errors -->
-    {% if household_form.errors or member_formset.errors or member_formset.non_form_errors %}
+    {% if household_form.errors or personal_data_form.errors or member_formset.errors or member_formset.non_form_errors %}
     <div class="alert alert-danger" role="alert">
         <h5>Form Validation Errors:</h5>
-        {% if household_form.non_field_errors %}
-        <p><strong>General errors:</strong></p>
-        <ul>
-            {% for error in household_form.non_field_errors %}
-            <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
         
         {% if household_form.errors %}
         <p><strong>Household form errors:</strong></p>
@@ -28,22 +20,20 @@
         </ul>
         {% endif %}
         
+        {% if personal_data_form.errors %}
+        <p><strong>Address form errors:</strong></p>
+        <ul>
+            {% for field, errors in personal_data_form.errors.items %}
+            <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        
         {% if member_formset.non_form_errors %}
         <p><strong>Member formset errors:</strong></p>
         <ul>
             {% for error in member_formset.non_form_errors %}
             <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        
-        {% if member_formset.errors %}
-        <p><strong>Member errors:</strong></p>
-        <ul>
-            {% for form_errors in member_formset.errors %}
-                {% if form_errors %}
-                <li>{{ form_errors }}</li>
-                {% endif %}
             {% endfor %}
         </ul>
         {% endif %}
@@ -86,18 +76,26 @@
                 <div class="ms-md-3">
                     <div class="mb-2 d-flex align-items-end">
                         <label class="text-nowrap me-2">House No., Street, Hamlet:</label>
-                        <input type="text" name="STREET" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" value="{% if household_form.STREET.value %}{{ household_form.STREET.value }}{% elif household.STREET %}{{ household.STREET }}{% endif %}">
+                        <input type="text" 
+                            name="STREET" 
+                            class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" 
+                            value="{% firstof personal_data_form.STREET.value household.STREET '' %}"
+                            {% if is_readonly %}readonly disabled{% endif %}>
                     </div>
-                    {% if household_form.STREET.errors %}
-                      <div class="text-danger small mt-1">{{ household_form.STREET.errors.0 }}</div>
+                    {% if personal_data_form.STREET.errors %}
+                    <div class="text-danger small mt-1">{{ personal_data_form.STREET.errors.0 }}</div>
                     {% endif %}
                     
                     <div class="mb-2 d-flex align-items-end">
                         <label class="text-nowrap me-2">Ward/Commune:</label>
-                        <input type="text" name="WARD" class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" value="{% if household_form.WARD.value %}{{ household_form.WARD.value }}{% elif household.WARD %}{{ household.WARD }}{% endif %}">
+                        <input type="text" 
+                            name="WARD" 
+                            class="form-control border-0 border-bottom rounded-0 px-1 shadow-none" 
+                            value="{% firstof personal_data_form.WARD.value household.WARD '' %}"
+                            {% if is_readonly %}readonly disabled{% endif %}>
                     </div>
-                    {% if household_form.WARD.errors %}
-                      <div class="text-danger small mt-1">{{ household_form.WARD.errors.0 }}</div>
+                    {% if personal_data_form.WARD.errors %}
+                    <div class="text-danger small mt-1">{{ personal_data_form.WARD.errors.0 }}</div>
                     {% endif %}
                     
                     <div class="mt-3">

@@ -18,15 +18,15 @@ from django.contrib import messages
 from datetime import datetime
 from django.contrib.auth import get_user_model
 
-from backends.audit_log.models.audit_log import AuditLog, AuditLogDetail
-from backends.audit_log.utils.permission_decorators import require_crf_view
+from backends.audit_logs.models.audit_logs import AuditLogs, AuditLogsDetail
+from backends.audit_logs.utils.permission_decorators import require_crf_view
 from backends.studies.study_43en.utils.site_utils import (
     get_site_filter_params,
     get_filtered_queryset
 )
 
 # ✅ NEW: Use base audit_log models instead (for new studies)
-# from backends.audit_log.models import AuditLog, AuditLogDetail
+# from backends.audit_logs.models import AuditLogs, AuditLogsDetail
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 # ==========================================
 
 @login_required
-@require_crf_view('auditlog', redirect_to='study_43en:home_dashboard')
+@require_crf_view('AuditLogs', redirect_to='study_43en:home_dashboard')
 def audit_log_list(request):
     """
     List all audit logs with filters and site-based access control
@@ -71,7 +71,7 @@ def audit_log_list(request):
     logger.info(f" Site filter: {site_filter}, Type: {filter_type}")
     
     # Get filtered queryset based on site access
-    logs = get_filtered_queryset(AuditLog, site_filter, filter_type)
+    logs = get_filtered_queryset(AuditLogs, site_filter, filter_type)
     
     # ==========================================
     # 3. APPLY USER FILTERS
@@ -162,7 +162,7 @@ def audit_log_list(request):
     # ==========================================
     
     # Get unique user_ids from audit logs (in study DB)
-    user_ids = AuditLog.objects.using(study_db)\
+    user_ids = AuditLogs.objects.using(study_db)\
         .values_list('user_id', flat=True)\
         .distinct()
     
@@ -172,13 +172,13 @@ def audit_log_list(request):
         .order_by('username')
     
     #  FIX: Get unique actions (sorted)
-    actions = AuditLog.objects.using(study_db)\
+    actions = AuditLogs.objects.using(study_db)\
         .values_list('action', flat=True)\
         .distinct()\
         .order_by('action')
     
     #  FIX: Get unique model names (sorted)
-    model_names = AuditLog.objects.using(study_db)\
+    model_names = AuditLogs.objects.using(study_db)\
         .values_list('model_name', flat=True)\
         .distinct()\
         .order_by('model_name')
@@ -208,7 +208,7 @@ def audit_log_list(request):
 # ==========================================
 
 @login_required
-@require_crf_view('auditlog', redirect_to='study_43en:audit_log_list')
+@require_crf_view('AuditLogs', redirect_to='study_43en:audit_log_list')
 def audit_log_detail(request, log_id):
     """
     View detailed audit log with all changes and integrity verification
@@ -228,7 +228,7 @@ def audit_log_detail(request, log_id):
     # 1. GET AUDIT LOG
     # ==========================================
     study_db = getattr(request, 'study_db_alias', '')
-    log = get_object_or_404(AuditLog.objects.using(study_db), id=log_id)
+    log = get_object_or_404(AuditLogs.objects.using(study_db), id=log_id)
     
     logger.info(f"📄 Log: {log.action} on {log.model_name} by {log.username}")
     
@@ -262,7 +262,7 @@ def audit_log_detail(request, log_id):
     # ==========================================
     # 3. GET CHANGE DETAILS
     # ==========================================
-    details = AuditLogDetail.objects.filter(audit_log=log).order_by('field_name')
+    details = AuditLogsDetail.objects.filter(audit_log=log).order_by('field_name')
     
     changes = []
     for detail in details:
@@ -561,7 +561,7 @@ def _get_field_label(model_name, field_name):
 # ==========================================
 
 @login_required
-@require_crf_view('auditlog', redirect_to='study_43en:audit_log_list')
+@require_crf_view('AuditLogs', redirect_to='study_43en:audit_log_list')
 def audit_log_export(request):
     """
     Export audit logs to CSV/Excel

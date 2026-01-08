@@ -41,19 +41,6 @@ class HH_CASEForm(forms.ModelForm):
                 'max': 10
             }),
             
-            # Address
-            'STREET': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': _('Street/Road/Block')
-            }),
-            'WARD': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': _('Ward/Commune')
-            }),
-            'CITY': forms.TextInput(attrs={
-                'class': 'form-control',
-                'value': 'Ho Chi Minh City'
-            }),
             
             # Household Composition
             'TOTAL_MEMBERS': forms.NumberInput(attrs={

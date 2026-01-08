@@ -30,7 +30,7 @@ from backends.studies.study_43en.models.schedule import ExpectedDates, ContactEx
 
 #  Import utils từ study app
 
-from backends.audit_log.utils import get_site_filtered_object_or_404
+from backends.audit_logs.utils import get_site_filtered_object_or_404
 
 logger = logging.getLogger(__name__)
 

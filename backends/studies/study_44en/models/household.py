@@ -9,13 +9,19 @@ from backends.studies.study_44en.models.base_models import AuditFieldsMixin
 from django.db.models import Q
 from datetime import date
 import re
+from backends.studies.study_44en.models.per_data import HH_PERSONAL_DATA
 
 
 # ==========================================
 # 1. MAIN HOUSEHOLD MODEL
 # ==========================================
 class HH_CASE(AuditFieldsMixin):
-    """Main household information"""
+    """
+    Main household information (NON-PII fields only)
+    
+    PII fields (address) moved to HH_PERSONAL_DATA model for better security
+    Access via: household.personal_data.STREET, etc.
+    """
     
     class OwnershipChoices(models.TextChoices):
         RENTED = 'rented', _('Rented')
@@ -58,10 +64,12 @@ class HH_CASE(AuditFieldsMixin):
         verbose_name=_('Respondent Member Number')
     )
     
-    # ADDRESS
-    STREET = models.CharField(max_length=200, null=True, blank=True, verbose_name=_('Street/Road/Block'))
-    WARD = models.CharField(max_length=100, null=True, blank=True, db_index=True, verbose_name=_('Ward/Commune'))
-    CITY = models.CharField(max_length=100, default='Ho Chi Minh City', verbose_name=_('City'))
+    # ==========================================
+    # ADDRESS FIELDS REMOVED - Now in HH_PERSONAL_DATA
+    # ==========================================
+    # STREET - REMOVED (now in personal_data)
+    # WARD - REMOVED (now in personal_data)
+    # CITY - REMOVED (now in personal_data)
     
     # HOUSEHOLD COMPOSITION
     TOTAL_MEMBERS = models.IntegerField(
@@ -112,13 +120,53 @@ class HH_CASE(AuditFieldsMixin):
         verbose_name_plural = _('Household Cases')
         ordering = ['HHID']
         indexes = [
-            models.Index(fields=['WARD', 'CITY'], name='idx_hh_location'),
+            # Removed idx_hh_location since WARD moved to personal_data
             models.Index(fields=['TOTAL_MEMBERS'], name='idx_hh_members'),
             models.Index(fields=['MONTHLY_INCOME'], name='idx_hh_income'),
         ]
     
     def __str__(self):
         return self.HHID
+    
+    # ==========================================
+    # PII ACCESS PROPERTIES (Backward Compatibility)
+    # ==========================================
+    
+    @property
+    def STREET(self):
+        """Access street from personal_data (backward compatibility)"""
+        try:
+            return self.personal_data.STREET
+        except:
+            return None
+    
+    @property
+    def WARD(self):
+        """Access ward from personal_data (backward compatibility)"""
+        try:
+            return self.personal_data.WARD
+        except:
+            return None
+    
+    @property
+    def CITY(self):
+        """Access city from personal_data (backward compatibility)"""
+        try:
+            return self.personal_data.CITY
+        except:
+            return None
+    
+    @property
+    def full_address(self):
+        """Get full address from personal_data"""
+        try:
+            return self.personal_data.full_address
+        except:
+            return None
+    
+    # ==========================================
+    # EXISTING METHODS
+    # ==========================================
     
     def save(self, *args, **kwargs):
         # Auto-generate HHID
@@ -131,6 +179,7 @@ class HH_CASE(AuditFieldsMixin):
             else:
                 self.HHID = "44EN-001"
         super().save(*args, **kwargs)
+
 
 
 # ==========================================

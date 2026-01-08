@@ -34,14 +34,14 @@ from backends.studies.study_43en.forms.patient.LAB_antibiotic_sensitivity import
 )
 
 # Import utilities
-from backends.audit_log.utils.permission_decorators import (
+from backends.audit_logs.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,
     check_instance_site_access,
 )
-from backends.audit_log.utils.decorators import audit_log
-from backends.audit_log.utils.processors import process_crf_update
+from backends.audit_logs.utils.decorators import audit_log
+from backends.audit_logs.utils.processors import process_crf_update
 
 logger = logging.getLogger(__name__)
 
@@ -150,8 +150,8 @@ def antibiotic_list(request, usubjid, culture_id):
     if request.method == 'POST':
         logger.info("🔵 Processing bulk antibiotic test update WITH AUDIT")
         
-        from backends.audit_log.utils.detector import ChangeDetector
-        from backends.audit_log.utils.validator import ReasonValidator
+        from backends.audit_logs.utils.detector import ChangeDetector
+        from backends.audit_logs.utils.validator import ReasonValidator
         
         detector = ChangeDetector()
         validator = ReasonValidator()
