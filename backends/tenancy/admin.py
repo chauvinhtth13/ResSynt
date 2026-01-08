@@ -353,14 +353,33 @@ class StudyAdmin(admin.ModelAdmin):
         """Initialize roles for selected studies"""
         from backends.tenancy.utils.role_manager import StudyRoleManager
         
-        count = 0
-        for study in queryset:
-            result = StudyRoleManager.initialize_study(study.code)
-            if 'error' not in result:
-                count += 1
+        success_count = 0
+        total_groups = 0
+        total_perms = 0
+        errors = []
         
-        self.message_user(request, f'Initialized roles for {count} studies')
-    initialize_roles.short_description = 'Initialize roles'
+        for study in queryset:
+            result = StudyRoleManager.initialize_study(study.code, force=True)
+            if 'error' in result:
+                errors.append(f"{study.code}: {result['error']}")
+            else:
+                success_count += 1
+                total_groups += result.get('groups_created', 0)
+                total_perms += result.get('permissions_assigned', 0)
+        
+        if success_count > 0:
+            self.message_user(
+                request, 
+                f'Initialized {success_count} studies: {total_groups} groups, {total_perms} permissions assigned'
+            )
+        
+        if errors:
+            self.message_user(
+                request,
+                f'Errors: {"; ".join(errors)}',
+                level='error'
+            )
+    initialize_roles.short_description = 'Initialize roles and permissions'
 
 
 # ==========================================

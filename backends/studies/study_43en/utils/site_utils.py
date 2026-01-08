@@ -27,47 +27,59 @@ CACHE_TIMEOUT_LONG = 3600  # 1 hour - cho rarely changed data
 
 def get_site_filter_params(request):
     """
-     REFACTORED: Single source of truth - uses middleware context
+    REFACTORED: Single source of truth - uses middleware context
     
     Determine site filter strategy from UnifiedTenancyMiddleware context.
-    Middleware ALWAYS injects site context for Study 43EN (after merge).
+    Middleware ALWAYS injects site context for Study 43EN.
     
     Returns:
         tuple: (site_filter, filter_type)
             - site_filter: 'all' | str | list
             - filter_type: 'all' | 'single' | 'multiple'
     
-    Examples:
-        site_filter, filter_type = get_site_filter_params(request)
-        
-        # filter_type='all' → site_filter='all' (super admin sees ALL sites)
-        # filter_type='single' → site_filter='003' (user selected specific site)
-        # filter_type='multiple' → site_filter=['003', '011'] (multi-site user)
+    Priority Order:
+        1. Single site selected → filter by that site only
+        2. can_access_all_sites=True → no site filtering (see ALL)
+        3. Multiple sites assigned → filter by user's sites
+        4. Fallback → empty (no access)
     """
-    #  Get from UnifiedTenancyMiddleware context (always present)
+    # Get from UnifiedTenancyMiddleware context
     selected_site_id = getattr(request, 'selected_site_id', 'all')
     can_access_all = getattr(request, 'can_access_all_sites', False)
-    user_site_codes = list(getattr(request, 'user_sites', set()))
+    user_sites = getattr(request, 'user_sites', None)
     
-    # Strategy 1: Single site selected
+    # Handle SimpleLazyObject - force evaluation if needed
+    if hasattr(user_sites, '__iter__') and not isinstance(user_sites, (str, list)):
+        user_sites = list(user_sites) if user_sites else []
+    elif user_sites is None:
+        user_sites = []
+    else:
+        user_sites = list(user_sites)
+    
+    # Log current context for debugging
+    logger.debug(
+        f"Site filter context: selected={selected_site_id}, "
+        f"can_access_all={can_access_all}, user_sites={user_sites}"
+    )
+    
+    # Strategy 1: Single site selected by user
     if selected_site_id and selected_site_id != 'all':
-        logger.debug(f"Site filter: single '{selected_site_id}'")
+        logger.info(f"Site filter: single site '{selected_site_id}'")
         return (selected_site_id, 'single')
     
-    # Strategy 2: Super admin with 'all' → see ALL sites in study
-    elif can_access_all and selected_site_id == 'all':
-        logger.debug(f"Site filter: all (super admin)")
+    # Strategy 2: User has can_access_all_sites=True → see ALL data
+    if can_access_all:
+        logger.info(f"Site filter: ALL (can_access_all_sites=True)")
         return ('all', 'all')
     
-    # Strategy 3: Multi-site user with 'all' → see only THEIR sites
-    elif selected_site_id == 'all' and user_site_codes:
-        logger.debug(f"Site filter: multiple {user_site_codes}")
-        return (user_site_codes, 'multiple')
+    # Strategy 3: User has specific sites assigned
+    if user_sites:
+        logger.info(f"Site filter: multiple sites {user_sites}")
+        return (user_sites, 'multiple')
     
-    # Strategy 4: Fallback (no sites)
-    else:
-        logger.debug(f"Site filter: multiple {user_site_codes} (fallback)")
-        return (user_site_codes, 'multiple')
+    # Strategy 4: No site access - return empty
+    logger.warning(f"Site filter: NO ACCESS (no sites assigned, can_access_all=False)")
+    return ([], 'multiple')
 
 
 def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):

@@ -119,44 +119,67 @@ class TenancyUtils:
     @classmethod
     def get_user_sites(cls, user, study) -> List[str]:
         """Get sites user can access in a study."""
+        site_info = cls.get_user_site_access(user, study)
+        return site_info['sites']
+    
+    @classmethod
+    def get_user_site_access(cls, user, study) -> Dict:
+        """
+        Get complete site access info for user in a study.
+        
+        Returns:
+            Dict with:
+                - can_access_all: bool - True if user has global access
+                - sites: List[str] - list of site codes (all sites if can_access_all)
+                - membership_active: bool - True if has active membership
+        """
         if not user or not study:
-            return []
+            return {'can_access_all': False, 'sites': [], 'membership_active': False}
         
-        cache_key = cls._cache_key('sites', user.pk, study.pk)
-        sites = cache.get(cache_key)
+        cache_key = cls._cache_key('site_access', user.pk, study.pk)
+        cached = cache.get(cache_key)
         
-        if sites is not None:
-            return sites
+        if cached is not None:
+            return cached
+        
+        result = {'can_access_all': False, 'sites': [], 'membership_active': False}
         
         try:
             from backends.tenancy.models import StudyMembership, StudySite
             
             membership = StudyMembership.objects.filter(
                 user=user, study=study, is_active=True
-            ).first()
+            ).select_related('study').first()
             
             if not membership:
-                sites = []
+                # No active membership
+                pass
             elif membership.can_access_all_sites:
-                sites = list(
+                # User has global access - get all study sites
+                result['can_access_all'] = True
+                result['membership_active'] = True
+                result['sites'] = list(
                     StudySite.objects.filter(study=study)
                     .values_list('site__code', flat=True)
                     .distinct()
                 )
+                logger.debug(f"User {user.username} has can_access_all_sites=True for study {study.code}")
             else:
-                sites = list(
+                # User has specific sites assigned
+                result['membership_active'] = True
+                result['sites'] = list(
                     membership.study_sites
                     .values_list('site__code', flat=True)
                     .distinct()
                 )
+                logger.debug(f"User {user.username} has sites {result['sites']} for study {study.code}")
             
-            cache.set(cache_key, sites, cls.CACHE_TTL)
+            cache.set(cache_key, result, cls.CACHE_TTL)
             
         except Exception as e:
-            logger.error(f"Error getting sites: {type(e).__name__}")
-            sites = []
+            logger.error(f"Error getting site access: {type(e).__name__}: {e}")
         
-        return sites
+        return result
     
     @classmethod
     def user_has_site_access(cls, user, study, site_code: str) -> bool:

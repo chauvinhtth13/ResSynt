@@ -17,7 +17,7 @@ from django.contrib import messages
 from datetime import datetime
 from django.contrib.auth import get_user_model
 
-from backends.audit_logs.models.audit_logs import AuditLog, AuditLogDetail
+from backends.audit_logs.models.audit_logs import AuditLogs, AuditLogsDetail
 from backends.studies.study_44en.utils.permission_decorators import require_crf_view
 
 User = get_user_model()

@@ -299,14 +299,19 @@ class UnifiedTenancyMiddleware:
         request.study_id = study.pk
         request.study_db = study.db_name
         
-        # Lazy load permissions
+        # Lazy load permissions and site access
         from .utils import TenancyUtils
         request.study_permissions = SimpleLazyObject(
             lambda: TenancyUtils.get_user_permissions(request.user, study)
         )
-        request.study_sites = SimpleLazyObject(
-            lambda: TenancyUtils.get_user_sites(request.user, study)
-        )
+        
+        # Get site access info (includes can_access_all_sites flag)
+        site_info = TenancyUtils.get_user_site_access(request.user, study)
+        request.can_access_all_sites = site_info['can_access_all']
+        request.user_sites = site_info['sites']
+        
+        # Also set selected_site_id from session (for single site selection)
+        request.selected_site_id = request.session.get('selected_site_id', 'all')
         
         # Track access
         TenancyUtils.track_study_access(request.user, study)
@@ -324,6 +329,11 @@ class UnifiedTenancyMiddleware:
     
     def _process_request(self, request: HttpRequest) -> HttpResponse:
         """Process request and add headers."""
+        # Rate limit write operations
+        rate_limit_response = self._check_rate_limit(request)
+        if rate_limit_response:
+            return rate_limit_response
+        
         response = self.get_response(request)
         
         self._add_performance_headers(request, response)
@@ -331,6 +341,94 @@ class UnifiedTenancyMiddleware:
         self._add_cache_headers(request, response)
         
         return response
+    
+    def _check_rate_limit(self, request: HttpRequest) -> Optional[HttpResponse]:
+        """
+        Check rate limit for write operations (POST, PUT, DELETE, PATCH).
+        
+        Rate limits:
+        - Anonymous users: 10 requests per minute
+        - Authenticated users: 60 requests per minute
+        - Superusers: No limit
+        
+        Returns:
+            HttpResponse with 429 status if rate limited, None otherwise.
+        """
+        # Skip rate limiting for safe methods
+        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return None
+        
+        # Skip for superusers
+        if request.user.is_authenticated and request.user.is_superuser:
+            return None
+        
+        # Skip for admin paths (already restricted to superusers)
+        if self._admin_re.match(request.path):
+            return None
+        
+        # Get client identifier
+        ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip() or \
+             request.META.get('REMOTE_ADDR', 'unknown')
+        
+        if request.user.is_authenticated:
+            key = f"{self.CACHE_PREFIX}rate:{request.user.id}"
+            max_requests = 60  # 60 requests per minute for authenticated users
+        else:
+            key = f"{self.CACHE_PREFIX}rate:anon:{ip}"
+            max_requests = 10  # 10 requests per minute for anonymous users
+        
+        window = 60  # 1 minute window
+        
+        # Get current count
+        count = cache.get(key, 0)
+        
+        if count >= max_requests:
+            logger.warning(
+                f"Rate limit exceeded: user={getattr(request.user, 'username', 'anon')} "
+                f"ip={ip} path={request.path} count={count}"
+            )
+            
+            # Send async alert for repeated violations
+            if count % 10 == 0:  # Every 10 violations
+                self._send_rate_limit_alert(request, ip, count)
+            
+            return HttpResponse(
+                'Quá nhiều yêu cầu. Vui lòng thử lại sau.',
+                status=429,
+                headers={
+                    'Retry-After': str(window),
+                    'X-RateLimit-Limit': str(max_requests),
+                    'X-RateLimit-Remaining': '0',
+                    'X-RateLimit-Reset': str(window),
+                }
+            )
+        
+        # Increment counter
+        cache.set(key, count + 1, window)
+        
+        return None
+    
+    def _send_rate_limit_alert(self, request: HttpRequest, ip: str, count: int) -> None:
+        """Send async alert for rate limit violations."""
+        try:
+            from backends.tenancy.tasks import send_security_alert
+            from datetime import datetime
+            
+            alert_key = f"{self.CACHE_PREFIX}alert:rate:{ip}"
+            if not cache.get(alert_key):  # Only send once per 5 minutes
+                send_security_alert.delay(
+                    alert_type='rate_limit_exceeded',
+                    details={
+                        'username': getattr(request.user, 'username', 'Anonymous'),
+                        'ip_address': ip,
+                        'endpoint': request.path,
+                        'count': f"{count} requests",
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    }
+                )
+                cache.set(alert_key, True, 300)  # Don't spam alerts
+        except Exception as e:
+            logger.error(f"Failed to send rate limit alert: {e}")
     
     def _add_performance_headers(self, request: HttpRequest, response: HttpResponse) -> None:
         """Add performance metrics to response."""

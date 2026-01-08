@@ -1,6 +1,6 @@
 # backends/studies/study_43en/utils/audit/decorators.py
 """
-⚠️ DEPRECATED - Use backends.audit_log.utils.decorators instead
+⚠️ DEPRECATED - Use backends.audit_logs.utils.decorators instead
 
 This file is kept for backwards compatibility only.
 All new code should import from backends.audit_log
@@ -110,7 +110,7 @@ def _create_simple_audit_log(request, action, model_name, patient_id):
     Automatically extracts site_id from multiple sources
     """
     # Import from base (already imported at top)
-    # from backends.audit_log.models import AuditLog
+    # from backends.audit_logs.models import AuditLog
     from backends.studies.study_43en.models.patient import SCR_CASE
     from backends.studies.study_43en.models.contact import SCR_CONTACT
     

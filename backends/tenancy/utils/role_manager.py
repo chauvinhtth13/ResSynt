@@ -148,6 +148,13 @@ class StudyRoleManager:
         return (study_code, role_key) if role_key else (None, None)
     
     @classmethod
+    def is_study_group(cls, group_name: str) -> bool:
+        """Check if group name follows study group naming convention."""
+        if not group_name or not isinstance(group_name, str):
+            return False
+        return group_name.startswith("Study ")
+    
+    @classmethod
     @transaction.atomic
     def initialize_study(cls, study_code: str, force: bool = False) -> Dict[str, Any]:
         """Initialize groups and permissions for a study."""
@@ -214,6 +221,7 @@ class StudyRoleManager:
         stats = {'permissions_assigned': 0, 'permissions_removed': 0}
         
         if not is_db_ready() or not is_contenttypes_ready():
+            logger.warning(f"Database not ready for permission assignment: study {study_code}")
             return stats
         
         app_label = f'study_{study_code.lower()}'
@@ -223,8 +231,14 @@ class StudyRoleManager:
             content_type__app_label=app_label
         ).select_related('content_type')
         
-        if not all_permissions:
+        if not all_permissions.exists():
+            logger.warning(
+                f"No permissions found for app_label '{app_label}'. "
+                f"Make sure migrations have been run for study_{study_code.lower()}."
+            )
             return stats
+        
+        logger.debug(f"Found {all_permissions.count()} permissions for {app_label}")
         
         # Build permission map: {model: {action: permission}}
         perm_map: Dict[str, Dict[str, Permission]] = {}
@@ -258,6 +272,10 @@ class StudyRoleManager:
             if to_add:
                 group.permissions.add(*to_add)
                 stats['permissions_assigned'] += len(to_add)
+                logger.info(
+                    f"Added {len(to_add)} permissions to group '{group.name}' "
+                    f"(role: {role_key}, actions: {allowed_actions})"
+                )
             
             # Remove extra (only if force)
             if force:
@@ -265,6 +283,7 @@ class StudyRoleManager:
                 if to_remove:
                     group.permissions.remove(*to_remove)
                     stats['permissions_removed'] += len(to_remove)
+                    logger.info(f"Removed {len(to_remove)} permissions from group '{group.name}'")
         
         # Clear cache
         cls.clear_study_cache(study_code)

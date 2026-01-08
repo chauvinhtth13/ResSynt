@@ -56,12 +56,12 @@ def register_study_urls() -> List[URLPattern]:
             )
             registered.append(url_pattern)
             
-        except ImportError:
+        except ImportError as e:
             failed.append(study_code)
-            logger.error(f"Cannot import API module for study {study_code}")
+            logger.error(f"Cannot import API module for study {study_code}: {e}")
         except Exception as e:
             failed.append(study_code)
-            logger.error(f"Error registering study {study_code}: {type(e).__name__}")
+            logger.error(f"Error registering study {study_code}: {type(e).__name__}: {e}")
     
     # Summary logging
     if registered:
