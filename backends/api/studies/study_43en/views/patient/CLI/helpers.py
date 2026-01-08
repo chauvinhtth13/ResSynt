@@ -298,8 +298,7 @@ def _save_antibiotic_formset(formset, clinical_case, user, antibiotic_type):
         
         instance.save()
     
-    for obj in formset.deleted_objects:
-        obj.delete()
+
         logger.info(f"Deleted {antibiotic_type} antibiotic: {obj}")
     
     formset.save_m2m()
@@ -330,8 +329,7 @@ def _save_related_formset(formset, clinical_case, user, entity_name):
         
         instance.save()
     
-    for obj in formset.deleted_objects:
-        obj.delete()
+
         logger.info(f"Deleted {entity_name}: {obj}")
     
     formset.save_m2m()

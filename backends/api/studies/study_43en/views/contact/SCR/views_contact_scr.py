@@ -12,14 +12,14 @@ from backends.studies.study_43en.models.contact import SCR_CONTACT
 from backends.studies.study_43en.forms.contact.contact_SCR import ScreeningContactForm
 
 # Audit utilities
-from backends.studies.study_43en.utils.audit.decorators import audit_log
-from backends.studies.study_43en.utils.audit.processors import (
+from backends.audit_log.utils.decorators import audit_log
+from backends.audit_log.utils.processors import (
     process_crf_update,
     process_crf_create,
 )
 
 # Permission utilities
-from backends.studies.study_43en.utils.permission_decorators import (
+from backends.audit_log.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,
@@ -147,7 +147,7 @@ def screening_contact_create(request):
         messages.error(request, _('❌ Invalid SITEID. Must be 003, 020, or 011.'))
         return redirect('study_43en:screening_contact_list')
     
-    # SECURITY FIX: Check user's ACTUAL site permissions (not just session)
+    # 🔒 SECURITY FIX: Check user's ACTUAL site permissions (not just session)
     if not check_site_permission(request, siteid):
         user_sites = getattr(request, 'user_sites', set())
         logger.warning(

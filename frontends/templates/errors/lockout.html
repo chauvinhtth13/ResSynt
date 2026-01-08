@@ -1,0 +1,30 @@
+<!-- frontends\templates\authentication\login.html -->
+{% extends 'account/auth_base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Sign In - ResSync Platform{% endblock %}
+{% block auth_content %}
+<div class="p-responsive flex-grow-1 d-flex flex-column justify-content-center align-items-center text-center">
+    <!-- Icon -->
+    <div class="text-center mb-1">
+        <!-- Logo -->
+        <img src="{% static 'base/images/logo.svg' %}" alt="ResSync Logo" height="50">
+    </div>
+    <!-- Title -->
+    <h2 class="card-title text-center fw-bold h3 mb-2">
+        {% trans "Security Lockout" %}
+    </h2>
+
+    <p class="subtitle text-center mb-4">
+        {% trans "Your account has been locked as a security precaution following several unsuccessful login attempts. Please contact support to verify your identity and unlock your account." %}
+    </p>
+
+    <!-- Action Button -->
+    <a href="/"
+        class="btn btn-royal-blue w-100 py-3 fw-semibold mb-3 fs-5">
+        <i class="bi bi-arrow-left me-2 icon-bold"></i>
+        {% trans "Back to Login" %}
+    </a>
+</div>
+{% endblock %}

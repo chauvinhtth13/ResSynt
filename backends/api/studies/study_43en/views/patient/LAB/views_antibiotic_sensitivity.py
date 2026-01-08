@@ -34,14 +34,14 @@ from backends.studies.study_43en.forms.patient.LAB_antibiotic_sensitivity import
 )
 
 # Import utilities
-from backends.studies.study_43en.utils.permission_decorators import (
+from backends.audit_log.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,
     check_instance_site_access,
 )
-from backends.studies.study_43en.utils.audit.decorators import audit_log
-from backends.studies.study_43en.utils.audit.processors import process_crf_update
+from backends.audit_log.utils.decorators import audit_log
+from backends.audit_log.utils.processors import process_crf_update
 
 logger = logging.getLogger(__name__)
 
@@ -150,8 +150,8 @@ def antibiotic_list(request, usubjid, culture_id):
     if request.method == 'POST':
         logger.info("🔵 Processing bulk antibiotic test update WITH AUDIT")
         
-        from backends.studies.study_43en.utils.audit.detector import ChangeDetector
-        from backends.studies.study_43en.utils.audit.validator import ReasonValidator
+        from backends.audit_log.utils.detector import ChangeDetector
+        from backends.audit_log.utils.validator import ReasonValidator
         
         detector = ChangeDetector()
         validator = ReasonValidator()
@@ -189,7 +189,7 @@ def antibiotic_list(request, usubjid, culture_id):
                 
                 # FIX 2: Allow empty string but log it
                 if sensitivity == '':
-                    logger.info(f"   WARNING: Empty string value (will be treated as no change)")
+                    logger.info(f"  ⚠️  WARNING: Empty string value (will be treated as no change)")
                     # Don't skip - let detector handle it
                 
                 # Process existing tests (numeric IDs)
@@ -223,7 +223,6 @@ def antibiotic_list(request, usubjid, culture_id):
                         )
                         
                         if is_reverting_to_nd:
-                            logger.info(f"  REVERT TO ND: {test.SENSITIVITY_LEVEL} → ND (This is a CHANGE!)")
                             is_first_time_fill = False  # Force to detect as change
                         
                         if is_first_time_fill and sensitivity != 'ND':
@@ -259,6 +258,7 @@ def antibiotic_list(request, usubjid, culture_id):
                             continue  # Skip change detection
                         
                         # Normal update OR revert to ND → detect changes
+                        logger.info(f"  🔄 NORMAL UPDATE/REVERT: {test.AST_ID} - Detect changes + audit")
                         logger.info(f"  NORMAL UPDATE/REVERT: {test.AST_ID} - Detect changes + audit")
                         
                         # Capture old data
@@ -295,7 +295,7 @@ def antibiotic_list(request, usubjid, culture_id):
                                 new_data['IZDIAM'] = float(new_data['IZDIAM'])
                                 logger.info(f"     IZDIAM converted to float: {new_data['IZDIAM']}")
                             except ValueError:
-                                logger.warning(f"      IZDIAM conversion failed: '{new_data['IZDIAM']}'")
+                                logger.warning(f"     ⚠️  IZDIAM conversion failed: '{new_data['IZDIAM']}'")
                                 new_data['IZDIAM'] = None
                         
                         # Detect changes for this test

@@ -12,7 +12,7 @@ from backends.studies.study_43en.models.patient import SCR_CASE
 
 
 # Permission utilities
-from backends.studies.study_43en.utils.permission_decorators import (
+from backends.audit_log.utils.permission_decorators import (
     require_crf_view,
 )
 

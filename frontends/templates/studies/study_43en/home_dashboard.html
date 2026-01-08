@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="{% static 'studies/study_43en/css/home_dashboard.css' %}">
 {% endblock %}
 
-{% block dashboard_content %}
+{% block base_main %}
 <!-- ============================================================================ -->
 <!-- NEW ENHANCED HEADER -->
 <!-- ============================================================================ -->
@@ -440,7 +440,7 @@
 {% endblock %}
 
 
-{% block extra_js_dashboard %}
+{% block extra_js %}
 <script nonce="{{ request.csp_nonce }}">
 // ==================== CHECK AUTO-REFRESH FIRST ====================
 //  MUST run BEFORE anything else
