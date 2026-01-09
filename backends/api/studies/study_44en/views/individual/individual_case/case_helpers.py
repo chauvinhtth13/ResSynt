@@ -11,7 +11,7 @@ from django.db import transaction
 from django.contrib import messages
 
 from backends.studies.study_44en.models.individual import Individual
-from backends.audit_logs.models import AuditLogs, AuditLogsDetail
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +120,7 @@ def save_individual(request, individual_form, is_create=False, change_reasons=No
                 ])
                 
                 # Create main audit log entry
-                audit_log = AuditLogs(
+                audit_log = AuditLog(
                     user_id=request.user.id,
                     username=request.user.username,
                     action='UPDATE',
@@ -155,7 +155,7 @@ def save_individual(request, individual_form, is_create=False, change_reasons=No
                     field_name = change['field']
                     reason = change_reasons.get(field_name, 'No reason provided')
                     
-                    detail = AuditLogsDetail(
+                    detail = AuditLogDetail(
                         audit_log=audit_log,
                         field_name=field_name,
                         old_value=str(change.get('old_value', '')),

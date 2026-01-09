@@ -1,15 +1,14 @@
 # backends/studies/study_44en/utils/audit/decorators.py
 """
-UPDATED: Using base audit_log system from backends.audit_log
+Audit Log Decorators for Study 44EN
 
-This file now uses the shared audit_log system.
-For study_44en, just import from backends.audit_log
+Uses the AuditLog/AuditLogDetail models created for study_44en.
 """
 import logging
 from functools import wraps
 from django.db import transaction
-# NEW: Use base audit_log system
-from backends.audit_logs.models import AuditLog, AuditLogDetail
+# Import from study_44en models (created via factory)
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 from backends.audit_logs.utils.helpers import get_client_ip
 
 logger = logging.getLogger(__name__)

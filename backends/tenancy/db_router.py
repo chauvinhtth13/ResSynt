@@ -63,6 +63,8 @@ class TenantRouter:
     # Apps that use study databases
     STUDY_APPS: frozenset = frozenset({
         'studies',
+        # Note: audit_logs models are now created per-study via factory
+        # with app_label = 'study_XXen', so they route automatically
     })
     
     # Class-level cache (shared across instances)

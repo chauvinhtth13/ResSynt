@@ -6,7 +6,7 @@ LIBRARY MODE: This app provides shared audit log functionality.
 Models are marked as managed=False - no migrations will be created.
 
 Study apps should:
-1. Inherit from AbstractAuditLog/AbstractAuditLogDetail in models/base.py
+1. Inherit from AuditLog/AuditLogDetail in models/base.py
 2. Create their own concrete models with proper app_label
 3. Run makemigrations for their own app
 

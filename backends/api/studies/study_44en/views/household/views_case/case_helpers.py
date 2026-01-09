@@ -7,7 +7,7 @@ from django.contrib import messages
 
 from backends.studies.study_44en.models.household import HH_CASE, HH_Member
 from backends.studies.study_44en.models.per_data import HH_PERSONAL_DATA
-from backends.audit_logs.models import AuditLogs, AuditLogsDetail
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
                     for field, reason in change_reasons.items()
                 ])
                 
-                audit_log = AuditLogs(
+                audit_log = AuditLog(
                     user_id=request.user.id,
                     username=request.user.username,
                     action='UPDATE',
@@ -156,7 +156,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
                     field_name = change['field']
                     reason = change_reasons.get(field_name, 'No reason provided')
                     
-                    detail = AuditLogsDetail(
+                    detail = AuditLogDetail(
                         audit_log=audit_log,
                         field_name=field_name,
                         old_value=str(change.get('old_value', '')),

@@ -1,22 +1,21 @@
 # backends/audit_logs/models/base.py
 """
-ABSTRACT BASE AUDIT LOG MODELS - For inheritance in study apps
+ABSTRACT AUDIT LOG MODELS + FACTORY FUNCTION
 
-These are ABSTRACT models - they don't create database tables directly.
-Each study app should inherit from these and create their own migrations.
+This module provides:
+1. Abstract base models (AbstractAuditLog, AbstractAuditLogDetail)
+2. Factory function to create concrete models for each study
 
-Usage in study app (e.g., study_43en/models/audit.py):
-    from backends.audit_logs.models.base import AbstractAuditLog, AbstractAuditLogDetail
+Usage in study app (e.g., study_43en/models/__init__.py):
+    from backends.audit_logs.models.base import create_audit_models
     
-    class AuditLog(AbstractAuditLog):
-        class Meta(AbstractAuditLog.Meta):
-            app_label = 'study_43en'
-            db_table = 'log"."audit_log'  # Or study-specific table
-    
-    class AuditLogDetail(AbstractAuditLogDetail):
-        audit_log = models.ForeignKey(AuditLog, ...)
-        class Meta(AbstractAuditLogDetail.Meta):
-            app_label = 'study_43en'
+    # Create concrete AuditLog and AuditLogDetail for this study
+    AuditLog, AuditLogDetail = create_audit_models('study_43en')
+
+This ensures:
+- `makemigrations study_43en` includes AuditLog tables
+- Tables are created in the 'log' schema of each study database
+- No duplicate code across studies
 """
 from django.db import models
 from django.core.exceptions import PermissionDenied
@@ -26,8 +25,6 @@ from django.utils import timezone
 class AbstractAuditLog(models.Model):
     """
     Abstract base audit log entry
-    
-    Inherit this in your study app and set proper app_label
     """
     
     ACTION_CHOICES = [
@@ -111,7 +108,7 @@ class AbstractAuditLog(models.Model):
     )
     
     class Meta:
-        abstract = True  # ← KEY: No database table for this model
+        abstract = True
         ordering = ['-timestamp']
         verbose_name = 'Audit Log'
         verbose_name_plural = 'Audit Logs'
@@ -203,17 +200,8 @@ class AbstractAuditLogDetail(models.Model):
     """
     Abstract base audit log detail
     
-    NOTE: When inheriting, you must define the ForeignKey to your concrete AuditLog:
-    
-        class AuditLogDetail(AbstractAuditLogDetail):
-            audit_log = models.ForeignKey(
-                'AuditLog',  # Your concrete model
-                on_delete=models.PROTECT,
-                related_name='details'
-            )
+    NOTE: ForeignKey to AuditLog is added by factory function
     """
-    
-    # NOTE: audit_log FK must be defined in concrete class
     
     field_name = models.CharField(
         max_length=100,
@@ -237,7 +225,7 @@ class AbstractAuditLogDetail(models.Model):
     )
     
     class Meta:
-        abstract = True  # ← KEY: No database table for this model
+        abstract = True
         ordering = ['field_name']
         verbose_name = 'Audit Log Detail'
         verbose_name_plural = 'Audit Log Details'
@@ -255,3 +243,101 @@ class AbstractAuditLogDetail(models.Model):
         if self.pk:
             raise PermissionDenied("Audit log details are immutable")
         super().save(*args, **kwargs)
+
+
+# =============================================================================
+# FACTORY FUNCTION - Creates concrete models for each study
+# =============================================================================
+
+# Cache to store created models per study
+_audit_model_cache = {}
+
+
+def create_audit_models(app_label: str, index_prefix: str = None):
+    """
+    Factory function to create AuditLog and AuditLogDetail models for a study.
+    
+    Args:
+        app_label: The study app label (e.g., 'study_43en', 'study_44en')
+        index_prefix: Optional prefix for index names (default: first 3 chars of app_label)
+    
+    Returns:
+        tuple: (AuditLog, AuditLogDetail) concrete model classes
+    
+    Usage:
+        # In study_43en/models/__init__.py
+        from backends.audit_logs.models.base import create_audit_models
+        AuditLog, AuditLogDetail = create_audit_models('study_43en')
+    """
+    # Return cached models if already created
+    if app_label in _audit_model_cache:
+        return _audit_model_cache[app_label]
+    
+    # Default index prefix from app_label (e.g., 'study_43en' -> 's43')
+    if index_prefix is None:
+        # Extract number from app_label like 'study_43en' -> '43'
+        import re
+        match = re.search(r'(\d+)', app_label)
+        index_prefix = f"s{match.group(1)}" if match else app_label[:3]
+    
+    # Store in local variables for closure
+    _app_label = app_label
+    _index_prefix = index_prefix
+    
+    # Create Meta class for AuditLog
+    class AuditLogMeta:
+        app_label = _app_label
+        db_table = 'log"."audit_log'
+        db_table_comment = 'AUDIT_LOG_TABLE'
+        ordering = ['-timestamp']
+        verbose_name = 'Audit Log'
+        verbose_name_plural = 'Audit Logs'
+        default_permissions = ('add', 'view')
+        indexes = [
+            models.Index(fields=['-timestamp'], name=f'{_index_prefix}_audit_log_time_idx'),
+            models.Index(fields=['patient_id', '-timestamp'], name=f'{_index_prefix}_audit_log_patient_idx'),
+            models.Index(fields=['user_id', '-timestamp'], name=f'{_index_prefix}_audit_log_user_idx'),
+            models.Index(fields=['SITEID', '-timestamp'], name=f'{_index_prefix}_audit_log_site_idx'),
+            models.Index(fields=['model_name', 'action'], name=f'{_index_prefix}_audit_log_model_idx'),
+        ]
+    
+    # Create AuditLog model using type()
+    AuditLog = type('AuditLog', (AbstractAuditLog,), {'Meta': AuditLogMeta, '__module__': f'backends.studies.{_app_label}.models'})
+    
+    # Create Meta class for AuditLogDetail
+    class AuditLogDetailMeta:
+        app_label = _app_label
+        db_table = 'log"."audit_log_detail'
+        db_table_comment = 'AUDIT_LOG_TABLE'
+        ordering = ['field_name']
+        verbose_name = 'Audit Log Detail'
+        verbose_name_plural = 'Audit Log Details'
+        default_permissions = ('add', 'view')
+        indexes = [
+            models.Index(fields=['audit_log', 'field_name'], name=f'{_index_prefix}_audit_detail_idx'),
+        ]
+    
+    # Create AuditLogDetail model using type()
+    AuditLogDetail = type('AuditLogDetail', (AbstractAuditLogDetail,), {
+        'Meta': AuditLogDetailMeta,
+        '__module__': f'backends.studies.{_app_label}.models',
+        'audit_log': models.ForeignKey(
+            AuditLog,
+            on_delete=models.PROTECT,
+            related_name='details'
+        ),
+    })
+    
+    # Cache the models
+    _audit_model_cache[_app_label] = (AuditLog, AuditLogDetail)
+    
+    return AuditLog, AuditLogDetail
+
+
+def get_audit_models(app_label: str):
+    """
+    Get cached audit models for a study.
+    
+    Returns None if models haven't been created yet.
+    """
+    return _audit_model_cache.get(app_label)

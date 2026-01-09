@@ -1,15 +1,14 @@
 # backends/studies/study_43en/utils/audit/decorators.py
 """
-⚠️ DEPRECATED - Use backends.audit_log.utils.decorators instead
+Audit Log Decorators for Study 43EN
 
-This file is kept for backwards compatibility only.
-All new code should import from backends.audit_log
+Uses the AuditLog/AuditLogDetail models created for study_43en.
 """
 import logging
 from functools import wraps
 from django.db import transaction
-# NEW: Import from base audit_log
-from backends.audit_logs.models import AuditLog, AuditLogDetail
+# Import from study_43en models (created via factory)
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 from backends.audit_logs.utils.helpers import get_client_ip
 
 logger = logging.getLogger(__name__)

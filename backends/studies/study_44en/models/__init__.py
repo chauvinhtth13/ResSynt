@@ -1,3 +1,17 @@
+# backends/studies/study_44en/models/__init__.py
+"""
+Main models package for study_44en
+
+AuditLog and AuditLogDetail are created via factory function from audit_logs.
+This ensures makemigrations study_44en includes audit tables.
+"""
+
+# ==========================================
+# AUDIT LOG MODELS (Created via factory)
+# ==========================================
+from backends.audit_logs.models import create_audit_models
+AuditLog, AuditLogDetail = create_audit_models('study_44en')
+
 # ==========================================
 # STUDY 44EN - HOUSEHOLD MODELS
 # ==========================================
