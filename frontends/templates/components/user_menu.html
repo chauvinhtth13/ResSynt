@@ -31,7 +31,21 @@
         <i class="bi bi-gear me-2"></i>{% trans 'Settings' %}
       </a>
     </li>
+
     
+    
+    
+    <!-- Back to Select Study (conditional) -->
+    {% if show_back_to_study %}
+    <li><hr class="dropdown-divider"></li>
+    <li>
+      <a href="{% url 'select_study' %}" class="dropdown-item">
+        <i class="bi bi-arrow-left-circle me-2"></i>{% trans 'Select another study' %}
+      </a>
+    </li>
+    {% endif %}
+    
+
     <li><hr class="dropdown-divider"></li>
     
     <!-- Logout -->

@@ -1,7 +1,7 @@
 {% extends 'default/dashboard.html' %}
 {% load static i18n %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 {% endblock %}
 
@@ -169,7 +169,7 @@
 
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}">
 (function() {
   'use strict';

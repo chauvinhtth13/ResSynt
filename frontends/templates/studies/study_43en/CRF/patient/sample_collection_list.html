@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load dict_filters %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 <style>
   /* Sample List Enhanced Styles */
@@ -380,7 +380,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}">
   $(document).ready(function() {
     // Check if in view-only mode

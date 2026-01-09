@@ -12,7 +12,7 @@
 <li class="breadcrumb-item active">{% trans "Antibiotic Tests" %} - {{ culture.LAB_CULTURE_ID }}</li>
 {% endblock %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="{% static 'css/studies/study_43en/antibiotic_sensitivity.css' %}">
@@ -566,7 +566,7 @@
 
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
 
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>

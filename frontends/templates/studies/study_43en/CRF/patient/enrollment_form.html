@@ -24,7 +24,7 @@
 <li class="breadcrumb-item active">{% trans "Patient Enrollment" %}</li>
 {% endblock %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 
 <!-- Include CRF unified styles -->
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
@@ -1389,7 +1389,7 @@
 
 {% include 'studies/study_43en/CRF/includes/datepicker_scripts.html' %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 {% include 'studies/study_43en/CRF/includes/datepicker_scripts.html' %}
 
 <script>

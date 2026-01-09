@@ -11,7 +11,7 @@
 <li class="breadcrumb-item active">{% trans "Xét nghiệm" %}</li>
 {% endblock %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 <style>
   /* Page-specific overrides only - base styles in crf-forms.css */
@@ -333,7 +333,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}">
   $(document).ready(function() {
     console.log('=== LABORATORY TEST LIST ===');

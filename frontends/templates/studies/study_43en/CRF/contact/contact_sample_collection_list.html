@@ -4,7 +4,7 @@
 {% load dict_filters %}
 {% block title %}{% trans "Contact Sample List" %}{% endblock %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 <style>
   /* Sample List Enhanced Styles - Contact */
@@ -467,7 +467,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}">
   $(document).ready(function() {
     console.log('=== CONTACT SAMPLE LIST LOADED ===');

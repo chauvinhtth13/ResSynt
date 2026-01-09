@@ -11,7 +11,7 @@
 <li class="breadcrumb-item active">{% trans "LAB Microbiology" %}</li>
 {% endblock %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 <!-- DataTables CSS from jsdelivr (CSP-compliant) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.8/css/dataTables.bootstrap5.min.css">
@@ -554,7 +554,7 @@
 
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <!-- DataTables JS from jsdelivr (CSP-compliant) -->
 <!-- Core DataTables library MUST come first -->
 <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.8/js/jquery.dataTables.min.js"></script>

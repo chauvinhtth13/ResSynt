@@ -3,7 +3,7 @@
 
 {% block title %}{% trans "Contact Screening List - Study 43EN" %}{% endblock %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 <style>
   /* Contact list specific styles */
@@ -198,7 +198,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <!-- 🎯 Include Contact Site Selection Modal -->
 {% include 'studies/study_43en/CRF/includes/contact_site_selection_modal.html' %}
 

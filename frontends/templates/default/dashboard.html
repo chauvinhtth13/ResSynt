@@ -6,93 +6,33 @@
 
 <link rel="stylesheet" href="{% static 'base/css/dashboard.css' %}">
 
-{% block extra_dashboard_css %}{% endblock %}
+{% block dashboard_css %}{% endblock %}
 
 {% endblock %}
 
 {% block base_main %}
-<div class="dashboard-wrapper">
+<div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
   <!-- Sidebar -->
   {% block sidebar %}
-  {% include 'studies/study_43en/sidebar.html' %}
   {% endblock %}
-
-  <!-- Sidebar Overlay for Mobile -->
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <!-- Main Content -->
   <main class="dashboard-content" id="mainContent">
     <!-- Navbar bên trong main content -->
-    {% include 'includes/header/dashboard_header.html' %}
+    {% include 'components/header.html' with show_sidebar_toggle=True show_notifications=True show_back_to_study=True position="sticky-top"%}
     
-    <!-- Content Area -->
-    <div class="container-fluid p-4">
-      {% block dashboard_content %}
-      <!-- Content will be injected here -->
-      {% endblock %}
+    <div class="p-3 p-lg-4">
+        {% block dashboard_content %}
+        {% endblock %}
     </div>
   </main>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/dashboard.js' %}"></script>
 
-<!-- Auto-dismiss alerts -->
-<script nonce="{{ request.csp_nonce }}">
-(function() {
-  'use strict';
-  
-  const AUTO_DISMISS_DELAY = 5000; // 5 seconds
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    const alerts = document.querySelectorAll('.auto-dismiss-alert');
-    
-    alerts.forEach(function(alert, index) {
-      // Stagger the start time for multiple alerts
-      const delay = index * 500;
-      
-      setTimeout(function() {
-        // Start progress bar animation
-        const progressBar = alert.querySelector('.alert-progress-bar');
-        if (progressBar) {
-          progressBar.style.animation = `alertProgress ${AUTO_DISMISS_DELAY}ms linear forwards`;
-        }
-        
-        // Auto dismiss after delay
-        setTimeout(function() {
-          if (alert && alert.parentNode) {
-            // Add fade out animation
-            alert.style.animation = 'alertFadeOut 0.3s ease-out forwards';
-            
-            // Remove from DOM after animation
-            setTimeout(function() {
-              if (alert.parentNode) {
-                alert.parentNode.removeChild(alert);
-              }
-            }, 300);
-          }
-        }, AUTO_DISMISS_DELAY);
-      }, delay);
-      
-      // Pause on hover
-      alert.addEventListener('mouseenter', function() {
-        const progressBar = alert.querySelector('.alert-progress-bar');
-        if (progressBar) {
-          progressBar.style.animationPlayState = 'paused';
-        }
-      });
-      
-      alert.addEventListener('mouseleave', function() {
-        const progressBar = alert.querySelector('.alert-progress-bar');
-        if (progressBar) {
-          progressBar.style.animationPlayState = 'running';
-        }
-      });
-    });
-  });
-})();
-</script>
-
-{% block extra_js_dashboard %}{% endblock %}
+{% block dashboard_js %}{% endblock %}
 {% endblock %}
+

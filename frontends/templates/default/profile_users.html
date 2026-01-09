@@ -4,7 +4,7 @@
 
 {% block title %}{% trans "Account Settings" %} - ResSync{% endblock %}
 
-{% block extra_dashboard_css %}
+{% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/default/profile_users.css' %}">
 {% endblock %}
 
@@ -354,7 +354,7 @@
 
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <!-- base.js already loaded in dashboard.html -->
 <script nonce="{{ request.csp_nonce }}" src="{% static 'js/default/auth_utils.js' %}"></script>
 <script nonce="{{ request.csp_nonce }}" src="{% static 'js/default/profile_users.js' %}"></script>
