@@ -36,14 +36,31 @@ urlpatterns = [
     # ===== DASHBOARD & CHARTS =====
     path('dashboard/', dashboard.home_dashboard, name='home_dashboard'),
     
-    # Chart APIs
     path('api/dashboard-stats/', 
          dashboard.get_dashboard_stats_api, 
          name='dashboard_stats_api'),
+    
     # Enrollment chart data
     path('api/enrollment-chart/', 
          dashboard.get_enrollment_chart_api, 
          name='enrollment_chart_api'),
+    
+    # Monthly screening & enrollment statistics
+    path('api/monthly-stats/', 
+         dashboard.get_monthly_screening_enrollment_api, 
+         name='monthly_stats_api'),
+
+    # Contact monthly screening & enrollment statistics
+    path('api/contact-monthly-stats/', 
+         dashboard.get_monthly_contact_stats_api, 
+         name='contact_monthly_stats_api'),
+    # Sampling follow-up (patient & contact)
+    path('api/sampling-followup/', 
+         dashboard.get_sampling_followup_stats_api, 
+         name='sampling_followup_api'),
+    path('api/kpneumoniae-isolation/', 
+         dashboard.get_kpneumoniae_isolation_stats_api, 
+         name='kpneumoniae_isolation_api'),
 
     # ===== SCREENING CASE =====
     path('screening/', views_scr_case_list.screening_case_list, name='screening_case_list'),

@@ -159,6 +159,409 @@
     </div>
 </div>
 
+{# Monthly Screening & Enrollment Chart + Table #}
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-bar-chart-line text-primary me-2"></i>
+                        {% trans "Monthly Screening & Enrollment Statistics" %}
+                    </h6>
+                    
+                    {# Filters #}
+                    <div class="d-flex gap-2 flex-wrap">
+                        {# Site Filter #}
+                        <div class="btn-group" role="group" aria-label="Site filter">
+                            <button type="button" class="btn btn-sm btn-outline-secondary monthly-site-btn active" data-site="all">
+                                {% trans "All Sites" %}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary monthly-site-btn" data-site="003">
+                                003
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary monthly-site-btn" data-site="020">
+                                020
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary monthly-site-btn" data-site="011">
+                                011
+                            </button>
+                        </div>
+                        
+                        {# Period Type Filter #}
+                        <div class="input-group input-group-sm" style="width: auto;">
+                            <label class="input-group-text">{% trans "View by" %}</label>
+                            <select class="form-select" id="periodType" style="min-width: 100px;">
+                                <option value="year">{% trans "Year" %}</option>
+                                <option value="quarter">{% trans "Quarter" %}</option>
+                                <option value="month" selected>{% trans "Month" %}</option>
+                            </select>
+                        </div>
+                        
+                        {# Year Selector #}
+                        <div class="input-group input-group-sm" id="yearSelector" style="width: auto;">
+                            <label class="input-group-text">{% trans "Year" %}</label>
+                            <select class="form-select" id="selectedYear" style="min-width: 100px;">
+                                <option value="all">{% trans "All Years" %}</option>
+                                <option value="2024">2024</option>
+                                <option value="2025" selected>2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        
+                        {# Quarter Selector #}
+                        <div class="input-group input-group-sm" id="quarterSelector" style="width: auto; display: none;">
+                            <label class="input-group-text">{% trans "Quarter" %}</label>
+                            <select class="form-select" id="selectedQuarter" style="min-width: 100px;">
+                                <option value="all">{% trans "All Quarters" %}</option>
+                                <option value="Q1">Q1 (Jan-Mar)</option>
+                                <option value="Q2">Q2 (Apr-Jun)</option>
+                                <option value="Q3">Q3 (Jul-Sep)</option>
+                                <option value="Q4">Q4 (Oct-Dec)</option>
+                            </select>
+                        </div>
+                        
+                        {# Month Selector #}
+                        <div class="input-group input-group-sm" id="monthSelector" style="width: auto; display: none;">
+                            <label class="input-group-text">{% trans "Month" %}</label>
+                            <select class="form-select" id="selectedMonth" style="min-width: 120px;">
+                                <option value="all">{% trans "All Months" %}</option>
+                                <option value="01">{% trans "January" %}</option>
+                                <option value="02">{% trans "February" %}</option>
+                                <option value="03">{% trans "March" %}</option>
+                                <option value="04">{% trans "April" %}</option>
+                                <option value="05">{% trans "May" %}</option>
+                                <option value="06">{% trans "June" %}</option>
+                                <option value="07">{% trans "July" %}</option>
+                                <option value="08">{% trans "August" %}</option>
+                                <option value="09">{% trans "September" %}</option>
+                                <option value="10">{% trans "October" %}</option>
+                                <option value="11">{% trans "November" %}</option>
+                                <option value="12">{% trans "December" %}</option>
+                            </select>
+                        </div>
+                        
+                        {# Apply Button #}
+                        <button class="btn btn-sm btn-primary" type="button" id="monthlyApplyFilter">
+                            <i class="bi bi-search"></i> {% trans "Apply" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {# Chart Section - 70% #}
+                    <div class="col-12 col-lg-8">
+                        <div id="monthlyChart" style="width: 100%; height: 400px;"></div>
+                        
+                        {# Loading indicator #}
+                        <div id="monthlyChartLoading" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{% trans "Loading..." %}</span>
+                            </div>
+                            <p class="text-muted mt-2">{% trans "Loading chart data..." %}</p>
+                        </div>
+                    </div>
+                    
+                    {# Table Section - 30% #}
+                    <div class="col-12 col-lg-4">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-sm table-hover" id="monthlyStatsTable">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>{% trans "Month" %}</th>
+                                        <th class="text-end">{% trans "Screening" %}</th>
+                                        <th class="text-end">{% trans "Enrollment" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">
+                                            {% trans "Loading..." %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Contact Monthly Screening & Enrollment Chart + Table #}
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-people text-success me-2"></i>
+                        {% trans "Contact Monthly Screening & Enrollment Statistics" %}
+                    </h6>
+                    
+                    {# Filters #}
+                    <div class="d-flex gap-2 flex-wrap">
+                        {# Site Filter #}
+                        <div class="btn-group" role="group" aria-label="Contact site filter">
+                            <button type="button" class="btn btn-sm btn-outline-success contact-site-btn active" data-site="all">
+                                {% trans "All Sites" %}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success contact-site-btn" data-site="003">
+                                003
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success contact-site-btn" data-site="020">
+                                020
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success contact-site-btn" data-site="011">
+                                011
+                            </button>
+                        </div>
+                        
+                        {# Period Type Filter #}
+                        <div class="input-group input-group-sm" style="width: auto;">
+                            <label class="input-group-text">{% trans "View by" %}</label>
+                            <select class="form-select" id="contactPeriodType" style="min-width: 100px;">
+                                <option value="year">{% trans "Year" %}</option>
+                                <option value="quarter">{% trans "Quarter" %}</option>
+                                <option value="month" selected>{% trans "Month" %}</option>
+                            </select>
+                        </div>
+                        
+                        {# Year Selector #}
+                        <div class="input-group input-group-sm" id="contactYearSelector" style="width: auto;">
+                            <label class="input-group-text">{% trans "Year" %}</label>
+                            <select class="form-select" id="contactSelectedYear" style="min-width: 100px;">
+                                <option value="all">{% trans "All Years" %}</option>
+                                <option value="2024">2024</option>
+                                <option value="2025" selected>2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                        
+                        {# Quarter Selector #}
+                        <div class="input-group input-group-sm" id="contactQuarterSelector" style="width: auto; display: none;">
+                            <label class="input-group-text">{% trans "Quarter" %}</label>
+                            <select class="form-select" id="contactSelectedQuarter" style="min-width: 100px;">
+                                <option value="all">{% trans "All Quarters" %}</option>
+                                <option value="Q1">Q1 (Jan-Mar)</option>
+                                <option value="Q2">Q2 (Apr-Jun)</option>
+                                <option value="Q3">Q3 (Jul-Sep)</option>
+                                <option value="Q4">Q4 (Oct-Dec)</option>
+                            </select>
+                        </div>
+                        
+                        {# Month Selector #}
+                        <div class="input-group input-group-sm" id="contactMonthSelector" style="width: auto; display: none;">
+                            <label class="input-group-text">{% trans "Month" %}</label>
+                            <select class="form-select" id="contactSelectedMonth" style="min-width: 120px;">
+                                <option value="all">{% trans "All Months" %}</option>
+                                <option value="01">{% trans "January" %}</option>
+                                <option value="02">{% trans "February" %}</option>
+                                <option value="03">{% trans "March" %}</option>
+                                <option value="04">{% trans "April" %}</option>
+                                <option value="05">{% trans "May" %}</option>
+                                <option value="06">{% trans "June" %}</option>
+                                <option value="07">{% trans "July" %}</option>
+                                <option value="08">{% trans "August" %}</option>
+                                <option value="09">{% trans "September" %}</option>
+                                <option value="10">{% trans "October" %}</option>
+                                <option value="11">{% trans "November" %}</option>
+                                <option value="12">{% trans "December" %}</option>
+                            </select>
+                        </div>
+                        
+                        {# Apply Button #}
+                        <button class="btn btn-sm btn-success" type="button" id="contactApplyFilter">
+                            <i class="bi bi-search"></i> {% trans "Apply" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {# Chart Section - 70% #}
+                    <div class="col-12 col-lg-8">
+                        <div id="contactMonthlyChart" style="width: 100%; height: 400px;"></div>
+                        
+                        {# Loading indicator #}
+                        <div id="contactChartLoading" class="text-center py-5">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">{% trans "Loading..." %}</span>
+                            </div>
+                            <p class="text-muted mt-2">{% trans "Loading contact data..." %}</p>
+                        </div>
+                    </div>
+                    
+                    {# Table Section - 30% #}
+                    <div class="col-12 col-lg-4">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-sm table-hover" id="contactStatsTable">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>{% trans "Month" %}</th>
+                                        <th class="text-end">{% trans "Screening" %}</th>
+                                        <th class="text-end">{% trans "Enrollment" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">
+                                            {% trans "Loading..." %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Sampling Follow-up Table (Patient & Contact) #}
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-clipboard-data text-info me-2"></i>
+                        {% trans "Sample Management: Patient & Contact Sampling Follow-up" %}
+                    </h6>
+                    
+                    {# Site Filter #}
+                    <div class="btn-group" role="group" aria-label="Sampling site filter">
+                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn active" data-site="all">
+                            {% trans "All Sites" %}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="003">
+                            003
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="020">
+                            020
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="011">
+                            011
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {# Loading indicator #}
+                <div id="samplingLoading" class="text-center py-5">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                    </div>
+                    <p class="text-muted mt-2">{% trans "Loading sampling data..." %}</p>
+                </div>
+                
+                {# Sampling Table #}
+                <div id="samplingTableContainer" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th rowspan="2" class="align-middle">{% trans "Schedule" %}</th>
+                                    <th colspan="2" class="text-center bg-primary bg-opacity-10">{% trans "PATIENT" %}</th>
+                                    <th colspan="2" class="text-center bg-success bg-opacity-10">{% trans "CONTACT" %}</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-center bg-primary bg-opacity-10">{% trans "Total Sampling" %}</th>
+                                    <th class="text-center bg-primary bg-opacity-10">{% trans "Blood Sampling" %}</th>
+                                    <th class="text-center bg-success bg-opacity-10">{% trans "Total Sampling" %}</th>
+                                    <th class="text-center bg-success bg-opacity-10">{% trans "Blood Sampling" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="samplingTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">{% trans "Loading..." %}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>{% trans "Note:" %}</strong> 
+                            {% trans "Total Sampling includes Stool, Rectal Swab, and Throat Swab samples (excludes blood). Blood Sampling is counted separately." %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# K. pneumoniae Isolation Statistics Table #}
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-virus text-danger me-2"></i>
+                    {% trans "Table 7: No. of K. pneumoniae isolated from throat swab & stool/rectal swab samples" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                {# Loading indicator #}
+                <div id="kpneumoniaeLoading" class="text-center py-5">
+                    <div class="spinner-border text-danger" role="status">
+                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                    </div>
+                    <p class="text-muted mt-2">{% trans "Loading K. pneumoniae data..." %}</p>
+                </div>
+                
+                {# K. pneumoniae Table #}
+                <div id="kpneumoniaeTableContainer" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th rowspan="2" class="align-middle">{% trans "Study site" %}</th>
+                                    <th rowspan="2" class="align-middle">{% trans "Subject" %}</th>
+                                    <th rowspan="2" class="align-middle text-center">{% trans "No. of participant" %}</th>
+                                    <th rowspan="2" class="align-middle text-center">{% trans "Clinical Kp." %}</th>
+                                    <th colspan="4" class="text-center bg-info bg-opacity-10">{% trans "Throat swab*" %}</th>
+                                    <th colspan="4" class="text-center bg-warning bg-opacity-10">{% trans "Stool/Rectal swab*" %}</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-center bg-info bg-opacity-10">{% trans "Day 1" %}</th>
+                                    <th class="text-center bg-info bg-opacity-10">{% trans "Day 10" %}</th>
+                                    <th class="text-center bg-info bg-opacity-10">{% trans "Day 28" %}</th>
+                                    <th class="text-center bg-info bg-opacity-10">{% trans "Day 90" %}</th>
+                                    <th class="text-center bg-warning bg-opacity-10">{% trans "Day 1" %}</th>
+                                    <th class="text-center bg-warning bg-opacity-10">{% trans "Day 10" %}</th>
+                                    <th class="text-center bg-warning bg-opacity-10">{% trans "Day 28" %}</th>
+                                    <th class="text-center bg-warning bg-opacity-10">{% trans "Day 90" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kpneumoniaeTableBody">
+                                <tr>
+                                    <td colspan="12" class="text-center text-muted">{% trans "Loading..." %}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-secondary mt-3">
+                        <small>
+                            <i class="bi bi-asterisk me-1"></i>
+                            <strong>*</strong> 
+                            {% trans "K. pneumoniae positive sample / Total collected samples" %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block dashboard_js %}
@@ -169,8 +572,20 @@
 {# ECharts library #}
 <script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 
-{# Dashboard JavaScript #}
+{# Dashboard JavaScript - Enrollment Progress Chart #}
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard.js' %}"></script>
+
+{# Patient Monthly Statistics JavaScript - Bar Chart + Table #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/monthly_stats.js' %}"></script>
+
+{# Contact Monthly Statistics JavaScript - Bar Chart + Table #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/contact_stats.js' %}"></script>
+
+{# Sampling Follow-up JavaScript - Table Only #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/sampling_followup.js' %}"></script>
+
+{# K. pneumoniae Isolation JavaScript - Table Only #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/kpneumoniae_isolation.js' %}"></script>
 
 {% block extra_js_dashboard %}{% endblock %}
 {% endblock %}
