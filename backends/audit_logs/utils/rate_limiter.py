@@ -1,4 +1,4 @@
-# backends/audit_log/utils/rate_limiter.py
+# backends/audit_logs/utils/rate_limiter.py
 """
 BASE Rate Limiter - Shared across all studies
 

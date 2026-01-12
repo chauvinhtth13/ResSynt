@@ -2,6 +2,10 @@
 """
 Audit Log System - Factory-based approach for multi-study databases
 
+Creates audit tables in 'logging' schema of each study database:
+- logging.audit_log: Main audit log entries
+- logging.audit_log_detail: Field-level change details
+
 Provides:
 - Factory function: create_audit_models() to create AuditLog/AuditLogDetail per study
 - Abstract base models: AbstractAuditLog, AbstractAuditLogDetail
@@ -14,7 +18,7 @@ Usage in study models/__init__.py:
 Usage in views/decorators:
     from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 """
-default_app_config = 'backends.audit_logs.apps.AuditLogsConfig'
+default_app_config = 'backends.audit_logs.apps.AuditLogConfig'
 
 # Don't import models here - causes AppRegistryNotReady error
 # Import from backends.audit_logs.models directly instead

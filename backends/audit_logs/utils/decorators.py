@@ -1,12 +1,17 @@
-# backends/audit_log/utils/decorators.py
+# backends/audit_logs/utils/decorators.py
 """
 BASE Audit Log Decorator - Shared across all studies
 
 LIBRARY MODE: Model classes are passed directly as parameters.
 Each study passes their own AuditLog/AuditLogDetail models.
 
+Database Schema:
+    Audit tables are created in 'logging' schema:
+    - logging.audit_log: Main audit log entries
+    - logging.audit_log_detail: Field-level change details
+
 Usage:
-    from backends.studies.study_43en.models.audit import AuditLog, AuditLogDetail
+    from backends.studies.study_43en.models import AuditLog, AuditLogDetail
     
     @audit_log('SCREENINGCASE', audit_log_model=AuditLog, audit_log_detail_model=AuditLogDetail)
     def my_view(request):

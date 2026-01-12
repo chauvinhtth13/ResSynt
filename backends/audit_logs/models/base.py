@@ -6,6 +6,10 @@ This module provides:
 1. Abstract base models (AbstractAuditLog, AbstractAuditLogDetail)
 2. Factory function to create concrete models for each study
 
+Database Schema Structure:
+- Each study database has 2 schemas: 'data' (CRF tables) and 'logging' (audit tables)
+- Audit tables: logging.audit_log, logging.audit_log_detail
+
 Usage in study app (e.g., study_43en/models/__init__.py):
     from backends.audit_logs.models.base import create_audit_models
     
@@ -14,8 +18,13 @@ Usage in study app (e.g., study_43en/models/__init__.py):
 
 This ensures:
 - `makemigrations study_43en` includes AuditLog tables
-- Tables are created in the 'log' schema of each study database
+- Tables are created in the 'logging' schema of each study database
 - No duplicate code across studies
+
+Security Features:
+- HMAC-SHA256 checksum for tamper detection
+- Immutable records (no update/delete allowed)
+- IP address and session tracking
 """
 from django.db import models
 from django.core.exceptions import PermissionDenied
@@ -287,8 +296,8 @@ def create_audit_models(app_label: str, index_prefix: str = None):
     # Create Meta class for AuditLog
     class AuditLogMeta:
         app_label = _app_label
-        db_table = 'log"."audit_logs'
-        db_table_comment = 'AUDIT_LOG_TABLE'
+        db_table = 'logging"."audit_log'
+        db_table_comment = 'Audit log entries for tracking data changes'
         ordering = ['-timestamp']
         verbose_name = 'Audit Log'
         verbose_name_plural = 'Audit Logs'
@@ -307,8 +316,8 @@ def create_audit_models(app_label: str, index_prefix: str = None):
     # Create Meta class for AuditLogDetail
     class AuditLogDetailMeta:
         app_label = _app_label
-        db_table = 'log"."audit_log_details'
-        db_table_comment = 'AUDIT_LOG_TABLE'
+        db_table = 'logging"."audit_log_detail'
+        db_table_comment = 'Audit log detail entries for field-level changes'
         ordering = ['field_name']
         verbose_name = 'Audit Log Detail'
         verbose_name_plural = 'Audit Log Details'

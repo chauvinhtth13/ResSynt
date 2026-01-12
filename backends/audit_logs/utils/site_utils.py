@@ -1,4 +1,4 @@
-# File: backends/studies/study_43en/utils/site_utils.py
+# backends/audit_logs/utils/site_utils.py
 
 """
 Site Filtering Utilities for Views
@@ -6,6 +6,12 @@ Site Filtering Utilities for Views
 
 High-level helper functions matching dashboard.py logic
 OPTIMIZED: Redis caching integrated
+
+Usage:
+    from backends.audit_logs.utils.site_utils import get_site_filter_params, get_filtered_queryset
+    
+    site_filter, filter_type = get_site_filter_params(request)
+    queryset = get_filtered_queryset(model, site_filter, filter_type, db_alias='db_study_43en')
 """
 
 from django.db.models import Q
@@ -17,7 +23,8 @@ import hashlib
 
 logger = logging.getLogger(__name__)
 
-DB_ALIAS = 'db_study_43en'
+# Default database alias (can be overridden per-call)
+DEFAULT_DB_ALIAS = 'db_study_43en'
 
 # 🚀 Cache timeout configuration
 CACHE_TIMEOUT_SHORT = 300  # 5 minutes - cho query results
@@ -70,7 +77,7 @@ def get_site_filter_params(request):
         return (user_site_codes, 'multiple')
 
 
-def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):
+def get_filtered_queryset(model, site_filter, filter_type, use_cache=True, db_alias=None):
     """
     🚀 OPTIMIZED: Get filtered queryset với Redis caching
     
@@ -79,39 +86,42 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):
         site_filter: 'all' | str | list
         filter_type: 'all' | 'single' | 'multiple'
         use_cache: Enable/disable caching (default True)
+        db_alias: Database alias to use (default: DEFAULT_DB_ALIAS)
     
     Returns:
-        Filtered QuerySet using db_study_43en
+        Filtered QuerySet using specified database
     """
+    db = db_alias or DEFAULT_DB_ALIAS
+    
     # 🔥 Cache key generation
     if use_cache:
-        cache_key = _generate_cache_key('queryset', model.__name__, site_filter, filter_type)
+        cache_key = _generate_cache_key('queryset', model.__name__, site_filter, filter_type, db)
         
         # Try to get from cache
         cached_pks = cache.get(cache_key)
         if cached_pks is not None:
             logger.debug(f"Cache HIT: [{model.__name__}] {len(cached_pks)} objects")
             # Return queryset filtered by cached PKs
-            return model.objects.using(DB_ALIAS).filter(pk__in=cached_pks)
+            return model.objects.using(db).filter(pk__in=cached_pks)
     
     # Cache MISS - query database
     if filter_type == 'all':
         logger.debug(f"[{model.__name__}] Query all sites")
-        queryset = model.objects.using(DB_ALIAS)
+        queryset = model.objects.using(db)
     
     elif filter_type == 'multiple':
         logger.debug(f"[{model.__name__}] Query multiple sites: {site_filter}")
         
         if not site_filter:
             logger.warning(f"[{model.__name__}] Empty site filter - returning empty")
-            return model.objects.using(DB_ALIAS).none()
+            return model.objects.using(db).none()
         
         # Use manager's filter_by_site which handles multiple sites
-        queryset = model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
+        queryset = model.site_objects.using(db).filter_by_site(site_filter)
     
     else:  # filter_type == 'single'
         logger.debug(f"[{model.__name__}] Query single site: {site_filter}")
-        queryset = model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
+        queryset = model.site_objects.using(db).filter_by_site(site_filter)
     
     # 🔥 Cache the result (PKs only to save memory)
     if use_cache:

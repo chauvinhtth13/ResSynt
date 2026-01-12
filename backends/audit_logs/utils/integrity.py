@@ -1,4 +1,4 @@
-# backends/audit_log/utils/integrity.py
+# backends/audit_logs/utils/integrity.py
 """
 BASE Integrity Checker - Shared across all studies
 

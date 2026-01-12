@@ -1,4 +1,4 @@
-# backends/audit_log/apps.py
+# backends/audit_logs/apps.py
 """
 Django App Configuration for Base Audit Log System
 

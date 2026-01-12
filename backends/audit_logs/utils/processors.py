@@ -1,4 +1,4 @@
-# backends/studies/study_43en/utils/audit/processors.py
+# backends/audit_logs/utils/processors.py
 """
 Universal Audit System - Handles ALL CRF types
 

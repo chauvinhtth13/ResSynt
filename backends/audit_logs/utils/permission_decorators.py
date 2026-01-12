@@ -1,4 +1,4 @@
-# backends/studies/study_43en/utils/permission_decorators.py
+# backends/audit_logs/utils/permission_decorators.py
 """
 Permission decorators for CRF views
  FIXED: Use TenancyUtils for permission checking

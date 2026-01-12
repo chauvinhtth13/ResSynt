@@ -5,8 +5,13 @@ Audit Log Models - Factory-based approach
 This module provides a factory function to create AuditLog and AuditLogDetail
 models for each study. This ensures:
 - `makemigrations study_XXen` includes AuditLog tables
-- Tables are created in the 'log' schema of each study database
+- Tables are created in the 'logging' schema of each study database
 - No duplicate code across studies
+
+Database Schema:
+    Each study database has 2 schemas:
+    - 'data': Contains CRF data tables
+    - 'logging': Contains audit tables (audit_log, audit_log_detail)
 
 Usage in study app (e.g., study_43en/models/__init__.py):
     from backends.audit_logs.models import create_audit_models

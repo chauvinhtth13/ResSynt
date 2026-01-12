@@ -1,6 +1,18 @@
-# backends/audit_log/utils/__init__.py
+# backends/audit_logs/utils/__init__.py
 """
 BASE Audit Log Utils - Shared across all studies
+
+This module provides:
+- Security sanitization (XSS, SQL injection prevention)
+- Change detection for audit logging
+- HMAC integrity verification
+- Rate limiting decorators
+- Site filtering utilities
+
+Database Schema:
+    Audit tables in 'logging' schema:
+    - logging.audit_log: Main entries
+    - logging.audit_log_detail: Field-level changes
 
 Export all utility classes and functions
 """

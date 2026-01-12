@@ -1,4 +1,4 @@
-# backends/audit_log/utils/detector.py
+# backends/audit_logs/utils/detector.py
 """
 BASE Change Detection - Shared across all studies
 
