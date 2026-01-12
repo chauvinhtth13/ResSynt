@@ -9,4 +9,4 @@ class Study43ENConfig(AppConfig):
     def ready(self):
         """App initialization - Import signals to register them"""
         # Import signals to ensure they are registered
-        from backends.studies.study_43en.services import signals
+        from backends.api.studies.study_43en.services import signals

@@ -274,10 +274,7 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.media",
                 "django.template.context_processors.tz",
-                # Study-specific context processors - optimized with early returns
-                # to skip DB queries on non-study paths (login, admin, static, etc.)
-                "backends.studies.study_43en.services.context_processors.upcoming_appointments",
-                "backends.studies.study_43en.services.context_processors.study_context",
+                "backends.studies.study_loader.dynamic_study_context",
             ],
         },
     },

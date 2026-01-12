@@ -11,7 +11,7 @@ from django.db import transaction
 from django.contrib import messages
 
 from backends.studies.study_44en.models.individual import Individual
-from backends.audit_logs.models import AuditLog, AuditLogDetail
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 
 logger = logging.getLogger(__name__)
 

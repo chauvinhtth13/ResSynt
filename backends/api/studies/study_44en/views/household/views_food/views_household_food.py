@@ -36,7 +36,7 @@ from backends.audit_logs.utils.decorators import audit_log
 from backends.audit_logs.utils.processors import process_crf_update
 
 # Import permission decorators
-from backends.studies.study_44en.utils.permission_decorators import (
+from backends.audit_logs.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,

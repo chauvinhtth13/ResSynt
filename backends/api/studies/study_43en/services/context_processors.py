@@ -115,7 +115,6 @@ def upcoming_appointments(request):
         return _EMPTY_NOTIFICATIONS
     
     from backends.studies.study_43en.models.schedule import FollowUpStatus
-    # FIX: Import from correct location (study utils, not audit_log utils)
     from backends.studies.study_43en.utils.site_utils import get_site_filter_params, get_filtered_queryset
     
     # ==========================================
@@ -250,25 +249,10 @@ def upcoming_appointments(request):
     }
 
 
-# ==========================================
-# STUDY CONTEXT
-# ==========================================
-def study_context(request):
-    """
-    Add study-specific context variables to all templates
-    
-    Returns:
-        dict: study_folder, study_code, study_name
-    """
-    return {
-        'study_folder': 'studies/study_43en',
-        'study_code': '43EN',
-        'study_name': 'Clinical Trial 43EN',
-    }
 
 
 # ==========================================
-# DASHBOARD STATISTICS (Optional)
+# DASHBOARD STATISTICS 
 # ==========================================
 def dashboard_stats(request):
     """
