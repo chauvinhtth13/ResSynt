@@ -48,7 +48,7 @@ if env.bool("USE_PGBOUNCER", default=False):
     DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
 
 # =============================================================================
-# CACHE (Redis - Production optimized)
+# CACHE (Redis)
 # =============================================================================
 
 redis_url = env("REDIS_URL", default=None)
@@ -58,26 +58,20 @@ if redis_url:
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": redis_url,
-            "KEY_PREFIX": "resync",
-            "TIMEOUT": 300,  # Default cache timeout: 5 minutes
+            "KEY_PREFIX": "cache",
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                "IGNORE_EXCEPTIONS": True,  # Graceful degradation
-                "SOCKET_CONNECT_TIMEOUT": 5,
-                "SOCKET_TIMEOUT": 5,
+                "IGNORE_EXCEPTIONS": True,
                 "CONNECTION_POOL_CLASS_KWARGS": {
                     "max_connections": 50,
                     "timeout": 20,
                 },
-                # Compress values > 10KB to save memory
-                "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
             },
         },
         "sessions": {
             "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": redis_url,
             "KEY_PREFIX": "session",
-            "TIMEOUT": 86400,  # Session cache: 24 hours
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
@@ -85,7 +79,6 @@ if redis_url:
     }
     SESSION_CACHE_ALIAS = "sessions"
 else:
-    # Fallback to database cache if Redis not available
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.db.DatabaseCache",

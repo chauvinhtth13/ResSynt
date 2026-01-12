@@ -1,4 +1,4 @@
-# backends/studies/study_43en/services/signals.py
+# backends/api/studies/study_43en/services/signals.py
 
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
@@ -11,9 +11,82 @@ from backends.studies.study_43en.models.contact import (
 from backends.studies.study_43en.models.schedule import (
     ExpectedCalendar, ExpectedDates, ContactExpectedDates, FollowUpStatus
 )
+# Import trực tiếp PII models
+from backends.studies.study_43en.models.patient.PER_DATA import PERSONAL_DATA
+from backends.studies.study_43en.models.contact.PER_CONTACT_DATA import PERSONAL_CONTACT_DATA
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+# ==========================================
+# HELPER FUNCTIONS - Get PII from PERSONAL_DATA
+# ==========================================
+
+def get_patient_pii(patient):
+    """
+    Get INITIAL and PHONE for patient
+    - INITIAL: from SCR_CASE
+    - PHONE: from PERSONAL_DATA
+    
+    Args:
+        patient: ENR_CASE instance
+    Returns:
+        tuple: (initial, phone)
+    """
+    initial = ''
+    phone = ''
+    
+    # Get INITIAL from SCR_CASE
+    try:
+        screening_case = patient.USUBJID  # ENR_CASE → SCR_CASE
+        initial = screening_case.INITIAL if screening_case else ''
+    except Exception:
+        pass
+    
+    # Get PHONE from PERSONAL_DATA (query trực tiếp)
+    try:
+        personal_data = PERSONAL_DATA.objects.using('db_study_43en').get(USUBJID=patient)
+        phone = personal_data.PHONE or ''
+    except PERSONAL_DATA.DoesNotExist:
+        phone = ''
+    except Exception:
+        phone = ''
+    
+    return initial, phone
+
+
+def get_contact_pii(contact):
+    """
+    Get INITIAL and PHONE for contact
+    - INITIAL: from SCR_CONTACT
+    - PHONE: from PERSONAL_CONTACT_DATA
+    
+    Args:
+        contact: ENR_CONTACT instance
+    Returns:
+        tuple: (initial, phone)
+    """
+    initial = ''
+    phone = ''
+    
+    # Get INITIAL from SCR_CONTACT
+    try:
+        screening_contact = contact.USUBJID  # ENR_CONTACT → SCR_CONTACT
+        initial = screening_contact.INITIAL if screening_contact else ''
+    except Exception:
+        pass
+    
+    # Get PHONE from PERSONAL_CONTACT_DATA (query trực tiếp)
+    try:
+        personal_data = PERSONAL_CONTACT_DATA.objects.using('db_study_43en').get(USUBJID=contact)
+        phone = personal_data.PHONE or ''
+    except PERSONAL_CONTACT_DATA.DoesNotExist:
+        phone = ''
+    except Exception:
+        phone = ''
+    
+    return initial, phone
 
 
 # ==========================================
@@ -23,8 +96,7 @@ logger = logging.getLogger(__name__)
 @receiver(post_save, sender=ENR_CASE)
 def sync_enrollment_date_to_expected_dates(sender, instance, **kwargs):
     """
-     TWO-WAY SYNC: ENR_CASE → ExpectedDates → FollowUpStatus
-    Sync enrollment date, PHONE, and INITIAL
+    TWO-WAY SYNC: ENR_CASE → ExpectedDates → FollowUpStatus
     """
     expected, created = ExpectedDates.objects.using('db_study_43en').get_or_create(USUBJID=instance)
     
@@ -33,14 +105,11 @@ def sync_enrollment_date_to_expected_dates(sender, instance, **kwargs):
         expected.save(using='db_study_43en', update_fields=['ENROLLMENT_DATE'])
         expected.auto_map_from_calendar()
     
-    #  Sync PHONE & INITIAL to all FollowUpStatus records
-    if instance.FULLNAME or instance.PHONE:
-        try:
-            screening_case = instance.USUBJID  # Get SCR_CASE
-            initial = screening_case.INITIAL if screening_case else ''
-            phone = instance.PHONE if instance.PHONE else ''
-            
-            # Update all existing FollowUpStatus records
+    # Sync PHONE & INITIAL to all FollowUpStatus records
+    try:
+        initial, phone = get_patient_pii(instance)
+        
+        if initial or phone:
             updated_count = FollowUpStatus.objects.using('db_study_43en').filter(
                 USUBJID=instance.USUBJID_id,
                 SUBJECT_TYPE='PATIENT'
@@ -50,16 +119,15 @@ def sync_enrollment_date_to_expected_dates(sender, instance, **kwargs):
             )
             
             if updated_count > 0:
-                logger.info(f" Synced PHONE for patient {instance.USUBJID_id}: {phone} ({updated_count} records)")
-        except Exception as e:
-            logger.error(f" Error syncing PHONE: {e}", exc_info=True)
+                logger.info(f"Synced PII for patient {instance.USUBJID_id}: ({updated_count} records)")
+    except Exception as e:
+        logger.error(f"Error syncing PII: {e}", exc_info=True)
 
 
 @receiver(post_save, sender=ENR_CONTACT)
 def sync_enrollment_date_to_contact_expected_dates(sender, instance, **kwargs):
     """
-     TWO-WAY SYNC: ENR_CONTACT → ContactExpectedDates → FollowUpStatus
-    Sync enrollment date, PHONE, and INITIAL
+    TWO-WAY SYNC: ENR_CONTACT → ContactExpectedDates → FollowUpStatus
     """
     expected, created = ContactExpectedDates.objects.using('db_study_43en').get_or_create(USUBJID=instance)
     
@@ -79,14 +147,11 @@ def sync_enrollment_date_to_contact_expected_dates(sender, instance, **kwargs):
                 'V3_EXPECTED_FROM', 'V3_EXPECTED_TO', 'V3_EXPECTED_DATE'
             ])
     
-    #  Sync PHONE & INITIAL to all FollowUpStatus records
-    if instance.FULLNAME or instance.PHONE:
-        try:
-            screening_contact = instance.USUBJID  # Get SCR_CONTACT
-            initial = screening_contact.INITIAL if screening_contact else ''
-            phone = instance.PHONE if instance.PHONE else ''
-            
-            # Update all existing FollowUpStatus records
+    # Sync PHONE & INITIAL to all FollowUpStatus records
+    try:
+        initial, phone = get_contact_pii(instance)
+        
+        if initial or phone:
             updated_count = FollowUpStatus.objects.using('db_study_43en').filter(
                 USUBJID=instance.USUBJID_id,
                 SUBJECT_TYPE='CONTACT'
@@ -96,34 +161,25 @@ def sync_enrollment_date_to_contact_expected_dates(sender, instance, **kwargs):
             )
             
             if updated_count > 0:
-                logger.info(f" Synced PHONE for contact {instance.USUBJID_id}: {phone} ({updated_count} records)")
-        except Exception as e:
-            logger.error(f" Error syncing PHONE for contact: {e}", exc_info=True)
+                logger.info(f"Synced PII for contact {instance.USUBJID_id}: ({updated_count} records)")
+    except Exception as e:
+        logger.error(f"Error syncing PII for contact: {e}", exc_info=True)
 
 
 # ==========================================
-#  ExpectedDates Signal - ONE-WAY: ExpectedDates → FollowUpStatus
+# ExpectedDates Signal
 # ==========================================
 
 @receiver(post_save, sender=ExpectedDates)
 def update_followup_status_from_expected_dates(sender, instance, **kwargs):
     """
-     ONE-WAY SYNC: ExpectedDates → FollowUpStatus
-    Updates expected dates and checks completion status from CRF forms
+    ONE-WAY SYNC: ExpectedDates → FollowUpStatus
     """
     try:
         patient = instance.USUBJID
+        initial, phone = get_patient_pii(patient)
         
-        # Get INITIAL and PHONE
-        try:
-            screening_case = patient.USUBJID
-            initial = screening_case.INITIAL if screening_case else ''
-            phone = patient.PHONE if hasattr(patient, 'PHONE') and patient.PHONE else ''
-        except:
-            initial = ''
-            phone = ''
-        
-        #  Check V2 completion (Sample)
+        # Check V2 completion (Sample)
         try:
             sample_v2 = SAM_CASE.objects.using('db_study_43en').get(USUBJID=patient, SAMPLE_TYPE='2')
             v2_actual_date = sample_v2.SAMPLEDATE if sample_v2.SAMPLE else None
@@ -132,7 +188,7 @@ def update_followup_status_from_expected_dates(sender, instance, **kwargs):
             v2_actual_date = None
             v2_status = 'UPCOMING'
         
-        #  Check V3 completion (FU_CASE_28)
+        # Check V3 completion (FU_CASE_28)
         try:
             followup_v3 = FU_CASE_28.objects.using('db_study_43en').get(USUBJID=patient)
             v3_actual_date = followup_v3.EvaluateDate if followup_v3.EvaluatedAtDay28 == 'Yes' else None
@@ -141,7 +197,7 @@ def update_followup_status_from_expected_dates(sender, instance, **kwargs):
             v3_actual_date = None
             v3_status = 'UPCOMING'
         
-        #  Check V4 completion (FU_CASE_90)
+        # Check V4 completion (FU_CASE_90)
         try:
             followup_v4 = FU_CASE_90.objects.using('db_study_43en').get(USUBJID=patient)
             v4_actual_date = followup_v4.EvaluateDate if followup_v4.EvaluatedAtDay90 == 'Yes' else None
@@ -202,28 +258,19 @@ def update_followup_status_from_expected_dates(sender, instance, **kwargs):
             )
             
     except Exception as e:
-        logger.error(f" Error in update_followup_status_from_expected_dates: {e}", exc_info=True)
+        logger.error(f"Error in update_followup_status_from_expected_dates: {e}", exc_info=True)
 
 
 @receiver(post_save, sender=ContactExpectedDates)
 def update_followup_status_from_contact_expected_dates(sender, instance, **kwargs):
     """
-     ONE-WAY SYNC: ContactExpectedDates → FollowUpStatus
-    Updates expected dates and checks completion status from CRF forms
+    ONE-WAY SYNC: ContactExpectedDates → FollowUpStatus
     """
     try:
         contact = instance.USUBJID
+        initial, phone = get_contact_pii(contact)
         
-        # Get INITIAL and PHONE
-        try:
-            screening_contact = contact.USUBJID
-            initial = screening_contact.INITIAL if screening_contact else ''
-            phone = contact.PHONE if hasattr(contact, 'PHONE') and contact.PHONE else ''
-        except:
-            initial = ''
-            phone = ''
-        
-        #  Check V2 completion (FU_CONTACT_28)
+        # Check V2 completion (FU_CONTACT_28)
         try:
             followup_v2 = FU_CONTACT_28.objects.using('db_study_43en').get(USUBJID=contact)
             v2_actual_date = followup_v2.EvaluateDate if followup_v2.EvaluatedAtDay28 == 'Yes' else None
@@ -232,7 +279,7 @@ def update_followup_status_from_contact_expected_dates(sender, instance, **kwarg
             v2_actual_date = None
             v2_status = 'UPCOMING'
         
-        #  Check V3 completion (FU_CONTACT_90)
+        # Check V3 completion (FU_CONTACT_90)
         try:
             followup_v3 = FU_CONTACT_90.objects.using('db_study_43en').get(USUBJID=contact)
             v3_actual_date = followup_v3.EvaluateDate if followup_v3.EvaluatedAtDay90 == 'Yes' else None
@@ -276,37 +323,25 @@ def update_followup_status_from_contact_expected_dates(sender, instance, **kwarg
             )
             
     except Exception as e:
-        logger.error(f" Error in update_followup_status_from_contact_expected_dates: {e}", exc_info=True)
+        logger.error(f"Error in update_followup_status_from_contact_expected_dates: {e}", exc_info=True)
 
 
 # ==========================================
-#  CRF FORM SIGNALS - TWO-WAY SYNC: CRF ↔ FollowUpStatus
+# CRF FORM SIGNALS
 # ==========================================
 
 @receiver(post_save, sender=FU_CASE_28)
 def sync_fu_case_28_to_followup_status(sender, instance, created, **kwargs):
-    """
-     TWO-WAY SYNC: FU_CASE_28 ↔ FollowUpStatus
-    When FU_CASE_28 is saved, automatically update FollowUpStatus
-    """
+    """TWO-WAY SYNC: FU_CASE_28 ↔ FollowUpStatus"""
     try:
-        # Determine actual date and status
         actual_date = instance.EvaluateDate if instance.EvaluatedAtDay28 == 'Yes' else None
         status = 'COMPLETED' if instance.EvaluatedAtDay28 == 'Yes' else 'UPCOMING'
         
-        # Get INITIAL and PHONE
-        try:
-            patient = instance.USUBJID  # ENR_CASE
-            screening = patient.USUBJID  # SCR_CASE
-            initial = screening.INITIAL if screening else ''
-            phone = patient.PHONE if hasattr(patient, 'PHONE') and patient.PHONE else ''
-        except:
-            initial = ''
-            phone = ''
+        patient = instance.USUBJID
+        initial, phone = get_patient_pii(patient)
         
-        #  FIXED: Use correct lookup path
         followup_status, status_created = FollowUpStatus.objects.using('db_study_43en').update_or_create(
-            USUBJID=instance.USUBJID.USUBJID.USUBJID,  # ENR_CASE → SCR_CASE → USUBJID
+            USUBJID=instance.USUBJID.USUBJID.USUBJID,
             SUBJECT_TYPE='PATIENT',
             VISIT='V3',
             defaults={
@@ -317,36 +352,22 @@ def sync_fu_case_28_to_followup_status(sender, instance, created, **kwargs):
             }
         )
         
-        logger.info(
-            f"{' Created' if status_created else ' Updated'} FollowUpStatus V3 "
-            f"for {instance.USUBJID.USUBJID.USUBJID}: {status} on {actual_date}"
-        )
+        logger.info(f"{'Created' if status_created else 'Updated'} FollowUpStatus V3 for {instance.USUBJID.USUBJID.USUBJID}: {status}")
         
     except Exception as e:
-        logger.error(f" Error syncing FU_CASE_28 to FollowUpStatus: {e}", exc_info=True)
+        logger.error(f"Error syncing FU_CASE_28: {e}", exc_info=True)
 
 
 @receiver(post_save, sender=FU_CASE_90)
 def sync_fu_case_90_to_followup_status(sender, instance, **kwargs):
-    """
-     TWO-WAY SYNC: FU_CASE_90 ↔ FollowUpStatus
-    When FU_CASE_90 is saved, automatically update FollowUpStatus
-    """
+    """TWO-WAY SYNC: FU_CASE_90 ↔ FollowUpStatus"""
     try:
         actual_date = instance.EvaluateDate if instance.EvaluatedAtDay90 == 'Yes' else None
         status = 'COMPLETED' if instance.EvaluatedAtDay90 == 'Yes' else 'UPCOMING'
         
-        # Get INITIAL and PHONE
-        try:
-            patient = instance.USUBJID
-            screening = patient.USUBJID
-            initial = screening.INITIAL if screening else ''
-            phone = patient.PHONE if hasattr(patient, 'PHONE') and patient.PHONE else ''
-        except:
-            initial = ''
-            phone = ''
+        patient = instance.USUBJID
+        initial, phone = get_patient_pii(patient)
         
-        #  FIXED: Use correct lookup path
         followup_status, status_created = FollowUpStatus.objects.using('db_study_43en').update_or_create(
             USUBJID=instance.USUBJID.USUBJID.USUBJID,
             SUBJECT_TYPE='PATIENT',
@@ -359,36 +380,22 @@ def sync_fu_case_90_to_followup_status(sender, instance, **kwargs):
             }
         )
         
-        logger.info(
-            f"{' Created' if status_created else ' Updated'} FollowUpStatus V4 "
-            f"for {instance.USUBJID.USUBJID.USUBJID}: {status} on {actual_date}"
-        )
+        logger.info(f"{'Created' if status_created else 'Updated'} FollowUpStatus V4 for {instance.USUBJID.USUBJID.USUBJID}: {status}")
         
     except Exception as e:
-        logger.error(f" Error syncing FU_CASE_90 to FollowUpStatus: {e}", exc_info=True)
+        logger.error(f"Error syncing FU_CASE_90: {e}", exc_info=True)
 
 
 @receiver(post_save, sender=FU_CONTACT_28)
 def sync_fu_contact_28_to_followup_status(sender, instance, **kwargs):
-    """
-     TWO-WAY SYNC: FU_CONTACT_28 ↔ FollowUpStatus
-    When FU_CONTACT_28 is saved, automatically update FollowUpStatus
-    """
+    """TWO-WAY SYNC: FU_CONTACT_28 ↔ FollowUpStatus"""
     try:
         actual_date = instance.EvaluateDate if instance.EvaluatedAtDay28 == 'Yes' else None
         status = 'COMPLETED' if instance.EvaluatedAtDay28 == 'Yes' else 'UPCOMING'
         
-        # Get INITIAL and PHONE
-        try:
-            contact = instance.USUBJID
-            screening = contact.USUBJID
-            initial = screening.INITIAL if screening else ''
-            phone = contact.PHONE if hasattr(contact, 'PHONE') and contact.PHONE else ''
-        except:
-            initial = ''
-            phone = ''
+        contact = instance.USUBJID
+        initial, phone = get_contact_pii(contact)
         
-        #  FIXED: Use correct lookup path
         followup_status, status_created = FollowUpStatus.objects.using('db_study_43en').update_or_create(
             USUBJID=instance.USUBJID.USUBJID.USUBJID,
             SUBJECT_TYPE='CONTACT',
@@ -401,33 +408,22 @@ def sync_fu_contact_28_to_followup_status(sender, instance, **kwargs):
             }
         )
         
-        logger.info(f"{'' if status_created else ''} FollowUpStatus V2 for contact {instance.USUBJID.USUBJID.USUBJID}: {status}")
+        logger.info(f"{'Created' if status_created else 'Updated'} FollowUpStatus V2 for contact {instance.USUBJID.USUBJID.USUBJID}: {status}")
         
     except Exception as e:
-        logger.error(f" Error syncing FU_CONTACT_28: {e}", exc_info=True)
+        logger.error(f"Error syncing FU_CONTACT_28: {e}", exc_info=True)
 
 
 @receiver(post_save, sender=FU_CONTACT_90)
 def sync_fu_contact_90_to_followup_status(sender, instance, **kwargs):
-    """
-     TWO-WAY SYNC: FU_CONTACT_90 ↔ FollowUpStatus
-    When FU_CONTACT_90 is saved, automatically update FollowUpStatus
-    """
+    """TWO-WAY SYNC: FU_CONTACT_90 ↔ FollowUpStatus"""
     try:
         actual_date = instance.EvaluateDate if instance.EvaluatedAtDay90 == 'Yes' else None
         status = 'COMPLETED' if instance.EvaluatedAtDay90 == 'Yes' else 'UPCOMING'
         
-        # Get INITIAL and PHONE
-        try:
-            contact = instance.USUBJID
-            screening = contact.USUBJID
-            initial = screening.INITIAL if screening else ''
-            phone = contact.PHONE if hasattr(contact, 'PHONE') and contact.PHONE else ''
-        except:
-            initial = ''
-            phone = ''
+        contact = instance.USUBJID
+        initial, phone = get_contact_pii(contact)
         
-        #  FIXED: Use correct lookup path
         followup_status, status_created = FollowUpStatus.objects.using('db_study_43en').update_or_create(
             USUBJID=instance.USUBJID.USUBJID.USUBJID,
             SUBJECT_TYPE='CONTACT',
@@ -440,21 +436,17 @@ def sync_fu_contact_90_to_followup_status(sender, instance, **kwargs):
             }
         )
         
-        logger.info(f"{'' if status_created else ''} FollowUpStatus V3 for contact {instance.USUBJID.USUBJID.USUBJID}: {status}")
+        logger.info(f"{'Created' if status_created else 'Updated'} FollowUpStatus V3 for contact {instance.USUBJID.USUBJID.USUBJID}: {status}")
         
     except Exception as e:
-        logger.error(f" Error syncing FU_CONTACT_90: {e}", exc_info=True)
+        logger.error(f"Error syncing FU_CONTACT_90: {e}", exc_info=True)
 
 
 @receiver(post_save, sender=SAM_CASE)
 def sync_sam_case_to_followup_status(sender, instance, **kwargs):
-    """
-     TWO-WAY SYNC: SAM_CASE ↔ FollowUpStatus
-    When sample V2 is collected, automatically update FollowUpStatus
-    """
+    """TWO-WAY SYNC: SAM_CASE ↔ FollowUpStatus"""
     if instance.SAMPLE_TYPE == '2':
         try:
-            # Determine actual date from any sample type
             actual_date = None
             if instance.SAMPLE:
                 actual_date = (instance.STOOLDATE or instance.RECTSWABDATE or 
@@ -462,17 +454,9 @@ def sync_sam_case_to_followup_status(sender, instance, **kwargs):
                             
             status = 'COMPLETED' if instance.SAMPLE else 'UPCOMING'
             
-            # Get INITIAL and PHONE
-            try:
-                patient = instance.USUBJID
-                screening = patient.USUBJID
-                initial = screening.INITIAL if screening else ''
-                phone = patient.PHONE if hasattr(patient, 'PHONE') and patient.PHONE else ''
-            except:
-                initial = ''
-                phone = ''
+            patient = instance.USUBJID
+            initial, phone = get_patient_pii(patient)
             
-            #  FIXED: Use correct lookup path
             followup_status, status_created = FollowUpStatus.objects.using('db_study_43en').update_or_create(
                 USUBJID=instance.USUBJID.USUBJID.USUBJID,
                 SUBJECT_TYPE='PATIENT',
@@ -485,83 +469,74 @@ def sync_sam_case_to_followup_status(sender, instance, **kwargs):
                 }
             )
             
-            logger.info(f"{'' if status_created else ''} FollowUpStatus V2 (sample) for {instance.USUBJID.USUBJID.USUBJID}: {status}")
+            logger.info(f"{'Created' if status_created else 'Updated'} FollowUpStatus V2 (sample) for {instance.USUBJID.USUBJID.USUBJID}: {status}")
             
         except Exception as e:
-            logger.error(f" Error syncing SAM_CASE: {e}", exc_info=True)
+            logger.error(f"Error syncing SAM_CASE: {e}", exc_info=True)
 
 
 # ==========================================
-# DELETE SIGNALS - Clean up FollowUpStatus
+# DELETE SIGNALS
 # ==========================================
 
 @receiver(pre_delete, sender=FU_CASE_28)
 def delete_followup_status_on_fu28_delete(sender, instance, **kwargs):
-    """Delete FollowUpStatus when FU_CASE_28 is deleted"""
     try:
         deleted_count = FollowUpStatus.objects.using('db_study_43en').filter(
             USUBJID=instance.USUBJID.USUBJID.USUBJID,
             SUBJECT_TYPE='PATIENT',
             VISIT='V3'
         ).delete()[0]
-        
         if deleted_count > 0:
-            logger.info(f"🗑️ Deleted {deleted_count} FollowUpStatus V3 for {instance.USUBJID.USUBJID.USUBJID}")
+            logger.info(f"Deleted {deleted_count} FollowUpStatus V3 for {instance.USUBJID.USUBJID.USUBJID}")
     except Exception as e:
-        logger.error(f" Error deleting FollowUpStatus: {e}", exc_info=True)
+        logger.error(f"Error deleting FollowUpStatus: {e}", exc_info=True)
 
 
 @receiver(pre_delete, sender=FU_CASE_90)
 def delete_followup_status_on_fu90_delete(sender, instance, **kwargs):
-    """Delete FollowUpStatus when FU_CASE_90 is deleted"""
     try:
         deleted_count = FollowUpStatus.objects.using('db_study_43en').filter(
             USUBJID=instance.USUBJID.USUBJID.USUBJID,
             SUBJECT_TYPE='PATIENT',
             VISIT='V4'
         ).delete()[0]
-        
         if deleted_count > 0:
-            logger.info(f"🗑️ Deleted {deleted_count} FollowUpStatus V4 for {instance.USUBJID.USUBJID.USUBJID}")
+            logger.info(f"Deleted {deleted_count} FollowUpStatus V4 for {instance.USUBJID.USUBJID.USUBJID}")
     except Exception as e:
-        logger.error(f" Error deleting FollowUpStatus: {e}", exc_info=True)
+        logger.error(f"Error deleting FollowUpStatus: {e}", exc_info=True)
 
 
 @receiver(pre_delete, sender=FU_CONTACT_28)
 def delete_followup_status_on_contact28_delete(sender, instance, **kwargs):
-    """Delete FollowUpStatus when FU_CONTACT_28 is deleted"""
     try:
         deleted_count = FollowUpStatus.objects.using('db_study_43en').filter(
             USUBJID=instance.USUBJID.USUBJID.USUBJID,
             SUBJECT_TYPE='CONTACT',
             VISIT='V2'
         ).delete()[0]
-        
         if deleted_count > 0:
-            logger.info(f"🗑️ Deleted {deleted_count} FollowUpStatus V2 for contact {instance.USUBJID.USUBJID.USUBJID}")
+            logger.info(f"Deleted {deleted_count} FollowUpStatus V2 for contact {instance.USUBJID.USUBJID.USUBJID}")
     except Exception as e:
-        logger.error(f" Error deleting FollowUpStatus: {e}", exc_info=True)
+        logger.error(f"Error deleting FollowUpStatus: {e}", exc_info=True)
 
 
 @receiver(pre_delete, sender=FU_CONTACT_90)
 def delete_followup_status_on_contact90_delete(sender, instance, **kwargs):
-    """Delete FollowUpStatus when FU_CONTACT_90 is deleted"""
     try:
         deleted_count = FollowUpStatus.objects.using('db_study_43en').filter(
             USUBJID=instance.USUBJID.USUBJID.USUBJID,
             SUBJECT_TYPE='CONTACT',
             VISIT='V3'
         ).delete()[0]
-        
         if deleted_count > 0:
-            logger.info(f"🗑️ Deleted {deleted_count} FollowUpStatus V3 for contact {instance.USUBJID.USUBJID.USUBJID}")
+            logger.info(f"Deleted {deleted_count} FollowUpStatus V3 for contact {instance.USUBJID.USUBJID.USUBJID}")
     except Exception as e:
-        logger.error(f" Error deleting FollowUpStatus: {e}", exc_info=True)
+        logger.error(f"Error deleting FollowUpStatus: {e}", exc_info=True)
 
 
 @receiver(pre_delete, sender=SAM_CASE)
 def delete_followup_status_on_sample_delete(sender, instance, **kwargs):
-    """Delete FollowUpStatus V2 when SAM_CASE V2 is deleted"""
     if instance.SAMPLE_TYPE == '2':
         try:
             deleted_count = FollowUpStatus.objects.using('db_study_43en').filter(
@@ -569,8 +544,7 @@ def delete_followup_status_on_sample_delete(sender, instance, **kwargs):
                 SUBJECT_TYPE='PATIENT',
                 VISIT='V2'
             ).delete()[0]
-            
             if deleted_count > 0:
-                logger.info(f"🗑️ Deleted {deleted_count} FollowUpStatus V2 (sample) for {instance.USUBJID.USUBJID.USUBJID}")
+                logger.info(f"Deleted {deleted_count} FollowUpStatus V2 (sample) for {instance.USUBJID.USUBJID.USUBJID}")
         except Exception as e:
-            logger.error(f" Error deleting FollowUpStatus: {e}", exc_info=True)
+            logger.error(f"Error deleting FollowUpStatus: {e}", exc_info=True)

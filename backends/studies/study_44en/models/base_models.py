@@ -25,61 +25,6 @@ from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 # DEPARTMENT CHOICES BY SITE
 # ==========================================
 
-DEPARTMENTS_BY_SITE = {
-    '003': [  # Bệnh viện Bệnh Nhiệt Đới TPHCM – HTD/003
-        ('Nhiễm A', 'Nhiễm A'),
-        ('Nhiễm B', 'Nhiễm B'),
-        ('Nhiễm C', 'Nhiễm C'),
-        ('Nhiễm D', 'Nhiễm D'),
-        ('Nhiễm E', 'Nhiễm E'),
-        ('Nhiễm Việt – Anh', 'Nhiễm Việt – Anh'),
-        ('Nội A', 'Nội A'),
-        ('Nội B', 'Nội B'),
-        ('Cấp cứu', 'Cấp cứu'),
-        ('Hồi sức tích cực – Chống độc Người lớn', 'Hồi sức tích cực – Chống độc Người lớn'),
-    ],
-    
-    '020': [  # Bệnh viện Bệnh Nhiệt Đới Trung Ương - NHTD/020
-        ('Cấp cứu', 'Cấp cứu'),
-        ('Trung tâm Hồi sức tích cực', 'Trung tâm Hồi sức tích cực'),
-        ('Nhiễm khuẩn tổng hợp', 'Nhiễm khuẩn tổng hợp'),
-        ('Viêm gan', 'Viêm gan'),
-        ('Trung tâm Phẫu thuật Gan Mật', 'Trung tâm Phẫu thuật Gan Mật'),
-    ],
-    
-    '011': [  # Bệnh viện Chợ Rẫy – CRH/011
-        ('Nội Phổi', 'Nội Phổi'),
-        ('Nội Tiêu Hóa', 'Nội Tiêu Hóa'),
-        ('Ngoại Gan – Mật – Tụy', 'Ngoại Gan – Mật – Tụy'),
-        ('Bệnh Nhiệt Đới', 'Bệnh Nhiệt Đới'),
-    ],
-}
-
-
-def get_department_choices(siteid):
-    """
-    Get department choices for a specific site
-    
-    Args:
-        siteid: Site ID ('003', '020', '011')
-    
-    Returns:
-        List of tuples for choices
-    """
-    if not siteid or siteid == 'all':
-        # Return all departments from all sites (merged, unique)
-        all_depts = []
-        seen = set()
-        
-        for site_depts in DEPARTMENTS_BY_SITE.values():
-            for dept in site_depts:
-                if dept[0] not in seen:
-                    seen.add(dept[0])
-                    all_depts.append(dept)
-        
-        return sorted(all_depts, key=lambda x: x[0])
-    
-    return DEPARTMENTS_BY_SITE.get(siteid, [])
 
 
 class AuditFieldsMixin(models.Model):

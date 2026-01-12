@@ -41,7 +41,7 @@ from .helpers_followup import (
     detect_followup_flat_field_changes,
 )
 
-from backends.studies.study_44en.utils.permission_decorators import (
+from backends.audit_logs.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,

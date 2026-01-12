@@ -128,28 +128,30 @@ def audit_log(model_name: str, get_patient_id_from: str = 'usubjid',
         get_patient_id_from: Parameter name in URL kwargs for patient ID (default 'usubjid')
         scr_case_model: Optional - SCR_CASE model class for SITEID lookup
         scr_contact_model: Optional - SCR_CONTACT model class for SITEID lookup
-        audit_log_model: REQUIRED - AuditLog model class from study app
-        audit_log_detail_model: REQUIRED - AuditLogDetail model class from study app
+        audit_log_model: Optional - AuditLog model class (defaults to backends.audit_logs.models.AuditLog)
+        audit_log_detail_model: Optional - AuditLogDetail model class (defaults to backends.audit_logs.models.AuditLogDetail)
     
     Example:
         from backends.studies.study_43en.models.patient import SCR_CASE
-        from backends.studies.study_43en.models.audit import AuditLog, AuditLogDetail
         
         @audit_log('SCREENINGCASE', 
                    get_patient_id_from='usubjid', 
-                   scr_case_model=SCR_CASE,
-                   audit_log_model=AuditLog,
-                   audit_log_detail_model=AuditLogDetail)
+                   scr_case_model=SCR_CASE)
         def my_view(request, usubjid):
             ...
     """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            # Validate required models
+            # Use provided models - they must be passed from each study
+            nonlocal audit_log_model, audit_log_detail_model
             if not audit_log_model or not audit_log_detail_model:
-                logger.warning(f"[AuditLog] Missing audit models for {view_func.__name__} - skipping audit")
-                return view_func(request, *args, **kwargs)
+                # Models must be provided - can't use default since they are per-study now
+                raise ValueError(
+                    "audit_log_model and audit_log_detail_model must be provided. "
+                    "Import from your study's models, e.g.: "
+                    "from backends.studies.study_43en.models import AuditLog, AuditLogDetail"
+                )
             
             # Get patient_id with case-insensitive lookup
             patient_id = kwargs.get(get_patient_id_from)

@@ -1,14 +1,18 @@
 # backends/audit_logs/__init__.py
 """
-BASE Audit Log System - Shared across all studies
+Audit Log System - Factory-based approach for multi-study databases
 
 Provides:
-- Models: AuditLog, AuditLogDetail
+- Factory function: create_audit_models() to create AuditLog/AuditLogDetail per study
+- Abstract base models: AbstractAuditLog, AbstractAuditLogDetail
 - Utils: decorators, helpers, validators, etc.
 
-Usage in studies:
-    from backends.audit_logs.models import AuditLog, AuditLogDetail
-    from backends.audit_logs.utils import audit_log, ChangeDetector, ReasonValidator
+Usage in study models/__init__.py:
+    from backends.audit_logs.models import create_audit_models
+    AuditLog, AuditLogDetail = create_audit_models('study_43en')
+
+Usage in views/decorators:
+    from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 """
 default_app_config = 'backends.audit_logs.apps.AuditLogsConfig'
 

@@ -1,35 +1,42 @@
-# backends/audit_log/models/__init__.py
-"""
-BASE Audit Log Models - Shared across all studies
-"""
 # backends/audit_logs/models/__init__.py
 """
-Audit Log Models
+Audit Log Models - Factory-based approach
 
-Provides both:
-1. Abstract base models (for inheritance in study apps)
-2. Concrete models (for direct use if needed)
+This module provides a factory function to create AuditLog and AuditLogDetail
+models for each study. This ensures:
+- `makemigrations study_XXen` includes AuditLog tables
+- Tables are created in the 'log' schema of each study database
+- No duplicate code across studies
 
-RECOMMENDED: Use abstract models for study-specific databases
-    from backends.audit_logs.models.base import AbstractAuditLog, AbstractAuditLogDetail
+Usage in study app (e.g., study_43en/models/__init__.py):
+    from backends.audit_logs.models import create_audit_models
+    
+    # Create concrete AuditLog and AuditLogDetail for this study
+    AuditLog, AuditLogDetail = create_audit_models('study_43en')
+    
+    # Export them
+    __all__ = ['AuditLog', 'AuditLogDetail', ...]
 
-ALTERNATIVE: Use concrete models (requires audit_logs in INSTALLED_APPS with migrations)
-    from backends.audit_logs.models import AuditLogs, AuditLogsDetail
+For runtime usage (views, decorators, etc.):
+    from backends.audit_logs.models import get_audit_models
+    
+    AuditLog, AuditLogDetail = get_audit_models('study_43en')
+    # or import directly from study
+    from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 """
 
-# Abstract base models (NO migrations needed)
-from .base import AbstractAuditLog, AbstractAuditLogDetail
-
-# Concrete models (migrations needed if used directly)
-from .audit_logs import AuditLogs, AuditLogsDetail
+from .base import (
+    AbstractAuditLog,
+    AbstractAuditLogDetail,
+    create_audit_models,
+    get_audit_models,
+)
 
 __all__ = [
-    # Abstract (recommended)
+    # Abstract base models
     'AbstractAuditLog',
     'AbstractAuditLogDetail',
-    # Concrete
-    'AuditLogs',
-    'AuditLogsDetail',
+    # Factory function
+    'create_audit_models',
+    'get_audit_models',
 ]
-
-__all__ = ['AuditLogs', 'AuditLogsDetail']

@@ -2,7 +2,16 @@
 """
 Main models package for study_43en
 Import all model subpackages for Django registry
+
+AuditLog and AuditLogDetail are created via factory function from audit_logs.
+This ensures makemigrations study_43en includes audit tables.
 """
+
+# ==========================================
+# AUDIT LOG MODELS (Created via factory)
+# ==========================================
+from backends.audit_logs.models import create_audit_models
+AuditLog, AuditLogDetail = create_audit_models('study_43en')
 
 # ==========================================
 # BASE MODELS (MIXINS)
@@ -26,6 +35,12 @@ from .schedule import *
 # EXPORTS
 # ==========================================
 __all__ = [
+    # ==========================================
+    # AUDIT LOG MODELS
+    # ==========================================
+    'AuditLog',
+    'AuditLogDetail',
+    
     # ==========================================
     # BASE MODELS
     # ==========================================

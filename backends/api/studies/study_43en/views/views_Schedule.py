@@ -8,7 +8,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, Case, When, Value, IntegerField
 from django.utils.translation import gettext as _
 from django.utils.timezone import localtime
-
+from backends.api.studies.study_43en.services.context_processors import upcoming_appointments
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 
@@ -740,7 +740,6 @@ def mark_notification_read(request):
             request.session.modified = True
         
         #  Đếm lại số thông báo chưa đọc
-        from backends.studies.study_43en.services.context_processors import upcoming_appointments
         context = upcoming_appointments(request)
         
         return JsonResponse({
@@ -809,7 +808,6 @@ def get_notification_count(request):
     GET: /studies/43en/api/notification/count/
     """
     try:
-        from backends.studies.study_43en.services.context_processors import upcoming_appointments
         context = upcoming_appointments(request)
         
         return JsonResponse({

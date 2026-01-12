@@ -22,7 +22,7 @@ from backends.studies.study_44en.models.individual import (
     Individual_FollowUp, Individual_Sample
 )
 
-from backends.studies.study_44en.utils.permission_decorators import (
+from backends.audit_logs.utils.permission_decorators import (
     require_crf_view,
     require_crf_add,
     require_crf_change,
@@ -46,7 +46,7 @@ def get_filtered_individuals(user):
 
 
 @login_required
-# @require_crf_view('dashboard')
+@require_crf_view('dashboard')
 def dashboard(request):
     """
     Dashboard view for Study 44EN

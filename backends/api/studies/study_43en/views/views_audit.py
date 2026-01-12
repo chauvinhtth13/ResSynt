@@ -18,15 +18,15 @@ from django.contrib import messages
 from datetime import datetime
 from django.contrib.auth import get_user_model
 
-from backends.audit_logs.models.audit_logs import AuditLogs, AuditLogsDetail
-from backends.audit_logs.utils.permission_decorators import require_crf_view
+from backends.audit_log.models.audit_log import AuditLog, AuditLogDetail
+from backends.audit_log.utils.permission_decorators import require_crf_view
 from backends.studies.study_43en.utils.site_utils import (
     get_site_filter_params,
     get_filtered_queryset
 )
 
 # ✅ NEW: Use base audit_log models instead (for new studies)
-# from backends.audit_logs.models import AuditLog, AuditLogDetail
+# from backends.audit_log.models import AuditLog, AuditLogDetail
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 # ==========================================
 
 @login_required
-@require_crf_view('auditlog', redirect_to='study_43en:home_dashboard')
+@require_crf_view('AuditLog', redirect_to='study_43en:home_dashboard')
 def audit_log_list(request):
     """
     List all audit logs with filters and site-based access control
@@ -208,7 +208,7 @@ def audit_log_list(request):
 # ==========================================
 
 @login_required
-@require_crf_view('auditlog', redirect_to='study_43en:audit_log_list')
+@require_crf_view('AuditLog', redirect_to='study_43en:audit_log_list')
 def audit_log_detail(request, log_id):
     """
     View detailed audit log with all changes and integrity verification
@@ -561,7 +561,7 @@ def _get_field_label(model_name, field_name):
 # ==========================================
 
 @login_required
-@require_crf_view('auditlog', redirect_to='study_43en:audit_log_list')
+@require_crf_view('AuditLog', redirect_to='study_43en:audit_log_list')
 def audit_log_export(request):
     """
     Export audit logs to CSV/Excel

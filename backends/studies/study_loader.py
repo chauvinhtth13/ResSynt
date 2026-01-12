@@ -1,11 +1,13 @@
+# backends/studies/study_loader.py
 """
 Study App Loader - Secure implementation with professional error handling.
 """
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
-from dataclasses import dataclass
+from typing import Dict, List, Optional, Set, Tuple, Callable
+from dataclasses import dataclass, field
+from importlib import import_module
 
 import environ
 import psycopg
@@ -29,6 +31,7 @@ class StudyInfo:
     code: str
     has_database_app: bool = False
     has_api_app: bool = False
+    has_context_processors: bool = False  # NEW
 
 
 @dataclass 
@@ -38,6 +41,7 @@ class LoaderCache:
     active_studies: Optional[Set[str]] = None
     valid_studies: Optional[Set[str]] = None
     existing_databases: Optional[Set[str]] = None
+    context_processors: Dict[str, List[Callable]] = field(default_factory=dict)  # NEW
     db_status: DatabaseStatus = DatabaseStatus.OK
     
     def clear(self):
@@ -45,6 +49,7 @@ class LoaderCache:
         self.active_studies = None
         self.valid_studies = None
         self.existing_databases = None
+        self.context_processors = {}  # NEW
         self.db_status = DatabaseStatus.OK
 
 
@@ -157,11 +162,19 @@ class StudyAppLoader:
                 if not cls._is_valid_study_folder(folder):
                     continue
                 
+                code = folder.name.removeprefix(cls.STUDY_PREFIX)
+                
                 if (folder / 'urls.py').exists():
-                    code = folder.name.removeprefix(cls.STUDY_PREFIX)
                     if code not in studies:
                         studies[code] = StudyInfo(code=code)
                     studies[code].has_api_app = True
+                
+                # NEW: Check for context_processors.py
+                services_dir = folder / 'services'
+                if (services_dir / 'context_processors.py').exists():
+                    if code not in studies:
+                        studies[code] = StudyInfo(code=code)
+                    studies[code].has_context_processors = True
         
         cls._cache.folder_info = studies
         return studies
@@ -445,6 +458,57 @@ class StudyAppLoader:
         
         return databases
     
+    # =========================================================================
+    # Context Processors (NEW)
+    # =========================================================================
+    
+    @classmethod
+    def get_study_context_processors(cls, study_code: str) -> List[Callable]:
+        """
+        Get context processor functions for a specific study.
+        
+        Args:
+            study_code: e.g., '43en', '44en'
+        
+        Returns:
+            List of context processor functions
+        """
+        # Check cache first
+        if study_code in cls._cache.context_processors:
+            return cls._cache.context_processors[study_code]
+        
+        processors = []
+        module_path = f"backends.api.studies.{cls.STUDY_PREFIX}{study_code}.services.context_processors"
+        
+        try:
+            module = import_module(module_path)
+            
+            # Auto-discover callable functions (exclude private and imports)
+            for name in dir(module):
+                if name.startswith('_'):
+                    continue
+                    
+                obj = getattr(module, name)
+                
+                # Check if it's a function defined in this module
+                if (callable(obj) 
+                    and hasattr(obj, '__module__') 
+                    and obj.__module__ == module_path):
+                    processors.append(obj)
+            
+            if processors:
+                logger.debug(f"Loaded {len(processors)} context processors for {cls.STUDY_PREFIX}{study_code}")
+            
+        except ImportError:
+            # No context_processors.py for this study - that's OK
+            logger.debug(f"No context processors found for {cls.STUDY_PREFIX}{study_code}")
+        except Exception as e:
+            logger.warning(f"Error loading context processors for {cls.STUDY_PREFIX}{study_code}: {e}")
+        
+        # Cache result (even if empty)
+        cls._cache.context_processors[study_code] = processors
+        return processors
+    
     @classmethod
     def get_database_status(cls) -> DatabaseStatus:
         """Get current database status."""
@@ -454,6 +518,87 @@ class StudyAppLoader:
     def clear_cache(cls) -> None:
         """Clear all caches."""
         cls._cache.clear()
+
+
+# =============================================================================
+# Context Processor for Django Templates (NEW)
+# =============================================================================
+
+def dynamic_study_context(request):
+    """
+    Dynamic context processor - auto-loads study-specific contexts.
+    
+    This single context processor replaces the need to list each study's
+    context processors in settings.py.
+    
+    Usage in settings.py TEMPLATES:
+        "backends.studies.study_loader.dynamic_study_context"
+    
+    How it works:
+        1. Detects current study from request/session
+        2. Loads context processors from:
+           backends/api/studies/study_{code}/services/context_processors.py
+        3. Calls each processor and merges results
+    
+    Returns:
+        dict: Combined context from all study-specific processors
+    """
+    # Get current study code
+    study_code = _get_current_study_code(request)
+    
+    if not study_code:
+        return {}
+    
+    # Get and execute study-specific processors
+    context = {}
+    processors = StudyAppLoader.get_study_context_processors(study_code)
+    
+    for processor in processors:
+        try:
+            result = processor(request)
+            if isinstance(result, dict):
+                context.update(result)
+        except Exception as e:
+            logger.error(f"Error in context processor {processor.__name__}: {e}")
+    
+    return context
+
+
+def _get_current_study_code(request) -> Optional[str]:
+    """
+    Extract current study code from request.
+    
+    Priority:
+        1. request.current_study (set by middleware)
+        2. request.session['current_study_code']
+        3. URL path parsing (e.g., /studies/43en/...)
+    
+    Returns:
+        str: Study code (lowercase) or None
+    """
+    # 1. From middleware attribute
+    current_study = getattr(request, 'current_study', None)
+    if current_study:
+        if hasattr(current_study, 'code'):
+            return current_study.code.lower()
+        return str(current_study).lower()
+    
+    # 2. From session
+    study_code = request.session.get('current_study_code')
+    if study_code:
+        return study_code.lower()
+    
+    # 3. From URL path
+    path = request.path
+    if '/studies/' in path:
+        # Parse: /studies/43en/... → 43en
+        parts = path.split('/studies/')
+        if len(parts) > 1:
+            code_part = parts[1].split('/')[0]
+            if code_part:
+                return code_part.lower()
+    
+    return None
 
 
 # =============================================================================

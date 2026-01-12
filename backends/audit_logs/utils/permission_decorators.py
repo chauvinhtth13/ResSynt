@@ -59,7 +59,8 @@ def require_study_permission(permission_codename: str, redirect_to: str = None):
 
 def require_crf_permission(action: str, model_name: str, redirect_to: str = None):
     """Build permission and check using TenancyUtils"""
-    permission_codename = f'{action}_{model_name}'
+    # Django stores permissions with lowercase model names
+    permission_codename = f'{action}_{model_name.lower()}'
     return require_study_permission(permission_codename, redirect_to)
 
 
