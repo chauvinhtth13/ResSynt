@@ -18,12 +18,15 @@ from django.contrib import messages
 from datetime import datetime
 from django.contrib.auth import get_user_model
 
-from backends.studies.study_43en.models import AuditLog, AuditLogDetail
-from backends.audit_logs.utils.permission_decorators import require_crf_view
+from backends.audit_log.models.audit_log import AuditLog, AuditLogDetail
+from backends.audit_log.utils.permission_decorators import require_crf_view
 from backends.studies.study_43en.utils.site_utils import (
     get_site_filter_params,
     get_filtered_queryset
 )
+
+# ✅ NEW: Use base audit_log models instead (for new studies)
+# from backends.audit_log.models import AuditLog, AuditLogDetail
 
 User = get_user_model()
 logger = logging.getLogger(__name__)

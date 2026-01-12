@@ -1,4 +1,4 @@
-{% extends 'default/dashboard.html' %}
+{% extends 'studies\study_43en\home_dashboard.html' %}
 {% load static %}
 {% load i18n %}
 
@@ -12,7 +12,7 @@
 <li class="breadcrumb-item active">{% trans "Resistance Statistics" %}</li>
 {% endblock %}
 
-{% block extra_head_dashboard %}
+{% block dashboard_css %}
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -263,7 +263,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}">
 $(document).ready(function() {
   console.log(' Antibiotic Statistics Page Loaded');

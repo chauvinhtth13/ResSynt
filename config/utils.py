@@ -201,10 +201,13 @@ class DatabaseConfig:
         
         conn_max_age = 0 if env.bool("DEBUG", default=False) else 300
         
+        # Query timeout: 30 seconds to prevent long-running queries blocking connections
+        statement_timeout = env.int("STUDY_DB_STATEMENT_TIMEOUT", default=30000)
+        
         options = {
-            "options": f"-c search_path={search_path}",
+            "options": f"-c search_path={search_path} -c statement_timeout={statement_timeout}",
             "sslmode": management_db["OPTIONS"].get("sslmode", "prefer"),
-            "connect_timeout": 5,
+            "connect_timeout": 10,
             "keepalives": 1,
             "keepalives_idle": 60,
             "keepalives_interval": 10,

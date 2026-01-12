@@ -1,7 +1,7 @@
 // frontends/static/js/default/sidebar.js
 (() => {
   // ==========================================
-  // SIDEBAR MANAGER - Xử lý toggle/responsive
+  // SIDEBAR MANAGER - Optimized Toggle/Responsive
   // ==========================================
   class SidebarManager {
     constructor(config = {}) {
@@ -12,7 +12,7 @@
         overlayId: config.overlayId || 'sidebarOverlay',
         mainContentId: config.mainContentId || 'mainContent',
         breakpoint: config.breakpoint || 992,
-        resizeDelay: config.resizeDelay || 250
+        resizeDelay: config.resizeDelay || 150
       };
 
       // DOM Elements
@@ -23,17 +23,21 @@
 
       // Validate elements
       if (!this.sidebar || !this.sidebarToggle) {
-        console.warn('[sidebar.js] Missing required elements:', {
-          sidebar: this.sidebar,
-          sidebarToggle: this.sidebarToggle,
-          overlay: this.overlay,
-          mainContent: this.mainContent
+        console.warn('[SidebarManager] Missing required elements:', {
+          sidebar: !!this.sidebar,
+          sidebarToggle: !!this.sidebarToggle
         });
         return;
       }
 
       // State
       this.resizeTimer = null;
+      this.isAnimating = false;
+      this.pendingChartResize = false;
+      
+      // Bound handlers for proper cleanup
+      this._boundTransitionEnd = this.handleTransitionEnd.bind(this);
+      this._boundResize = this.handleResize.bind(this);
 
       // Initialize
       this.bind();
@@ -41,99 +45,176 @@
 
     bind() {
       // Toggle button click
-      this.sidebarToggle.addEventListener('click', () => this.toggleSidebar());
+      this.sidebarToggle.addEventListener('click', () => this.toggleSidebar(), { passive: true });
 
-      // Overlay click
+      // Overlay click (for mobile)
       if (this.overlay) {
-        this.overlay.addEventListener('click', () => this.closeSidebar());
+        this.overlay.addEventListener('click', () => this.closeSidebar(), { passive: true });
       }
 
-      // ESC key
+      // ESC key - use passive for better scroll performance
       document.addEventListener('keydown', (e) => this.handleEscapeKey(e));
 
-      // Window resize
-      window.addEventListener('resize', () => this.handleResize());
+      // Window resize with passive listener
+      window.addEventListener('resize', this._boundResize, { passive: true });
+      
+      // Listen for transition end on sidebar for chart resize
+      this.sidebar.addEventListener('transitionend', this._boundTransitionEnd, { passive: true });
+      
+      // Also listen on main content for margin transition
+      if (this.mainContent) {
+        this.mainContent.addEventListener('transitionend', this._boundTransitionEnd, { passive: true });
+      }
     }
 
     isDesktop() {
       return window.innerWidth >= this.config.breakpoint;
     }
 
+    /**
+     * Toggle sidebar with optimized animation handling
+     */
     toggleSidebar() {
-      if (this.isDesktop()) {
-        // Desktop mode
-        this.sidebar.classList.toggle('hide');
-        if (this.mainContent) {
-          this.mainContent.classList.toggle('sidebar-hidden');
+      // Prevent rapid toggling during animation
+      if (this.isAnimating) return;
+      
+      this.isAnimating = true;
+      this.pendingChartResize = true;
+      
+      // Use requestAnimationFrame for smooth class toggle
+      requestAnimationFrame(() => {
+        if (this.isDesktop()) {
+          this.toggleDesktop();
+        } else {
+          this.toggleMobile();
         }
-        
-        //  Resize all ECharts instances after BOTH transitions complete:
-        // - Sidebar transform: 300ms
-        // - Content margin-left: 300ms
-        // Use 350ms to ensure both animations finish + small buffer
-        setTimeout(() => {
-          this.resizeAllCharts();
-        }, 350);
-      } else {
-        // Mobile mode
-        this.sidebar.classList.toggle('show');
-        if (this.overlay) {
-          this.overlay.classList.toggle('d-none');
-        }
-      }
+      });
     }
     
     /**
-     * Resize all ECharts instances to fit new container dimensions
-     * Optimized to prevent lag during sidebar toggle
+     * Desktop toggle - slides sidebar and adjusts content margin
+     */
+    toggleDesktop() {
+      const isHiding = !this.sidebar.classList.contains('hide');
+      
+      // Toggle classes
+      this.sidebar.classList.toggle('hide');
+      if (this.mainContent) {
+        this.mainContent.classList.toggle('sidebar-hidden');
+      }
+      
+      // Dispatch custom event for other components
+      this.dispatchToggleEvent(isHiding ? 'hidden' : 'visible');
+    }
+    
+    /**
+     * Mobile toggle - slides sidebar from left with overlay
+     */
+    toggleMobile() {
+      const isShowing = !this.sidebar.classList.contains('show');
+      
+      this.sidebar.classList.toggle('show');
+      
+      if (this.overlay) {
+        // Use show/hide classes instead of d-none for smooth transition
+        this.overlay.classList.toggle('show', isShowing);
+      }
+      
+      // Dispatch custom event
+      this.dispatchToggleEvent(isShowing ? 'visible' : 'hidden');
+    }
+    
+    /**
+     * Handle transition end - resize charts only once after animation completes
+     */
+    handleTransitionEnd(e) {
+      // Only handle transform/margin transitions, not other properties
+      if (e.propertyName !== 'transform' && e.propertyName !== 'margin-left') {
+        return;
+      }
+      
+      // Prevent multiple resize calls
+      if (!this.pendingChartResize) return;
+      this.pendingChartResize = false;
+      this.isAnimating = false;
+      
+      // Use RAF to ensure DOM is fully updated before resize
+      requestAnimationFrame(() => {
+        this.resizeAllCharts();
+      });
+    }
+    
+    /**
+     * Dispatch custom toggle event for external listeners
+     */
+    dispatchToggleEvent(state) {
+      const event = new CustomEvent('sidebar:toggle', {
+        detail: { state, isDesktop: this.isDesktop() },
+        bubbles: true
+      });
+      this.sidebar.dispatchEvent(event);
+    }
+    
+    /**
+     * Resize all ECharts instances - batched and optimized
      */
     resizeAllCharts() {
       if (typeof echarts === 'undefined') return;
       
-      // Force browser reflow to ensure layout is updated before resize
-      if (this.mainContent) {
-        void this.mainContent.offsetHeight;
-      }
-      
-      // Find all chart elements and resize in one batch
       const chartElements = document.querySelectorAll('[id$="Chart"]');
-      let resizedCount = 0;
+      if (chartElements.length === 0) return;
       
-      chartElements.forEach(chartElement => {
-        // Force reflow for each chart container
-        void chartElement.offsetHeight;
+      // Batch all resizes in a single RAF
+      requestAnimationFrame(() => {
+        let resizedCount = 0;
         
-        const chartInstance = echarts.getInstanceByDom(chartElement);
-        if (chartInstance) {
-          // Use resize with animation disabled for smoother performance
-          chartInstance.resize({
-            animation: {
-              duration: 0
-            }
-          });
-          resizedCount++;
+        chartElements.forEach(chartElement => {
+          const chartInstance = echarts.getInstanceByDom(chartElement);
+          if (chartInstance) {
+            // Resize with animation disabled for instant update
+            chartInstance.resize({ animation: { duration: 0 } });
+            resizedCount++;
+          }
+        });
+        
+        if (resizedCount > 0) {
+          console.log(`📊 Resized ${resizedCount} chart(s)`);
         }
       });
-      
-      if (resizedCount > 0) {
-        console.log(`📊 Resized ${resizedCount} charts after sidebar toggle`);
-      }
     }
 
     openSidebar() {
+      if (this.isAnimating) return;
+      
       if (!this.isDesktop()) {
-        this.sidebar.classList.add('show');
-        if (this.overlay) {
-          this.overlay.classList.remove('d-none');
-        }
+        this.isAnimating = true;
+        requestAnimationFrame(() => {
+          this.sidebar.classList.add('show');
+          if (this.overlay) {
+            this.overlay.classList.add('show');
+          }
+          this.dispatchToggleEvent('visible');
+        });
       }
     }
 
     closeSidebar() {
-      this.sidebar.classList.remove('show');
-      if (this.overlay) {
-        this.overlay.classList.add('d-none');
-      }
+      if (this.isAnimating) return;
+      
+      this.isAnimating = true;
+      requestAnimationFrame(() => {
+        this.sidebar.classList.remove('show');
+        if (this.overlay) {
+          this.overlay.classList.remove('show');
+        }
+        this.dispatchToggleEvent('hidden');
+        
+        // Reset animation state after a short delay for mobile
+        // (in case transitionend doesn't fire)
+        setTimeout(() => {
+          this.isAnimating = false;
+        }, 350);
+      });
     }
 
     handleEscapeKey(e) {
@@ -145,18 +226,34 @@
     handleResize() {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = setTimeout(() => {
-        if (!this.isDesktop() && this.overlay) {
-          this.overlay.classList.add('d-none');
+        // Reset states on resize
+        if (!this.isDesktop()) {
+          if (this.overlay) {
+            this.overlay.classList.remove('show');
+          }
+          this.sidebar.classList.remove('show');
         }
+        this.isAnimating = false;
       }, this.config.resizeDelay);
     }
 
     isOpen() {
       if (this.isDesktop()) {
         return !this.sidebar.classList.contains('hide');
-      } else {
-        return this.sidebar.classList.contains('show');
       }
+      return this.sidebar.classList.contains('show');
+    }
+    
+    /**
+     * Cleanup method for SPA or dynamic content
+     */
+    destroy() {
+      this.sidebar.removeEventListener('transitionend', this._boundTransitionEnd);
+      if (this.mainContent) {
+        this.mainContent.removeEventListener('transitionend', this._boundTransitionEnd);
+      }
+      window.removeEventListener('resize', this._boundResize);
+      clearTimeout(this.resizeTimer);
     }
   }
 
@@ -167,7 +264,7 @@
     constructor() {
       // Configuration
       this.config = {
-        linkSelector: '.sidebar-link',
+        linkSelector: '.sidebar-item',
         activeClass: 'active',
         storageKey: 'sidebar-active-link',
         checkUrlMatch: true
@@ -393,7 +490,7 @@
     window.sidebarActiveManager = new SidebarActiveManager();
 
     // Add smooth scroll behavior for internal links
-    document.querySelectorAll('.sidebar-link[href^="#"]').forEach(link => {
+    document.querySelectorAll('.sidebar-item[href^="#"]').forEach(link => {
       link.addEventListener('click', (e) => {
         const targetId = link.getAttribute('href');
         if (targetId && targetId !== '#') {
@@ -422,15 +519,5 @@
         })
       );
     }
-
-    // Optional: Custom configuration example (commented out)
-    // window.sidebarManager = new SidebarManager({
-    //   sidebarId: 'customSidebar',
-    //   toggleId: 'customToggle',
-    //   overlayId: 'customOverlay',
-    //   mainContentId: 'customMainContent',
-    //   breakpoint: 1024,
-    //   resizeDelay: 300
-    // });
   });
 })();

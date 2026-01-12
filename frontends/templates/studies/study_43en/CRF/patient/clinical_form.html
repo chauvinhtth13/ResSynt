@@ -1,4 +1,4 @@
-{% extends 'default/dashboard.html' %}
+{% extends 'studies\study_43en\home_dashboard.html' %}
 {% load static %}
 {% load i18n %}
 
@@ -13,7 +13,7 @@
 <li class="breadcrumb-item active">{% trans "Clinical Information" %}</li>
 {% endblock %}
 
-{% block extra_head_dashboard %}
+{% block dashboard_css %}
 <!-- Include CRF unified styles -->
 {% include 'studies/study_43en/CRF/includes/crf_styles.html' %}
 <!-- All readonly styles are now in crf-forms.css -->
@@ -192,7 +192,7 @@
 
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 {% include 'studies/study_43en/CRF/includes/datepicker_scripts.html' %}
 
 <!-- Clinical Form JavaScript -->

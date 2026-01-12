@@ -259,65 +259,6 @@
    4. AUTH BUTTONS
    ========================================================================== */
 
-/* ---------- Cyber Button (Primary) ---------- */
-.btn-cyber {
-    position: relative;
-    z-index: 1;
-    padding: 0.75rem 2rem;
-    font-family: var(--font-primary);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--color-accent-cyan);
-    background: transparent;
-    border: 1px solid var(--color-accent-cyan) !important;
-    overflow: hidden;
-    transition: 
-        color var(--duration-normal) var(--ease-out-quad),
-        box-shadow var(--duration-normal) var(--ease-out-quad);
-}
-
-.btn-cyber::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: var(--color-accent-cyan);
-    transform: translateX(-100%);
-    transition: transform var(--duration-normal) var(--ease-out-expo);
-}
-
-.btn-cyber:hover {
-    color: #000;
-    box-shadow: var(--shadow-glow-cyan);
-}
-
-.btn-cyber:hover::before {
-    transform: translateX(0);
-}
-
-.btn-cyber:focus-visible {
-    outline: 2px solid rgba(var(--rgb-accent-cyan), 0.5);
-    outline-offset: 2px;
-}
-
-.btn-cyber:disabled {
-    opacity: 0.7;
-    color: #000;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.btn-cyber:disabled::before {
-    transform: translateX(0);
-}
-
-.btn-cyber .spinner-border {
-    width: 1rem;
-    height: 1rem;
-    border-width: 2px;
-}
-
 /* ---------- Registration Notice ---------- */
 .registration-notice {
     display: flex;

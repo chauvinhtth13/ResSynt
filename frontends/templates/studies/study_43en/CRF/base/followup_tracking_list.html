@@ -1,685 +1,662 @@
-{% extends 'default/dashboard.html' %}
+{% extends 'studies\study_43en\home_dashboard.html' %}
 {% load static %}
 {% load i18n %}
 {% block title %}Theo dõi lịch hẹn{% endblock %}
 
 {% block page_title %}Theo dõi lịch hẹn{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* Chỉ giữ animation đặc biệt cho alert */
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    #alertContainer .alert {
-        margin-bottom: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-</style>
-{% endblock %}
-
 
 {% block dashboard_content %}
-<div class="container-fluid">
 
-    <!-- Alert container for notifications -->
-    <div id="alertContainer" style="position: fixed; top: 80px; right: 20px; z-index: 9999; min-width: 300px;"></div>
+<!-- Alert container for notifications -->
+<div id="alertContainer" style="position: fixed; top: 80px; right: 20px; z-index: 9999; min-width: 300px;"></div>
 
-    <!-- Bộ lọc -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-primary">Bộ lọc tìm kiếm</h6>
-            <div>
-                <button class="btn btn-sm btn-primary" type="button" data-toggle="collapse" data-target="#filterCollapse">
-                    <i class="fas fa-filter mr-1"></i> Hiển thị/Ẩn bộ lọc
-                </button>
-            </div>
+<!-- Bộ lọc -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Bộ lọc tìm kiếm</h6>
+        <div>
+            <button class="btn btn-sm btn-primary" type="button" data-toggle="collapse" data-target="#filterCollapse">
+                <i class="fas fa-filter mr-1"></i> Hiển thị/Ẩn bộ lọc
+            </button>
         </div>
-        <div class="collapse show" id="filterCollapse">
-            <div class="card-body">
-                <form method="get" id="filterForm">
-                    <div class="row">
-                        <!-- Khoảng thời gian -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Khoảng thời gian</label>
-                                <div class="input-group">
+    </div>
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <form method="get" id="filterForm">
+                <div class="row">
+                    <!-- Khoảng thời gian -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Khoảng thời gian</label>
+                            <div class="input-group">
 
-                                    <input type="date" class="form-control datepicker" name="date_from" id="date_from" 
-                                        value="{{ date_from|date:'Y-m-d' }}">
-                                    <div class="input-group-prepend input-group-append">
-                                        <span class="input-group-text">đến</span>
-                                    </div>
-                                    <input type="date" class="form-control datepicker" name="date_to" id="date_to" 
-                                        value="{{ date_to|date:'Y-m-d' }}">
+                                <input type="date" class="form-control datepicker" name="date_from" id="date_from" 
+                                    value="{{ date_from|date:'Y-m-d' }}">
+                                <div class="input-group-prepend input-group-append">
+                                    <span class="input-group-text">đến</span>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Bộ lọc nhanh -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Bộ lọc nhanh</label>
-                                <div class="btn-group btn-block">
-                                    <button type="button" class="btn btn-outline-primary" id="thisWeek">Tuần này</button>
-                                    <button type="button" class="btn btn-outline-primary" id="nextWeek">Tuần sau</button>
-                                    <button type="button" class="btn btn-outline-primary" id="thisMonth">Tháng này</button>
-                                    <button type="button" class="btn btn-outline-primary" id="all">Tất cả</button>
-                                </div>
+                                <input type="date" class="form-control datepicker" name="date_to" id="date_to" 
+                                    value="{{ date_to|date:'Y-m-d' }}">
                             </div>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="subject_type">Loại đối tượng</label>
-                                <select name="subject_type" id="subject_type" class="form-control">
-                                    <option value="">-- Tất cả đối tượng --</option>
-                                    {% for value, text in subject_type_choices %}
-                                        <option value="{{ value }}" {% if current_subject_type == value %}selected{% endif %}>
-                                            {{ text }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="visit">Lần thăm</label>
-                                <select name="visit" id="visit" class="form-control">
-                                    <option value="">-- Tất cả lần thăm --</option>
-                                    {% for value, text in visit_choices %}
-                                        <option value="{{ value }}" {% if current_visit == value %}selected{% endif %}>
-                                            {{ text }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="status">Trạng thái</label>
-                                <select name="status" id="status" class="form-control">
-                                    <option value="">-- Tất cả trạng thái --</option>
-                                    {% for value, text in status_choices %}
-                                        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
-                                            {{ text }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="search">Tìm kiếm</label>
-                                <input type="text" class="form-control" id="search" name="search" 
-                                    placeholder="Mã bệnh nhân, tên viết tắt..." value="{{ search_query|default:'' }}">
+                    <!-- Bộ lọc nhanh -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Bộ lọc nhanh</label>
+                            <div class="btn-group btn-block">
+                                <button type="button" class="btn btn-outline-primary" id="thisWeek">Tuần này</button>
+                                <button type="button" class="btn btn-outline-primary" id="nextWeek">Tuần sau</button>
+                                <button type="button" class="btn btn-outline-primary" id="thisMonth">Tháng này</button>
+                                <button type="button" class="btn btn-outline-primary" id="all">Tất cả</button>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-md-12 text-right">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search mr-1"></i> Tìm kiếm
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="subject_type">Loại đối tượng</label>
+                            <select name="subject_type" id="subject_type" class="form-control">
+                                <option value="">-- Tất cả đối tượng --</option>
+                                {% for value, text in subject_type_choices %}
+                                    <option value="{{ value }}" {% if current_subject_type == value %}selected{% endif %}>
+                                        {{ text }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="visit">Lần thăm</label>
+                            <select name="visit" id="visit" class="form-control">
+                                <option value="">-- Tất cả lần thăm --</option>
+                                {% for value, text in visit_choices %}
+                                    <option value="{{ value }}" {% if current_visit == value %}selected{% endif %}>
+                                        {{ text }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="status">Trạng thái</label>
+                            <select name="status" id="status" class="form-control">
+                                <option value="">-- Tất cả trạng thái --</option>
+                                {% for value, text in status_choices %}
+                                    <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+                                        {{ text }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="search">Tìm kiếm</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                placeholder="Mã bệnh nhân, tên viết tắt..." value="{{ search_query|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 text-right">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search mr-1"></i> Tìm kiếm
+                        </button>
+                        <a href="{% url 'study_43en:followup_tracking_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt mr-1"></i> Đặt lại
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- PENDING FOLLOW-UPS TABLE -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-warning">
+            <i class="fas fa-clock mr-2"></i>Danh sách cần theo dõi
+            <span class="badge badge-warning ml-2">{{ pending_followups.paginator.count }}</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        <!-- ADD WRAPPER HERE -->
+        <div class="table-outline-wrapper">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th width="5%">STT</th>
+                        <th width="10%">Mã BN</th>
+                        <th width="10%">Tên viết tắt</th>
+                        <th width="10%">Loại</th>
+                        <th width="10%">Lần khám</th>
+                        <th width="12%">Ngày dự kiến</th>
+                        <th width="10%">Trạng thái</th>
+                        <th width="10%">Liên hệ</th>
+                        <th width="13%">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for followup in pending_followups %}
+                    <tr class="
+                        {% if followup.STATUS == 'LATE' %}table-warning{% endif %}
+                        {% if followup.STATUS == 'MISSED' %}table-danger{% endif %}
+                        " id="followup-row-{{ followup.pk }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ followup.USUBJID }}</td>
+                        <td>{{ followup.INITIAL }}</td>
+                        <td>
+                            {% if followup.SUBJECT_TYPE == 'PATIENT' %}
+                            <span class="badge badge-primary ">Bệnh nhân</span>
+                            {% else %}
+                            <span class="badge badge-info ">Người tiếp xúc</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ followup.get_VISIT_display }}</td>
+                        <td>
+                            <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
+                            <small class="d-block text-muted" title="Khoảng thời gian dự kiến">
+                                {% if followup.EXPECTED_FROM and followup.EXPECTED_TO %}
+                                    {{ followup.EXPECTED_FROM|date:"d/m" }} - {{ followup.EXPECTED_TO|date:"d/m/Y" }}
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td>
+                            {% if followup.STATUS == 'LATE' %}
+                                <span class="badge badge-warning text-dark "><i class="fas fa-exclamation-circle mr-1"></i>Trễ hẹn</span>
+                            {% elif followup.STATUS == 'MISSED' %}
+                                <span class="badge badge-danger  "><i class="fas fa-times-circle mr-1"></i>Bỏ lỡ</span>
+                            {% elif followup.STATUS == 'UPCOMING' %}
+                                <span class="badge badge-primary "><i class="fas fa-calendar mr-1"></i>Sắp tới</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if followup.PHONE %}
+                                <a href="tel:{{ followup.PHONE }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-phone-alt"></i> {{ followup.PHONE }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!--  COMPLETE BUTTON -->
+                            <button class="btn btn-sm btn-success complete-followup-btn" 
+                                data-id="{{ followup.pk }}"
+                                data-usubjid="{{ followup.USUBJID }}"
+                                data-visit="{{ followup.get_VISIT_display }}"
+                                data-expected="{{ followup.EXPECTED_DATE|date:'Y-m-d' }}"
+                                title="Đánh dấu hoàn thành">
+                                <i class="fas fa-check-circle mr-1"></i> Hoàn thành
                             </button>
-                            <a href="{% url 'study_43en:followup_tracking_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-sync-alt mr-1"></i> Đặt lại
+                            <!--  MISSED BUTTON -->
+                            <button class="btn btn-sm btn-danger missed-followup-btn" 
+                                data-id="{{ followup.pk }}"
+                                data-usubjid="{{ followup.USUBJID }}"
+                                data-visit="{{ followup.get_VISIT_display }}"
+                                data-expected="{{ followup.EXPECTED_DATE|date:'Y-m-d' }}"
+                                title="Đánh dấu Missed">
+                                <i class="fas fa-times-circle mr-1"></i> Missed
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center">
+                            <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                            <p class="text-muted">Không có lịch hẹn cần theo dõi</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination for pending -->
+        {% if pending_followups.has_other_pages %}
+        <nav aria-label="{% trans 'Pending pagination' %}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pending_followups.has_previous %}
+                <!-- First page -->
+                <li class="page-item">
+                    <a class="page-link" 
+                    href="?pending_page=1{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    title="{% trans 'First page' %}">
+                        {% trans "First" %}
+                    </a>
+                </li>
+                
+                <!-- Previous page -->
+                <li class="page-item">
+                    <a class="page-link" 
+                    href="?pending_page={{ pending_followups.previous_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    title="{% trans 'Previous page' %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Page numbers with range -->
+                {% for num in pending_followups.paginator.page_range %}
+                    {% if pending_followups.number == num %}
+                        <!-- Current page -->
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > pending_followups.number|add:'-3' and num < pending_followups.number|add:'3' %}
+                        <!-- Pages within range -->
+                        <li class="page-item">
+                            <a class="page-link" 
+                            href="?pending_page={{ num }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                {{ num }}
                             </a>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- PENDING FOLLOW-UPS TABLE -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-warning">
-                <i class="fas fa-clock mr-2"></i>Danh sách cần theo dõi
-                <span class="badge badge-warning ml-2">{{ pending_followups.paginator.count }}</span>
-            </h6>
-        </div>
-        <div class="card-body">
-            <!-- ADD WRAPPER HERE -->
-            <div class="table-outline-wrapper">
-                <div class="table-responsive">
-                    <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th width="5%">STT</th>
-                            <th width="10%">Mã BN</th>
-                            <th width="10%">Tên viết tắt</th>
-                            <th width="10%">Loại</th>
-                            <th width="10%">Lần khám</th>
-                            <th width="12%">Ngày dự kiến</th>
-                            <th width="10%">Trạng thái</th>
-                            <th width="10%">Liên hệ</th>
-                            <th width="13%">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for followup in pending_followups %}
-                        <tr class="
-                            {% if followup.STATUS == 'LATE' %}table-warning{% endif %}
-                            {% if followup.STATUS == 'MISSED' %}table-danger{% endif %}
-                            " id="followup-row-{{ followup.pk }}">
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ followup.USUBJID }}</td>
-                            <td>{{ followup.INITIAL }}</td>
-                            <td>
-                                {% if followup.SUBJECT_TYPE == 'PATIENT' %}
-                                <span class="badge badge-primary ">Bệnh nhân</span>
-                                {% else %}
-                                <span class="badge badge-info ">Người tiếp xúc</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ followup.get_VISIT_display }}</td>
-                            <td>
-                                <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
-                                <small class="d-block text-muted" title="Khoảng thời gian dự kiến">
-                                    {% if followup.EXPECTED_FROM and followup.EXPECTED_TO %}
-                                        {{ followup.EXPECTED_FROM|date:"d/m" }} - {{ followup.EXPECTED_TO|date:"d/m/Y" }}
-                                    {% endif %}
-                                </small>
-                            </td>
-                            <td>
-                                {% if followup.STATUS == 'LATE' %}
-                                    <span class="badge badge-warning text-dark "><i class="fas fa-exclamation-circle mr-1"></i>Trễ hẹn</span>
-                                {% elif followup.STATUS == 'MISSED' %}
-                                    <span class="badge badge-danger  "><i class="fas fa-times-circle mr-1"></i>Bỏ lỡ</span>
-                                {% elif followup.STATUS == 'UPCOMING' %}
-                                    <span class="badge badge-primary "><i class="fas fa-calendar mr-1"></i>Sắp tới</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if followup.PHONE %}
-                                    <a href="tel:{{ followup.PHONE }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-phone-alt"></i> {{ followup.PHONE }}
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <!--  COMPLETE BUTTON -->
-                                <button class="btn btn-sm btn-success complete-followup-btn" 
-                                    data-id="{{ followup.pk }}"
-                                    data-usubjid="{{ followup.USUBJID }}"
-                                    data-visit="{{ followup.get_VISIT_display }}"
-                                    data-expected="{{ followup.EXPECTED_DATE|date:'Y-m-d' }}"
-                                    title="Đánh dấu hoàn thành">
-                                    <i class="fas fa-check-circle mr-1"></i> Hoàn thành
-                                </button>
-                                <!--  MISSED BUTTON -->
-                                <button class="btn btn-sm btn-danger missed-followup-btn" 
-                                    data-id="{{ followup.pk }}"
-                                    data-usubjid="{{ followup.USUBJID }}"
-                                    data-visit="{{ followup.get_VISIT_display }}"
-                                    data-expected="{{ followup.EXPECTED_DATE|date:'Y-m-d' }}"
-                                    title="Đánh dấu Missed">
-                                    <i class="fas fa-times-circle mr-1"></i> Missed
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="9" class="text-center">
-                                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
-                                <p class="text-muted">Không có lịch hẹn cần theo dõi</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination for pending -->
-            {% if pending_followups.has_other_pages %}
-            <nav aria-label="{% trans 'Pending pagination' %}" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    {% if pending_followups.has_previous %}
-                    <!-- First page -->
-                    <li class="page-item">
-                        <a class="page-link" 
-                        href="?pending_page=1{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
-                        title="{% trans 'First page' %}">
-                            {% trans "First" %}
-                        </a>
-                    </li>
-                    
-                    <!-- Previous page -->
-                    <li class="page-item">
-                        <a class="page-link" 
-                        href="?pending_page={{ pending_followups.previous_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
-                        title="{% trans 'Previous page' %}">
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                    </li>
+                        </li>
                     {% endif %}
-                    
-                    <!-- Page numbers with range -->
-                    {% for num in pending_followups.paginator.page_range %}
-                        {% if pending_followups.number == num %}
-                            <!-- Current page -->
-                            <li class="page-item active">
-                                <span class="page-link">{{ num }}</span>
-                            </li>
-                        {% elif num > pending_followups.number|add:'-3' and num < pending_followups.number|add:'3' %}
-                            <!-- Pages within range -->
-                            <li class="page-item">
-                                <a class="page-link" 
-                                href="?pending_page={{ num }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
-                                    {{ num }}
+                {% endfor %}
+                
+                {% if pending_followups.has_next %}
+                <!-- Next page -->
+                <li class="page-item">
+                    <a class="page-link" 
+                    href="?pending_page={{ pending_followups.next_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    title="{% trans 'Next page' %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                
+                <!-- Last page -->
+                <li class="page-item">
+                    <a class="page-link" 
+                    href="?pending_page={{ pending_followups.paginator.num_pages }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    title="{% trans 'Last page' %}">
+                        {% trans "Last" %}
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- COMPLETED FOLLOW-UPS TABLE -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-success">
+            <i class="fas fa-check-circle mr-2"></i>Danh sách đã hoàn thành
+            <span class="badge badge-success ml-2">{{ completed_followups.paginator.count }}</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        <!-- ADD WRAPPER HERE -->
+        <div class="table-outline-wrapper">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                <thead class="thead-light">
+                    <tr>
+                        <th width="5%">STT</th>
+                        <th width="12%">Mã BN</th>
+                        <th width="12%">Tên viết tắt</th>
+                        <th width="10%">Loại</th>
+                        <th width="10%">Lần khám</th>
+                        <th width="13%">Ngày dự kiến</th>
+                        <th width="13%">Ngày hoàn thành</th>
+                        <th width="10%">Trạng thái</th>
+                        <th width="15%">Liên hệ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for followup in completed_followups %}
+                    <tr class="table-success">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ followup.USUBJID }}</td>
+                        <td>{{ followup.INITIAL }}</td>
+                        <td>
+                            {% if followup.SUBJECT_TYPE == 'PATIENT' %}
+                            <span class="badge badge-primary ">Bệnh nhân</span>
+                            {% else %}
+                            <span class="badge badge-info">Người tiếp xúc</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ followup.get_VISIT_display }}</td>
+                        <td>
+                            <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
+                        </td>
+                        <td>
+                            <strong class="text-success">{{ followup.ACTUAL_DATE|date:"d/m/Y" }}</strong>
+                        </td>
+                        <td>
+                            <span class="btn btn-sm btn-success complete-followup-btn ">
+                                <i class="fas fa-check-circle mr-1"></i>Hoàn thành
+                            </span>
+                        </td>
+                        <td>
+                            {% if followup.PHONE %}
+                                <a href="tel:{{ followup.PHONE }}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-phone-alt"></i> {{ followup.PHONE }}
                                 </a>
-                            </li>
-                        {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">
+                            Chưa có lịch hẹn nào được hoàn thành
+                        </td>
+                    </tr>
                     {% endfor %}
-                    
-                    {% if pending_followups.has_next %}
-                    <!-- Next page -->
-                    <li class="page-item">
-                        <a class="page-link" 
-                        href="?pending_page={{ pending_followups.next_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
-                        title="{% trans 'Next page' %}">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
-                    </li>
-                    
-                    <!-- Last page -->
-                    <li class="page-item">
-                        <a class="page-link" 
-                        href="?pending_page={{ pending_followups.paginator.num_pages }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
-                        title="{% trans 'Last page' %}">
-                            {% trans "Last" %}
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
+                </tbody>
+            </table>
         </div>
+
+        <!-- Pagination for completed -->
+        {% if completed_followups.has_other_pages %}
+        <nav aria-label="{% trans 'Completed pagination' %}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if completed_followups.has_previous %}
+                <!-- First page -->
+                <li class="page-item">
+                    <a class="page-link" 
+                    href="?completed_page=1{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    title="{% trans 'First page' %}">
+                        {% trans "First" %}
+                    </a>
+                </li>
+                
+                <!-- Previous page -->
+                <li class="page-item">
+                    <a class="page-link" 
+                    href="?completed_page={{ completed_followups.previous_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    title="{% trans 'Previous page' %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Page numbers with range -->
+                {% for num in completed_followups.paginator.page_range %}
+                    {% if completed_followups.number == num %}
+                        <!-- Current page -->
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > completed_followups.number|add:'-3' and num < completed_followups.number|add:'3' %}
+                        <!-- Pages within range -->
+                        <li class="page-item">
+                            <a class="page-link" 
+                            href="?completed_page={{ num }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if completed_followups.has_next %}
+                <!-- Next page -->
+                <li class="page-item">
+                    <a class="page-link" 
+                    href="?completed_page={{ completed_followups.next_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    title="{% trans 'Next page' %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                
+                <!-- Last page -->
+                <li class="page-item">
+                    <a class="page-link" 
+                    href="?completed_page={{ completed_followups.paginator.num_pages }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    title="{% trans 'Last page' %}">
+                        {% trans "Last" %}
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
+</div>
 
-    <!-- COMPLETED FOLLOW-UPS TABLE -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-success">
-                <i class="fas fa-check-circle mr-2"></i>Danh sách đã hoàn thành
-                <span class="badge badge-success ml-2">{{ completed_followups.paginator.count }}</span>
-            </h6>
-        </div>
-        <div class="card-body">
-            <!-- ADD WRAPPER HERE -->
-            <div class="table-outline-wrapper">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-                    <thead class="thead-light">
-                        <tr>
-                            <th width="5%">STT</th>
-                            <th width="12%">Mã BN</th>
-                            <th width="12%">Tên viết tắt</th>
-                            <th width="10%">Loại</th>
-                            <th width="10%">Lần khám</th>
-                            <th width="13%">Ngày dự kiến</th>
-                            <th width="13%">Ngày hoàn thành</th>
-                            <th width="10%">Trạng thái</th>
-                            <th width="15%">Liên hệ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for followup in completed_followups %}
-                        <tr class="table-success">
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ followup.USUBJID }}</td>
-                            <td>{{ followup.INITIAL }}</td>
-                            <td>
-                                {% if followup.SUBJECT_TYPE == 'PATIENT' %}
-                                <span class="badge badge-primary ">Bệnh nhân</span>
-                                {% else %}
-                                <span class="badge badge-info">Người tiếp xúc</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ followup.get_VISIT_display }}</td>
-                            <td>
-                                <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
-                            </td>
-                            <td>
-                                <strong class="text-success">{{ followup.ACTUAL_DATE|date:"d/m/Y" }}</strong>
-                            </td>
-                            <td>
-                                <span class="btn btn-sm btn-success complete-followup-btn ">
-                                    <i class="fas fa-check-circle mr-1"></i>Hoàn thành
-                                </span>
-                            </td>
-                            <td>
-                                {% if followup.PHONE %}
-                                    <a href="tel:{{ followup.PHONE }}" class="btn btn-sm btn-outline-success">
-                                        <i class="fas fa-phone-alt"></i> {{ followup.PHONE }}
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="9" class="text-center text-muted">
-                                Chưa có lịch hẹn nào được hoàn thành
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
 
-            <!-- Pagination for completed -->
-            {% if completed_followups.has_other_pages %}
-            <nav aria-label="{% trans 'Completed pagination' %}" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    {% if completed_followups.has_previous %}
-                    <!-- First page -->
-                    <li class="page-item">
-                        <a class="page-link" 
-                        href="?completed_page=1{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
-                        title="{% trans 'First page' %}">
-                            {% trans "First" %}
-                        </a>
-                    </li>
-                    
-                    <!-- Previous page -->
-                    <li class="page-item">
-                        <a class="page-link" 
-                        href="?completed_page={{ completed_followups.previous_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
-                        title="{% trans 'Previous page' %}">
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                    </li>
-                    {% endif %}
-                    
-                    <!-- Page numbers with range -->
-                    {% for num in completed_followups.paginator.page_range %}
-                        {% if completed_followups.number == num %}
-                            <!-- Current page -->
-                            <li class="page-item active">
-                                <span class="page-link">{{ num }}</span>
-                            </li>
-                        {% elif num > completed_followups.number|add:'-3' and num < completed_followups.number|add:'3' %}
-                            <!-- Pages within range -->
-                            <li class="page-item">
-                                <a class="page-link" 
-                                href="?completed_page={{ num }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
-                                    {{ num }}
+<!-- MISSED FOLLOW-UPS TABLE -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-danger">
+            <i class="fas fa-times-circle mr-2"></i>Danh sách Missed (Mất liên lạc)
+            <span class="badge badge-danger ml-2">{{ missed_followups.paginator.count }}</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        <!-- ADD WRAPPER HERE -->
+        <div class="table-outline-wrapper">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                <thead class="thead-light">
+                    <tr>
+                        <th width="5%">STT</th>
+                        <th width="10%">Mã BN</th>
+                        <th width="10%">Tên viết tắt</th>
+                        <th width="8%">Loại</th>
+                        <th width="8%">Lần khám</th>
+                        <th width="12%">Ngày dự kiến</th>
+                        <th width="12%">Ngày Missed</th>
+                        <th width="20%">Lý do</th>
+                        <th width="8%">Trạng thái</th>
+                        <th width="7%">Liên hệ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for followup in missed_followups %}
+                    <tr class="table-danger">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ followup.USUBJID }}</td>
+                        <td>{{ followup.INITIAL }}</td>
+                        <td>
+                            {% if followup.SUBJECT_TYPE == 'PATIENT' %}
+                            <span class="badge badge-primary ">Bệnh nhân</span>
+                            {% else %}
+                            <span class="badge badge-info">Người tiếp xúc</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ followup.get_VISIT_display }}</td>
+                        <td>
+                            <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
+                        </td>
+                        <td>
+                            <strong class="text-danger">{{ followup.MISSED_DATE|date:"d/m/Y" }}</strong>
+                        </td>
+                        <td>
+                            <small>{{ followup.MISSED_REASON|truncatewords:10 }}</small>
+                        </td>
+                        <td>
+                            <span class="badge badge-danger ">
+                                <i class="fas fa-times-circle mr-1"></i>Missed
+                            </span>
+                        </td>
+                        <td>
+                            {% if followup.PHONE %}
+                                <a href="tel:{{ followup.PHONE }}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-phone-alt mr-1"></i>{{ followup.PHONE }}
                                 </a>
-                            </li>
-                        {% endif %}
+                            {% else %}
+                                <span class="text-muted">Không có</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted">
+                            Chưa có lịch hẹn nào bị missed
+                        </td>
+                    </tr>
                     {% endfor %}
-                    
-                    {% if completed_followups.has_next %}
-                    <!-- Next page -->
-                    <li class="page-item">
-                        <a class="page-link" 
-                        href="?completed_page={{ completed_followups.next_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
-                        title="{% trans 'Next page' %}">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
-                    </li>
-                    
-                    <!-- Last page -->
-                    <li class="page-item">
-                        <a class="page-link" 
-                        href="?completed_page={{ completed_followups.paginator.num_pages }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if visit %}&visit={{ visit }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if subject_type %}&subject_type={{ subject_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
-                        title="{% trans 'Last page' %}">
-                            {% trans "Last" %}
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
+                </tbody>
+            </table>
         </div>
+
+        <!--  Pagination for missed -->
+        {% if missed_followups.has_other_pages %}
+        <nav aria-label="Missed pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if missed_followups.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" 
+                        href="?missed_page=1{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}"
+                        title="First page">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" 
+                        href="?missed_page={{ missed_followups.previous_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}"
+                        title="Previous"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                {% endif %}
+                
+                {% for num in missed_followups.paginator.page_range %}
+                    {% if missed_followups.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > missed_followups.number|add:'-3' and num < missed_followups.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" 
+                                href="?missed_page={{ num }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if missed_followups.has_next %}
+                <li class="page-item">
+                    <a class="page-link" 
+                        href="?missed_page={{ missed_followups.next_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}"
+                        title="Next"><i class="bi bi-chevron-right"></i></a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" 
+                        href="?missed_page={{ missed_followups.paginator.num_pages }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}"
+                        title="Last">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
-
-
-    <!-- MISSED FOLLOW-UPS TABLE -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-danger">
-                <i class="fas fa-times-circle mr-2"></i>Danh sách Missed (Mất liên lạc)
-                <span class="badge badge-danger ml-2">{{ missed_followups.paginator.count }}</span>
-            </h6>
-        </div>
-        <div class="card-body">
-            <!-- ADD WRAPPER HERE -->
-            <div class="table-outline-wrapper">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-                    <thead class="thead-light">
-                        <tr>
-                            <th width="5%">STT</th>
-                            <th width="10%">Mã BN</th>
-                            <th width="10%">Tên viết tắt</th>
-                            <th width="8%">Loại</th>
-                            <th width="8%">Lần khám</th>
-                            <th width="12%">Ngày dự kiến</th>
-                            <th width="12%">Ngày Missed</th>
-                            <th width="20%">Lý do</th>
-                            <th width="8%">Trạng thái</th>
-                            <th width="7%">Liên hệ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for followup in missed_followups %}
-                        <tr class="table-danger">
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ followup.USUBJID }}</td>
-                            <td>{{ followup.INITIAL }}</td>
-                            <td>
-                                {% if followup.SUBJECT_TYPE == 'PATIENT' %}
-                                <span class="badge badge-primary ">Bệnh nhân</span>
-                                {% else %}
-                                <span class="badge badge-info">Người tiếp xúc</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ followup.get_VISIT_display }}</td>
-                            <td>
-                                <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
-                            </td>
-                            <td>
-                                <strong class="text-danger">{{ followup.MISSED_DATE|date:"d/m/Y" }}</strong>
-                            </td>
-                            <td>
-                                <small>{{ followup.MISSED_REASON|truncatewords:10 }}</small>
-                            </td>
-                            <td>
-                                <span class="badge badge-danger ">
-                                    <i class="fas fa-times-circle mr-1"></i>Missed
-                                </span>
-                            </td>
-                            <td>
-                                {% if followup.PHONE %}
-                                    <a href="tel:{{ followup.PHONE }}" class="btn btn-sm btn-outline-danger">
-                                        <i class="fas fa-phone-alt mr-1"></i>{{ followup.PHONE }}
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">Không có</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="10" class="text-center text-muted">
-                                Chưa có lịch hẹn nào bị missed
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!--  Pagination for missed -->
-            {% if missed_followups.has_other_pages %}
-            <nav aria-label="Missed pagination" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    {% if missed_followups.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" 
-                           href="?missed_page=1{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}"
-                           title="First page">First</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" 
-                           href="?missed_page={{ missed_followups.previous_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}"
-                           title="Previous"><i class="bi bi-chevron-left"></i></a>
-                    </li>
-                    {% endif %}
-                    
-                    {% for num in missed_followups.paginator.page_range %}
-                        {% if missed_followups.number == num %}
-                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                        {% elif num > missed_followups.number|add:'-3' and num < missed_followups.number|add:'3' %}
-                            <li class="page-item">
-                                <a class="page-link" 
-                                   href="?missed_page={{ num }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}">{{ num }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if missed_followups.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" 
-                           href="?missed_page={{ missed_followups.next_page_number }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}"
-                           title="Next"><i class="bi bi-chevron-right"></i></a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" 
-                           href="?missed_page={{ missed_followups.paginator.num_pages }}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}"
-                           title="Last">Last</a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
-        </div>
-    </div> 
+</div> 
 </div>
 
 <!--  COMPLETE FOLLOW-UP MODAL -->
 <div class="modal fade" id="completeFollowupModal" tabindex="-1" role="dialog" aria-labelledby="completeFollowupModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="completeFollowupModalLabel">
-                    <i class="fas fa-check-circle mr-2"></i>Đánh dấu hoàn thành
-                </h5>
-            </div>
-            <div class="modal-body">
-                <form id="completeFollowupForm">
-                    {% csrf_token %}
-                    <input type="hidden" id="followup_id_complete" name="followup_id">
-                    
-                    <div class="alert alert-info">
-                        <strong id="complete_usubjid"></strong> - <span id="complete_visit"></span>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="actual_date_complete" class="font-weight-bold">
-                            <i class="fas fa-calendar-check mr-1"></i>Ngày hoàn thành <span class="text-danger">*</span>
-                        </label>
-                        <input type="date" class="form-control datepicker" id="actual_date_complete" name="actual_date" required>
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Ngày dự kiến: <strong id="expected_date_display"></strong>
-                        </small>
-                    </div>
-                    
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        <strong>Lưu ý:</strong> Sau khi đánh dấu hoàn thành, thông tin sẽ được đồng bộ với CRF form tương ứng.
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cancelCompleteFollowup">
-                    <i class="fas fa-times mr-1"></i>Hủy
-                </button>
-                <button type="button" class="btn btn-success" id="saveCompleteFollowup">
-                    <i class="fas fa-check-circle mr-1"></i>Xác nhận hoàn thành
-                </button>
-            </div>
+<div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+            <h5 class="modal-title" id="completeFollowupModalLabel">
+                <i class="fas fa-check-circle mr-2"></i>Đánh dấu hoàn thành
+            </h5>
+        </div>
+        <div class="modal-body">
+            <form id="completeFollowupForm">
+                {% csrf_token %}
+                <input type="hidden" id="followup_id_complete" name="followup_id">
+                
+                <div class="alert alert-info">
+                    <strong id="complete_usubjid"></strong> - <span id="complete_visit"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="actual_date_complete" class="font-weight-bold">
+                        <i class="fas fa-calendar-check mr-1"></i>Ngày hoàn thành <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control datepicker" id="actual_date_complete" name="actual_date" required>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Ngày dự kiến: <strong id="expected_date_display"></strong>
+                    </small>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Lưu ý:</strong> Sau khi đánh dấu hoàn thành, thông tin sẽ được đồng bộ với CRF form tương ứng.
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelCompleteFollowup">
+                <i class="fas fa-times mr-1"></i>Hủy
+            </button>
+            <button type="button" class="btn btn-success" id="saveCompleteFollowup">
+                <i class="fas fa-check-circle mr-1"></i>Xác nhận hoàn thành
+            </button>
         </div>
     </div>
+</div>
 </div>
 
 <!-- MISSED FOLLOW-UP MODAL -->
 <div class="modal fade" id="missedFollowupModal" tabindex="-1" role="dialog" aria-labelledby="missedFollowupModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="missedFollowupModalLabel">
-                    <i class="fas fa-times-circle mr-2"></i>Đánh dấu Missed (Mất liên lạc)
-                </h5>
-            </div>
-            <div class="modal-body">
-                <form id="missedFollowupForm">
-                    {% csrf_token %}
-                    <input type="hidden" id="followup_id_missed" name="followup_id">
-                    
-                    <div class="alert alert-info">
-                        <strong id="missed_usubjid"></strong> - <span id="missed_visit"></span>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="missed_date_input" class="font-weight-bold">
-                            <i class="fas fa-calendar-times mr-1"></i>Ngày Missed <span class="text-danger">*</span>
-                        </label>
-                        <input type="date" class="form-control datepicker" id="missed_date_input" name="missed_date" required>
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Ngày dự kiến: <strong id="missed_expected_date_display"></strong>
-                        </small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="missed_reason_input" class="font-weight-bold">
-                            <i class="fas fa-comment-alt mr-1"></i>Lý do Missed <span class="text-danger">*</span>
-                        </label>
-                        <textarea class="form-control" id="missed_reason_input" name="missed_reason" rows="3" 
-                                  placeholder="Vui lòng nhập lý do (VD: Mất liên lạc, không trả lời điện thoại, chuyển địa chỉ...)" 
-                                  required></textarea>
-                    </div>
-                    
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        <strong>Lưu ý:</strong> Sau khi đánh dấu Missed, thông tin sẽ được lưu vào hệ thống và không thể hoàn thành được nữa.
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cancelMissedFollowup">
-                    <i class="fas fa-times mr-1"></i>Hủy
-                </button>
-                <button type="button" class="btn btn-danger" id="saveMissedFollowup">
-                    <i class="fas fa-times-circle mr-1"></i>Xác nhận Missed
-                </button>
-            </div>
+<div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="missedFollowupModalLabel">
+                <i class="fas fa-times-circle mr-2"></i>Đánh dấu Missed (Mất liên lạc)
+            </h5>
+        </div>
+        <div class="modal-body">
+            <form id="missedFollowupForm">
+                {% csrf_token %}
+                <input type="hidden" id="followup_id_missed" name="followup_id">
+                
+                <div class="alert alert-info">
+                    <strong id="missed_usubjid"></strong> - <span id="missed_visit"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="missed_date_input" class="font-weight-bold">
+                        <i class="fas fa-calendar-times mr-1"></i>Ngày Missed <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control datepicker" id="missed_date_input" name="missed_date" required>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Ngày dự kiến: <strong id="missed_expected_date_display"></strong>
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="missed_reason_input" class="font-weight-bold">
+                        <i class="fas fa-comment-alt mr-1"></i>Lý do Missed <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" id="missed_reason_input" name="missed_reason" rows="3" 
+                                placeholder="Vui lòng nhập lý do (VD: Mất liên lạc, không trả lời điện thoại, chuyển địa chỉ...)" 
+                                required></textarea>
+                </div>
+                
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Lưu ý:</strong> Sau khi đánh dấu Missed, thông tin sẽ được lưu vào hệ thống và không thể hoàn thành được nữa.
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelMissedFollowup">
+                <i class="fas fa-times mr-1"></i>Hủy
+            </button>
+            <button type="button" class="btn btn-danger" id="saveMissedFollowup">
+                <i class="fas fa-times-circle mr-1"></i>Xác nhận Missed
+            </button>
         </div>
     </div>
 </div>
 
 {% endblock %}
 
-{% block extra_js_dashboard %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}">
     $(document).ready(function() {
         console.log('📋 Follow-up tracking page loaded');

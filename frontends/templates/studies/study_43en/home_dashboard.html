@@ -1,621 +1,122 @@
-<!-- frontends/templates/studies/study_43en/home_dashboard.html -->
 {% extends 'default/dashboard.html' %}
 {% load static %}
-{% load i18n %} 
+{% load i18n %}
 
-{% block title %}{% trans "Dashboard Overview" %} - {{ request.study_code|upper }}{% endblock %}
+{% block title %}{% trans "43EN Dashboard Overview" %} - {{ request.study_code|upper }}{% endblock %}
 
-{% block extra_head_dashboard %}
-<!-- ECharts -->
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-<!-- Dashboard CSS -->
-<link rel="stylesheet" href="{% static 'studies/study_43en/css/home_dashboard.css' %}">
+{% block dashboard_css %}
 {% endblock %}
 
-{% block base_main %}
-<!-- ============================================================================ -->
-<!-- NEW ENHANCED HEADER -->
-<!-- ============================================================================ -->
-<div class="dashboard-header-new">
-    <div class="header-main">
-        <div class="study-info">
-            <h1 class="study-title">{{ study_name|default:"Study Name Not Available" }}</h1>
+{% block sidebar %}
+{% include 'studies/study_43en/sidebar.html' %}
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="rounded-3 mb-4 bg-navy-blue-900 text-white p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+        <div class="min-w-0 flex-grow-1">
+            <h5 class="h5 fw-bold mb-1">{% trans "43EN Study Dashboard" %}</h5>
+            <p class="text-white-50 mb-0 small line-clamp-2" title="{{ study.name|default:'' }}">
+                {{ study.name|default:"" }}
+            </p>
         </div>
-        
-        <div class="header-meta-cards">
-            <!-- Site Card -->
-            <div class="meta-card meta-card-site">
-                <div class="meta-icon">
-                    <i class="bi bi-geo-alt-fill"></i>
-                </div>
-                <div class="meta-content">
-                    <span class="meta-label">{% trans "Site" %}</span>
-                    <span class="meta-value">{{ site_name|default:"All Sites" }}</span>
-                    {% if filter_type %}
-                        <span class="meta-subvalue">({{ filter_type }})</span>
-                    {% endif %}
-                </div>
+        <button class="btn-cyber-outline-sm flex-shrink-0" id="refreshBtn">
+            <i class="bi bi-arrow-clockwise" id="refreshIcon"></i>
+            {% trans "Refresh" %}
+        </button>
+    </div>
+
+    <!-- Bottom Row: Stats -->
+    <div class="d-flex flex-wrap justify-content-between gap-3 gap-lg-4 pt-2 border-top border-secondary border-opacity-25">
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-white bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center"
+                style="width: 45px; height: 45px; flex-shrink: 0;">
+                <i class="bi bi-geo-alt-fill text-white fs-5"></i>
             </div>
-            
-            <!-- Project Duration Card -->
-            <div class="meta-card meta-card-duration">
-                <div class="meta-icon">
-                    <i class="bi bi-calendar-range"></i>
-                </div>
-                <div class="meta-content">
-                    <span class="meta-label">{% trans "Project Duration" %}</span>
-                    <span class="meta-value">
-                        {% if project_start %}
-                            {{ project_start|date:"d/m/Y" }} - {{ today|date:"d/m/Y" }}
-                        {% else %}
-                            {% trans "Not started" %}
-                        {% endif %}
-                    </span>
-                    {% if project_start %}
-                        <span class="meta-subvalue">
-                            {{ today|timeuntil:project_start }} days
-                        </span>
-                    {% endif %}
-                </div>
+
+            <div class="d-flex flex-column justify-content-center">
+                <span class="text-white-50 text-uppercase fw-semibold"
+                    style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    {% trans "Study Site" %}
+                </span>
+
+                <span class="text-white fw-bold lh-1 mt-1">
+                    {% if site_code %}{{ site_code }} - {{ site_name }}{% else %} {% trans "All Sites" %} {% endif%}
+                </span>
             </div>
-            
-            <!-- Last Updated Card -->
-            <div class="meta-card meta-card-update">
-                <div class="meta-icon">
-                    <i class="bi bi-clock-history"></i>
-                </div>
-                <div class="meta-content">
-                    <span class="meta-label">{% trans "Last Updated" %}</span>
-                    <span class="meta-value">{{ today|date:"d/m/Y H:i" }}</span>
-                    <span class="meta-subvalue">{{ today|date:"D" }}</span>
-                </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-white bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center"
+                style="width: 45px; height: 45px; flex-shrink: 0;">
+                <i class="bi bi-clock-history text-white fs-5"></i>
             </div>
-            
-            <!-- Refresh Button -->
-            <div class="meta-card meta-card-refresh" id="btnRefreshDashboard" style="cursor: pointer;" title="{% trans 'Refresh Dashboard' %}">
-                <div class="meta-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </div>
-                <div class="meta-content">
-                    <span class="meta-label">{% trans "Refresh" %}</span>
-                    <span class="meta-value">{% trans "Click to update" %}</span>
-                </div>
+            <div class="d-flex flex-column justify-content-center">
+                <span class="text-white-50 text-uppercase fw-semibold"
+                    style="font-size: 0.75rem; letter-spacing: 0.5px;">{% trans "Last Update" %}</span>
+                <span class="text-white fw-bold lh-1 mt-1">{{ today|date:"d/m/Y H:i" }}</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ============================================================================ -->
-<!-- ENHANCED STATS CARDS ROW 1: SCREENING & ENROLLMENT -->
-<!-- ============================================================================ -->
 <div class="row g-4 mb-4">
-    <!-- 1. Total Screening Patients -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="enhanced-stat-card stat-primary">
-            <div class="stat-background">
-                <div class="stat-icon-wrapper">
-                    <i class="bi bi-people-fill"></i>
-                </div>
-            </div>
-            <div class="stat-content">
-                <div class="stat-header">
-                    <span class="stat-label">{% trans "Screening Patients" %}</span>
-                    <div class="stat-badge">
-                        <i class="bi bi-arrow-up"></i>
-                    </div>
-                </div>
-                <div class="stat-value">
-                    <span class="count-up" data-target="{{ screening_patients|default:0 }}">0</span>
-                </div>
-                <div class="stat-footer">
-                    <span class="stat-sublabel">{% trans "Total screened" %}</span>
-                </div>
-                <div class="stat-chart" id="sparkline-screening-patients"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. Enrolled Patients -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="enhanced-stat-card stat-success">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <span class="stat-label">{% trans "Enrolled Patients" %}</span>
-                    <div class="stat-badge badge-success">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-                </div>
-                <div class="stat-value">
-                    <span class="count-up" data-target="{{ enrolled_patients|default:0 }}">0</span>
-                </div>
-                <div class="stat-footer">
-                    <div class="progress-wrapper">
-                        <span class="stat-sublabel">
-                            {% if percent_target %}
-                                {{ percent_target|floatformat:1 }}% {% trans "of target" %}  
-                                {#  Use floatformat:1 #}
-                            {% else %}
-                                {% trans "Target" %}: {{ target_enrollment }}
-                            {% endif %}
-                        </span>
-                        <div class="mini-progress">
-                            <div class="mini-progress-bar" style="width: {{ percent_target|default:0 }}%"></div>
-                        </div>
+        <div class="card h-100 border-0 shadow-sm border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Screening Patients" %}</p>
+                        <h2 class="fw-bold mb-0 text-primary count-up" data-target="{{ screening_patients|default:0 }}">0</h2>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 3. Total Contacts -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="enhanced-stat-card stat-info">
-            <div class="stat-background">
-                <div class="stat-icon-wrapper">
-                    <i class="bi bi-people"></i>
-                </div>
-            </div>
-            <div class="stat-content">
-                <div class="stat-header">
-                    <span class="stat-label">{% trans "Screening Contacts" %}</span>
-                    <div class="stat-badge badge-info">
-                        <i class="bi bi-graph-up"></i>
+        <div class="card h-100 border-0 shadow-sm border-start border-4 border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Enrolled Patients" %}</p>
+                        <h2 class="fw-bold mb-0 text-success count-up" data-target="{{ enrolled_patients|default:0 }}">0</h2>
                     </div>
                 </div>
-                <div class="stat-value">
-                    <span class="count-up" data-target="{{ screening_contacts|default:0 }}">0</span>
-                </div>
-                <div class="stat-footer">
-                    <span class="stat-sublabel">{% trans "Total screened" %}</span>
-                </div>
-                <div class="stat-chart" id="sparkline-screening-contacts"></div>
             </div>
         </div>
     </div>
 
-    <!-- 4. Enrolled Contacts -->
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="enhanced-stat-card stat-warning">
-            <div class="stat-background">
-                <div class="stat-icon-wrapper">
-                    <i class="bi bi-person-plus-fill"></i>
-                </div>
-            </div>
-            <div class="stat-content">
-                <div class="stat-header">
-                    <span class="stat-label">{% trans "Enrolled Contacts" %}</span>
-                    <div class="stat-badge badge-warning">
-                        <i class="bi bi-star-fill"></i>
+        <div class="card h-100 border-0 shadow-sm border-start border-4 border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Screening Contacts" %}</p>
+                        <h2 class="fw-bold mb-0 text-info count-up" data-target="{{ screening_contacts|default:0 }}">0</h2>
                     </div>
                 </div>
-                <div class="stat-value">
-                    <span class="count-up" data-target="{{ enrolled_contacts|default:0 }}">0</span>
-                </div>
-                <div class="stat-footer">
-                    {% if screening_contacts > 0 %}
-                        <div class="stat-ratio">
-                            <span class="ratio-text">{{ enrolled_contacts }}/{{ screening_contacts }}</span>
-                            <span class="ratio-percent">{% widthratio enrolled_contacts screening_contacts 100 %}%</span>
-                        </div>
-                    {% else %}
-                        <span class="stat-sublabel">{% trans "No screening yet" %}</span>
-                    {% endif %}
-                </div>
-                <div class="stat-chart" id="donut-enrolled-contacts"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Enrolled Contacts" %}</p>
+                        <h2 class="fw-bold mb-0 text-warning count-up" data-target="{{ enrolled_contacts|default:0 }}">0</h2>
+                    </div>
+                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ============================================================================ -->
-<!-- STATS CARDS ROW 2: CLINICAL OUTCOMES -->
-<!-- ============================================================================ -->
-<div class="row g-4 mb-4">
-    <!-- 1. Average Hospital Stay -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="enhanced-stat-card stat-secondary">
-            <div class="stat-background">
-                <div class="stat-icon-wrapper">
-                    <i class="bi bi-calendar-week"></i>
-                </div>
-            </div>
-            <div class="stat-content">
-                <div class="stat-header">
-                    <span class="stat-label">{% trans "Avg Hospital Stay" %}</span>
-                    <div class="stat-badge badge-secondary">
-                        <i class="bi bi-hourglass-split"></i>
-                    </div>
-                </div>
-                <div class="stat-value">
-                    {% if avg_hospital_stay %}
-                        <span class="count-up" data-target="{{ avg_hospital_stay|floatformat:0 }}" data-decimal="1">0</span>
-                        <span class="stat-unit">days</span>
-                    {% else %}
-                        <span class="text-muted">-</span>
-                    {% endif %}
-                </div>
-                <div class="stat-footer">
-                    <span class="stat-sublabel">
-                        {% if avg_hospital_stay %}{% trans "Average duration" %}{% else %}{% trans "No data" %}{% endif %}
-                    </span>
-                </div>
-                <div class="stat-chart" id="bar-hospital-stay"></div>
-            </div>
-        </div>
-    </div>
 
-    <!-- 2. Mortality Rate -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="enhanced-stat-card stat-danger">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <span class="stat-label">{% trans "Mortality Rate" %}</span>
-                    <div class="stat-badge badge-danger">
-                        <i class="bi bi-exclamation-triangle"></i>
-                    </div>
-                </div>
-                <div class="stat-value">
-                    {% if mortality_rate is not None %}
-                        <span class="count-up 
-                            {% if mortality_rate >= 20 %}text-danger
-                            {% elif mortality_rate >= 10 %}text-warning
-                            {% else %}
-                            {% endif %}" 
-                            data-target="{{ mortality_rate }}"  
-                            {#  Pre-formatted in Python #}
-                            data-decimal="1">0</span>
-                        <span class="stat-unit">%</span>
-                    {% else %}
-                        <span class="text-muted">-</span>
-                    {% endif %}
-                </div>
-                <div class="stat-footer">
-                    <span class="stat-sublabel">
-                        {% if total_deaths is not None and total_enrolled_for_mortality is not None %}
-                            {{ total_deaths }}/{{ total_enrolled_for_mortality }} {% trans "deaths" %}
-                        {% else %}
-                            {% trans "No data" %}
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. Active Cases -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="enhanced-stat-card stat-purple">
-            <div class="stat-background">
-                <div class="stat-icon-wrapper">
-                    <i class="bi bi-virus"></i>
-                </div>
-            </div>
-            <div class="stat-content">
-                <div class="stat-header">
-                    <span class="stat-label">{% trans "Active Cases" %}</span>
-                    <div class="stat-badge badge-purple">
-                        <i class="bi bi-activity"></i>
-                    </div>
-                </div>
-                <div class="stat-value">
-                    <span class="count-up" data-target="{{ enrolled_patients|default:0 }}">0</span>
-                </div>
-                <div class="stat-footer">
-                    <span class="stat-sublabel">{% trans "Currently enrolled" %}</span>
-                </div>
-                <div class="stat-chart" id="radar-active-cases"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. Study Progress -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="enhanced-stat-card stat-teal">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <span class="stat-label">{% trans "Study Progress" %}</span>
-                    <div class="stat-badge badge-teal">
-                        <i class="bi bi-trophy"></i>
-                    </div>
-                </div>
-                <div class="stat-value">
-                    <span class="count-up" 
-                        data-target="{{ percent_target }}"  
-                        {#  Pre-formatted in Python #}
-                        data-decimal="1">0</span>
-                    <span class="stat-unit">%</span>
-                </div>
-                <div class="stat-footer">
-                    <span class="stat-sublabel">{% trans "Of target reached" %}</span>
-                </div>
-            </div>
-                <!-- Progress ring for study target (created by JS) -->
-                <div class="stat-chart" id="ring-study-progress"></div>
-        </div>
-    </div>
-
-
-<!-- Gender Distribution Charts -->
-<div class="row g-4 mb-4">
-    <div class="col-lg-6">
-        <div class="chart-card">
-            <div class="chart-card-header">
-                <div class="header-icon">
-                    <i class="bi bi-gender-ambiguous"></i>
-                </div>
-                <h5>{% trans "Patient Gender Distribution" %}</h5>
-            </div>
-            <div class="chart-card-body">
-                <div id="patientGenderChart" style="height: 350px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="chart-card">
-            <div class="chart-card-header">
-                <div class="header-icon">
-                    <i class="bi bi-gender-ambiguous"></i>
-                </div>
-                <h5>{% trans "Contact Gender Distribution" %}</h5>
-            </div>
-            <div class="chart-card-body">
-                <div id="contactGenderChart" style="height: 350px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Screening Comparison Chart -->
-<div class="row g-4 mb-4">
-    <div class="col-12">
-        <div class="chart-card">
-            <div class="chart-card-header">
-                <div class="header-icon">
-                    <i class="bi bi-bar-chart-line"></i>
-                </div>
-                <h5>{% trans "Monthly Screening Comparison" %}</h5>
-                <div class="header-actions">
-                    <button class="btn-icon btn-refresh-chart" 
-                            data-chart-id="screeningComparison">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chart-card-body">
-                <div id="screeningComparisonChart" style="height: 400px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Patient Enrollment Chart -->
-<div class="row g-4 mb-4">
-    <div class="col-12">
-        <div class="chart-card">
-            <div class="chart-card-header">
-                <div class="header-icon">
-                    <i class="bi bi-graph-up"></i>
-                </div>
-                <h5>{% trans "Patient Enrollment Over Time" %}</h5>
-            </div>
-            <div class="chart-card-body">
-                <div id="patientEnrollmentChart" style="height: 400px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Infection Focus & Antibiotic Resistance Charts -->
-<div class="row g-4 mb-4">
-    <div class="col-lg-6">
-        <div class="chart-card">
-            <div class="chart-card-header">
-                <div class="header-icon">
-                    <i class="bi bi-virus"></i>
-                </div>
-                <h5>{% trans "Infection Focus Distribution" %}</h5>
-            </div>
-            <div class="chart-card-body">
-                <div id="infectionFocusChart" style="height: 400px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="chart-card">
-            <div class="chart-card-header">
-                <div class="header-icon">
-                    <i class="bi bi-shield-exclamation"></i>
-                </div>
-                <h5>{% trans "Top 10 Antibiotic Resistance Rates" %}</h5>
-            </div>
-            <div class="chart-card-body">
-                <div id="antibioticResistanceChart" style="height: 400px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
 
 {% endblock %}
 
-
-{% block extra_js %}
-<script nonce="{{ request.csp_nonce }}">
-// ==================== CHECK AUTO-REFRESH FIRST ====================
-//  MUST run BEFORE anything else
-var isAutoRefresh = (function() {
-    const autoRefreshTime = sessionStorage.getItem('dashboardAutoRefreshTime');
-    const now = Date.now();
-    const timeDiff = autoRefreshTime ? (now - parseInt(autoRefreshTime)) : null;
-    const result = autoRefreshTime && timeDiff < 2000;
-    
-    console.log(' Auto-refresh check:');
-    console.log('  - Stored time:', autoRefreshTime);
-    console.log('  - Current time:', now);
-    console.log('  - Time diff (ms):', timeDiff);
-    console.log('  - Is auto-refresh?:', result);
-    
-    // Clear the flag immediately
-    sessionStorage.removeItem('dashboardAutoRefreshTime');
-    
-    console.log(' isAutoRefresh =', result);
-    return result;
-})();
-
-// ==================== IMMEDIATE CONFIG DEFINITION ====================
-(function() {
-    'use strict';
-    
-    console.log('Defining dashboard config...');
-    
-    // Define translations
-    window.translations = {
-        enrolled: '{% trans "Enrolled" %}',
-        remaining: '{% trans "Remaining" %}',
-        patients: '{% trans "Patients" %}',
-        contacts: '{% trans "Contacts" %}',
-        male: '{% trans "Male" %}',
-        female: '{% trans "Female" %}',
-        other: '{% trans "Other" %}',
-        cumulativePatients: '{% trans "Cumulative (Patients)" %}',
-        cumulativeContacts: '{% trans "Cumulative (Contacts)" %}',
-        monthlyCount: '{% trans "Monthly Count" %}',
-        cumulativeCount: '{% trans "Cumulative Count" %}',
-        monthlyEnrollment: '{% trans "Monthly Enrollment" %}',
-        cumulativeTotal: '{% trans "Cumulative Total" %}',
-        resistanceRate: '{% trans "Resistance Rate (%)" %}',
-        resistant: '{% trans "resistant" %}',
-        tests: '{% trans "tests" %}',
-        underlyingConditions: '{% trans "Underlying Conditions" %}',
-        patientsWithCondition: '{% trans "Patients with condition" %}',
-        totalTests: '{% trans "Total AST tests" %}',
-        sensitive: '{% trans "Sensitive" %}',
-        intermediate: '{% trans "Intermediate" %}',
-        errorLoading: '{% trans "Error loading chart data" %}',
-        insufficientData: '{% trans "Insufficient data available" %}'
-    };
-    
-    // Define dashboard config
-    window.dashboardConfig = {
-        enrolledPatients: {{ enrolled_patients|default:0 }},
-        targetEnrollment: {{ target_enrollment|default:750 }},
-        screeningContacts: {{ screening_contacts|default:0 }},
-        enrolledContacts: {{ enrolled_contacts|default:0 }},
-        percentTarget: parseFloat('{{ percent_target|default:"0" }}'),
-        mortalityRate: parseFloat('{{ mortality_rate|default:"0" }}'),
-        avgHospitalStay: parseFloat('{{ avg_hospital_stay|floatformat:1|default:"0" }}'),
-        siteId: '{{ site_id|default:"all" }}',
-        filterType: '{{ filter_type|default:"" }}',
-        endpoints: {
-            genderDistribution: '/studies/43en/api/charts/gender-distribution/',
-            screeningComparison: '/studies/43en/api/charts/screening-comparison/',
-            patientEnrollment: '/studies/43en/api/charts/patient-enrollment/',
-            infectionFocus: '/studies/43en/api/charts/infection-focus/',
-            antibioticResistance: '/studies/43en/api/charts/antibiotic-resistance/',
-            resistanceComorbidity: '/studies/43en/api/charts/resistance-comorbidity/'
-        }
-    };
-    
-    console.log(' Config defined:', window.dashboardConfig);
-})();
-</script>
-
-<!-- Load Dashboard Script -->
-<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard.js' %}"></script>
-
-<script nonce="{{ request.csp_nonce }}">
-(function() {
-    'use strict';
-    
-    console.log('🚀 Dashboard initialization (NO animations)...');
-    
-    // Main initialization
-    function initializeDashboard() {
-        console.log('=== INITIALIZING DASHBOARD ===');
-        
-        if (typeof DashboardCharts === 'undefined') {
-            console.error('❌ DashboardCharts not loaded');
-            return;
-        }
-        
-        if (typeof window.dashboardConfig === 'undefined') {
-            console.error('❌ dashboardConfig not defined');
-            return;
-        }
-        
-        try {
-            //  Initialize stat counters - NO ANIMATION
-            $('.count-up').each(function() {
-                const $this = $(this);
-                const target = parseFloat($this.data('target')) || 0;
-                const decimals = parseInt($this.data('decimal')) || 0;
-                
-                // Direct update - no animation
-                $this.text(target.toFixed(decimals));
-            });
-            
-            // Initialize charts
-            DashboardCharts.init(window.dashboardConfig);
-            console.log(' Dashboard initialized (no animations)!');
-            
-            // Setup refresh button click handler
-            $('#btnRefreshDashboard').on('click', function() {
-                console.log('Refresh button clicked');
-                const $icon = $(this).find('.bi-arrow-clockwise');
-                
-                // Add spinning animation
-                $icon.addClass('fa-spin');
-                
-                // Reload the page
-                setTimeout(function() {
-                    window.location.reload();
-                }, 300);
-            });
-            
-        } catch (error) {
-            console.error('❌ Dashboard initialization failed:', error);
-        }
-    }
-    
-    // Execute initialization
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initializeDashboard, 100);
-        });
-    } else {
-        setTimeout(initializeDashboard, 100);
-    }
-    
-})();
-</script>
-
-<style>
-/* Count-up transition */
-.count-up {
-    transition: color 0.3s ease;
-}
-
-/* Refresh button spin animation */
-.fa-spin, .bi-arrow-clockwise.fa-spin {
-    animation: fa-spin 1s infinite linear;
-}
-
-@keyframes fa-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Refresh button hover effect */
-#btnRefreshDashboard:hover .meta-icon {
-    transform: scale(1.1);
-    transition: transform 0.2s ease;
-}
-
-#btnRefreshDashboard:active .bi-arrow-clockwise {
-    transform: rotate(180deg);
-    transition: transform 0.3s ease;
-}
-</style>
-
+{% block dashboard_js %}
 {% endblock %}

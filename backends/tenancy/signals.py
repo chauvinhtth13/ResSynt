@@ -465,7 +465,11 @@ def auto_create_study_roles(sender: Any, instance: Any, created: bool, **kwargs:
 @receiver(post_migrate)
 def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> None:
     """
-    Automatically sync permissions after migrations for study apps
+    Automatically sync groups and permissions after migrations for study apps.
+    
+    This signal ensures:
+    1. Groups are created for the study (if they don't exist)
+    2. Permissions are assigned to groups based on role templates
     """
     if not _is_study_app(sender):
         return
@@ -478,14 +482,20 @@ def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> No
     from backends.tenancy.utils.role_manager import StudyRoleManager
     
     try:
+        
+        # Then assign permissions (force=True to ensure consistency)
         result = StudyRoleManager.assign_permissions(study_code, force=True)
         
-        if result.get('permissions_assigned', 0) > 0 or result.get('permissions_removed', 0) > 0:
+        total_changes = result.get('permissions_assigned', 0) + result.get('permissions_removed', 0)
+        
+        if total_changes > 0:
             logger.info(
                 f"Auto-synced permissions for study {study_code}: "
                 f"Assigned {result.get('permissions_assigned', 0)}, "
                 f"removed {result.get('permissions_removed', 0)} permissions"
             )
+        else:
+            logger.debug(f"No permission changes needed for study {study_code}")
             
     except Exception as e:
         logger.error(

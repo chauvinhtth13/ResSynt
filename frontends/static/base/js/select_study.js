@@ -4,26 +4,46 @@
 
     class StudySearcher {
         constructor() {
-            // DOM elements
+            // DOM elements - cache once
             this.searchInput = document.getElementById('searchInput');
             this.listBody = document.getElementById('studyTableBody');
             this.paginationControls = document.getElementById('paginationControls');
             this.pageSizeSelect = document.getElementById('pageSizeSelect');
             this.defaultEmptyState = document.getElementById('emptyStateDefault');
-            this.searchEmptyState = null;
+            
+            // Cache pagination info elements
+            this.startEl = document.getElementById('showingStart');
+            this.endEl = document.getElementById('showingEnd');
+            this.totalEl = document.getElementById('totalStudies');
+            
+            // Pre-create search empty state (reuse instead of recreate)
+            this.searchEmptyState = this.createSearchEmptyState();
             
             // Pagination settings
             this.itemsPerPage = 5;
             this.currentPage = 1;
+            this.totalPages = 0;
+            
+            // Data arrays
             this.allItems = [];
             this.filteredItems = [];
+            
+            // Track visible items for efficient updates
+            this.visibleSet = new Set();
 
-            // Debounce
+            // Debounce with bound handler
             this.searchTimer = null;
-            this.debounceDelay = 200;
+            this.debounceDelay = 150; // Reduced for snappier response
+            
+            // Bound handlers (avoid creating new functions)
+            this.boundHandleSearch = this.handleSearch.bind(this);
+            this.boundOnPaginationClick = this.onPaginationClick.bind(this);
             
             // Animation frame for smooth rendering
             this.rafId = null;
+            
+            // Last search term to avoid redundant searches
+            this.lastSearchTerm = '';
 
             if (!this.searchInput || !this.listBody) {
                 return;
@@ -32,24 +52,51 @@
             this.initialize();
         }
 
+        createSearchEmptyState() {
+            const el = document.createElement('div');
+            el.className = 'study-list__empty';
+            el.id = 'emptyStateSearch';
+            el.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state__icon">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="empty-state__title">No matching studies</h3>
+                    <p class="empty-state__text">Try a different search term</p>
+                </div>
+            `;
+            return el;
+        }
+
         initialize() {
-            // Cache all study items
-            this.allItems = Array.from(this.listBody.querySelectorAll('.study-item[data-study-id]'));
-            this.filteredItems = [...this.allItems];
+            // Cache all study items using NodeList directly (faster than Array.from for iteration)
+            const items = this.listBody.querySelectorAll('.study-item[data-study-id]');
+            const len = items.length;
+            this.allItems = new Array(len);
             
             // Pre-cache text content for faster search
-            this.allItems.forEach(item => {
+            for (let i = 0; i < len; i++) {
+                const item = items[i];
+                this.allItems[i] = item;
+                
+                // Cache search text - combine code and name
                 const codeEl = item.querySelector('[data-col="code"]');
                 const nameEl = item.querySelector('[data-col="name"]');
                 item._searchText = (
-                    (codeEl?.textContent || '') + ' ' + 
-                    (nameEl?.textContent || '')
+                    (codeEl ? codeEl.textContent.trim() : '') + ' ' + 
+                    (nameEl ? nameEl.textContent.trim() : '')
                 ).toLowerCase();
-            });
+                
+                // Cache index for O(1) lookup
+                item._index = i;
+            }
+            
+            // Initialize filtered as reference (not copy) when no filter
+            this.filteredItems = this.allItems;
             
             // Hide default empty state if we have items
-            if (this.allItems.length > 0 && this.defaultEmptyState) {
-                this.defaultEmptyState.style.display = 'none';
+            if (len > 0 && this.defaultEmptyState) {
+                this.defaultEmptyState.hidden = true;
             }
             
             this.attachEvents();
@@ -57,41 +104,86 @@
         }
 
         attachEvents() {
-            // Optimized search with debounce
-            this.searchInput.addEventListener('input', this.onSearchInput.bind(this));
+            // Search input with debounce
+            this.searchInput.addEventListener('input', () => {
+                clearTimeout(this.searchTimer);
+                this.searchTimer = setTimeout(this.boundHandleSearch, this.debounceDelay);
+            });
             
-            // Clear on Escape
+            // Clear on Escape - use keydown for immediate response
             this.searchInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && this.searchInput.value) {
                     e.preventDefault();
                     this.searchInput.value = '';
-                    this.handleSearch();
+                    this.lastSearchTerm = '';
+                    this.filteredItems = this.allItems;
+                    this.currentPage = 1;
+                    this.scheduleUpdate();
                 }
             });
 
             // Page size selector
             if (this.pageSizeSelect) {
                 this.pageSizeSelect.addEventListener('change', (e) => {
-                    this.setPageSize(e.target.value);
+                    this.itemsPerPage = e.target.value | 0; // Faster parseInt
+                    this.currentPage = 1;
+                    this.scheduleUpdate();
                 });
+            }
+            
+            // Event delegation for pagination (single listener instead of per-button)
+            if (this.paginationControls) {
+                this.paginationControls.addEventListener('click', this.boundOnPaginationClick);
             }
         }
 
-        onSearchInput() {
-            clearTimeout(this.searchTimer);
-            this.searchTimer = setTimeout(() => this.handleSearch(), this.debounceDelay);
+        onPaginationClick(e) {
+            const link = e.target.closest('.page-link');
+            if (!link) return;
+            
+            e.preventDefault();
+            
+            const li = link.parentElement;
+            if (li.classList.contains('disabled') || li.classList.contains('active')) {
+                return;
+            }
+            
+            const action = link.dataset.action;
+            if (action === 'prev') {
+                this.currentPage--;
+            } else if (action === 'next') {
+                this.currentPage++;
+            } else if (action) {
+                this.currentPage = action | 0;
+            }
+            
+            this.scheduleUpdate();
         }
 
         handleSearch() {
             const filter = this.searchInput.value.toLowerCase().trim();
             
-            // Use cached search text for performance
-            if (filter) {
-                this.filteredItems = this.allItems.filter(item => 
-                    item._searchText.includes(filter)
-                );
+            // Skip if search term hasn't changed
+            if (filter === this.lastSearchTerm) {
+                return;
+            }
+            this.lastSearchTerm = filter;
+            
+            if (!filter) {
+                // No filter - use original array reference
+                this.filteredItems = this.allItems;
             } else {
-                this.filteredItems = [...this.allItems];
+                // Filter with optimized loop
+                const results = [];
+                const items = this.allItems;
+                const len = items.length;
+                
+                for (let i = 0; i < len; i++) {
+                    if (items[i]._searchText.indexOf(filter) !== -1) {
+                        results.push(items[i]);
+                    }
+                }
+                this.filteredItems = results;
             }
 
             this.currentPage = 1;
@@ -99,224 +191,169 @@
         }
 
         scheduleUpdate() {
-            // Cancel previous frame
             if (this.rafId) {
                 cancelAnimationFrame(this.rafId);
             }
-            // Schedule update on next frame for smooth rendering
-            this.rafId = requestAnimationFrame(() => this.updateDisplay());
+            this.rafId = requestAnimationFrame(() => {
+                this.rafId = null;
+                this.updateDisplay();
+            });
         }
 
         updateDisplay() {
-            // Hide all items using CSS class (faster than style manipulation)
-            this.allItems.forEach(item => {
-                item.classList.add('hidden');
-            });
-
-            // Remove search empty state
-            this.removeSearchEmptyState();
+            const allLen = this.allItems.length;
+            const filteredLen = this.filteredItems.length;
+            
+            // Calculate what should be visible
+            const newVisibleSet = new Set();
+            let startIndex = 0;
+            let endIndex = 0;
+            
+            if (filteredLen > 0) {
+                this.totalPages = Math.ceil(filteredLen / this.itemsPerPage);
+                startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                endIndex = Math.min(startIndex + this.itemsPerPage, filteredLen);
+                
+                for (let i = startIndex; i < endIndex; i++) {
+                    newVisibleSet.add(this.filteredItems[i]);
+                }
+            } else {
+                this.totalPages = 0;
+            }
+            
+            // Diff-based update: only modify changed items
+            // Hide items that were visible but shouldn't be
+            for (const item of this.visibleSet) {
+                if (!newVisibleSet.has(item)) {
+                    item.classList.add('hidden');
+                }
+            }
+            
+            // Show items that should be visible but aren't
+            for (const item of newVisibleSet) {
+                if (!this.visibleSet.has(item)) {
+                    item.classList.remove('hidden');
+                }
+            }
+            
+            // Update visible set
+            this.visibleSet = newVisibleSet;
             
             // Handle empty states
-            if (this.allItems.length === 0) {
-                // No studies at all - show default empty
-                if (this.defaultEmptyState) {
-                    this.defaultEmptyState.style.display = '';
-                }
-                this.updatePaginationInfo(0, 0, 0);
-                this.renderPagination();
-                return;
-            }
+            this.updateEmptyStates(allLen, filteredLen);
             
-            // Hide default empty state
-            if (this.defaultEmptyState) {
-                this.defaultEmptyState.style.display = 'none';
-            }
-
-            // No search results
-            if (this.filteredItems.length === 0) {
-                this.showSearchEmptyState();
-                this.updatePaginationInfo(0, 0, 0);
-                this.renderPagination();
-                return;
-            }
-
-            // Calculate pagination
-            const totalPages = Math.ceil(this.filteredItems.length / this.itemsPerPage);
-            const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-            const endIndex = Math.min(startIndex + this.itemsPerPage, this.filteredItems.length);
-
-            // Show current page items
-            for (let i = startIndex; i < endIndex; i++) {
-                this.filteredItems[i].classList.remove('hidden');
-            }
-
-            this.updatePaginationInfo(startIndex + 1, endIndex, this.filteredItems.length);
+            // Update pagination info
+            this.updatePaginationInfo(
+                filteredLen === 0 ? 0 : startIndex + 1,
+                endIndex,
+                filteredLen
+            );
+            
+            // Render pagination controls
             this.renderPagination();
         }
 
-        showSearchEmptyState() {
-            if (!this.searchEmptyState) {
-                this.searchEmptyState = document.createElement('div');
-                this.searchEmptyState.className = 'study-list__empty';
-                this.searchEmptyState.id = 'emptyStateSearch';
-                this.searchEmptyState.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state__icon">
-                            <i class="bi bi-search" aria-hidden="true"></i>
-                        </div>
-                        <h3 class="empty-state__title">No matching studies</h3>
-                        <p class="empty-state__text">Try a different search term</p>
-                    </div>
-                `;
+        updateEmptyStates(allLen, filteredLen) {
+            // Default empty state (no studies at all)
+            if (this.defaultEmptyState) {
+                this.defaultEmptyState.hidden = allLen > 0;
             }
-            this.listBody.appendChild(this.searchEmptyState);
-        }
-
-        removeSearchEmptyState() {
-            if (this.searchEmptyState && this.searchEmptyState.parentNode) {
+            
+            // Search empty state (no results for search)
+            const showSearchEmpty = allLen > 0 && filteredLen === 0;
+            
+            if (showSearchEmpty) {
+                if (!this.searchEmptyState.parentNode) {
+                    this.listBody.appendChild(this.searchEmptyState);
+                }
+            } else if (this.searchEmptyState.parentNode) {
                 this.searchEmptyState.remove();
             }
         }
 
         updatePaginationInfo(start, end, total) {
-            const startEl = document.getElementById('showingStart');
-            const endEl = document.getElementById('showingEnd');
-            const totalEl = document.getElementById('totalStudies');
-
-            if (startEl) startEl.textContent = total === 0 ? 0 : start;
-            if (endEl) endEl.textContent = end;
-            if (totalEl) totalEl.textContent = total;
+            if (this.startEl) this.startEl.textContent = start;
+            if (this.endEl) this.endEl.textContent = end;
+            if (this.totalEl) this.totalEl.textContent = total;
         }
 
         renderPagination() {
             if (!this.paginationControls) return;
 
-            const totalPages = Math.ceil(this.filteredItems.length / this.itemsPerPage);
-            this.paginationControls.innerHTML = '';
-
-            // Use DocumentFragment for batch DOM updates
-            const fragment = document.createDocumentFragment();
-
-            // Previous button - always show, disabled when no prev
-            fragment.appendChild(
-                this.createNavButton('‹', this.currentPage === 1 || totalPages === 0, -1)
-            );
-
-            // Page numbers - show at least page 1 placeholder when empty
+            const totalPages = this.totalPages;
+            const currentPage = this.currentPage;
+            
+            // Build HTML string (faster than DOM manipulation for small elements)
+            const parts = [];
+            
+            // Previous button
+            parts.push(this.getNavButtonHtml('prev', '‹', currentPage === 1 || totalPages === 0));
+            
+            // Page numbers
             if (totalPages <= 1) {
-                fragment.appendChild(this.createPageButton(1, totalPages === 0));
+                parts.push(this.getPageButtonHtml(1, currentPage === 1, totalPages === 0));
             } else {
-                this.appendPageNumbers(fragment, totalPages);
+                this.appendPageNumbersHtml(parts, totalPages, currentPage);
             }
-
-            // Next button - always show, disabled when no next
-            fragment.appendChild(
-                this.createNavButton('›', this.currentPage === totalPages || totalPages <= 1, 1)
-            );
-
-            this.paginationControls.appendChild(fragment);
+            
+            // Next button
+            parts.push(this.getNavButtonHtml('next', '›', currentPage >= totalPages || totalPages <= 1));
+            
+            this.paginationControls.innerHTML = parts.join('');
         }
 
-        appendPageNumbers(fragment, totalPages) {
+        appendPageNumbersHtml(parts, totalPages, currentPage) {
             const maxVisible = 5;
             
             if (totalPages <= maxVisible) {
                 for (let i = 1; i <= totalPages; i++) {
-                    fragment.appendChild(this.createPageButton(i));
+                    parts.push(this.getPageButtonHtml(i, currentPage === i, false));
                 }
                 return;
             }
 
-            if (this.currentPage <= 3) {
+            if (currentPage <= 3) {
                 for (let i = 1; i <= 3; i++) {
-                    fragment.appendChild(this.createPageButton(i));
+                    parts.push(this.getPageButtonHtml(i, currentPage === i, false));
                 }
-                fragment.appendChild(this.createEllipsis());
-                fragment.appendChild(this.createPageButton(totalPages));
+                parts.push('<li class="page-item disabled"><span class="page-link">…</span></li>');
+                parts.push(this.getPageButtonHtml(totalPages, false, false));
                 
-            } else if (this.currentPage >= totalPages - 2) {
-                fragment.appendChild(this.createPageButton(1));
-                fragment.appendChild(this.createEllipsis());
+            } else if (currentPage >= totalPages - 2) {
+                parts.push(this.getPageButtonHtml(1, false, false));
+                parts.push('<li class="page-item disabled"><span class="page-link">…</span></li>');
                 for (let i = totalPages - 2; i <= totalPages; i++) {
-                    fragment.appendChild(this.createPageButton(i));
+                    parts.push(this.getPageButtonHtml(i, currentPage === i, false));
                 }
                 
             } else {
-                fragment.appendChild(this.createPageButton(1));
-                fragment.appendChild(this.createEllipsis());
-                for (let i = this.currentPage - 1; i <= this.currentPage + 1; i++) {
-                    fragment.appendChild(this.createPageButton(i));
+                parts.push(this.getPageButtonHtml(1, false, false));
+                parts.push('<li class="page-item disabled"><span class="page-link">…</span></li>');
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    parts.push(this.getPageButtonHtml(i, currentPage === i, false));
                 }
-                fragment.appendChild(this.createEllipsis());
-                fragment.appendChild(this.createPageButton(totalPages));
+                parts.push('<li class="page-item disabled"><span class="page-link">…</span></li>');
+                parts.push(this.getPageButtonHtml(totalPages, false, false));
             }
         }
 
-        createPageButton(pageNum, forceDisabled = false) {
-            const li = document.createElement('li');
-            const isActive = this.currentPage === pageNum && !forceDisabled;
-            const isDisabled = forceDisabled;
+        getPageButtonHtml(pageNum, isActive, isDisabled) {
+            const classes = ['page-item'];
+            if (isActive) classes.push('active');
+            if (isDisabled) classes.push('disabled');
             
-            li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
-            
-            const btn = document.createElement('a');
-            btn.className = 'page-link';
-            btn.href = '#';
-            btn.textContent = pageNum;
-            
-            if (!isActive && !isDisabled) {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.goToPage(pageNum);
-                });
-            }
-            
-            li.appendChild(btn);
-            return li;
+            return `<li class="${classes.join(' ')}"><a class="page-link" href="#" data-action="${pageNum}">${pageNum}</a></li>`;
         }
 
-        createNavButton(symbol, disabled, direction) {
-            const li = document.createElement('li');
-            li.className = 'page-item' + (disabled ? ' disabled' : '');
-            
-            const btn = document.createElement('a');
-            btn.className = 'page-link';
-            btn.href = '#';
-            btn.innerHTML = symbol;
-            
-            if (!disabled) {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.goToPage(this.currentPage + direction);
-                });
-            }
-            
-            li.appendChild(btn);
-            return li;
-        }
-
-        createEllipsis() {
-            const li = document.createElement('li');
-            li.className = 'page-item disabled';
-            li.innerHTML = '<span class="page-link">…</span>';
-            return li;
-        }
-
-        goToPage(page) {
-            this.currentPage = page;
-            this.scheduleUpdate();
-        }
-
-        setPageSize(size) {
-            this.itemsPerPage = parseInt(size, 10);
-            this.currentPage = 1;
-            this.scheduleUpdate();
+        getNavButtonHtml(action, symbol, disabled) {
+            const disabledClass = disabled ? ' disabled' : '';
+            return `<li class="page-item${disabledClass}"><a class="page-link" href="#" data-action="${action}">${symbol}</a></li>`;
         }
     }
 
-    // Initialize
+    // Initialize with optimal timing
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => new StudySearcher());
+        document.addEventListener('DOMContentLoaded', () => new StudySearcher(), { once: true });
     } else {
         new StudySearcher();
     }

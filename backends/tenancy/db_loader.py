@@ -386,24 +386,30 @@ class EnhancedStudyDatabaseManager:
         """Print formatted statistics (for debugging)"""
         stats = self.get_stats()
         
-        print("\n" + "=" * 70)
-        print("STUDY DATABASE MANAGER STATISTICS")
-        print("=" * 70)
-        print(f"Registered Databases: {stats['registered_databases']}")
-        print(f"Cache Size: {stats['cache_size']}")
-        print(f"Last Cleanup: {stats['last_cleanup']}")
+        output_lines = [
+            "",
+            "=" * 70,
+            "STUDY DATABASE MANAGER STATISTICS",
+            "=" * 70,
+            f"Registered Databases: {stats['registered_databases']}",
+            f"Cache Size: {stats['cache_size']}",
+            f"Last Cleanup: {stats['last_cleanup']}",
+        ]
         
         if stats['usage_stats']:
-            print("\nDatabase Usage:")
+            output_lines.append("\nDatabase Usage:")
             for db_name, db_stats in stats['usage_stats'].items():
-                print(f"\n  {db_name}:")
-                print(f"    Usage Count: {db_stats.get('usage_count', 0)}")
-                print(f"    Errors: {db_stats.get('errors', 0)}")
-                print(f"    Last Used: {db_stats.get('last_used', 'Never')}")
+                output_lines.append(f"\n  {db_name}:")
+                output_lines.append(f"    Usage Count: {db_stats.get('usage_count', 0)}")
+                output_lines.append(f"    Errors: {db_stats.get('errors', 0)}")
+                output_lines.append(f"    Last Used: {db_stats.get('last_used', 'Never')}")
                 if 'last_error' in db_stats:
-                    print(f"    Last Error: {db_stats['last_error']}")
+                    output_lines.append(f"    Last Error: {db_stats['last_error']}")
         
-        print("=" * 70 + "\n")
+        output_lines.append("=" * 70 + "\n")
+        
+        # Use logger instead of print for production safety
+        logger.info("\n".join(output_lines))
 
     def clear_cache(self):
         """Clear configuration cache (useful for testing)"""

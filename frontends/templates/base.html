@@ -24,7 +24,7 @@
 </head>
 <body>
     {% block base_main %}{% endblock %}
-
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script nonce="{{ request.csp_nonce }}" src="{% static 'bootstrap/js/bootstrap.bundle.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>

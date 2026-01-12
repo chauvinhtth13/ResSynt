@@ -1,7 +1,7 @@
 <!-- frontends/templates/components/header.html -->
 {% load static i18n %}
 
-<nav class="navbar navbar-expand bg-navy-blue-900 shadow-sm sticky-top fixed-top py-3 px-4" 
+<header class="header navbar navbar-expand bg-navy-blue-900 shadow-sm {% if position %}{{ position }}{% endif %} py-3 {% if padding_x %}{{ padding_x }}{% endif %}" 
      role="navigation"
      aria-label="Main navigation">
   <div class="container-fluid">
@@ -9,8 +9,8 @@
     <!-- Left Section -->
     <div class="d-flex align-items-center">
       {% if show_sidebar_toggle %}
-        <button class="btn btn-link me-2" type="button" id="sidebarToggle" aria-label="{% trans 'Toggle sidebar' %}">
-          <i class="bi bi-list fs-4 text-dark"></i>
+        <button class="btn btn-nav-action px-1" type="button" id="sidebarToggle" aria-label="{% trans 'Toggle sidebar' %}">
+          <i class="fa-solid fa-bars fw-bold fs-4"></i>
         </button>
       {% endif %}
       
@@ -26,31 +26,6 @@
       {% endif %}
     </div>
 
-    <!-- Center Section -->
-    {% if page_title %}
-      <div class="flex-grow-1">
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb mb-0">
-            {% if breadcrumbs %}
-              {% for crumb in breadcrumbs %}
-                {% if forloop.last %}
-                  <li class="breadcrumb-item active" aria-current="page">{{ crumb.title }}</li>
-                {% else %}
-                  <li class="breadcrumb-item">
-                    <a href="{{ crumb.url }}" class="text-decoration-none">{{ crumb.title }}</a>
-                  </li>
-                {% endif %}
-              {% endfor %}
-            {% else %}
-              <li class="breadcrumb-item active" aria-current="page">{{ page_title }}</li>
-            {% endif %}
-          </ol>
-        </nav>
-      </div>
-    {% else %}
-      <div class="flex-grow-1"></div>
-    {% endif %}
-
     <!-- Right Section -->
     <div class="d-flex align-items-center">
       {% if show_notifications %}
@@ -64,14 +39,13 @@
       {% endif %}
       
       {% if show_user_menu|default:True %}
-        {% include 'components/user_menu.html' %}
+        {% include 'components/user_menu.html' with show_back_to_study=show_back_to_study %}
       {% endif %}
     </div>
     
   </div>
-</nav>
+</header>
 
-{% if position == 'fixed-top' %}
-  <!-- Spacer để content không bị che bởi fixed navbar -->
-  <div style="height: 56px;"></div>
+{% if position == 'fixed-top' or position == 'sticky-top' %}
+  <div class="header-spacer" style="height: 4.5rem;"></div>
 {% endif %}

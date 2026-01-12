@@ -234,12 +234,32 @@ class StudySite(models.Model):
 # Single signal for database creation
 @receiver(post_save, sender=Study)
 def handle_study_database(sender, instance, created, **kwargs):
+    """Handle database creation when a new study is created.
+    
+    Uses Celery task for async processing to avoid blocking the request.
+    Falls back to synchronous execution if Celery is in eager mode (dev).
+    """
     if not created:
         return
     
     from django.db import transaction
+    from django.conf import settings
     
-    def _create_database():
+    def _trigger_database_creation():
+        try:
+            from backends.tenancy.tasks import create_study_database_task
+            
+            # Use Celery task (async in production, sync in dev with CELERY_TASK_ALWAYS_EAGER)
+            create_study_database_task.delay(instance.pk)
+            logger.info(f"Queued database creation task for study {instance.code}")
+            
+        except Exception as e:
+            logger.error(f"Error queuing database creation: {e}")
+            # Fallback to synchronous creation
+            _create_database_sync()
+    
+    def _create_database_sync():
+        """Synchronous fallback for database creation."""
         try:
             from backends.tenancy.utils.db_study_creator import DatabaseStudyCreator
             from backends.tenancy.utils.role_manager import StudyRoleManager
@@ -256,4 +276,4 @@ def handle_study_database(sender, instance, created, **kwargs):
             logger.error(f"Error in database creation: {e}")
     
     # Delay until transaction commits
-    transaction.on_commit(_create_database)
+    transaction.on_commit(_trigger_database_creation)
