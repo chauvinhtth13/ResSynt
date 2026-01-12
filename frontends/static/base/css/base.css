@@ -694,16 +694,13 @@ a.btn-nav-action:active {
 }
 
 /* Danger State */
-.dropdown-menu-action .dropdown-item-danger,
-.dropdown-menu-action .dropdown-item-danger i {
+.dropdown-menu-action .dropdown-item-danger {
     color: var(--bs-danger);
     background-color: transparent;
 }
 
 .dropdown-menu-action .dropdown-item-danger:hover,
-.dropdown-menu-action .dropdown-item-danger:focus,
-.dropdown-menu-action .dropdown-item-danger:hover i,
-.dropdown-menu-action .dropdown-item-danger:focus i {
+.dropdown-menu-action .dropdown-item-danger:focus {
     color: var(--bs-danger);
     background-color: var(--bs-danger-bg-subtle);
 }
