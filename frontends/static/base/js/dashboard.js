@@ -519,15 +519,5 @@
         })
       );
     }
-
-    // Optional: Custom configuration example (commented out)
-    // window.sidebarManager = new SidebarManager({
-    //   sidebarId: 'customSidebar',
-    //   toggleId: 'customToggle',
-    //   overlayId: 'customOverlay',
-    //   mainContentId: 'customMainContent',
-    //   breakpoint: 1024,
-    //   resizeDelay: 300
-    // });
   });
 })();

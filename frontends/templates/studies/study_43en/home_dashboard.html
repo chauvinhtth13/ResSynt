@@ -1,23 +1,122 @@
-<!-- frontends/templates/studies/study_43en/home_dashboard.html -->
 {% extends 'default/dashboard.html' %}
 {% load static %}
-{% load i18n %} 
+{% load i18n %}
 
 {% block title %}{% trans "43EN Dashboard Overview" %} - {{ request.study_code|upper }}{% endblock %}
 
 {% block dashboard_css %}
-<link rel="stylesheet" href="{% static 'studies/study_43en/css/home_dashboard.css' %}">
 {% endblock %}
-
 
 {% block sidebar %}
-    {% include 'studies/study_43en/sidebar.html' %}
+{% include 'studies/study_43en/sidebar.html' %}
 {% endblock %}
-
 
 {% block dashboard_content %}
-{% endblock %}
+<div class="rounded-3 mb-4 bg-navy-blue-900 text-white p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+        <div class="min-w-0 flex-grow-1">
+            <h5 class="h5 fw-bold mb-1">{% trans "43EN Study Dashboard" %}</h5>
+            <p class="text-white-50 mb-0 small line-clamp-2" title="{{ study.name|default:'' }}">
+                {{ study.name|default:"" }}
+            </p>
+        </div>
+        <button class="btn-cyber-outline-sm flex-shrink-0" id="refreshBtn">
+            <i class="bi bi-arrow-clockwise" id="refreshIcon"></i>
+            {% trans "Refresh" %}
+        </button>
+    </div>
 
+    <!-- Bottom Row: Stats -->
+    <div class="d-flex flex-wrap justify-content-between gap-3 gap-lg-4 pt-2 border-top border-secondary border-opacity-25">
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-white bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center"
+                style="width: 45px; height: 45px; flex-shrink: 0;">
+                <i class="bi bi-geo-alt-fill text-white fs-5"></i>
+            </div>
+
+            <div class="d-flex flex-column justify-content-center">
+                <span class="text-white-50 text-uppercase fw-semibold"
+                    style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    {% trans "Study Site" %}
+                </span>
+
+                <span class="text-white fw-bold lh-1 mt-1">
+                    {% if site_code %}{{ site_code }} - {{ site_name }}{% else %} {% trans "All Sites" %} {% endif%}
+                </span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-white bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center"
+                style="width: 45px; height: 45px; flex-shrink: 0;">
+                <i class="bi bi-clock-history text-white fs-5"></i>
+            </div>
+            <div class="d-flex flex-column justify-content-center">
+                <span class="text-white-50 text-uppercase fw-semibold"
+                    style="font-size: 0.75rem; letter-spacing: 0.5px;">{% trans "Last Update" %}</span>
+                <span class="text-white fw-bold lh-1 mt-1">{{ today|date:"d/m/Y H:i" }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Screening Patients" %}</p>
+                        <h2 class="fw-bold mb-0 text-primary count-up" data-target="{{ screening_patients|default:0 }}">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-4 border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Enrolled Patients" %}</p>
+                        <h2 class="fw-bold mb-0 text-success count-up" data-target="{{ enrolled_patients|default:0 }}">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-4 border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Screening Contacts" %}</p>
+                        <h2 class="fw-bold mb-0 text-info count-up" data-target="{{ screening_contacts|default:0 }}">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Enrolled Contacts" %}</p>
+                        <h2 class="fw-bold mb-0 text-warning count-up" data-target="{{ enrolled_contacts|default:0 }}">0</h2>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
 
 {% block dashboard_js %}
 {% endblock %}

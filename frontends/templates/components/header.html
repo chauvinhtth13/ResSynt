@@ -46,7 +46,6 @@
   </div>
 </header>
 
-{% if position == 'fixed-top' %}
-  <!-- Spacer để content không bị che bởi fixed navbar -->
-  <div style="height: 56px;"></div>
+{% if position == 'fixed-top' or position == 'sticky-top' %}
+  <div class="header-spacer" style="height: 4.5rem;"></div>
 {% endif %}

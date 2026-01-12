@@ -9,7 +9,10 @@
    3. Glass Morphism Foundation
    4. Button Components
    5. Dropdown System
-   6. Utility Classes
+   6. Notification System
+   7. Utility Classes
+   8. Keyframe Animations
+   9. Media Queries (Responsive + Accessibility)
    ========================================================================== */
 
 
@@ -18,7 +21,7 @@
    ========================================================================== */
 
 :root {
-    /* ========== Color Scale: Midnight Navy ========== */
+    /* ===== Color Scale: Midnight Navy ===== */
     --color-midnight-navy-50: #edf0ff;
     --color-midnight-navy-100: #dbe1ff;
     --color-midnight-navy-200: #b7c4fe;
@@ -31,88 +34,81 @@
     --color-midnight-navy-900: #011945;
     --color-midnight-navy-950: #000f30;
 
-    /* ========== RGB Values (for rgba() usage) ========== */
-    --rgb-accent-cyan:   0, 245, 255;
-    --rgb-accent-teal:   0, 191, 166;
+    /* ===== RGB Values (for rgba() usage) ===== */
+    --rgb-accent-cyan: 0, 245, 255;
+    --rgb-accent-teal: 0, 191, 166;
     --rgb-accent-purple: 168, 85, 247;
-    --rgb-accent-pink:   255, 110, 199;
-    --rgb-glass-base:    240, 248, 255;
+    --rgb-accent-pink: 255, 110, 199;
+    --rgb-glass-base: 240, 248, 255;
     
-    /* ========== Solid Accent Colors ========== */
-    --color-accent-cyan:   rgb(var(--rgb-accent-cyan));
-    --color-accent-teal:   rgb(var(--rgb-accent-teal));
+    /* ===== Solid Accent Colors ===== */
+    --color-accent-cyan: rgb(var(--rgb-accent-cyan));
+    --color-accent-teal: rgb(var(--rgb-accent-teal));
     --color-accent-purple: rgb(var(--rgb-accent-purple));
-    --color-accent-pink:   rgb(var(--rgb-accent-pink));
-    --color-white:         #ffffff;
+    --color-accent-pink: rgb(var(--rgb-accent-pink));
+    --color-white: #ffffff;
 
-    /* ========== Metallic Colors ========== */
+    /* ===== Metallic Colors ===== */
     --color-titanium-silver: #c0c0c0;
-    --color-mclaren-silver:  #9ba2b4;
-    --color-carbon-fiber:    #2c2c2c;
+    --color-mclaren-silver: #9ba2b4;
+    --color-carbon-fiber: #2c2c2c;
 
-    /* ========== Glass Effect ========== */
-    --glass-bg-primary:   rgba(var(--rgb-glass-base), 0.10);
+    /* ===== Glass Effect ===== */
+    --glass-bg-primary: rgba(var(--rgb-glass-base), 0.10);
     --glass-bg-secondary: rgba(var(--rgb-glass-base), 0.05);
-    --glass-bg-tertiary:  rgba(var(--rgb-glass-base), 0.02);
-    --glass-border:       rgba(var(--rgb-glass-base), 0.15);
+    --glass-bg-tertiary: rgba(var(--rgb-glass-base), 0.02);
+    --glass-border: rgba(var(--rgb-glass-base), 0.15);
     --glass-border-light: rgba(var(--rgb-glass-base), 0.12);
 
-    /* ========== Gradients ========== */
+    /* ===== Gradients ===== */
     --gradient-metallic: linear-gradient(180deg, var(--color-titanium-silver), var(--color-mclaren-silver));
-    
-    --gradient-highlight: linear-gradient(90deg, 
-        var(--color-accent-cyan) 0%, 
-        var(--color-accent-purple) 35%, 
-        var(--color-accent-pink) 65%, 
-        var(--color-accent-cyan) 100%
-    );
-    
-    --gradient-glass: linear-gradient(135deg, 
-        var(--glass-bg-primary) 0%, 
-        var(--glass-bg-secondary) 50%, 
-        var(--glass-bg-tertiary) 100%
-    );
-    
-    --gradient-prism-line: linear-gradient(90deg, 
-        transparent 0%, 
-        rgba(var(--rgb-accent-cyan), 0.5) 20%, 
-        rgba(var(--rgb-accent-purple), 0.5) 50%, 
-        rgba(var(--rgb-accent-pink), 0.5) 80%, 
-        transparent 100%
-    );
+    --gradient-highlight: linear-gradient(90deg, var(--color-accent-cyan) 0%, var(--color-accent-purple) 35%, var(--color-accent-pink) 65%, var(--color-accent-cyan) 100%);
+    --gradient-glass: linear-gradient(135deg, var(--glass-bg-primary) 0%, var(--glass-bg-secondary) 50%, var(--glass-bg-tertiary) 100%);
+    --gradient-prism-line: linear-gradient(90deg, transparent 0%, rgba(var(--rgb-accent-cyan), 0.5) 20%, rgba(var(--rgb-accent-purple), 0.5) 50%, rgba(var(--rgb-accent-pink), 0.5) 80%, transparent 100%);
 
-    /* ========== Timing Functions (Performance Optimized) ========== */
-    --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-out-quad:  cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    --ease-in-out:    cubic-bezier(0.4, 0, 0.2, 1);
+    /* ===== Timing Functions ===== */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* ========== Duration ========== */
-    --duration-fast:   150ms;
+    /* ===== Duration ===== */
+    --duration-fast: 150ms;
     --duration-normal: 200ms;
-    --duration-slow:   300ms;
+    --duration-slow: 300ms;
 
-    /* ========== Shadows ========== */
-    --shadow-glass:       0 8px 32px rgba(0, 0, 0, 0.3);
+    /* ===== Shadows ===== */
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
     --shadow-glass-hover: 0 6px 24px rgba(var(--rgb-accent-cyan), 0.15);
-    --shadow-glow-cyan:   0 0 20px rgba(var(--rgb-accent-cyan), 0.25);
-    --shadow-text:        0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-glow-cyan: 0 0 20px rgba(var(--rgb-accent-cyan), 0.25);
+    --shadow-text: 0 2px 4px rgba(0, 0, 0, 0.4);
 
-    /* ========== Blur ========== */
-    --blur-glass:    1.25rem;
+    /* ===== Blur ===== */
+    --blur-glass: 1.25rem;
     --blur-glass-sm: 0.75rem;
 
-    /* ========== Border Radius ========== */
-    --radius-sm:  0.375rem;
-    --radius-md:  0.5rem;
-    --radius-lg:  0.75rem;
-    --radius-xl:  1rem;
+    /* ===== Border Radius ===== */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
     --radius-2xl: 1.5rem;
     
-    /* ========== Component Dimensions ========== */
-    --nav-btn-height:      2.5rem;
-    --lang-btn-width:      3.75rem;
-    --dropdown-min-width:  11rem;
+    /* ===== Component Dimensions ===== */
+    --nav-btn-height: 2.5rem;
+    --lang-btn-width: 3.75rem;
+    --dropdown-min-width: 11rem;
     --dropdown-action-width: 16rem;
+    
+    /* ===== Notification Variables ===== */
+    --notification-width: 360px;
+    --notification-max-height: 400px;
+    --notification-item-gap: 0.5rem;
+    --notification-unread-bg: rgba(var(--rgb-accent-cyan), 0.08);
+    --notification-unread-border: rgba(var(--rgb-accent-cyan), 0.3);
+    --notification-success: #10b981;
+    --notification-warning: #f59e0b;
+    --notification-error: #ef4444;
+    --notification-info: var(--color-accent-cyan);
 }
 
 
@@ -134,26 +130,20 @@ html {
    3. GLASS MORPHISM FOUNDATION
    ========================================================================== */
 
-/* Base Glass */
-.glass-base {
+/* Shared Glass Properties */
+.glass-base,
+.glass-prism-top,
+.btn-glass-neon {
     background: var(--gradient-glass);
     backdrop-filter: blur(var(--blur-glass));
     -webkit-backdrop-filter: blur(var(--blur-glass));
     border: 1px solid var(--glass-border);
 }
 
-/* Glass with Prism Top Line */
 .glass-prism-top {
     position: relative;
-    background: var(--gradient-glass);
-    backdrop-filter: blur(var(--blur-glass));
-    -webkit-backdrop-filter: blur(var(--blur-glass));
-    border: 1px solid var(--glass-border);
-    box-shadow: 
-        var(--shadow-glass),
-        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.15),
-        inset 0 -1px 0 rgba(var(--rgb-glass-base), 0.05);
     overflow: hidden;
+    box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(var(--rgb-glass-base), 0.15), inset 0 -1px 0 rgba(var(--rgb-glass-base), 0.05);
 }
 
 .glass-prism-top::after {
@@ -165,20 +155,13 @@ html {
     pointer-events: none;
 }
 
-/* Glass Neon Variant */
 .glass-neon {
-    background: linear-gradient(135deg, 
-        rgba(var(--rgb-accent-cyan), 0.25), 
-        rgba(var(--rgb-accent-purple), 0.25)
-    );
+    background: linear-gradient(135deg, rgba(var(--rgb-accent-cyan), 0.25), rgba(var(--rgb-accent-purple), 0.25));
     backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--blur-glass-sm)) saturate(150%);
     border: 1px solid rgba(var(--rgb-glass-base), 0.3);
     border-top-color: rgba(var(--rgb-glass-base), 0.5);
-    box-shadow: 
-        0 8px 32px rgba(var(--rgb-accent-cyan), 0.25),
-        inset 0 2px 0 rgba(var(--rgb-glass-base), 0.2),
-        inset 0 -1px 0 rgba(var(--rgb-accent-purple), 0.2);
+    box-shadow: 0 8px 32px rgba(var(--rgb-accent-cyan), 0.25), inset 0 2px 0 rgba(var(--rgb-glass-base), 0.2), inset 0 -1px 0 rgba(var(--rgb-accent-purple), 0.2);
 }
 
 .glass-neon i {
@@ -187,63 +170,35 @@ html {
 }
 
 
-/* ========================================
-   BTN-NAV-ACTION - UNIFIED STATES
-   ========================================
-   States Flow:
-   1. Default → Trạng thái bình thường
-   2. Hover   → Di chuột qua
-   3. Active  → Click giữ (mousedown)
-   4. Focus   → Tab navigation
-   5. Show    → Dropdown đang mở
-   ======================================== */
+/* ==========================================================================
+   4. BUTTON COMPONENTS
+   ========================================================================== */
 
+/* ----- BTN-NAV-ACTION ----- */
 .btn-nav-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     height: var(--nav-btn-height);
     padding: 0 0.75rem;
-    
     font-size: 1rem;
     font-weight: 700;
     text-decoration: none;
-    
-    /* Default Colors */
     color: var(--color-mclaren-silver);
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: var(--radius-md);
-    
     cursor: pointer;
-    
-    /* Prevent browser default behaviors */
     -webkit-tap-highlight-color: transparent;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     user-select: none;
-    
-    /* Smooth transitions */
-    transition: 
-        color 0.2s ease-out,
-        background-color 0.2s ease-out,
-        border-color 0.2s ease-out,
-        box-shadow 0.2s ease-out,
-        transform 0.15s ease-out;
+    transition: color 0.2s ease-out, background-color 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.15s ease-out;
 }
 
-/* ----------------------------------------
-   Language Button Variant
-   ---------------------------------------- */
 .btn-nav-action.btn-language {
     width: var(--lang-btn-width);
     padding: 0;
 }
 
-/* ----------------------------------------
-   Dropdown Arrow Animation
-   ---------------------------------------- */
 .btn-nav-action.dropdown-toggle::after {
     margin-left: 0.5rem;
     vertical-align: middle;
@@ -254,60 +209,32 @@ html {
     transform: rotate(180deg);
 }
 
-/* ----------------------------------------
-   STATE 1: HOVER
-   - Subtle glow effect
-   - Light background tint
-   ---------------------------------------- */
+/* States: Hover */
 .btn-nav-action:hover {
     color: var(--color-accent-cyan);
     background-color: rgba(255, 255, 255, 0.05);
     border-color: rgba(var(--rgb-accent-cyan), 0.3);
-    box-shadow: 
-        0 2px 8px rgba(0, 0, 0, 0.2),
-        0 0 4px rgba(var(--rgb-accent-cyan), 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 4px rgba(var(--rgb-accent-cyan), 0.15);
 }
 
-/* ----------------------------------------
-   STATE 2: ACTIVE (Click & Hold)
-   - Bao gồm TẤT CẢ trường hợp :active
-   - Kể cả khi kéo chuột ra ngoài nút
-   ---------------------------------------- */
-.btn-nav-action:active {
-    color: var(--color-accent-cyan);
-    background-color: rgba(var(--rgb-accent-cyan), 0.2);
-    border-color: rgba(var(--rgb-accent-cyan), 0.5);
-    box-shadow: 
-        0 1px 3px rgba(0, 0, 0, 0.3),
-        0 0 8px rgba(var(--rgb-accent-cyan), 0.25);
-    transform: scale(0.97);
-}
-
-/* Active + Hover (click giữ trong nút) */
+/* States: Active */
+.btn-nav-action:active,
 .btn-nav-action:active:hover {
     color: var(--color-accent-cyan);
     background-color: rgba(var(--rgb-accent-cyan), 0.2);
     border-color: rgba(var(--rgb-accent-cyan), 0.5);
-    box-shadow: 
-        0 1px 3px rgba(0, 0, 0, 0.3),
-        0 0 8px rgba(var(--rgb-accent-cyan), 0.25);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 8px rgba(var(--rgb-accent-cyan), 0.25);
     transform: scale(0.97);
 }
 
-/* Active + NOT Hover (click giữ rồi kéo ra ngoài) */
 .btn-nav-action:active:not(:hover) {
-    color: var(--color-accent-cyan);
     background-color: rgba(var(--rgb-accent-cyan), 0.15);
     border-color: rgba(var(--rgb-accent-cyan), 0.4);
-    box-shadow: 
-        0 1px 3px rgba(0, 0, 0, 0.3),
-        0 0 6px rgba(var(--rgb-accent-cyan), 0.2);
-    transform: scale(1); /* Bỏ scale khi kéo ra ngoài */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 6px rgba(var(--rgb-accent-cyan), 0.2);
+    transform: scale(1);
 }
 
-/* ----------------------------------------
-   STATE 3: FOCUS (Keyboard Navigation)
-   ---------------------------------------- */
+/* States: Focus */
 .btn-nav-action:focus {
     outline: none;
 }
@@ -315,35 +242,25 @@ html {
 .btn-nav-action:focus-visible {
     outline: none;
     color: var(--color-accent-cyan);
-    box-shadow: 
-        0 0 0 2px var(--dark-bg, #0f172a),
-        0 0 0 4px rgba(var(--rgb-accent-cyan), 0.6);
+    box-shadow: 0 0 0 2px var(--dark-bg, #0f172a), 0 0 0 4px rgba(var(--rgb-accent-cyan), 0.6);
 }
 
-/* ----------------------------------------
-   STATE 4: SHOW (Dropdown Open)
-   ---------------------------------------- */
+/* States: Show (Dropdown Open) */
 .btn-nav-action.show {
     color: var(--color-accent-cyan);
     background-color: rgba(var(--rgb-accent-cyan), 0.15);
     border-color: var(--color-accent-cyan);
-    box-shadow: 
-        0 0 12px rgba(var(--rgb-accent-cyan), 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 12px rgba(var(--rgb-accent-cyan), 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .btn-nav-action.show:hover {
     background-color: rgba(var(--rgb-accent-cyan), 0.2);
-    box-shadow: 
-        0 0 15px rgba(var(--rgb-accent-cyan), 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 15px rgba(var(--rgb-accent-cyan), 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .btn-nav-action.show:active {
     transform: scale(0.97);
-    box-shadow: 
-        0 0 8px rgba(var(--rgb-accent-cyan), 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 8px rgba(var(--rgb-accent-cyan), 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .btn-nav-action.show:active:not(:hover) {
@@ -352,9 +269,7 @@ html {
     transform: scale(1);
 }
 
-/* ----------------------------------------
-   STATE 5: DISABLED
-   ---------------------------------------- */
+/* States: Disabled */
 .btn-nav-action:disabled,
 .btn-nav-action.disabled {
     color: var(--color-mclaren-silver);
@@ -363,9 +278,7 @@ html {
     pointer-events: none;
 }
 
-/* ----------------------------------------
-   RESET: Link styles
-   ---------------------------------------- */
+/* Reset link styles */
 a.btn-nav-action,
 a.btn-nav-action:hover,
 a.btn-nav-action:focus,
@@ -373,7 +286,7 @@ a.btn-nav-action:active {
     text-decoration: none;
 }
 
-/* ---------- Glass Neon Button ---------- */
+/* ----- BTN-GLASS-NEON ----- */
 .btn-glass-neon {
     position: relative;
     display: inline-grid;
@@ -382,41 +295,36 @@ a.btn-nav-action:active {
     width: 9.25rem;
     height: 3rem;
     padding: 0 1rem;
-    
-    background: var(--gradient-glass);
-    backdrop-filter: blur(var(--blur-glass));
-    -webkit-backdrop-filter: blur(var(--blur-glass));
-    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    
     font-size: 1rem;
     color: var(--color-white) !important;
     white-space: nowrap;
-    
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(var(--rgb-glass-base), 0.1);
-    
-    transition: 
-        color var(--duration-normal) var(--ease-in-out),
-        border-color var(--duration-normal) var(--ease-in-out),
-        box-shadow var(--duration-slow) var(--ease-in-out),
-        transform var(--duration-normal) var(--ease-in-out);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(var(--rgb-glass-base), 0.1);
+    transition: color var(--duration-normal) var(--ease-in-out), border-color var(--duration-normal) var(--ease-in-out), box-shadow var(--duration-slow) var(--ease-in-out), transform var(--duration-normal) var(--ease-in-out);
 }
 
-/* Hover Overlay */
 .btn-glass-neon::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(135deg, 
-        rgba(var(--rgb-accent-cyan), 0.12), 
-        rgba(var(--rgb-accent-purple), 0.1)
-    );
+    background: linear-gradient(135deg, rgba(var(--rgb-accent-cyan), 0.12), rgba(var(--rgb-accent-purple), 0.1));
     opacity: 0;
     transition: opacity var(--duration-normal) var(--ease-in-out);
     pointer-events: none;
+}
+
+.btn-glass-neon span {
+    text-align: left;
+    padding-left: 0.5rem;
+}
+
+.btn-glass-neon.dropdown-toggle::after {
+    transition: transform var(--duration-slow) var(--ease-in-out);
+}
+
+.btn-glass-neon.show.dropdown-toggle::after {
+    transform: rotate(180deg);
 }
 
 .btn-glass-neon:hover {
@@ -441,35 +349,183 @@ a.btn-nav-action:active {
 .btn-glass-neon:active::before,
 .btn-glass-neon.show::before {
     opacity: 1;
-    background: linear-gradient(135deg, 
-        rgba(var(--rgb-accent-cyan), 0.15), 
-        rgba(var(--rgb-accent-purple), 0.12)
-    );
+    background: linear-gradient(135deg, rgba(var(--rgb-accent-cyan), 0.15), rgba(var(--rgb-accent-purple), 0.12));
 }
 
 .btn-glass-neon:focus-visible {
     outline: none;
     border-color: rgba(var(--rgb-accent-cyan), 0.4);
-    box-shadow: 
-        0 4px 20px rgba(var(--rgb-accent-cyan), 0.2),
-        0 0 0 2px rgba(var(--rgb-accent-cyan), 0.3);
+    box-shadow: 0 4px 20px rgba(var(--rgb-accent-cyan), 0.2), 0 0 0 2px rgba(var(--rgb-accent-cyan), 0.3);
 }
 
 .btn-glass-neon:focus-visible::before {
     opacity: 1;
 }
 
-.btn-glass-neon span {
-    text-align: left;
-    padding-left: 0.5rem;
+/* ---------- Cyber Button (Primary) ---------- */
+.btn-cyber {
+    position: relative;
+    z-index: 1;
+    padding: 0.75rem 2rem;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--color-accent-cyan);
+    background: transparent;
+    border: 1px solid var(--color-accent-cyan) !important;
+    overflow: hidden;
+    transition: 
+        color var(--duration-normal) var(--ease-out-quad),
+        box-shadow var(--duration-normal) var(--ease-out-quad);
 }
 
-.btn-glass-neon.dropdown-toggle::after {
-    transition: transform var(--duration-slow) var(--ease-in-out);
+.btn-cyber::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--color-accent-cyan);
+    transform: translateX(-100%);
+    transition: transform var(--duration-normal) var(--ease-out-expo);
 }
 
-.btn-glass-neon.show.dropdown-toggle::after {
+.btn-cyber:hover {
+    color: #000;
+    box-shadow: var(--shadow-glow-cyan);
+}
+
+.btn-cyber:hover::before {
+    transform: translateX(0);
+}
+
+.btn-cyber:focus-visible {
+    outline: 2px solid rgba(var(--rgb-accent-cyan), 0.5);
+    outline-offset: 2px;
+}
+
+.btn-cyber:disabled {
+    opacity: 0.7;
+    color: #000;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-cyber:disabled::before {
+    transform: translateX(0);
+}
+
+.btn-cyber .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+/* ---------- Cyber Button Outline Small ---------- */
+.btn-cyber-outline-sm {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: 
+        color var(--duration-normal) var(--ease-out-quad),
+        border-color var(--duration-normal) var(--ease-out-quad),
+        box-shadow var(--duration-normal) var(--ease-out-quad);
+}
+
+.btn-cyber-outline-sm::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--color-accent-cyan);
+    transform: translateX(-100%);
+    transition: transform var(--duration-normal) var(--ease-out-expo);
+}
+
+.btn-cyber-outline-sm:hover {
+    color: var(--color-midnight-navy-950);
+    border-color: var(--color-accent-cyan) !important;
+    box-shadow: var(--shadow-glow-cyan);
+}
+
+.btn-cyber-outline-sm:hover::before {
+    transform: translateX(0);
+}
+
+.btn-cyber-outline-sm:focus-visible {
+    outline: 2px solid rgba(var(--rgb-accent-cyan), 0.5);
+    outline-offset: 2px;
+}
+
+.btn-cyber-outline-sm:active {
+    transform: scale(0.97);
+}
+
+.btn-cyber-outline-sm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-cyber-outline-sm:disabled::before {
+    transform: translateX(0);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Icon spin animation for refresh */
+.btn-cyber-outline-sm .bi-arrow-clockwise {
+    transition: transform 0.3s var(--ease-out-expo);
+}
+
+.btn-cyber-outline-sm:hover .bi-arrow-clockwise {
     transform: rotate(180deg);
+}
+
+/* ----- BTN-NOTIFICATION ----- */
+.btn-notification {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    color: var(--color-midnight-navy-100);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    transition: color var(--duration-fast) var(--ease-out-quad), background-color var(--duration-fast) var(--ease-out-quad), border-color var(--duration-fast) var(--ease-out-quad), transform var(--duration-fast) var(--ease-out-quad);
+}
+
+.btn-notification:hover {
+    color: var(--color-white);
+    background-color: rgba(var(--rgb-accent-cyan), 0.1);
+    border-color: rgba(var(--rgb-accent-cyan), 0.2);
+}
+
+.btn-notification:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--rgb-accent-cyan), 0.3);
+}
+
+.btn-notification .bi-bell {
+    transition: transform var(--duration-normal) var(--ease-out-expo);
+}
+
+.btn-notification:hover .bi-bell {
+    animation: bellRing 0.6s ease-in-out;
 }
 
 
@@ -477,34 +533,23 @@ a.btn-nav-action:active {
    5. DROPDOWN SYSTEM
    ========================================================================== */
 
-/* ---------- Base Dropdown ---------- */
+/* ----- Base Dropdown ----- */
 .dropdown-menu-base {
     padding: 0.5rem;
     margin-top: 0.25rem !important;
     overflow: hidden;
-    
-    background: linear-gradient(135deg, 
-        rgba(10, 25, 47, 0.95), 
-        rgba(15, 35, 65, 0.92)
-    );
+    background: linear-gradient(135deg, rgba(10, 25, 47, 0.95), rgba(15, 35, 65, 0.92));
     backdrop-filter: blur(var(--blur-glass));
     -webkit-backdrop-filter: blur(var(--blur-glass));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    box-shadow: 
-        0 10px 40px -10px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    
-    /* Animation - GPU accelerated */
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     opacity: 0;
     visibility: hidden;
     transform: translateY(-8px);
     transform-origin: top center;
     will-change: opacity, transform;
-    transition: 
-        opacity var(--duration-normal) var(--ease-out-expo),
-        transform var(--duration-normal) var(--ease-out-expo),
-        visibility var(--duration-normal);
+    transition: opacity var(--duration-normal) var(--ease-out-expo), transform var(--duration-normal) var(--ease-out-expo), visibility var(--duration-normal);
 }
 
 .dropdown-menu-base.show {
@@ -519,19 +564,14 @@ a.btn-nav-action:active {
     display: flex;
     align-items: center;
     padding: 0.6rem 1rem;
-    
     font-size: 1rem;
     font-weight: 500;
     color: var(--color-midnight-navy-100);
-    
     background: transparent;
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    
-    transition: 
-        color var(--duration-fast) var(--ease-out-quad),
-        background-color var(--duration-fast) var(--ease-out-quad);
+    transition: color var(--duration-fast) var(--ease-out-quad), background-color var(--duration-fast) var(--ease-out-quad);
 }
 
 .dropdown-menu-base .dropdown-item:hover,
@@ -551,14 +591,13 @@ a.btn-nav-action:active {
     color: var(--color-accent-cyan);
 }
 
-/* Divider */
+/* Divider & Form Reset */
 .dropdown-menu-base .dropdown-divider {
     border-top: 1px solid var(--glass-border);
     margin: 0.5rem 0;
     opacity: 0.6;
 }
 
-/* Form Reset */
 .dropdown-menu-base form {
     margin: 0;
     padding: 0;
@@ -569,7 +608,7 @@ a.btn-nav-action:active {
     text-align: left;
 }
 
-/* ---------- Select Dropdown (Language, Theme) ---------- */
+/* ----- Select Dropdown (Language, Theme) ----- */
 .dropdown-menu-select {
     min-width: var(--dropdown-min-width);
 }
@@ -578,8 +617,10 @@ a.btn-nav-action:active {
     margin-top: 0.25rem;
 }
 
-/* Accent Line */
-.dropdown-menu-select::before {
+/* Shared Accent Line for Select & Action Dropdowns */
+.dropdown-menu-select::before,
+.dropdown-menu-action::before,
+.dropdown-menu-notification::before {
     content: '';
     position: absolute;
     inset: 0 0 auto 0;
@@ -594,7 +635,6 @@ a.btn-nav-action:active {
     font-weight: 400;
 }
 
-/* Active State */
 .dropdown-menu-select .dropdown-item.active {
     color: var(--color-accent-cyan);
     font-weight: 600;
@@ -603,7 +643,6 @@ a.btn-nav-action:active {
     pointer-events: none;
 }
 
-/* Glow Indicator */
 .dropdown-menu-select .dropdown-item.active::after {
     content: '';
     position: absolute;
@@ -617,29 +656,15 @@ a.btn-nav-action:active {
     box-shadow: 0 0 8px rgba(var(--rgb-accent-cyan), 0.5);
 }
 
-/* ---------- Action Dropdown (User Menu) ---------- */
+/* ----- Action Dropdown (User Menu) ----- */
 .dropdown-menu-action {
     min-width: var(--dropdown-action-width);
     padding: 0.5rem 0;
 }
 
-/* Prism Line */
-.dropdown-menu-action::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 2px;
-    background: var(--gradient-prism-line);
-    opacity: 0.8;
-    z-index: 1;
-}
-
 .dropdown-menu-action .dropdown-item {
     border-radius: 0;
-    transition: 
-        color var(--duration-fast) var(--ease-out-quad),
-        background-color var(--duration-fast) var(--ease-out-quad),
-        padding-left var(--duration-fast) var(--ease-out-expo);
+    transition: color var(--duration-fast) var(--ease-out-quad), background-color var(--duration-fast) var(--ease-out-quad), padding-left var(--duration-fast) var(--ease-out-expo);
 }
 
 .dropdown-menu-action .dropdown-item:hover,
@@ -653,7 +678,6 @@ a.btn-nav-action:active {
     margin-right: 0.5rem;
 }
 
-/* Header */
 .dropdown-menu-action .dropdown-header {
     padding: 0.5rem 1rem;
 }
@@ -669,144 +693,27 @@ a.btn-nav-action:active {
     font-size: 0.85rem;
 }
 
-/* Danger State - Bootstrap 5 compatible */
-.dropdown-menu-action .dropdown-item-danger {
+/* Danger State */
+.dropdown-menu-action .dropdown-item-danger,
+.dropdown-menu-action .dropdown-item-danger i {
     color: var(--bs-danger);
     background-color: transparent;
 }
 
-.dropdown-menu-action .dropdown-item-danger i {
-    color: var(--bs-danger);
-}
-
 .dropdown-menu-action .dropdown-item-danger:hover,
-.dropdown-menu-action .dropdown-item-danger:focus {
+.dropdown-menu-action .dropdown-item-danger:focus,
+.dropdown-menu-action .dropdown-item-danger:hover i,
+.dropdown-menu-action .dropdown-item-danger:focus i {
     color: var(--bs-danger);
     background-color: var(--bs-danger-bg-subtle);
 }
 
-.dropdown-menu-action .dropdown-item-danger:hover i,
-.dropdown-menu-action .dropdown-item-danger:focus i {
-    color: var(--bs-danger);
-}
-
 
 /* ==========================================================================
-   6. UTILITY CLASSES
+   6. NOTIFICATION SYSTEM
    ========================================================================== */
 
-/* ---------- Text Colors ---------- */
-.text-accent-cyan   { color: var(--color-accent-cyan); }
-.text-accent-purple { color: var(--color-accent-purple); }
-.text-accent-pink   { color: var(--color-accent-pink); }
-.text-accent-teal   { color: var(--color-accent-teal); }
-
-/* ---------- Backgrounds ---------- */
-.bg-glass {
-    background: var(--gradient-glass);
-    backdrop-filter: blur(var(--blur-glass));
-    -webkit-backdrop-filter: blur(var(--blur-glass));
-}
-
-.bg-navy-blue-900 { background-color: var(--color-midnight-navy-900) !important; }
-.bg-navy-blue-950 { background-color: var(--color-midnight-navy-950) !important; }
-
-/* ---------- Brand Label ---------- */
-.brand-label {
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    background: var(--gradient-metallic);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    -webkit-text-stroke: 1px transparent;
-    filter: drop-shadow(var(--shadow-text));
-}
-
-/* ---------- Nav Divider ---------- */
-.nav-divider {
-    width: 0.1rem;
-    height: 1.5rem;
-    margin: 0 0.5rem;
-    background: linear-gradient(to bottom, 
-        transparent 0%, 
-        var(--color-mclaren-silver) 50%, 
-        transparent 100%
-    );
-}
-
-/* ==========================================================================
-   NOTIFICATION MENU COMPONENT
-   Extends: dropdown-menu-base styles
-   ========================================================================== */
-
-/* ---------- Variables ---------- */
-:root {
-    --notification-width: 360px;
-    --notification-max-height: 400px;
-    --notification-item-gap: 0.5rem;
-    
-    /* Status Colors */
-    --notification-unread-bg: rgba(var(--rgb-accent-cyan), 0.08);
-    --notification-unread-border: rgba(var(--rgb-accent-cyan), 0.3);
-    --notification-success: #10b981;
-    --notification-warning: #f59e0b;
-    --notification-error: #ef4444;
-    --notification-info: var(--color-accent-cyan);
-}
-
-/* ---------- Notification Button ---------- */
-.btn-notification {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    padding: 0;
-    
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    color: var(--color-midnight-navy-100);
-    
-    transition: 
-        color var(--duration-fast) var(--ease-out-quad),
-        background-color var(--duration-fast) var(--ease-out-quad),
-        border-color var(--duration-fast) var(--ease-out-quad),
-        transform var(--duration-fast) var(--ease-out-quad);
-}
-
-.btn-notification:hover {
-    color: var(--color-white);
-    background-color: rgba(var(--rgb-accent-cyan), 0.1);
-    border-color: rgba(var(--rgb-accent-cyan), 0.2);
-}
-
-.btn-notification:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--rgb-accent-cyan), 0.3);
-}
-
-/* Bell Icon Animation */
-.btn-notification .bi-bell {
-    transition: transform var(--duration-normal) var(--ease-out-expo);
-}
-
-.btn-notification:hover .bi-bell {
-    animation: bellRing 0.6s ease-in-out;
-}
-
-@keyframes bellRing {
-    0%, 100% { transform: rotate(0); }
-    15% { transform: rotate(14deg); }
-    30% { transform: rotate(-12deg); }
-    45% { transform: rotate(10deg); }
-    60% { transform: rotate(-8deg); }
-    75% { transform: rotate(4deg); }
-}
-
-/* ---------- Notification Badge ---------- */
+/* ----- Notification Badge ----- */
 .notification-badge {
     position: absolute;
     top: -4px;
@@ -814,23 +721,16 @@ a.btn-nav-action:active {
     min-width: 20px;
     height: 20px;
     padding: 0 6px;
-    
     display: flex;
     align-items: center;
     justify-content: center;
-    
     font-size: 0.7rem;
     font-weight: 700;
     color: var(--color-white);
-    
     background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
     border: 2px solid var(--color-midnight-navy-900);
     border-radius: 10px;
-    
-    /* Pulse Animation */
     animation: badgePulse 2s ease-in-out infinite;
-    
-    /* GPU acceleration */
     will-change: transform, box-shadow;
 }
 
@@ -840,59 +740,25 @@ a.btn-nav-action:active {
     font-size: 0.75rem;
 }
 
-@keyframes badgePulse {
-    0%, 100% { 
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(238, 90, 90, 0.5);
-    }
-    50% { 
-        transform: scale(1.05);
-        box-shadow: 0 0 0 6px rgba(238, 90, 90, 0);
-    }
-}
-
-/* Badge hidden when no notifications */
 .notification-badge:empty,
 .notification-badge[data-count="0"] {
     display: none;
 }
 
-/* ---------- Notification Dropdown Menu ---------- */
+/* ----- Notification Dropdown Menu ----- */
 .dropdown-menu-notification {
     width: var(--notification-width);
     max-width: calc(100vw - 2rem);
     padding: 0;
-    
-    /* Override base styles */
-    background: linear-gradient(160deg, 
-        rgba(10, 25, 47, 0.98), 
-        rgba(15, 35, 65, 0.96)
-    );
+    background: linear-gradient(160deg, rgba(10, 25, 47, 0.98), rgba(15, 35, 65, 0.96));
 }
 
-/* Accent Line - Top */
-.dropdown-menu-notification::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 2px;
-    background: var(--gradient-prism-line);
-    opacity: 0.8;
-    z-index: 1;
-}
-
-@keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-}
-
-/* ---------- Notification Header ---------- */
+/* ----- Notification Header ----- */
 .notification-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.25rem;
-    
     border-bottom: 1px solid var(--glass-border);
     background: rgba(0, 0, 0, 0.2);
 }
@@ -901,7 +767,6 @@ a.btn-nav-action:active {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    
     font-size: 1rem;
     font-weight: 600;
     color: var(--color-white);
@@ -918,32 +783,23 @@ a.btn-nav-action:active {
     min-width: 22px;
     height: 22px;
     padding: 0 8px;
-    
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--color-accent-cyan);
-    
     background: rgba(var(--rgb-accent-cyan), 0.15);
     border-radius: 11px;
 }
 
-/* Mark All Read Button */
 .notification-mark-read {
     padding: 0.4rem 0.75rem;
-    
     font-size: 0.8rem;
     font-weight: 500;
     color: var(--color-midnight-navy-100);
-    
     background: transparent;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    
-    transition: 
-        color var(--duration-fast) var(--ease-out-quad),
-        background-color var(--duration-fast) var(--ease-out-quad),
-        border-color var(--duration-fast) var(--ease-out-quad);
+    transition: color var(--duration-fast) var(--ease-out-quad), background-color var(--duration-fast) var(--ease-out-quad), border-color var(--duration-fast) var(--ease-out-quad);
 }
 
 .notification-mark-read:hover {
@@ -952,13 +808,11 @@ a.btn-nav-action:active {
     border-color: rgba(var(--rgb-accent-cyan), 0.2);
 }
 
-/* ---------- Notification List ---------- */
+/* ----- Notification List ----- */
 .notification-list {
     max-height: var(--notification-max-height);
     overflow-y: auto;
     overflow-x: hidden;
-    
-    /* Custom Scrollbar */
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--rgb-accent-cyan), 0.3) transparent;
 }
@@ -980,23 +834,17 @@ a.btn-nav-action:active {
     background: rgba(var(--rgb-accent-cyan), 0.5);
 }
 
-/* ---------- Notification Item ---------- */
+/* ----- Notification Item ----- */
 .notification-item {
     position: relative;
     display: flex;
     gap: 0.875rem;
     padding: 1rem 1.25rem;
-    
     color: var(--color-midnight-navy-100);
     text-decoration: none;
-    
     border-left: 3px solid transparent;
     cursor: pointer;
-    
-    transition: 
-        background-color var(--duration-fast) var(--ease-out-quad),
-        border-color var(--duration-fast) var(--ease-out-quad),
-        transform var(--duration-fast) var(--ease-out-quad);
+    transition: background-color var(--duration-fast) var(--ease-out-quad), border-color var(--duration-fast) var(--ease-out-quad), transform var(--duration-fast) var(--ease-out-quad);
 }
 
 .notification-item:hover {
@@ -1008,7 +856,6 @@ a.btn-nav-action:active {
     transform: scale(0.995);
 }
 
-/* Unread State */
 .notification-item.unread {
     background-color: var(--notification-unread-bg);
     border-left-color: var(--notification-unread-border);
@@ -1021,17 +868,10 @@ a.btn-nav-action:active {
     right: 1rem;
     width: 8px;
     height: 8px;
-    
     background: var(--color-accent-cyan);
     border-radius: 50%;
-    
     box-shadow: 0 0 8px rgba(var(--rgb-accent-cyan), 0.6);
     animation: unreadPulse 2s ease-in-out infinite;
-}
-
-@keyframes unreadPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
 }
 
 /* Notification Icon */
@@ -1042,14 +882,16 @@ a.btn-nav-action:active {
     justify-content: center;
     width: 40px;
     height: 40px;
-    
     border-radius: var(--radius-md);
-    
     transition: transform var(--duration-fast) var(--ease-out-quad);
 }
 
 .notification-item:hover .notification-icon {
     transform: scale(1.1);
+}
+
+.notification-icon i {
+    font-size: 1.1rem;
 }
 
 /* Icon Variants */
@@ -1078,27 +920,19 @@ a.btn-nav-action:active {
     color: var(--color-accent-purple);
 }
 
-.notification-icon i {
-    font-size: 1.1rem;
-}
-
 /* Notification Content */
 .notification-content {
     flex: 1;
-    min-width: 0; /* Enable text truncation */
+    min-width: 0;
 }
 
 .notification-message {
     margin: 0 0 0.25rem 0;
-    
     font-size: 0.9rem;
     font-weight: 500;
     line-height: 1.4;
     color: var(--color-midnight-navy-100);
-    
-    /* Truncate long text */
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -1112,7 +946,6 @@ a.btn-nav-action:active {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    
     font-size: 0.8rem;
     color: var(--color-midnight-navy-400);
 }
@@ -1129,27 +962,24 @@ a.btn-nav-action:active {
 
 .notification-category {
     padding: 0.15rem 0.5rem;
-    
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    
     background: rgba(var(--rgb-accent-purple), 0.15);
     color: var(--color-accent-purple);
     border-radius: var(--radius-xs);
 }
 
-/* ---------- Empty State ---------- */
+/* ----- Empty State ----- */
 .notification-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 3rem 2rem;
-    
     text-align: center;
-    color: var(--color-midnight-navy-400);
+    color: var(--color-white);
 }
 
 .notification-empty-icon {
@@ -1159,10 +989,8 @@ a.btn-nav-action:active {
     width: 64px;
     height: 64px;
     margin-bottom: 1rem;
-    
     font-size: 1.75rem;
-    color: var(--color-midnight-navy-500);
-    
+    color: var(--color-white);
     background: rgba(var(--rgb-accent-cyan), 0.05);
     border: 1px dashed var(--glass-border);
     border-radius: var(--radius-lg);
@@ -1170,10 +998,9 @@ a.btn-nav-action:active {
 
 .notification-empty-title {
     margin: 0 0 0.5rem 0;
-    
     font-size: 1rem;
     font-weight: 600;
-    color: var(--color-midnight-navy-100);
+    color: var(--color-white);
 }
 
 .notification-empty-text {
@@ -1182,10 +1009,9 @@ a.btn-nav-action:active {
     line-height: 1.5;
 }
 
-/* ---------- Notification Footer ---------- */
+/* ----- Notification Footer ----- */
 .notification-footer {
     padding: 0.875rem 1.25rem;
-    
     border-top: 1px solid var(--glass-border);
     background: rgba(0, 0, 0, 0.15);
 }
@@ -1195,15 +1021,11 @@ a.btn-nav-action:active {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--color-accent-cyan);
     text-decoration: none;
-    
-    transition: 
-        color var(--duration-fast) var(--ease-out-quad),
-        gap var(--duration-fast) var(--ease-out-quad);
+    transition: color var(--duration-fast) var(--ease-out-quad), gap var(--duration-fast) var(--ease-out-quad);
 }
 
 .notification-footer-link:hover {
@@ -1220,7 +1042,7 @@ a.btn-nav-action:active {
     transform: translateX(2px);
 }
 
-/* ---------- Loading State ---------- */
+/* ----- Loading State ----- */
 .notification-loading {
     display: flex;
     flex-direction: column;
@@ -1233,16 +1055,10 @@ a.btn-nav-action:active {
 .notification-spinner {
     width: 32px;
     height: 32px;
-    
     border: 3px solid rgba(var(--rgb-accent-cyan), 0.2);
     border-top-color: var(--color-accent-cyan);
     border-radius: 50%;
-    
     animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
 }
 
 .notification-loading-text {
@@ -1250,24 +1066,24 @@ a.btn-nav-action:active {
     color: var(--color-midnight-navy-400);
 }
 
-/* ---------- Skeleton Loading ---------- */
+/* ----- Skeleton Loading ----- */
 .notification-skeleton {
     display: flex;
     gap: 0.875rem;
     padding: 1rem 1.25rem;
 }
 
+.notification-skeleton .skeleton-icon,
+.notification-skeleton .skeleton-line {
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
 .notification-skeleton .skeleton-icon {
     width: 40px;
     height: 40px;
     border-radius: var(--radius-md);
-    background: linear-gradient(90deg, 
-        rgba(255,255,255,0.05) 0%,
-        rgba(255,255,255,0.1) 50%,
-        rgba(255,255,255,0.05) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
 }
 
 .notification-skeleton .skeleton-content {
@@ -1280,13 +1096,6 @@ a.btn-nav-action:active {
 .notification-skeleton .skeleton-line {
     height: 12px;
     border-radius: 6px;
-    background: linear-gradient(90deg, 
-        rgba(255,255,255,0.05) 0%,
-        rgba(255,255,255,0.1) 50%,
-        rgba(255,255,255,0.05) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
 }
 
 .notification-skeleton .skeleton-line:first-child {
@@ -1298,12 +1107,7 @@ a.btn-nav-action:active {
     height: 10px;
 }
 
-@keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-/* ---------- Notification Groups ---------- */
+/* ----- Notification Groups ----- */
 .notification-group {
     border-bottom: 1px solid var(--glass-border);
 }
@@ -1317,13 +1121,11 @@ a.btn-nav-action:active {
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.25rem;
-    
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--color-midnight-navy-400);
-    
     background: rgba(0, 0, 0, 0.2);
 }
 
@@ -1331,7 +1133,7 @@ a.btn-nav-action:active {
     font-size: 0.7rem;
 }
 
-/* ---------- Swipe Actions (Touch Devices) ---------- */
+/* ----- Swipe Actions (Touch Devices) ----- */
 .notification-item-wrapper {
     position: relative;
     overflow: hidden;
@@ -1342,10 +1144,8 @@ a.btn-nav-action:active {
     top: 0;
     right: 0;
     bottom: 0;
-    
     display: flex;
     align-items: stretch;
-    
     transform: translateX(100%);
     transition: transform var(--duration-normal) var(--ease-out-expo);
 }
@@ -1359,13 +1159,9 @@ a.btn-nav-action:active {
     align-items: center;
     justify-content: center;
     width: 60px;
-    
     border: none;
     cursor: pointer;
-    
-    transition: 
-        background-color var(--duration-fast) var(--ease-out-quad),
-        transform var(--duration-fast) var(--ease-out-quad);
+    transition: background-color var(--duration-fast) var(--ease-out-quad), transform var(--duration-fast) var(--ease-out-quad);
 }
 
 .notification-action-btn:hover {
@@ -1382,84 +1178,27 @@ a.btn-nav-action:active {
     color: var(--color-white);
 }
 
-/* ---------- Real-time Update Animation ---------- */
-.notification-item.new-notification {
-    animation: slideInNotification 0.4s var(--ease-out-expo);
-}
-
-@keyframes slideInNotification {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Removing Animation */
-.notification-item.removing {
-    animation: slideOutNotification 0.3s var(--ease-out-quad) forwards;
-}
-
-@keyframes slideOutNotification {
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-        height: 0;
-        padding: 0;
-        margin: 0;
-    }
-}
-
-/* ---------- Toast Notification ---------- */
+/* ----- Toast Notification ----- */
 .notification-toast {
     position: fixed;
     top: 1rem;
     right: 1rem;
     z-index: 9999;
-    
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
     padding: 1rem 1.25rem;
     max-width: 380px;
-    
-    background: linear-gradient(135deg, 
-        rgba(10, 25, 47, 0.98), 
-        rgba(15, 35, 65, 0.96)
-    );
+    background: linear-gradient(135deg, rgba(10, 25, 47, 0.98), rgba(15, 35, 65, 0.96));
     backdrop-filter: blur(var(--blur-glass));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    box-shadow: 
-        0 15px 50px -12px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    
+    box-shadow: 0 15px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     animation: toastSlideIn 0.4s var(--ease-out-expo);
 }
 
 .notification-toast.toast-hiding {
     animation: toastSlideOut 0.3s var(--ease-out-quad) forwards;
-}
-
-@keyframes toastSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes toastSlideOut {
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
 }
 
 .notification-toast-icon {
@@ -1488,12 +1227,10 @@ a.btn-nav-action:active {
 .notification-toast-close {
     flex-shrink: 0;
     padding: 0.25rem;
-    
     background: transparent;
     border: none;
     color: var(--color-midnight-navy-400);
     cursor: pointer;
-    
     transition: color var(--duration-fast) var(--ease-out-quad);
 }
 
@@ -1501,17 +1238,114 @@ a.btn-nav-action:active {
     color: var(--color-white);
 }
 
-/* Toast Progress Bar */
 .notification-toast-progress {
     position: absolute;
     bottom: 0;
     left: 0;
     height: 3px;
-    
     background: var(--color-accent-cyan);
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-    
     animation: toastProgress 5s linear forwards;
+}
+
+/* Animation classes for real-time updates */
+.notification-item.new-notification {
+    animation: slideInNotification 0.4s var(--ease-out-expo);
+}
+
+.notification-item.removing {
+    animation: slideOutNotification 0.3s var(--ease-out-quad) forwards;
+}
+
+/* ==========================================================================
+   7. UTILITY CLASSES
+   ========================================================================== */
+
+/* Text Colors */
+.text-accent-cyan { color: var(--color-accent-cyan); }
+.text-accent-purple { color: var(--color-accent-purple); }
+.text-accent-pink { color: var(--color-accent-pink); }
+.text-accent-teal { color: var(--color-accent-teal); }
+
+/* Backgrounds */
+.bg-glass {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+}
+
+.bg-navy-blue-900 { background-color: var(--color-midnight-navy-900) !important; }
+.bg-navy-blue-950 { background-color: var(--color-midnight-navy-950) !important; }
+
+/* Brand Label */
+.brand-label {
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--gradient-metallic);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 1px transparent;
+    filter: drop-shadow(var(--shadow-text));
+}
+
+/* Nav Divider */
+.nav-divider {
+    width: 0.1rem;
+    height: 1.5rem;
+    margin: 0 0.5rem;
+    background: linear-gradient(to bottom, transparent 0%, var(--color-mclaren-silver) 50%, transparent 100%);
+}
+
+
+/* ==========================================================================
+   8. KEYFRAME ANIMATIONS (Consolidated)
+   ========================================================================== */
+
+@keyframes bellRing {
+    0%, 100% { transform: rotate(0); }
+    15% { transform: rotate(14deg); }
+    30% { transform: rotate(-12deg); }
+    45% { transform: rotate(10deg); }
+    60% { transform: rotate(-8deg); }
+    75% { transform: rotate(4deg); }
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(238, 90, 90, 0.5); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(238, 90, 90, 0); }
+}
+
+@keyframes unreadPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes slideInNotification {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideOutNotification {
+    to { opacity: 0; transform: translateX(100%); height: 0; padding: 0; margin: 0; }
+}
+
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastSlideOut {
+    to { opacity: 0; transform: translateX(100%); }
 }
 
 @keyframes toastProgress {
@@ -1519,7 +1353,12 @@ a.btn-nav-action:active {
     to { width: 0%; }
 }
 
-/* ---------- Responsive ---------- */
+
+/* ==========================================================================
+   9. MEDIA QUERIES (Consolidated)
+   ========================================================================== */
+
+/* ----- Responsive ----- */
 @media (max-width: 576px) {
     .dropdown-menu-notification {
         width: calc(100vw - 1rem);
@@ -1547,13 +1386,10 @@ a.btn-nav-action:active {
     }
 }
 
-/* ---------- Dark Mode Adjustments ---------- */
+/* ----- Dark Mode Adjustments ----- */
 @media (prefers-color-scheme: light) {
     .dropdown-menu-notification {
-        background: linear-gradient(160deg, 
-            rgba(255, 255, 255, 0.98), 
-            rgba(248, 250, 252, 0.96)
-        );
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
     }
     
     .notification-header {
@@ -1577,7 +1413,7 @@ a.btn-nav-action:active {
     }
 }
 
-/* ---------- Accessibility ---------- */
+/* ----- Accessibility: Reduced Motion ----- */
 @media (prefers-reduced-motion: reduce) {
     .notification-badge,
     .notification-item.unread::after,
@@ -1585,10 +1421,7 @@ a.btn-nav-action:active {
     .notification-spinner,
     .notification-skeleton .skeleton-icon,
     .notification-skeleton .skeleton-line,
-    .dropdown-menu-notification::before {
-        animation: none;
-    }
-    
+    .dropdown-menu-notification::before,
     .notification-item.new-notification,
     .notification-item.removing,
     .notification-toast,
@@ -1597,7 +1430,7 @@ a.btn-nav-action:active {
     }
 }
 
-/* Focus Visible for Keyboard Navigation */
+/* ----- Accessibility: Focus Visible ----- */
 .notification-item:focus-visible {
     outline: 2px solid var(--color-accent-cyan);
     outline-offset: -2px;

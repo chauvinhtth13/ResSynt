@@ -59,6 +59,12 @@
   transition: margin-left var(--sidebar-transition-duration) var(--sidebar-transition-timing);
 }
 
+.dashboard-content > .header {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
 .dashboard-content.sidebar-hidden {
   margin-left: 0;
 }

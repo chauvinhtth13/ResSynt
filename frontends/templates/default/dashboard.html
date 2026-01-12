@@ -21,7 +21,7 @@
     <!-- Navbar bên trong main content -->
     {% include 'components/header.html' with show_sidebar_toggle=True show_notifications=True show_back_to_study=True position="sticky-top"%}
     
-    <div class="p-3 p-lg-4">
+    <div class="container-fluid p-3 p-lg-4 mt-0" id="dashboardContent">
         {% block dashboard_content %}
         {% endblock %}
     </div>
