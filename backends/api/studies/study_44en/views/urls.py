@@ -1,4 +1,4 @@
-# backends/api/studies/study_44en/views/urls_dashboard.py
+# backends/api/studies/study_44en/views/urls.py
 
 """
 Dashboard URL Configuration for Study 44EN

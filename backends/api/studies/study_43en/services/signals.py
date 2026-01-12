@@ -1,4 +1,4 @@
-# backends/studies/study_43en/services/signals.py
+# backends/api/studies/study_43en/services/signals.py
 
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
