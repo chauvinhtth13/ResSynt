@@ -287,7 +287,7 @@ def create_audit_models(app_label: str, index_prefix: str = None):
     # Create Meta class for AuditLog
     class AuditLogMeta:
         app_label = _app_label
-        db_table = 'log"."audit_log'
+        db_table = 'log"."audit_logs'
         db_table_comment = 'AUDIT_LOG_TABLE'
         ordering = ['-timestamp']
         verbose_name = 'Audit Log'
@@ -307,7 +307,7 @@ def create_audit_models(app_label: str, index_prefix: str = None):
     # Create Meta class for AuditLogDetail
     class AuditLogDetailMeta:
         app_label = _app_label
-        db_table = 'log"."audit_log_detail'
+        db_table = 'log"."audit_log_details'
         db_table_comment = 'AUDIT_LOG_TABLE'
         ordering = ['field_name']
         verbose_name = 'Audit Log Detail'

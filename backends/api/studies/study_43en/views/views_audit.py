@@ -25,9 +25,6 @@ from backends.studies.study_43en.utils.site_utils import (
     get_filtered_queryset
 )
 
-# ✅ NEW: Use base audit_log models instead (for new studies)
-# from backends.audit_logs.models import AuditLog, AuditLogDetail
-
 User = get_user_model()
 logger = logging.getLogger(__name__)
 

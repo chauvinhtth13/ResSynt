@@ -18,14 +18,14 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 
 from backends.studies.study_44en.models import AuditLog, AuditLogDetail
-from backends.studies.study_44en.utils.permission_decorators import require_crf_view
+from backends.audit_logs.utils.permission_decorators import require_crf_view
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 @login_required
-# @require_crf_view('AuditLog')
+@require_crf_view('AuditLog')
 def audit_log_list(request):
     """
     List all audit logs with filters
@@ -153,7 +153,7 @@ def audit_log_list(request):
 
 
 @login_required
-# @require_crf_view('AuditLog')
+@require_crf_view('AuditLog')
 def audit_log_detail(request, log_id):
     """
     View detailed audit log with all changes
