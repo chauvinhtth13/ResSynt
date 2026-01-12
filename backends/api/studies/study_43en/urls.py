@@ -37,16 +37,13 @@ urlpatterns = [
     path('dashboard/', dashboard.home_dashboard, name='home_dashboard'),
     
     # Chart APIs
-    path('api/charts/patient-cumulative/', dashboard.patient_cumulative_chart_data, name='patient_cumulative_chart_data'),
-    path('api/charts/contact-cumulative/', dashboard.contact_cumulative_chart_data, name='contact_cumulative_chart_data'),
-    path('api/charts/screening-comparison/', dashboard.screening_comparison_chart_data, name='screening_comparison_chart_data'),
-    path('api/charts/gender-distribution/', dashboard.gender_distribution_chart_data, name='gender_distribution_chart_data'),
-    path('api/charts/patient-enrollment/', dashboard.patient_enrollment_chart_data, name='patient_enrollment_chart_data'),
-    path('api/charts/sample-distribution/', dashboard.sample_distribution_chart_data, name='sample_distribution_chart_data'),
-    path('api/charts/infection-focus/', dashboard.infection_focus_chart_data, name='infection_focus_chart_data'),
-    path('api/charts/antibiotic-resistance/', dashboard.antibiotic_resistance_chart_data, name='antibiotic_resistance_chart_data'),
-    path('api/charts/resistance-comorbidity/', dashboard.resistance_by_comorbidity_data, name='resistance_by_comorbidity_data'),
-
+    path('api/dashboard-stats/', 
+         dashboard.get_dashboard_stats_api, 
+         name='dashboard_stats_api'),
+    # Enrollment chart data
+    path('api/enrollment-chart/', 
+         dashboard.get_enrollment_chart_api, 
+         name='enrollment_chart_api'),
 
     # ===== SCREENING CASE =====
     path('screening/', views_scr_case_list.screening_case_list, name='screening_case_list'),

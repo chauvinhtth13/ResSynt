@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext_lazy as _
 from backends.studies.study_43en.models.patient import SCR_CASE
 from backends.studies.study_43en.forms.patient.SCR import ScreeningCaseForm
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 from django.contrib import messages
 # Audit utilities
 from backends.audit_logs.utils.decorators import audit_log
@@ -31,7 +32,13 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @require_crf_add('scr_case', redirect_to='study_43en:screening_case_list')
-@audit_log(model_name='SCREENINGCASE', get_patient_id_from='SCRID')
+@audit_log(
+    model_name='SCREENINGCASE',
+    get_patient_id_from='SCRID',
+    scr_case_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def screening_case_create(request):
     """
     CREATE screening case - WITH SITE SELECTION MODAL
@@ -187,7 +194,13 @@ def screening_case_create(request):
 
 @login_required
 @require_crf_change('scr_case', redirect_to='study_43en:screening_case_list')
-@audit_log(model_name='SCREENINGCASE', get_patient_id_from='SCRID')
+@audit_log(
+    model_name='SCREENINGCASE',
+    get_patient_id_from='SCRID',
+    scr_case_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def screening_case_update(request, SCRID):
     """
     UPDATE screening case
@@ -251,7 +264,13 @@ def screening_case_update(request, SCRID):
 
 @login_required
 @require_crf_view('scr_case', redirect_to='study_43en:screening_case_list')
-@audit_log(model_name='SCREENINGCASE', get_patient_id_from='SCRID')
+@audit_log(
+    model_name='SCREENINGCASE',
+    get_patient_id_from='SCRID',
+    scr_case_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def screening_case_view(request, SCRID):
     """
     READ screening case (read-only)

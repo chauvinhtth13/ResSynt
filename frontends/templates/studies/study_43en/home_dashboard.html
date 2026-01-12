@@ -16,8 +16,8 @@
     <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
         <div class="min-w-0 flex-grow-1">
             <h5 class="h5 fw-bold mb-1">{% trans "43EN Study Dashboard" %}</h5>
-            <p class="text-white-50 mb-0 small line-clamp-2" title="{{ study.name|default:'' }}">
-                {{ study.name|default:"" }}
+            <p class="text-white-50 mb-0 small line-clamp-2" title="{{ study_name|default:'' }}">
+                {{ study_name|default:"" }}
             </p>
         </div>
         <button class="btn-cyber-outline-sm flex-shrink-0" id="refreshBtn">
@@ -41,7 +41,7 @@
                 </span>
 
                 <span class="text-white fw-bold lh-1 mt-1">
-                    {% if site_code %}{{ site_code }} - {{ site_name }}{% else %} {% trans "All Sites" %} {% endif%}
+                    {{ site_name }}
                 </span>
             </div>
         </div>
@@ -60,6 +60,7 @@
     </div>
 </div>
 
+{# Statistics Cards #}
 <div class="row g-4 mb-4">
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card h-100 border-0 shadow-sm border-start border-4 border-primary">
@@ -67,7 +68,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Screening Patients" %}</p>
-                        <h2 class="fw-bold mb-0 text-primary count-up" data-target="{{ screening_patients|default:0 }}">0</h2>
+                        <h2 class="fw-bold mb-0 text-primary">{{ screening_patients|default:0 }}</h2>
                     </div>
                 </div>
             </div>
@@ -80,7 +81,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Enrolled Patients" %}</p>
-                        <h2 class="fw-bold mb-0 text-success count-up" data-target="{{ enrolled_patients|default:0 }}">0</h2>
+                        <h2 class="fw-bold mb-0 text-success">{{ enrolled_patients|default:0 }}</h2>
                     </div>
                 </div>
             </div>
@@ -93,7 +94,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Screening Contacts" %}</p>
-                        <h2 class="fw-bold mb-0 text-info count-up" data-target="{{ screening_contacts|default:0 }}">0</h2>
+                        <h2 class="fw-bold mb-0 text-info">{{ screening_contacts|default:0 }}</h2>
                     </div>
                 </div>
             </div>
@@ -106,7 +107,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Enrolled Contacts" %}</p>
-                        <h2 class="fw-bold mb-0 text-warning count-up" data-target="{{ enrolled_contacts|default:0 }}">0</h2>
+                        <h2 class="fw-bold mb-0 text-warning">{{ enrolled_contacts|default:0 }}</h2>
                     </div>
                  </div>
             </div>
@@ -114,9 +115,62 @@
     </div>
 </div>
 
-
+{# Enrollment Chart #}
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-graph-up text-primary me-2"></i>
+                        {% trans "Patient Enrollment Progress" %}
+                    </h6>
+                    
+                    {# Site Filter Buttons #}
+                    <div class="btn-group" role="group" aria-label="Site filter">
+                        <button type="button" class="btn btn-sm btn-outline-primary site-filter-btn active" data-site="all">
+                            {% trans "All Sites" %}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary site-filter-btn" data-site="003">
+                            003
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary site-filter-btn" data-site="020">
+                            020
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary site-filter-btn" data-site="011">
+                            011
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {# Chart container #}
+                <div id="enrollmentChart" style="width: 100%; height: 450px;"></div>
+                
+                {# Loading indicator #}
+                <div id="chartLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                    </div>
+                    <p class="text-muted mt-2">{% trans "Loading chart data..." %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
 {% block dashboard_js %}
+{# NO inline JavaScript - External files only #}
+{% endblock %}
+
+{% block extra_js %}
+{# ECharts library #}
+<script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+{# Dashboard JavaScript #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard.js' %}"></script>
+
+{% block extra_js_dashboard %}{% endblock %}
 {% endblock %}

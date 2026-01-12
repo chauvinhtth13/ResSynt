@@ -1,37 +1,24 @@
-"""
-Dashboard views and chart APIs for Study 43EN
- REFACTORED: Sử dụng site_utils thống nhất với views khác
-"""
-
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
-from django.db.models import Count, Avg, F, ExpressionWrapper, IntegerField, Q, Case, When
-from django.core.exceptions import FieldError
-from collections import OrderedDict
-from datetime import datetime, date
+from django.db.models import Count
+from datetime import datetime
 import logging
 
-from django.db.models.functions import Extract
-
-#  IMPORT TỪ SITE_UTILS (thay vì define riêng)
+# Import site utilities
 from backends.studies.study_43en.utils.site_utils import (
     get_site_filter_params,
     get_filtered_queryset
 )
 
+# Import models
 from backends.studies.study_43en.models import (
-    SCR_CASE, 
-    ENR_CASE, 
-    SCR_CONTACT, 
-    ENR_CONTACT,
-    SAM_CASE,
-    SAM_CONTACT,
-    CLI_CASE,
-    AntibioticSensitivity
+    SCR_CASE,       # Patient screening
+    ENR_CASE,       # Patient enrollment
+    SCR_CONTACT,    # Contact screening
+    ENR_CONTACT,    # Contact enrollment
 )
-from backends.studies.study_43en.models.patient import DISCH_CASE, FU_CASE_28, FU_CASE_90
 
 logger = logging.getLogger(__name__)
 
@@ -40,166 +27,116 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 DB_ALIAS = 'db_study_43en'
-TARGET_ENROLLMENT = 750
-
-
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-
-def add_percent_to_reasons(reason_qs):
-    """
-    Add percentage field to reasons queryset
-    
-    Args:
-        reason_qs: QuerySet or list with 'count' field
-        
-    Returns:
-        List of dicts with added 'percent' field
-    """
-    reasons = list(reason_qs)
-    total = sum(r['count'] for r in reasons)
-    
-    for r in reasons:
-        r['percent'] = round((r['count'] / total * 100), 1) if total > 0 else 0
-    
-    return reasons
 
 
 # ============================================================================
 # MAIN DASHBOARD VIEW
 # ============================================================================
 
-def get_enrolled_patients_queryset(site_filter, filter_type):
-    """
-     CENTRALIZED: Get enrolled patients queryset
-    Use this everywhere to ensure consistency
-    """
-    return get_filtered_queryset(SCR_CASE, site_filter, filter_type).filter(
-        UPPER16AGE=True,
-        INFPRIOR2OR48HRSADMIT=True,
-        ISOLATEDKPNFROMINFECTIONORBLOOD=True,
-        KPNISOUNTREATEDSTABLE=False,
-        CONSENTTOSTUDY=True
-    )
-
-
 @login_required
 def home_dashboard(request):
     """
-    Main dashboard view for Study 43EN
+    Main dashboard view - BACKEND ONLY
+    
+    Shows:
+    - Screening patients count
+    - Enrolled patients count
+    - Screening contacts count
+    - Enrolled contacts count
+    
+    All filtered by site from UnifiedTenancyMiddleware
+    
+    Args:
+        request: HttpRequest with site context from middleware
+        
+    Returns:
+        Rendered dashboard template with statistics
     """
+    # Get site filter from middleware context
     site_filter, filter_type = get_site_filter_params(request)
     
-    logger.debug(f"Loading dashboard - Site: {site_filter}, Type: {filter_type}")
+    logger.info(f"Dashboard loading - Site: {site_filter}, Type: {filter_type}")
     
     try:
-        study = getattr(request, 'study', None)
-        study_code = '43en'
-        study_folder = 'studies/study_43en'
-        
-        # ===== STUDY INFO =====
-        study_name = "Klebsiella pneumoniae Epidemiology Study"
-        site_name = "All Sites"
-        
-        # Lấy site name nếu có filter
-        if site_filter and site_filter != 'all':
-            from backends.tenancy.models import Site
-            try:
-                if filter_type == 'single':
-                    site = Site.objects.get(code=site_filter)
-                    site_name = site.name
-                elif filter_type == 'multiple':
-                    sites = Site.objects.filter(code__in=site_filter)
-                    site_count = sites.count()
-                    site_names = ', '.join([s.code for s in sites[:3]])
-                    site_name = f"{site_names}" + (f" (+{site_count - 3} more)" if site_count > 3 else "")
-            except Site.DoesNotExist:
-                site_name = f"Site {site_filter}"
-        
         # ===== PATIENT STATISTICS =====
-        screening_patients = get_filtered_queryset(SCR_CASE, site_filter, filter_type).count()
+        # Count ALL screening patients
+        screening_patients = get_filtered_queryset(
+            SCR_CASE, 
+            site_filter, 
+            filter_type
+        ).count()
         
-        #  Use centralized function
-        enrolled_patients = get_enrolled_patients_queryset(site_filter, filter_type).count()
+        # Count ENROLLED patients (from SCR_CASE with eligibility criteria)
+        enrolled_patients = get_filtered_queryset(
+            SCR_CASE, 
+            site_filter, 
+            filter_type
+        ).filter(
+            UPPER16AGE=True,
+            INFPRIOR2OR48HRSADMIT=True,
+            ISOLATEDKPNFROMINFECTIONORBLOOD=True,
+            KPNISOUNTREATEDSTABLE=False,
+            CONSENTTOSTUDY=True,
+            is_confirmed=True  # ✅ Must be confirmed
+        ).count()
         
-        logger.info(f"[Dashboard] Screening: {screening_patients}, Enrolled: {enrolled_patients}")
+        logger.debug(f"Patients - Screening: {screening_patients}, Enrolled: {enrolled_patients}")
         
         # ===== CONTACT STATISTICS =====
-        screening_contacts = get_filtered_queryset(SCR_CONTACT, site_filter, filter_type).count()
-        enrolled_contacts = get_filtered_queryset(ENR_CONTACT, site_filter, filter_type).count()
+        # Count ALL screening contacts
+        screening_contacts = get_filtered_queryset(
+            SCR_CONTACT,
+            site_filter,
+            filter_type
+        ).count()
         
-        # ===== PROJECT START DATE =====
-        first_enrollment = (
-            get_filtered_queryset(ENR_CASE, site_filter, filter_type)
-            .order_by('ENRDATE')
-            .values_list('ENRDATE', flat=True)
-            .first()
-        )
+        # Count ENROLLED contacts (from ENR_CONTACT)
+        enrolled_contacts = get_filtered_queryset(
+            ENR_CONTACT,
+            site_filter,
+            filter_type
+        ).count()
         
-        project_start = first_enrollment if first_enrollment else None
-        raw_percent = (enrolled_patients / TARGET_ENROLLMENT * 100) if enrolled_patients else 0.0
-        percent_target = f"{raw_percent:.1f}"  # Format as string with 1 decimal
+        logger.debug(f"Contacts - Screening: {screening_contacts}, Enrolled: {enrolled_contacts}")
         
-
-        avg_hospital_stay = get_average_hospital_stay(site_filter, filter_type)
-        mortality_stats = get_mortality_rate(site_filter, filter_type)
+        # ===== SITE NAME GENERATION =====
+        site_name = _get_site_display_name(site_filter, filter_type)
         
-        logger.info(f"[Dashboard] Mortality stats:")
-        logger.info(f"  - Dashboard enrolled: {enrolled_patients}")
-        logger.info(f"  - Mortality enrolled: {mortality_stats['total_enrolled']}")
-        logger.info(f"  - Match: {enrolled_patients == mortality_stats['total_enrolled']}")
-
-        # ===== UNRECRUITED REASONS =====
-        patient_reasons = (
-            get_filtered_queryset(SCR_CASE, site_filter, filter_type)
-            .filter(CONSENTTOSTUDY=False)
-            .exclude(UNRECRUITED_REASON__isnull=True)
-            .exclude(UNRECRUITED_REASON__exact='')
-            .values('UNRECRUITED_REASON')
-            .annotate(count=Count('*'))
-            .order_by('-count')
-        )
-        
-        contact_not_consented = (
-            get_filtered_queryset(SCR_CONTACT, site_filter, filter_type)
-            .filter(CONSENTTOSTUDY=False)
-            .count()
-        )
-        
-        contact_reasons = [
-            {'UNRECRUITED_REASON': 'Did not consent', 'count': contact_not_consented}
-        ] if contact_not_consented > 0 else []
-        
+        # ===== BUILD CONTEXT =====
         context = {
-            'study': study,
-            'study_code': study_code,
-            'study_folder': study_folder,
-            'study_name': study_name,
+            # Study metadata
+            'study': getattr(request, 'study', None),
+            'study_code': '43en',
+            'study_folder': 'studies/study_43en',
+            'study_name': "Klebsiella pneumoniae Epidemiology Study",
+            
+            # Site information
             'site_name': site_name,
+            'site_filter': site_filter,
+            'filter_type': filter_type,
+            
+            # Statistics
             'screening_patients': screening_patients,
-            'enrolled_patients': enrolled_patients, 
+            'enrolled_patients': enrolled_patients,
             'screening_contacts': screening_contacts,
             'enrolled_contacts': enrolled_contacts,
-            'percent_target': percent_target,
-            'target_enrollment': TARGET_ENROLLMENT,
-            'project_start': project_start,
+            
+            # Metadata
             'today': datetime.now(),
-            'patient_reasons': add_percent_to_reasons(patient_reasons),
-            'contact_reasons': add_percent_to_reasons(contact_reasons),
-            'site_id': site_filter,
-            'filter_type': filter_type,
-            'avg_hospital_stay': avg_hospital_stay,
-            'mortality_rate': f"{mortality_stats['mortality_rate']:.1f}",  # Format as string with 1 decimal
-            'total_deaths': mortality_stats['total_deaths'],
-            'total_enrolled_for_mortality': mortality_stats['total_enrolled'], 
         }
         
-        logger.debug(f"Dashboard loaded successfully")
+        logger.info(
+            f"Dashboard loaded successfully - "
+            f"Patients: {screening_patients}/{enrolled_patients}, "
+            f"Contacts: {screening_contacts}/{enrolled_contacts}"
+        )
+        
         return render(request, 'studies/study_43en/home_dashboard.html', context)
         
     except Exception as e:
-        logger.error(f"Error in home_dashboard: {str(e)}", exc_info=True)
+        logger.error(f"Dashboard error: {str(e)}", exc_info=True)
+        
+        # Return error context
         return render(request, 'studies/study_43en/home_dashboard.html', {
             'error': str(e),
             'today': datetime.now(),
@@ -207,586 +144,361 @@ def home_dashboard(request):
             'study_code': '43en',
         })
 
+
 # ============================================================================
-# CHART DATA APIs -  REFACTORED
+# HELPER FUNCTIONS
+# ============================================================================
+
+def _get_site_display_name(site_filter, filter_type):
+    """
+    Generate human-readable site name for display
+    
+    Args:
+        site_filter: 'all' | str | list
+        filter_type: 'all' | 'single' | 'multiple'
+        
+    Returns:
+        str: Display name (e.g., "All Sites", "003 - Site Name", "003, 011 (+2 more)")
+    """
+    if filter_type == 'all' or site_filter == 'all':
+        return "All Sites"
+    
+    try:
+        from backends.tenancy.models import Site
+        
+        if filter_type == 'single':
+            # Single site
+            site = Site.objects.get(code=site_filter)
+            return f"{site.code} - {site.name}"
+            
+        elif filter_type == 'multiple':
+            # Multiple sites
+            sites = Site.objects.filter(code__in=site_filter)
+            site_count = sites.count()
+            
+            if site_count == 0:
+                return "No Sites"
+            elif site_count == 1:
+                site = sites.first()
+                return f"{site.code} - {site.name}"
+            else:
+                # Show first 3 sites
+                site_codes = [s.code for s in sites[:3]]
+                site_names = ', '.join(site_codes)
+                
+                if site_count > 3:
+                    return f"{site_names} (+{site_count - 3} more)"
+                else:
+                    return site_names
+                    
+    except Exception as e:
+        logger.warning(f"Could not fetch site name: {e}")
+        
+        # Fallback
+        if filter_type == 'single':
+            return f"Site {site_filter}"
+        elif filter_type == 'multiple' and site_filter:
+            return f"{len(site_filter)} Sites"
+        else:
+            return "Unknown Site"
+    
+    return "All Sites"
+
+
+# ============================================================================
+# API ENDPOINTS (If needed for charts)
 # ============================================================================
 
 @require_GET
 @login_required
-def patient_cumulative_chart_data(request):
-    """API: Patient cumulative enrollment by month"""
-    site_filter, filter_type = get_site_filter_params(request)
+def get_dashboard_stats_api(request):
+    """
+    API endpoint to refresh dashboard statistics
     
-    queryset = get_filtered_queryset(ENR_CASE, site_filter, filter_type)
-    enroll_dates = queryset.values_list('ENRDATE', flat=True).order_by('ENRDATE')
+    Returns JSON with current counts
     
-    month_counts = OrderedDict()
-    for d in enroll_dates:
-        if d:
-            month_str = d.strftime('%m/%Y')
-            month_counts[month_str] = month_counts.get(month_str, 0) + 1
-    
-    cumulative = []
-    total = 0
-    for month in month_counts:
-        total += month_counts[month]
-        cumulative.append({'month': month, 'count': total})
-    
-    return JsonResponse({'data': cumulative})
-
-
-@require_GET
-@login_required
-def contact_cumulative_chart_data(request):
-    """API: Contact cumulative enrollment by date"""
-    site_filter, filter_type = get_site_filter_params(request)
-    
-    queryset = get_filtered_queryset(ENR_CONTACT, site_filter, filter_type)
-    enroll_dates = queryset.values_list('ENRDATE', flat=True).order_by('ENRDATE')
-    
-    date_counts = {}
-    for d in enroll_dates:
-        if d:
-            date_str = d.strftime('%Y-%m-%d')
-            date_counts[date_str] = date_counts.get(date_str, 0) + 1
-    
-    cumulative = []
-    count = 0
-    for date_key in sorted(date_counts.keys()):
-        count += date_counts[date_key]
-        cumulative.append({'date': date_key, 'count': count})
-    
-    return JsonResponse({'data': cumulative})
-
-
-@require_GET
-@login_required
-def screening_comparison_chart_data(request):
-    """API: Screening comparison between patients and contacts"""
-    site_filter, filter_type = get_site_filter_params(request)
-    
-    patient_queryset = get_filtered_queryset(SCR_CASE, site_filter, filter_type)
-    contact_queryset = get_filtered_queryset(SCR_CONTACT, site_filter, filter_type)
-    
-    patient_dates = patient_queryset.values_list('SCREENINGFORMDATE', flat=True)
-    contact_dates = contact_queryset.values_list('SCREENINGFORMDATE', flat=True)
-    
-    patient_months = {}
-    contact_months = {}
-    
-    for date in patient_dates:
-        if date:
-            month_key = date.strftime('%m/%Y')
-            patient_months[month_key] = patient_months.get(month_key, 0) + 1
-    
-    for date in contact_dates:
-        if date:
-            month_key = date.strftime('%m/%Y')
-            contact_months[month_key] = contact_months.get(month_key, 0) + 1
-    
-    all_dates = [d for d in list(patient_dates) + list(contact_dates) if d]
-    if not all_dates:
-        return JsonResponse({'data': {
-            'labels': [], 'patients': [], 'contacts': [],
-            'patientsCumulative': [], 'contactsCumulative': []
-        }})
-    
-    min_date = min(all_dates)
-    max_date = max(all_dates)
-    
-    current_date = datetime(min_date.year, min_date.month, 1)
-    end_date = datetime(max_date.year, max_date.month, 1)
-    
-    months = []
-    while current_date <= end_date:
-        months.append(current_date.strftime('%m/%Y'))
-        if current_date.month == 12:
-            current_date = datetime(current_date.year + 1, 1, 1)
-        else:
-            current_date = datetime(current_date.year, current_date.month + 1, 1)
-    
-    patients_data = []
-    contacts_data = []
-    patients_cumulative = []
-    contacts_cumulative = []
-    
-    patient_cum = 0
-    contact_cum = 0
-    
-    for month in months:
-        patient_count = patient_months.get(month, 0)
-        contact_count = contact_months.get(month, 0)
+    Usage:
+        GET /api/dashboard-stats/
         
-        patients_data.append(patient_count)
-        contacts_data.append(contact_count)
-        
-        patient_cum += patient_count
-        contact_cum += contact_count
-        
-        patients_cumulative.append(patient_cum)
-        contacts_cumulative.append(contact_cum)
-    
-    return JsonResponse({
-        'data': {
-            'labels': months,
-            'patients': patients_data,
-            'contacts': contacts_data,
-            'patientsCumulative': patients_cumulative,
-            'contactsCumulative': contacts_cumulative
+    Response:
+        {
+            "success": true,
+            "data": {
+                "screening_patients": 150,
+                "enrolled_patients": 120,
+                "screening_contacts": 300,
+                "enrolled_contacts": 250
+            },
+            "site_name": "003 - Hospital A",
+            "timestamp": "2026-01-13T10:30:00"
         }
-    })
-
-
-@require_GET
-@login_required
-def gender_distribution_chart_data(request):
-    """API: Gender distribution for enrolled patients and contacts"""
-    try:
-        site_filter, filter_type = get_site_filter_params(request)
-        
-        # Patient gender
-        patient_queryset = get_filtered_queryset(ENR_CASE, site_filter, filter_type)
-        patient_gender_counts = patient_queryset.values('SEX').annotate(count=Count('SEX'))
-        
-        patient_data = {'male': 0, 'female': 0}
-        for item in patient_gender_counts:
-            if item['SEX'] == 'Male':
-                patient_data['male'] = item['count']
-            elif item['SEX'] == 'Female':
-                patient_data['female'] = item['count']
-        
-        # Contact gender
-        contact_queryset = get_filtered_queryset(ENR_CONTACT, site_filter, filter_type)
-        contact_gender_counts = contact_queryset.values('SEX').annotate(count=Count('SEX'))
-        
-        contact_data = {'male': 0, 'female': 0}
-        for item in contact_gender_counts:
-            if item['SEX'] == 'Male':
-                contact_data['male'] = item['count']
-            elif item['SEX'] == 'Female':
-                contact_data['female'] = item['count']
-        
-        return JsonResponse({
-            'data': {
-                'patient': {
-                    'labels': ['Nam', 'Nữ'],
-                    'data': [patient_data['male'], patient_data['female']],
-                    'colors': ['#36A2EB', '#FF6384']
-                },
-                'contact': {
-                    'labels': ['Nam', 'Nữ'],
-                    'data': [contact_data['male'], contact_data['female']],
-                    'colors': ['#36A2EB', '#FF6384']
-                }
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error in gender_distribution_chart_data: {str(e)}", exc_info=True)
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-@require_GET
-@login_required
-def patient_enrollment_chart_data(request):
-    """API: Patient enrollment by month with cumulative"""
-    site_filter, filter_type = get_site_filter_params(request)
-    
-    queryset = get_filtered_queryset(ENR_CASE, site_filter, filter_type)
-    enroll_dates = queryset.values_list('ENRDATE', flat=True).order_by('ENRDATE')
-    
-    monthly_counts = {}
-    for date_val in enroll_dates:
-        if date_val:
-            month_key = date_val.strftime('%m/%Y')
-            monthly_counts[month_key] = monthly_counts.get(month_key, 0) + 1
-    
-    dates_filtered = [d for d in enroll_dates if d]
-    if not dates_filtered:
-        return JsonResponse({
-            'data': {
-                'labels': [],
-                'monthly': [],
-                'cumulative': [],
-                'target': TARGET_ENROLLMENT
-            }
-        })
-    
-    min_date = min(dates_filtered)
-    max_date = max(dates_filtered)
-    
-    current_date = datetime(min_date.year, min_date.month, 1)
-    end_date = datetime(max_date.year, max_date.month, 1)
-    
-    months = []
-    while current_date <= end_date:
-        months.append(current_date.strftime('%m/%Y'))
-        if current_date.month == 12:
-            current_date = datetime(current_date.year + 1, 1, 1)
-        else:
-            current_date = datetime(current_date.year, current_date.month + 1, 1)
-    
-    monthly_data = []
-    cumulative_data = []
-    cumulative = 0
-    
-    for month in months:
-        month_count = monthly_counts.get(month, 0)
-        monthly_data.append(month_count)
-        cumulative += month_count
-        cumulative_data.append(cumulative)
-    
-    return JsonResponse({
-        'data': {
-            'labels': months,
-            'monthly': monthly_data,
-            'cumulative': cumulative_data,
-            'target': TARGET_ENROLLMENT
-        }
-    })
-
-
-@require_GET
-@login_required
-def sample_distribution_chart_data(request):
-    """API: Sample distribution for patients and contacts"""
-    try:
-        site_filter, filter_type = get_site_filter_params(request)
-        
-        sample_types = {
-            'Phân': 'STOOL',
-            'Phết trực tràng': 'RECTSWAB',
-            'Phết họng': 'THROATSWAB',
-            'Máu': 'BLOOD'
-        }
-        
-        colors = {
-            'Phân': '#FF6384',
-            'Phết trực tràng': '#36A2EB',
-            'Phết họng': '#FFCE56',
-            'Máu': '#4BC0C0'
-        }
-        
-        # ===== PATIENT SAMPLES =====
-        patient_counts = {}
-        
-        for name, field in sample_types.items():
-            queryset = get_filtered_queryset(SAM_CASE, site_filter, filter_type)
-            count = queryset.filter(**{field: True}).count()
-            if count > 0:
-                patient_counts[name] = patient_counts.get(name, 0) + count
-        
-        for suffix in ['_2', '_3', '_4']:
-            for name, field in sample_types.items():
-                if name == 'Máu' and suffix == '_4':
-                    continue
-                
-                field_name = f"{field}{suffix}"
-                try:
-                    queryset = get_filtered_queryset(SAM_CASE, site_filter, filter_type)
-                    count = queryset.filter(**{field_name: True}).count()
-                    if count > 0:
-                        patient_counts[name] = patient_counts.get(name, 0) + count
-                except FieldError:
-                    continue
-        
-        # ===== CONTACT SAMPLES =====
-        contact_counts = {}
-        
-        for name, field in sample_types.items():
-            queryset = get_filtered_queryset(SAM_CONTACT, site_filter, filter_type)
-            count = queryset.filter(**{field: True}).count()
-            if count > 0:
-                contact_counts[name] = contact_counts.get(name, 0) + count
-        
-        for suffix in ['_3', '_4']:
-            for name, field in sample_types.items():
-                if name == 'Máu':
-                    continue
-                
-                field_name = f"{field}{suffix}"
-                try:
-                    queryset = get_filtered_queryset(SAM_CONTACT, site_filter, filter_type)
-                    count = queryset.filter(**{field_name: True}).count()
-                    if count > 0:
-                        contact_counts[name] = contact_counts.get(name, 0) + count
-                except FieldError:
-                    continue
-        
-        return JsonResponse({
-            'data': {
-                'patient': {
-                    'labels': list(patient_counts.keys()),
-                    'counts': list(patient_counts.values()),
-                    'colors': [colors.get(name, '#9966FF') for name in patient_counts.keys()]
-                },
-                'contact': {
-                    'labels': list(contact_counts.keys()),
-                    'counts': list(contact_counts.values()),
-                    'colors': [colors.get(name, '#9966FF') for name in contact_counts.keys()]
-                }
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error in sample_distribution_chart_data: {str(e)}", exc_info=True)
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-@require_GET
-@login_required
-def infection_focus_chart_data(request):
-    """API: Infection focus distribution"""
-    site_filter, filter_type = get_site_filter_params(request)
-    
-    queryset = get_filtered_queryset(CLI_CASE, site_filter, filter_type)
-    
-    focus_counts = (
-        queryset
-        .exclude(INFECTFOCUS48H__isnull=True)
-        .exclude(INFECTFOCUS48H__exact='')
-        .values('INFECTFOCUS48H')
-        .annotate(count=Count('*'))
-        .order_by('-count')
-    )
-    
-    labels = []
-    counts = []
-    colors = {
-        'Pneumonia': '#FF6384',        # Đỏ hồng
-        'UTI': '#36A2EB',              # Xanh dương
-        'AbdAbscess': '#FFCE56',       # Vàng
-        'Peritonitis': '#4BC0C0',      # Xanh ngọc
-        'SoftTissue': '#9966FF',       # Tím
-        'Meningitis': '#FF9F40',       # Cam
-        'NTTKTW': '#8B4513',           #  CHANGED: Nâu (khác với Empyema)
-        'Empyema': '#696969',          #  CHANGED: Xám đậm
-        'Other': '#C9CBCF'             # Xám nhạt
-    }
-    
-    chart_colors = []
-    for item in focus_counts:
-        focus = item['INFECTFOCUS48H']
-        labels.append(dict(CLI_CASE.InfectFocus48HChoices.choices).get(focus, focus))
-        counts.append(item['count'])
-        chart_colors.append(colors.get(focus, '#808080'))
-    
-    return JsonResponse({
-        'data': {
-            'labels': labels,
-            'counts': counts,
-            'colors': chart_colors
-        }
-    })
-
-
-@require_GET
-@login_required
-def antibiotic_resistance_chart_data(request):
-    """API: Antibiotic resistance overview"""
-    site_filter, filter_type = get_site_filter_params(request)
-    
-    #  SIMPLIFIED: Sử dụng get_filtered_queryset thống nhất
-    queryset = get_filtered_queryset(AntibioticSensitivity, site_filter, filter_type)
-    queryset = queryset.exclude(SENSITIVITY_LEVEL='ND')
-    
-    antibiotic_stats = {}
-    
-    for record in queryset.values('ANTIBIOTIC_NAME', 'SENSITIVITY_LEVEL'):
-        abx = record['ANTIBIOTIC_NAME']
-        sens = record['SENSITIVITY_LEVEL']
-        
-        if abx not in antibiotic_stats:
-            antibiotic_stats[abx] = {'total': 0, 'resistant': 0, 'sensitive': 0}
-        
-        antibiotic_stats[abx]['total'] += 1
-        if sens == 'R':
-            antibiotic_stats[abx]['resistant'] += 1
-        elif sens == 'S':
-            antibiotic_stats[abx]['sensitive'] += 1
-    
-    resistance_data = []
-    for abx, stats in antibiotic_stats.items():
-        if stats['total'] >= 5:
-            resistance_pct = round((stats['resistant'] / stats['total']) * 100, 1)
-            resistance_data.append({
-                'antibiotic': abx,
-                'resistance_pct': resistance_pct,
-                'total': stats['total']
-            })
-    
-    resistance_data.sort(key=lambda x: x['resistance_pct'], reverse=True)
-    top_10 = resistance_data[:10]
-    
-    return JsonResponse({
-        'data': {
-            'labels': [item['antibiotic'] for item in top_10],
-            'resistance': [item['resistance_pct'] for item in top_10],
-            'totals': [item['total'] for item in top_10]
-        }
-    })
-
-
-@require_GET
-@login_required
-def resistance_by_comorbidity_data(request):
-    """API: Antibiotic resistance rates by underlying conditions"""
+    """
     site_filter, filter_type = get_site_filter_params(request)
     
     try:
-        enrollment_qs = get_filtered_queryset(ENR_CASE, site_filter, filter_type)
+        # Get counts
+        screening_patients = get_filtered_queryset(
+            SCR_CASE, site_filter, filter_type
+        ).count()
         
-        conditions_to_check = {
-            'Diabetes': 'DIABETES',
-            'CKD': 'KIDNEYDISEASE',
-            'Cancer': 'CANCER',
-            'HIV/AIDS': 'HIV',
-            'Cirrhosis': 'CIRRHOSIS',
-            'COPD': 'COPD',
-            'Heart Failure': 'HEARTFAILURE'
-        }
+        enrolled_patients = get_filtered_queryset(
+            SCR_CASE, site_filter, filter_type
+        ).filter(
+            UPPER16AGE=True,
+            INFPRIOR2OR48HRSADMIT=True,
+            ISOLATEDKPNFROMINFECTIONORBLOOD=True,
+            KPNISOUNTREATEDSTABLE=False,
+            CONSENTTOSTUDY=True,
+            is_confirmed=True
+        ).count()
         
-        results = {}
+        screening_contacts = get_filtered_queryset(
+            SCR_CONTACT, site_filter, filter_type
+        ).count()
         
-        for condition_name, condition_field in conditions_to_check.items():
-            patients_with_condition = []
-            
-            for enrollment in enrollment_qs.select_related('Underlying_Condition'):
-                try:
-                    underlying = enrollment.Underlying_Condition
-                    if underlying and getattr(underlying, condition_field, False):
-                        usubjid_str = enrollment.USUBJID.USUBJID
-                        patients_with_condition.append(usubjid_str)
-                except Exception as e:
-                    logger.debug(f"Error checking condition for {enrollment.USUBJID}: {e}")
-                    continue
-            
-            if not patients_with_condition:
-                continue
-            
-            #  SIMPLIFIED: Sử dụng get_filtered_queryset
-            ast_qs = get_filtered_queryset(AntibioticSensitivity, site_filter, filter_type)
-            ast_qs = ast_qs.filter(
-                LAB_CULTURE_ID__USUBJID__USUBJID__USUBJID__in=patients_with_condition
-            ).exclude(SENSITIVITY_LEVEL='ND')
-            
-            total = ast_qs.count()
-            
-            if total < 5:
-                continue
-            
-            resistant = ast_qs.filter(SENSITIVITY_LEVEL='R').count()
-            sensitive = ast_qs.filter(SENSITIVITY_LEVEL='S').count()
-            intermediate = ast_qs.filter(SENSITIVITY_LEVEL='I').count()
-            
-            resistance_rate = round((resistant / total) * 100, 1)
-            
-            results[condition_name] = {
-                'resistance_rate': resistance_rate,
-                'total_tests': total,
-                'resistant_tests': resistant,
-                'sensitive_tests': sensitive,
-                'intermediate_tests': intermediate,
-                'patient_count': len(patients_with_condition)
-            }
-        
-        sorted_results = dict(sorted(results.items(), key=lambda x: x[1]['resistance_rate'], reverse=True))
+        enrolled_contacts = get_filtered_queryset(
+            ENR_CONTACT, site_filter, filter_type
+        ).count()
         
         return JsonResponse({
-            'data': sorted_results,
-            'status': 'success'
+            'success': True,
+            'data': {
+                'screening_patients': screening_patients,
+                'enrolled_patients': enrolled_patients,
+                'screening_contacts': screening_contacts,
+                'enrolled_contacts': enrolled_contacts,
+            },
+            'site_name': _get_site_display_name(site_filter, filter_type),
+            'timestamp': datetime.now().isoformat(),
         })
         
     except Exception as e:
-        logger.error(f"Error in resistance_by_comorbidity_data: {str(e)}", exc_info=True)
+        logger.error(f"API error: {str(e)}", exc_info=True)
         return JsonResponse({
+            'success': False,
             'error': str(e),
-            'status': 'error'
         }, status=500)
 
 
-# ============================================================================
-# HELPER FUNCTIONS FOR METRICS -  UPDATED
-# ============================================================================
-
-def get_average_hospital_stay(site_filter, filter_type):
+@require_GET
+@login_required
+def get_enrollment_chart_api(request):
     """
-     UPDATED: Nhận thêm filter_type parameter
-    Tính thời gian nằm viện trung bình
+    API endpoint for enrollment chart data
+    
+    Query Parameters:
+        site: Optional site code ('003', '020', '011') to override user's site filter
+    
+    Returns:
+        JSON with:
+        - months: List of month labels (MM/YYYY format)
+        - target: Target enrollment per month (cumulative) with stepped increase
+        - actual: Actual enrollment per month (cumulative, null after last enrollment)
+        - site_target: Total target for current site filter
+    
+    Target Logic:
+        - All Sites: 15 patients/month (07/2024-06/2025), then adjust to reach 750 by 04/2027
+        - Site 003: Starts 07/2024
+        - Site 020: Starts 10/2025
+        - Site 011: Starts 11/2025
+    
+    Usage:
+        GET /api/enrollment-chart/
+        GET /api/enrollment-chart/?site=003
     """
-    discharges = get_filtered_queryset(DISCH_CASE, site_filter, filter_type)
+    from datetime import date
+    from dateutil.relativedelta import relativedelta
     
-    discharges_with_stay = discharges.select_related(
-        'USUBJID__clinical_case'
-    ).filter(
-        DISCHDATE__isnull=False,
-        USUBJID__clinical_case__ADMISDATE__isnull=False
-    ).annotate(
-        stay_days=ExpressionWrapper(
-            Extract(F('DISCHDATE') - F('USUBJID__clinical_case__ADMISDATE'), 'day') + 1,
-            output_field=IntegerField()
-        )
-    )
+    # Check if site parameter is provided
+    site_param = request.GET.get('site', None)
     
-    avg_stay = discharges_with_stay.aggregate(
-        avg_days=Avg('stay_days')
-    )['avg_days']
+    if site_param and site_param != 'all':
+        # Override with provided site
+        site_filter = site_param
+        filter_type = 'single'
+        logger.info(f"Chart API: Using site from parameter: {site_param}")
+    else:
+        # Use default site filter from middleware
+        site_filter, filter_type = get_site_filter_params(request)
+        logger.info(f"Chart API: Using site from middleware: {site_filter}, type: {filter_type}")
     
-    return round(avg_stay, 1) if avg_stay else None
-
-
-def get_mortality_rate(site_filter, filter_type):
-    """
-    Calculate mortality rate from all enrolled patients
-     FIXED: Use enrolled patients from SCR_CASE (same as dashboard)
-    """
-    #  Use centralized function
-    enrolled_qs = get_enrolled_patients_queryset(site_filter, filter_type)
-    total_enrolled = enrolled_qs.count()
-    
-    logger.info(f"[Mortality] Total enrolled from SCR_CASE: {total_enrolled}")
-    
-    if total_enrolled == 0:
-        return {
-            'total_enrolled': 0,
-            'total_deaths': 0,
-            'mortality_rate': 0.0
+    try:
+        # ===== DEFINE TARGETS AND START DATES =====
+        SITE_CONFIG = {
+            'all': {
+                'target': 750,
+                'start_date': date(2024, 7, 1),
+            },
+            '003': {
+                'target': 200,
+                'start_date': date(2024, 7, 1),    # 01/07/2024
+            },
+            '020': {
+                'target': 150,
+                'start_date': date(2025, 10, 13),  # 13/10/2025
+            },
+            '011': {
+                'target': 400,
+                'start_date': date(2025, 11, 5),   # 05/11/2025
+            },
         }
-    
-    enrolled_usubjids = list(enrolled_qs.values_list('USUBJID', flat=True))
-    logger.info(f"[Mortality] Enrolled USUBJID count: {len(enrolled_usubjids)}")
-    
-    deaths_at_discharge = get_filtered_queryset(DISCH_CASE, site_filter, filter_type).filter(
-        USUBJID__in=enrolled_usubjids,  
-        DEATHATDISCH='Yes'
-    ).values_list('USUBJID', flat=True)
-    
-    deaths_at_fu28 = get_filtered_queryset(FU_CASE_28, site_filter, filter_type).filter(
-        USUBJID__in=enrolled_usubjids,  
-        Dead='Yes'
-    ).values_list('USUBJID', flat=True)
-    
-    deaths_at_fu90 = get_filtered_queryset(FU_CASE_90, site_filter, filter_type).filter(
-        USUBJID__in=enrolled_usubjids,  
-        Dead='Yes'
-    ).values_list('USUBJID', flat=True)
-    
-    all_death_usubjids = set(deaths_at_discharge) | set(deaths_at_fu28) | set(deaths_at_fu90)
-    total_deaths = len(all_death_usubjids)
-    
-    # Calculate with explicit decimal precision
-    raw_rate = (total_deaths / total_enrolled) * 100
-    mortality_rate = round(raw_rate, 1)
-    
-    logger.info(f"[Mortality] Deaths breakdown:")
-    logger.info(f"  - At discharge: {len(deaths_at_discharge)}")
-    logger.info(f"  - At FU-28: {len(deaths_at_fu28)}")
-    logger.info(f"  - At FU-90: {len(deaths_at_fu90)}")
-    logger.info(f"  - Total unique deaths: {total_deaths}")
-    logger.info(f"  - Raw rate: {raw_rate}")
-    logger.info(f"  - Rounded rate: {mortality_rate}")
-    logger.info(f"  - Mortality rate: {total_deaths}/{total_enrolled} = {mortality_rate}%")
-    
-    return {
-        'total_enrolled': total_enrolled,
-        'total_deaths': total_deaths,
-        'mortality_rate': mortality_rate
-    }
+        
+        # Get configuration for current site
+        if filter_type == 'all' or site_filter == 'all':
+            site_target = SITE_CONFIG['all']['target']
+            site_start_date = SITE_CONFIG['all']['start_date']
+        elif filter_type == 'single':
+            config = SITE_CONFIG.get(site_filter, {})
+            site_target = config.get('target', 0)
+            site_start_date = config.get('start_date', date(2024, 7, 1))
+        elif filter_type == 'multiple':
+            # For multiple sites: earliest start date, sum of targets
+            site_target = sum(SITE_CONFIG.get(site, {}).get('target', 0) for site in site_filter)
+            site_start_date = min(
+                SITE_CONFIG.get(site, {}).get('start_date', date(2024, 7, 1)) 
+                for site in site_filter
+            )
+        else:
+            site_target = 0
+            site_start_date = date(2024, 7, 1)
+        
+        # ===== STUDY PERIOD =====
+        chart_start_date = date(2024, 7, 1)   # Chart always starts from 07/2024
+        end_date = date(2027, 4, 30)          # 30/04/2027
+        
+        # Calculate total months (07/2024 to 04/2027 = 34 months)
+        # 2024: 6 months (Jul-Dec)
+        # 2025: 12 months
+        # 2026: 12 months  
+        # 2027: 4 months (Jan-Apr)
+        # Total: 34 months
+        total_months = ((end_date.year - chart_start_date.year) * 12 + 
+                       (end_date.month - chart_start_date.month) + 1)
+        
+        # ===== GENERATE MONTH LABELS =====
+        months = []
+        month_dates = []  # Keep date objects for calculations
+        current_date = chart_start_date
+        
+        while current_date <= end_date:
+            months.append(current_date.strftime('%m/%Y'))
+            month_dates.append(current_date)
+            current_date += relativedelta(months=1)
+        
+        logger.info(f"Total months calculated: {len(months)} (should be 34)")
+        
+        # ===== CALCULATE TARGET LINE (STEPPED TO REACH EXACT 750) =====
+        # Phase 1 (07/2024-06/2025): 15/month for all sites
+        # Phase 2 (07/2025-04/2027): Adjust to reach exactly 750 by 04/2027
+        
+        phase_1_end = date(2025, 6, 30)  # End of 15/month phase
+        phase_1_months = 12  # Jul 2024 - Jun 2025
+        phase_2_months = total_months - phase_1_months  # Remaining months
+        
+        if filter_type == 'all' or site_filter == 'all':
+            # All sites
+            phase_1_total = phase_1_months * 15  # 12 * 15 = 180
+            phase_2_needed = site_target - phase_1_total  # 750 - 180 = 570
+            phase_2_monthly = phase_2_needed / phase_2_months  # 570 / 22 = 25.9
+        else:
+            # Individual sites: proportional
+            proportion = site_target / 750.0
+            phase_1_total = phase_1_months * 15 * proportion
+            phase_2_needed = site_target - phase_1_total
+            phase_2_monthly = phase_2_needed / phase_2_months
+        
+        logger.info(f"Phase 1: {phase_1_months} months, Phase 2: {phase_2_months} months")
+        logger.info(f"Phase 2 monthly: {phase_2_monthly:.2f} to reach {site_target}")
+        
+        target_cumulative = []
+        cumulative_target = 0.0
+        
+        for month_date in month_dates:
+            # Only accumulate if site has started
+            if month_date >= site_start_date:
+                # Determine step based on phase
+                if month_date <= phase_1_end:
+                    if filter_type == 'all' or site_filter == 'all':
+                        monthly_step = 15
+                    else:
+                        monthly_step = 15 * proportion
+                else:
+                    monthly_step = phase_2_monthly
+                
+                cumulative_target += monthly_step
+            
+            target_cumulative.append(round(cumulative_target, 1))
+        
+        # Ensure last value is exactly the target
+        if target_cumulative and cumulative_target > 0:
+            target_cumulative[-1] = site_target
+        
+        # ===== GET ACTUAL ENROLLMENT DATA =====
+        enrolled_qs = get_filtered_queryset(
+            ENR_CASE, site_filter, filter_type
+        ).filter(
+            ENRDATE__isnull=False
+        ).values('ENRDATE').order_by('ENRDATE')
+        
+        # Find last enrollment date
+        enrollment_dates = [record['ENRDATE'] for record in enrolled_qs if record['ENRDATE']]
+        last_enrollment_date = max(enrollment_dates) if enrollment_dates else None
+        
+        logger.info(f"Last enrollment date: {last_enrollment_date}")
+        
+        # Count enrollments by month
+        enrollment_by_month = {}
+        for enr_date in enrollment_dates:
+            month_key = enr_date.strftime('%m/%Y')
+            enrollment_by_month[month_key] = enrollment_by_month.get(month_key, 0) + 1
+        
+        # ===== CALCULATE ACTUAL CUMULATIVE WITH CUTOFF =====
+        actual_cumulative = []
+        cumulative_count = 0
+        has_started = False
+        cutoff_reached = False
+        
+        for i, month in enumerate(months):
+            month_date = month_dates[i]
+            month_count = enrollment_by_month.get(month, 0)
+            
+            # Check if we've passed last enrollment date
+            if last_enrollment_date and month_date > last_enrollment_date:
+                cutoff_reached = True
+            
+            if cutoff_reached:
+                # After last enrollment, use null (cut the line)
+                actual_cumulative.append(None)
+            elif month_count > 0:
+                has_started = True
+                cumulative_count += month_count
+                actual_cumulative.append(cumulative_count)
+            elif has_started:
+                # After first enrollment but no new enrollments this month
+                actual_cumulative.append(cumulative_count)
+            else:
+                # Before first enrollment
+                actual_cumulative.append(None)
+        
+        # ===== RETURN DATA =====
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'months': months,
+                'target': target_cumulative,
+                'actual': actual_cumulative,
+                'site_target': site_target,
+                'total_months': total_months,
+                'site_start_date': site_start_date.strftime('%d/%m/%Y'),
+                'last_enrollment_date': last_enrollment_date.strftime('%d/%m/%Y') if last_enrollment_date else None,
+            },
+            'site_name': _get_site_display_name(site_filter, filter_type),
+            'timestamp': datetime.now().isoformat(),
+        })
+        
+    except Exception as e:
+        logger.error(f"Chart API error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+        }, status=500)
