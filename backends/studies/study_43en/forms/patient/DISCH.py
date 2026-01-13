@@ -44,30 +44,9 @@ class DischargeCaseForm(forms.ModelForm):
     
     class Meta:
         model = DISCH_CASE
-        exclude = ['USUBJID']  # Set by view
+        # Exclude header fields that are auto-populated from ENR_CASE (set by view)
+        exclude = ['USUBJID', 'EVENT', 'STUDYID', 'SITEID', 'SUBJID', 'INITIAL']
         widgets = {
-            #  Readonly header fields (auto-populated from ENR_CASE)
-            'EVENT': forms.TextInput(attrs={
-                'class': 'form-control',
-                'readonly': True
-            }),
-            'STUDYID': forms.TextInput(attrs={
-                'class': 'form-control',
-                'readonly': True
-            }),
-            'SITEID': forms.TextInput(attrs={
-                'class': 'form-control',
-                'readonly': True
-            }),
-            'SUBJID': forms.TextInput(attrs={
-                'class': 'form-control',
-                'readonly': True
-            }),
-            'INITIAL': forms.TextInput(attrs={
-                'class': 'form-control',
-                'readonly': True
-            }),
-            
             #  Date picker
             'DISCHDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
@@ -141,7 +120,6 @@ class DischargeCaseForm(forms.ModelForm):
             # Default values for new records
             self.fields['TRANSFERHOSP'].initial = DISCH_CASE.YesNoNAChoices.NO
             self.fields['DEATHATDISCH'].initial = DISCH_CASE.YesNoNAChoices.NO
-            self.fields['EVENT'].initial = 'DISCHARGE'
     
     def clean(self):
         """
