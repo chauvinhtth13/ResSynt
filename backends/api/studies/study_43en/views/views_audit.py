@@ -56,18 +56,14 @@ def audit_log_list(request):
     filters = {}
     
     # ==========================================
-    # 1. GET DATABASE ALIAS
-    # ==========================================
-    study_db = getattr(request, 'study_db_alias', '')
-    
-    # ==========================================
-    # 2. APPLY SITE FILTERING
+    # 1. APPLY SITE FILTERING
     # ==========================================
     site_filter, filter_type = get_site_filter_params(request)
     
     logger.info(f" Site filter: {site_filter}, Type: {filter_type}")
     
     # Get filtered queryset based on site access
+    # Database routing is handled automatically by TenantRouter
     logs = get_filtered_queryset(AuditLog, site_filter, filter_type)
     
     # ==========================================
@@ -158,8 +154,8 @@ def audit_log_list(request):
     # 5. GET FILTER OPTIONS (DISTINCT & SORTED)
     # ==========================================
     
-    # Get unique user_ids from audit logs (in study DB)
-    user_ids = AuditLog.objects.using(study_db)\
+    # Get unique user_ids from audit logs
+    user_ids = AuditLog.objects\
         .values_list('user_id', flat=True)\
         .distinct()
     
@@ -168,14 +164,14 @@ def audit_log_list(request):
         .filter(id__in=list(user_ids))\
         .order_by('username')
     
-    #  FIX: Get unique actions (sorted)
-    actions = AuditLog.objects.using(study_db)\
+    #  Get unique actions (sorted)
+    actions = AuditLog.objects\
         .values_list('action', flat=True)\
         .distinct()\
         .order_by('action')
     
-    #  FIX: Get unique model names (sorted)
-    model_names = AuditLog.objects.using(study_db)\
+    #  Get unique model names (sorted)
+    model_names = AuditLog.objects\
         .values_list('model_name', flat=True)\
         .distinct()\
         .order_by('model_name')
@@ -224,8 +220,8 @@ def audit_log_detail(request, log_id):
     # ==========================================
     # 1. GET AUDIT LOG
     # ==========================================
-    study_db = getattr(request, 'study_db_alias', '')
-    log = get_object_or_404(AuditLog.objects.using(study_db), id=log_id)
+    # Database routing is handled automatically by TenantRouter
+    log = get_object_or_404(AuditLog, id=log_id)
     
     logger.info(f"📄 Log: {log.action} on {log.model_name} by {log.username}")
     

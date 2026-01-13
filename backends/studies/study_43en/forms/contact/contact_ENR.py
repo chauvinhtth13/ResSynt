@@ -48,9 +48,9 @@ class EnrollmentContactForm(forms.ModelForm):
         widgets = {
 
             # Dates
-            'ENRDATE': forms.DateInput(attrs={
+            'ENRDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
             
             # Birth information
@@ -110,6 +110,10 @@ class EnrollmentContactForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Set input_formats for date field (DD/MM/YYYY)
+        if 'ENRDATE' in self.fields:
+            self.fields['ENRDATE'].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         # Set version for optimistic locking
         if self.instance and self.instance.pk:

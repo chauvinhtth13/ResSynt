@@ -43,11 +43,8 @@ def audit_log_list(request):
     logger.info(f"=== AUDIT LOG LIST (44EN) ===")
     logger.info(f"User: {request.user.username}")
     
-    # Get database alias
-    study_db = getattr(request, 'study_db_alias', 'db_study_44en')
-    
-    # Get all logs from study database
-    logs = AuditLog.objects.using(study_db).all()
+    # Get all logs - database routing handled automatically
+    logs = AuditLog.objects.all()
     
     filters = {}
     
@@ -121,7 +118,7 @@ def audit_log_list(request):
     logger.info(f"Found {paginator.count} audit logs")
     
     # Get filter options
-    user_ids = AuditLog.objects.using(study_db)\
+    user_ids = AuditLog.objects\
         .values_list('user_id', flat=True)\
         .distinct()
     
@@ -129,12 +126,12 @@ def audit_log_list(request):
         .filter(id__in=list(user_ids))\
         .order_by('username')
     
-    actions = AuditLog.objects.using(study_db)\
+    actions = AuditLog.objects\
         .values_list('action', flat=True)\
         .distinct()\
         .order_by('action')
     
-    model_names = AuditLog.objects.using(study_db)\
+    model_names = AuditLog.objects\
         .values_list('model_name', flat=True)\
         .distinct()\
         .order_by('model_name')
@@ -163,11 +160,11 @@ def audit_log_detail(request, log_id):
     logger.info(f"=== AUDIT LOG DETAIL (44EN) ===")
     logger.info(f"User: {request.user.username}, Log ID: {log_id}")
     
-    study_db = getattr(request, 'study_db_alias', 'db_study_44en')
-    log = get_object_or_404(AuditLog.objects.using(study_db), id=log_id)
+    # Database routing handled automatically
+    log = get_object_or_404(AuditLog, id=log_id)
     
     # Get change details
-    details = AuditLogDetail.objects.using(study_db).filter(audit_log=log).order_by('field_name')
+    details = AuditLogDetail.objects.filter(audit_log=log).order_by('field_name')
     
     changes = []
     for detail in details:

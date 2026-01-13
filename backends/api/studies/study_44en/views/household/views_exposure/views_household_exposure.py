@@ -18,6 +18,7 @@ from backends.studies.study_44en.models.household import (
     HH_CASE, HH_Exposure, HH_WaterSource, HH_WaterTreatment, HH_Animal,
     HH_FoodFrequency, HH_FoodSource
 )
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 from backends.studies.study_44en.forms.household import (
     HH_ExposureForm,
     HH_FoodFrequencyForm, HH_FoodSourceForm
@@ -155,7 +156,13 @@ def household_exposure_create(request, hhid):
 
 @login_required
 @require_crf_change('hh_exposure')
-@audit_log(model_name='HH_EXPOSURE', get_patient_id_from='hhid')
+@audit_log(
+    model_name='HH_EXPOSURE',
+    get_patient_id_from='hhid',
+    patient_model=HH_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def household_exposure_update(request, hhid):
     """
     UPDATE with MANUAL AUDIT handling

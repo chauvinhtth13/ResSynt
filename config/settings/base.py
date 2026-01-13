@@ -286,6 +286,7 @@ TEMPLATES = [
 
 USE_I18N = True
 USE_TZ = True
+USE_L10N = False  # Use custom date/time formats instead of locale-specific formats
 LANGUAGE_CODE = "vi"
 TIME_ZONE = "Asia/Ho_Chi_Minh"
 
@@ -383,7 +384,15 @@ RATELIMIT_USE_CACHE = "default"
 # ENCRYPTION & PASSWORDS
 # =============================================================================
 
+
+# Field encryption keys
 FERNET_KEYS = [env("FIELD_ENCRYPTION_KEY")]
+
+# SALT_KEY for encrypted_fields
+# Should be a long, random string or list of strings for key rotation
+SALT_KEY = env("SALT_KEY", default=None)
+if not SALT_KEY:
+    raise ValueError("SALT_KEY must be set in your environment for encrypted_fields.")
 
 BACKUP_ENCRYPTION_PASSWORD = env("BACKUP_ENCRYPTION_PASSWORD", default=None)
 PASSWORD_RESET_TIMEOUT = 900  # 15 minutes

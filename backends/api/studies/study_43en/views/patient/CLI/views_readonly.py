@@ -13,6 +13,10 @@ from django.contrib import messages
 # Import audit decorator
 from backends.audit_logs.utils.decorators import audit_log
 
+# Import models for audit
+from backends.studies.study_43en.models.patient import SCR_CASE
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
+
 # Import forms
 from backends.studies.study_43en.forms.patient.CLI import (
     ClinicalCaseForm,
@@ -46,7 +50,13 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @require_crf_view('cli_case', redirect_to='study_43en:patient_list')
-@audit_log(model_name='CLINICALCASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CLINICALCASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def clinical_case_view(request, usubjid):
     """
     View clinical case (read-only)
@@ -135,4 +145,4 @@ def clinical_case_view(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/clinical_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/clinical_form.html', context)

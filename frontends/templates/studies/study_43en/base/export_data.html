@@ -1,0 +1,612 @@
+<!-- templates/includes/dropdown_header/export_data.html -->
+
+{% extends 'studies\study_43en\home_dashboard.html' %}
+{% load static %}
+
+{% block title %}Export Data - Study 43EN{% endblock %}
+
+{% block page_title %}Export Data{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-file-export mr-2"></i>Export Data
+        </h1>
+        <a href="{% url 'study_43en:home_dashboard' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-1"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <form id="exportForm" method="POST" action="{% url 'study_43en:export_data' %}">
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Left Column - Filters -->
+            <div class="col-lg-8">
+                <!-- Site Selection -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-hospital mr-2"></i>Site Selection
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-0">
+                            <label for="site_filter">Select Site</label>
+                            <select class="form-control" id="site_filter" name="site_filter">
+                                <option value="all">All Sites</option>
+                                {% for site in sites %}
+                                <option value="{{ site.code }}" {% if site.code == selected_site_id %}selected{% endif %}>
+                                    {{ site.code }} - {{ site.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CRF Selection -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-file-medical mr-2"></i>CRF Selection
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Patient CRFs -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-primary mb-0">
+                                    <i class="fas fa-user-injured mr-2"></i>Patient CRFs
+                                </h6>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-primary btn-select-patient" data-action="select">
+                                        <i class="fas fa-check-double mr-1"></i>Select All
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-select-patient" data-action="deselect">
+                                        <i class="fas fa-times mr-1"></i>Deselect All
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <!-- Core CRFs -->
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="SCR_CASE" id="crf_screening" checked>
+                                        <label class="custom-control-label" for="crf_screening">Screening</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="ENR_CASE" id="crf_enrollment" checked>
+                                        <label class="custom-control-label" for="crf_enrollment">Enrollment</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="CLI_CASE" id="crf_clinical" checked>
+                                        <label class="custom-control-label" for="crf_clinical">Clinical</label>
+                                    </div>
+                                </div>
+                                
+                                <!--  NEW: Normalized Models from Enrollment -->
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="UnderlyingCondition" id="crf_underlying" checked>
+                                        <label class="custom-control-label" for="crf_underlying">Underlying Conditions</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="ENR_CASE_MedHisDrug" id="crf_medhis" checked>
+                                        <label class="custom-control-label" for="crf_medhis">Medication History</label>
+                                    </div>
+                                </div>
+                                
+                                <!--  NEW: Normalized Models from Clinical -->
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="HistorySymptom" id="crf_histsym" checked>
+                                        <label class="custom-control-label" for="crf_histsym">History Symptoms</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="Symptom_72H" id="crf_sym72" checked>
+                                        <label class="custom-control-label" for="crf_sym72">Symptoms 72H</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="PriorAntibiotic" id="crf_priorabx" checked>
+                                        <label class="custom-control-label" for="crf_priorabx">Prior Antibiotics</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="InitialAntibiotic" id="crf_initabx" checked>
+                                        <label class="custom-control-label" for="crf_initabx">Initial Antibiotics</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="MainAntibiotic" id="crf_mainabx" checked>
+                                        <label class="custom-control-label" for="crf_mainabx">Main Antibiotics</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="AEHospEvent" id="crf_ae" checked>
+                                        <label class="custom-control-label" for="crf_ae">Adverse Events</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Lab & Samples -->
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="LaboratoryTest" id="crf_lab" checked>
+                                        <label class="custom-control-label" for="crf_lab">Laboratory</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="LAB_Microbiology" id="crf_micro" checked>
+                                        <label class="custom-control-label" for="crf_micro">Microbiology</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="AntibioticSensitivity" id="crf_antibio_sens" checked>
+                                        <label class="custom-control-label" for="crf_antibio_sens">Antibiotic Sensitivity</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="SAM_CASE" id="crf_sample" checked>
+                                        <label class="custom-control-label" for="crf_sample">Sample Collection</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Follow-up & Discharge -->
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="FU_CASE_28" id="crf_fu28" checked>
+                                        <label class="custom-control-label" for="crf_fu28">Follow-up 28</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="FU_CASE_90" id="crf_fu90" checked>
+                                        <label class="custom-control-label" for="crf_fu90">Follow-up 90</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="DISCH_CASE" id="crf_discharge" checked>
+                                        <label class="custom-control-label" for="crf_discharge">Discharge</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input patient-crf" name="crfs" value="EndCaseCRF" id="crf_endcase" checked>
+                                        <label class="custom-control-label" for="crf_endcase">End Case</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Contact CRFs -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-info mb-0">
+                                    <i class="fas fa-users mr-2"></i>Contact CRFs
+                                </h6>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-info btn-select-contact" data-action="select">
+                                        <i class="fas fa-check-double mr-1"></i>Select All
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-select-contact" data-action="deselect">
+                                        <i class="fas fa-times mr-1"></i>Deselect All
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input contact-crf" name="crfs" value="SCR_CONTACT" id="crf_contact_screening" checked>
+                                        <label class="custom-control-label" for="crf_contact_screening">Screening Contact</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input contact-crf" name="crfs" value="ENR_CONTACT" id="crf_contact_enrollment" checked>
+                                        <label class="custom-control-label" for="crf_contact_enrollment">Enrollment Contact</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input contact-crf" name="crfs" value="SAM_CONTACT" id="crf_contact_sample" checked>
+                                        <label class="custom-control-label" for="crf_contact_sample">Contact Sample</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input contact-crf" name="crfs" value="FU_CONTACT_28" id="crf_contact_fu28" checked>
+                                        <label class="custom-control-label" for="crf_contact_fu28">Contact Follow-up 28</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input contact-crf" name="crfs" value="FU_CONTACT_90" id="crf_contact_fu90" checked>
+                                        <label class="custom-control-label" for="crf_contact_fu90">Contact Follow-up 90</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input contact-crf" name="crfs" value="ContactEndCaseCRF" id="crf_contact_endcase" checked>
+                                        <label class="custom-control-label" for="crf_contact_endcase">Contact End Case</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range Filter -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-calendar-alt mr-2"></i>Date Range Filter
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="start_date">Start Date</label>
+                                <input type="text" class="datepicker form-control" id="start_date" name="start_date" placeholder="DD/MM/YYYY">
+                                <small class="form-text text-muted">Leave empty to export all data</small>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="end_date">End Date</label>
+                                <input type="text" class="datepicker form-control" id="end_date" name="end_date" placeholder="DD/MM/YYYY">
+                                <small class="form-text text-muted">Leave empty to export all data</small>
+                            </div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label>Quick Select</label>
+                            <div class="btn-group d-flex" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-date-range" data-range="today">Today</button>
+                                <button type="button" class="btn btn-outline-primary btn-date-range" data-range="week">This Week</button>
+                                <button type="button" class="btn btn-outline-primary btn-date-range" data-range="month">This Month</button>
+                                <button type="button" class="btn btn-outline-primary btn-date-range" data-range="year">This Year</button>
+                                <button type="button" class="btn btn-outline-secondary btn-date-clear">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-cog mr-2"></i>Export Options
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Export Format</label>
+                            <div class="custom-control custom-radio">
+                                <input class="custom-control-input" type="radio" name="export_format" id="format_excel" value="excel" checked>
+                                <label class="custom-control-label" for="format_excel">
+                                    <i class="fas fa-file-excel text-success mr-1"></i>Excel (.xlsx)
+                                </label>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                <input class="custom-control-input" type="radio" name="export_format" id="format_csv" value="csv">
+                                <label class="custom-control-label" for="format_csv">
+                                    <i class="fas fa-file-csv text-info mr-1"></i>CSV (.csv)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="include_sensitive" name="include_sensitive">
+                                <label class="custom-control-label" for="include_sensitive">
+                                    Include Sensitive Data (FULLNAME, PHONE, ADDRESS, MEDRECORDID)
+                                </label>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    Warning: This will include personally identifiable information
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Summary & Actions -->
+            <div class="col-lg-4">
+                <!-- Export Summary -->
+                <div class="card shadow mb-4 border-left-primary">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-chart-bar mr-2"></i>Export Summary
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <div class="border rounded p-3 bg-primary text-white">
+                                    <h2 class="mb-0" id="selected_crfs_count">23</h2>
+                                    <small>CRFs Selected</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-3 bg-info text-white">
+                                    <h2 class="mb-0" id="estimated_records">-</h2>
+                                    <small>Est. Records</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <strong>Note:</strong> Export time depends on data volume. Large exports may take several minutes.
+                        </div>
+
+                        <!-- Export Actions -->
+                        <button type="submit" class="btn btn-primary btn-block mb-2" id="exportBtn">
+                            <i class="fas fa-download mr-2"></i>Export Data
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-block btn-reset-form">
+                            <i class="fas fa-redo mr-2"></i>Reset Form
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Exports -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-history mr-2"></i>Recent Exports
+                        </h6>
+                    </div>
+                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                        {% if recent_exports %}
+                            {% for export in recent_exports %}
+                            <div class="border-bottom pb-2 mb-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <i class="fas fa-file-excel text-success mr-2"></i>
+                                        <strong class="text-sm">{{ export.filename }}</strong>
+                                    </div>
+                                    <span class="badge badge-info">{{ export.file_size }}</span>
+                                </div>
+                                <div class="ml-4 mt-1">
+                                    <small class="text-muted">
+                                        <i class="far fa-clock mr-1"></i>{{ export.created_at }}
+                                        <span class="mx-2">|</span>
+                                        <i class="fas fa-folder mr-1"></i>{{ export.crf_count }} CRFs
+                                        <span class="mx-2">|</span>
+                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ export.site_filter }}
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center mb-0 py-4">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                No recent exports yet
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" data-backdrop="static" data-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <h5>Exporting Data...</h5>
+                <p class="text-muted mb-0">Please wait while we prepare your export file.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script nonce="{{ request.csp_nonce }}">
+// ==========================================
+// ESTIMATED COUNTS FROM BACKEND
+// ==========================================
+const estimatedCounts = {{ estimated_counts|safe|default:'{}' }};
+
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+
+// Count selected CRFs and calculate estimated records
+function updateCRFCount() {
+    const checkedBoxes = document.querySelectorAll('input[name="crfs"]:checked');
+    const count = checkedBoxes.length;
+    document.getElementById('selected_crfs_count').textContent = count;
+    
+    // Calculate total estimated records
+    let totalRecords = 0;
+    checkedBoxes.forEach(checkbox => {
+        const modelName = checkbox.value;
+        if (estimatedCounts[modelName]) {
+            totalRecords += estimatedCounts[modelName];
+        }
+    });
+    
+    // Update estimated records display
+    const estimatedEl = document.getElementById('estimated_records');
+    if (totalRecords > 0) {
+        estimatedEl.textContent = totalRecords.toLocaleString();
+    } else {
+        estimatedEl.textContent = '-';
+    }
+}
+
+// Select/Deselect all Patient CRFs
+function selectAllPatient(select) {
+    document.querySelectorAll('.patient-crf').forEach(checkbox => {
+        checkbox.checked = select;
+    });
+    updateCRFCount();
+}
+
+// Select/Deselect all Contact CRFs
+function selectAllContact(select) {
+    document.querySelectorAll('.contact-crf').forEach(checkbox => {
+        checkbox.checked = select;
+    });
+    updateCRFCount();
+}
+
+// Set date range
+function setDateRange(range) {
+    const today = new Date();
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    endDate.value = today.toISOString().split('T')[0];
+    
+    let start = new Date();
+    switch(range) {
+        case 'today':
+            start = today;
+            break;
+        case 'week':
+            start.setDate(today.getDate() - 7);
+            break;
+        case 'month':
+            start.setMonth(today.getMonth() - 1);
+            break;
+        case 'year':
+            start.setFullYear(today.getFullYear() - 1);
+            break;
+    }
+    
+    startDate.value = start.toISOString().split('T')[0];
+}
+
+// Clear date range
+function clearDateRange() {
+    document.getElementById('start_date').value = '';
+    document.getElementById('end_date').value = '';
+}
+
+// Reset form
+function resetForm() {
+    document.getElementById('exportForm').reset();
+    selectAllPatient(true);
+    selectAllContact(true);
+    updateCRFCount();
+}
+
+// ==========================================
+// EVENT LISTENERS - ĐÂY LÀ PHẦN THIẾU!
+// ==========================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log(' Export Data page initialized');
+    
+    // 1. Patient select/deselect buttons
+    document.querySelectorAll('.btn-select-patient').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            const select = (action === 'select');
+            selectAllPatient(select);
+            console.log(`Patient CRFs: ${action === 'select' ? 'Selected' : 'Deselected'} all`);
+        });
+    });
+    
+    // 2. Contact select/deselect buttons
+    document.querySelectorAll('.btn-select-contact').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            const select = (action === 'select');
+            selectAllContact(select);
+            console.log(`Contact CRFs: ${action === 'select' ? 'Selected' : 'Deselected'} all`);
+        });
+    });
+    
+    // 3. Date range quick select buttons
+    document.querySelectorAll('.btn-date-range').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const range = this.getAttribute('data-range');
+            setDateRange(range);
+            console.log(`Date range set to: ${range}`);
+        });
+    });
+    
+    // 4. Clear date button
+    const clearBtn = document.querySelector('.btn-date-clear');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            clearDateRange();
+            console.log('Date range cleared');
+        });
+    }
+    
+    // 5. Reset form button
+    const resetBtn = document.querySelector('.btn-reset-form');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            resetForm();
+            console.log('Form reset');
+        });
+    }
+    
+    // 6. Update CRF count on checkbox change
+    document.querySelectorAll('input[name="crfs"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateCRFCount);
+    });
+    
+    // 7. Form submission handler
+    const exportForm = document.getElementById('exportForm');
+    if (exportForm) {
+        exportForm.addEventListener('submit', function(e) {
+            const selectedCRFs = document.querySelectorAll('input[name="crfs"]:checked').length;
+            
+            if (selectedCRFs === 0) {
+                e.preventDefault();
+                alert('Please select at least one CRF to export!');
+                return false;
+            }
+            
+            // Show loading modal
+            $('#loadingModal').modal('show');
+            
+            // Hide modal after file download starts (3 seconds delay)
+            setTimeout(function() {
+                $('#loadingModal').modal('hide');
+            }, 3000);
+            
+            console.log(`Exporting ${selectedCRFs} CRFs...`);
+            return true;
+        });
+    }
+    
+    // Initialize CRF count on page load
+    updateCRFCount();
+    console.log(' All event listeners attached');
+});
+</script>
+
+{% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+{% endblock %}

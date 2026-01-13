@@ -564,28 +564,27 @@
 
 {% endblock %}
 
-{% block dashboard_js %}
-{# NO inline JavaScript - External files only #}
-{% endblock %}
 
-{% block extra_js %}
+{% block dashboard_js %}
+{# Date Formatter Utility - Auto-format dates to DD/MM/YYYY #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/utils/date-formatter.js' %}"></script>
+
 {# ECharts library #}
 <script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 
 {# Dashboard JavaScript - Enrollment Progress Chart #}
-<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard/home_dashboard.js' %}"></script>
 
 {# Patient Monthly Statistics JavaScript - Bar Chart + Table #}
-<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/monthly_stats.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard/monthly_stats.js' %}"></script>
 
 {# Contact Monthly Statistics JavaScript - Bar Chart + Table #}
-<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/contact_stats.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard/contact_stats.js' %}"></script>
 
 {# Sampling Follow-up JavaScript - Table Only #}
-<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/sampling_followup.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard/sampling_followup.js' %}"></script>
 
 {# K. pneumoniae Isolation JavaScript - Table Only #}
-<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/kpneumoniae_isolation.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/home_dashboard/kpneumoniae_isolation.js' %}"></script>
 
-{% block extra_js_dashboard %}{% endblock %}
 {% endblock %}

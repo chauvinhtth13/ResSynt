@@ -23,6 +23,7 @@ from django.urls import reverse
 from backends.studies.study_44en.models.individual import Individual, Individual_Exposure
 from backends.studies.study_44en.forms.individual import Individual_ExposureForm, Individual_Exposure2Form
 from backends.api.studies.study_44en.views.views_base import get_filtered_individuals
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 
 # Import audit utilities
 from backends.audit_logs.utils.decorators import audit_log
@@ -191,7 +192,13 @@ def individual_exposure_create(request, subjectid):
 
 @login_required
 @require_crf_change('individual_exposure')
-@audit_log(model_name='Individual_Exposure', get_patient_id_from='subjectid')
+@audit_log(
+    model_name='Individual_Exposure',
+    get_patient_id_from='subjectid',
+    patient_model=Individual,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def individual_exposure_update(request, subjectid):
     """UPDATE existing exposure data
     
@@ -646,7 +653,13 @@ def individual_exposure_2_create(request, subjectid):
 
 
 @login_required
-@audit_log(model_name='Individual_Exposure', get_patient_id_from='subjectid')
+@audit_log(
+    model_name='Individual_Exposure',
+    get_patient_id_from='subjectid',
+    patient_model=Individual,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def individual_exposure_2_update(request, subjectid):
     """UPDATE exposure 2 (vaccination & hospitalization)
     
@@ -1016,7 +1029,13 @@ def individual_exposure_3_create(request, subjectid):
 
 
 @login_required
-@audit_log(model_name='Individual_FoodFrequency', get_patient_id_from='subjectid')
+@audit_log(
+    model_name='Individual_FoodFrequency',
+    get_patient_id_from='subjectid',
+    patient_model=Individual,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def individual_exposure_3_update(request, subjectid):
     """UPDATE exposure 3 (food & travel)
     

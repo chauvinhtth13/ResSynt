@@ -24,6 +24,8 @@
 </head>
 <body>
     {% block base_main %}{% endblock %}
+    <!-- jQuery must be loaded before other scripts -->
+    <script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/jquery-3.7.1.min.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script nonce="{{ request.csp_nonce }}" src="{% static 'bootstrap/js/bootstrap.bundle.js' %}"></script>
     {% block extra_js %}{% endblock %}

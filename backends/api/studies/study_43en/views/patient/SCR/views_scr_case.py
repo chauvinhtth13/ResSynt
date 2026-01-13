@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 @audit_log(
     model_name='SCREENINGCASE',
     get_patient_id_from='SCRID',
-    scr_case_model=SCR_CASE,
+    patient_model=SCR_CASE,
     audit_log_model=AuditLog,
     audit_log_detail_model=AuditLogDetail
 )
@@ -197,7 +197,7 @@ def screening_case_create(request):
 @audit_log(
     model_name='SCREENINGCASE',
     get_patient_id_from='SCRID',
-    scr_case_model=SCR_CASE,
+    patient_model=SCR_CASE,
     audit_log_model=AuditLog,
     audit_log_detail_model=AuditLogDetail
 )
@@ -267,7 +267,7 @@ def screening_case_update(request, SCRID):
 @audit_log(
     model_name='SCREENINGCASE',
     get_patient_id_from='SCRID',
-    scr_case_model=SCR_CASE,
+    patient_model=SCR_CASE,
     audit_log_model=AuditLog,
     audit_log_detail_model=AuditLogDetail
 )

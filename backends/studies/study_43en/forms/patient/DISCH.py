@@ -69,9 +69,9 @@ class DischargeCaseForm(forms.ModelForm):
             }),
             
             #  Date picker
-            'DISCHDATE': forms.DateInput(attrs={
+            'DISCHDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
             
             #  Discharge status
@@ -119,6 +119,10 @@ class DischargeCaseForm(forms.ModelForm):
         self.patient = patient
         super().__init__(*args, **kwargs)
         
+        # Set input_formats for date field (DD/MM/YYYY)
+        if 'DISCHDATE' in self.fields:
+            self.fields['DISCHDATE'].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
+        
         #  Set labels from model verbose_name for radio fields
         # (since they're custom fields, need manual assignment)
         self.fields['TRANSFERHOSP'].label = DISCH_CASE._meta.get_field('TRANSFERHOSP').verbose_name
@@ -154,7 +158,7 @@ class DischargeCaseForm(forms.ModelForm):
             if enr_date and dischdate < enr_date:
                 errors['DISCHDATE'] = _(
                     'Discharge date cannot be before enrollment date ({enr_date})'
-                ).format(enr_date=enr_date.strftime('%Y-%m-%d'))
+                ).format(enr_date=enr_date.strftime('%d/%m/%Y'))
         
         #  Validate transfer info (only if Yes)
         transferred = cleaned_data.get('TRANSFERHOSP')

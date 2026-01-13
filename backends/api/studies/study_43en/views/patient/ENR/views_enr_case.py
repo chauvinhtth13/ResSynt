@@ -22,6 +22,7 @@ from django.urls import reverse
 from backends.studies.study_43en.models.patient import (
     SCR_CASE, ENR_CASE, UnderlyingCondition, ENR_CASE_MedHisDrug, PERSONAL_DATA
 )   
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 from backends.studies.study_43en.forms.patient.ENR import (
     MedHisDrugFormSet,
     UnderlyingConditionForm,
@@ -183,7 +184,13 @@ def make_formset_readonly(formset):
 
 @login_required
 @require_crf_add('enr_case', redirect_to='study_43en:screening_case_list')
-@audit_log(model_name='ENROLLMENTCASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENROLLMENTCASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def enrollment_case_create(request, usubjid):
     """
     Create new enrollment WITH personal data
@@ -280,7 +287,7 @@ def enrollment_case_create(request, usubjid):
         'selected_site_id': siteid,
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/enrollment_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/enrollment_form.html', context)
 
 
 # ==========================================
@@ -289,7 +296,13 @@ def enrollment_case_create(request, usubjid):
 
 @login_required
 @require_crf_change('enr_case', redirect_to='study_43en:screening_case_list')
-@audit_log(model_name='ENROLLMENTCASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENROLLMENTCASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def enrollment_case_update(request, usubjid):
     """
     Update enrollment WITH UNIVERSAL AUDIT SYSTEM
@@ -352,7 +365,7 @@ def enrollment_case_update(request, usubjid):
             'selected_site_id': siteid,
         }
         
-        return render(request, 'studies/study_43en/CRF/patient/enrollment_form.html', context)
+        return render(request, 'studies/study_43en/patient/form/enrollment_form.html', context)
     
     #  POST - USE UNIVERSAL AUDIT SYSTEM (UPDATED)
     logger.info(" Using Universal Audit System (Tier 3)")
@@ -393,7 +406,7 @@ def enrollment_case_update(request, usubjid):
         main_instance=enrollment_case,
         forms_config=forms_config,
         save_callback=save_callback,
-        template_name='studies/study_43en/CRF/patient/enrollment_form.html',
+        template_name='studies/study_43en/patient/form/enrollment_form.html',
         redirect_url=reverse('study_43en:patient_detail', kwargs={'usubjid': usubjid}),
         extra_context={
             'enrollment_case': enrollment_case,
@@ -410,7 +423,13 @@ def enrollment_case_update(request, usubjid):
 
 @login_required
 @require_crf_view('enr_case', redirect_to='study_43en:screening_case_list')
-@audit_log(model_name='ENROLLMENTCASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENROLLMENTCASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def enrollment_case_view(request, usubjid):
     """
     View enrollment (read-only)
@@ -476,4 +495,4 @@ def enrollment_case_view(request, usubjid):
         'selected_site_id': siteid,
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/enrollment_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/enrollment_form.html', context)

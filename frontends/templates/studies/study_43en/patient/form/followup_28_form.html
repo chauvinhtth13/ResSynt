@@ -1,0 +1,1161 @@
+{% extends 'studies\study_43en\home_dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{% if is_readonly %}
+    {% trans "View 28-Day Follow-up Information" %}
+{% else %}
+    {% if is_create %}
+        {% trans "Create New 28-Day Follow-up" %}
+    {% else %}
+        {% trans "Update 28-Day Follow-up" %}
+    {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if is_readonly %}
+    {% trans "View 28-Day Follow-up Information" %}
+{% else %}
+    {% if is_create %}
+        {% trans "Create New 28-Day Follow-up" %}
+    {% else %}
+        {% trans "Update 28-Day Follow-up" %}
+    {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block dashboard_css %}
+<!-- Include CRF unified styles -->
+{% include 'studies/study_43en/includes/crf_styles.html' %}
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb float-sm-right">
+    <li class="breadcrumb-item">
+        <a href="{% url 'study_43en:patient_list' %}">
+            <i class="fas fa-users"></i> {% trans "Patient List" %}
+        </a>
+    </li>
+    <li class="breadcrumb-item">
+        <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}">
+            {{ enrollment_case.USUBJID.USUBJID }}
+        </a>
+    </li>
+    <li class="breadcrumb-item active">
+        {% trans "28-day follow-up" %}
+    </li>
+</ol>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid followup-form">
+    <!-- Patient Info Card -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-injured"></i> 
+                        {% trans "Patient Information" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>{% trans "Patient ID" %}:</strong><br>
+                            <span class="text-primary font-weight-bold">
+                                {{ enrollment_case.USUBJID.USUBJID }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>{% trans "Screening Date" %}:</strong><br>
+                            {{ screening_case.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>{% trans "Enrollment Date" %}:</strong><br>
+                            {{ enrollment_case.ENRDATE|date:"d/m/Y"|default:"-" }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>{% trans "Status" %}:</strong><br>
+                            {% if followup_case %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i> {% trans "Data Available" %}
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> {% trans "No Data Yet" %}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <form id="followUpForm" method="post" novalidate 
+          data-is-create="{{ is_create|yesno:'true,false' }}"
+          {% if is_readonly %}class="readonly-form"{% endif %}>
+        {% csrf_token %}
+
+        <!--  Section 1: Assessment at Day 28 -->
+        <div class="card card-outline card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-clipboard-check"></i>
+                    {% trans "1. Assessment at Day 28" %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!--  EvaluatedAtDay28 -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                {{ followup_form.EvaluatedAtDay28.label }}
+                                {% if followup_form.EvaluatedAtDay28.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            <div>
+                                {% for choice_value, choice_label in followup_form.EvaluatedAtDay28.field.choices %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="EvaluatedAtDay28" 
+                                               id="id_EvaluatedAtDay28_{{ forloop.counter }}" 
+                                               value="{{ choice_value }}"
+                                               {% if followup_form.EvaluatedAtDay28.value == choice_value %}checked{% endif %}
+                                               {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label" for="id_EvaluatedAtDay28_{{ forloop.counter }}">
+                                            {{ choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if followup_form.EvaluatedAtDay28.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.EvaluatedAtDay28.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!--  EvaluateDate -->
+                    <div class="col-md-3" id="evaluatedate-field">
+                        <div class="form-group">
+                            <label for="id_EvaluateDate" class="form-label">
+                                {{ followup_form.EvaluateDate.label }}
+                            </label>
+                            {{ followup_form.EvaluateDate }}
+                            {% if followup_form.EvaluateDate.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.EvaluateDate.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!--  Outcome28Days -->
+                    <div class="col-md-3" id="outcome28days-field">
+                        <div class="form-group">
+                            <label for="id_Outcome28Days" class="form-label">
+                                {{ followup_form.Outcome28Days.label }}
+                            </label>
+                            {{ followup_form.Outcome28Days }}
+                            {% if followup_form.Outcome28Days.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.Outcome28Days.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--  Section 2: Rehospitalization -->
+        <div class="card card-outline card-warning">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-hospital"></i>
+                    {% trans "2. Rehospitalization" %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!--  Rehospitalized -->
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="form-label">
+                                {{ followup_form.Rehospitalized.label }}
+                                {% if followup_form.Rehospitalized.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            <div>
+                                {% for choice_value, choice_label in followup_form.Rehospitalized.field.choices %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                            type="radio" 
+                                            name="Rehospitalized" 
+                                            id="id_Rehospitalized_{{ forloop.counter }}" 
+                                            value="{{ choice_value }}"
+                                            {% if followup_form.Rehospitalized.value == choice_value %}checked{% endif %}
+                                            {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label" for="id_Rehospitalized_{{ forloop.counter }}">
+                                            {{ choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if followup_form.Rehospitalized.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.Rehospitalized.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rehospitalization Details -->
+                <div id="rehospitalization-section" class="mt-3" style="display: none;">
+                    <h5 class="text-muted">
+                        <i class="fas fa-list"></i>
+                        {% trans "Rehospitalization Details" %}
+                    </h5>
+                    <div id="rehospitalization-formset">
+                        {{ rehospitalization_formset.management_form }}
+                        {% for form in rehospitalization_formset %}
+                            <div class="rehospitalization-form card mb-2">
+                                <div class="card-body">
+                                    {% if form.non_field_errors %}
+                                        <div class="alert alert-danger">
+                                            {{ form.non_field_errors }}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="row">
+                                        <!--  REHOSP_No -->
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="{{ form.REHOSP_No.id_for_label }}" class="form-label">
+                                                    {{ form.REHOSP_No.label }}
+                                                </label>
+                                                {{ form.REHOSP_No }}
+                                                {% if form.REHOSP_No.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.REHOSP_No.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!--  ReHospDate -->
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="{{ form.ReHospDate.id_for_label }}" class="form-label">
+                                                    {{ form.ReHospDate.label }}
+                                                </label>
+                                                {{ form.ReHospDate }}
+                                                {% if form.ReHospDate.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.ReHospDate.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!--  ReHospLocate -->
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="{{ form.ReHospLocate.id_for_label }}" class="form-label">
+                                                    {{ form.ReHospLocate.label }}
+                                                </label>
+                                                {{ form.ReHospLocate }}
+                                                {% if form.ReHospLocate.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.ReHospLocate.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!--  REHOSPDAYS -->
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="{{ form.REHOSPDAYS.id_for_label }}" class="form-label">
+                                                    {{ form.REHOSPDAYS.label }}
+                                                </label>
+                                                {{ form.REHOSPDAYS }}
+                                                {% if form.REHOSPDAYS.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.REHOSPDAYS.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!--  ReHospReason -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label for="{{ form.ReHospReason.id_for_label }}" class="form-label">
+                                                    {{ form.ReHospReason.label }}
+                                                </label>
+                                                {{ form.ReHospReason }}
+                                                {% if form.ReHospReason.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.ReHospReason.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if not is_readonly %}
+                    <button type="button" id="add-rehospitalization" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> {% trans "Add Rehospitalization Episode" %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!--  Section 3: Death -->
+        <div class="card card-outline card-danger">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-cross"></i>
+                    {% trans "3. Death" %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!--  Dead -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">
+                                {{ followup_form.Dead.label }}
+                            </label>
+                            <div>
+                                {% for choice_value, choice_label in followup_form.Dead.field.choices %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="Dead" 
+                                               id="id_Dead_{{ forloop.counter }}" 
+                                               value="{{ choice_value }}"
+                                               {% if followup_form.Dead.value == choice_value %}checked{% endif %}
+                                               {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label" for="id_Dead_{{ forloop.counter }}">
+                                            {{ choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if followup_form.Dead.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.Dead.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!--  DeathDate -->
+                    <div class="col-md-4" id="deathdate-field">
+                        <div class="form-group">
+                            <label for="id_DeathDate" class="form-label">
+                                {{ followup_form.DeathDate.label }}
+                            </label>
+                            {{ followup_form.DeathDate }}
+                            {% if followup_form.DeathDate.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.DeathDate.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!--  DeathReason -->
+                    <div class="col-md-4" id="deathreason-field">
+                        <div class="form-group">
+                            <label for="id_DeathReason" class="form-label">
+                                {{ followup_form.DeathReason.label }}
+                            </label>
+                            {{ followup_form.DeathReason }}
+                            {% if followup_form.DeathReason.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.DeathReason.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--  Section 4: Antibiotic Use -->
+        <div class="card card-outline card-success">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-pills"></i>
+                    {% trans "4. Antibiotic Use" %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!--  Antb_Usage -->
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="form-label">
+                                {{ followup_form.Antb_Usage.label }}
+                            </label>
+                            <div>
+                                {% for choice_value, choice_label in followup_form.Antb_Usage.field.choices %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                            type="radio" 
+                                            name="Antb_Usage" 
+                                            id="id_Antb_Usage_{{ forloop.counter }}" 
+                                            value="{{ choice_value }}"
+                                            {% if followup_form.Antb_Usage.value == choice_value %}checked{% endif %}
+                                            {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label" for="id_Antb_Usage_{{ forloop.counter }}">
+                                            {{ choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if followup_form.Antb_Usage.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.Antb_Usage.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Antibiotic Details -->
+                <div id="antibiotic-section" class="mt-3" style="display: none;">
+                    <h5 class="text-muted">
+                        <i class="fas fa-list"></i>
+                        {% trans "Antibiotic Details" %}
+                    </h5>
+                    <div id="antibiotic-formset">
+                        {{ antibiotic_formset.management_form }}
+                        {% for form in antibiotic_formset %}
+                            <div class="antibiotic-form card mb-2">
+                                <div class="card-body">
+                                    {% if form.non_field_errors %}
+                                        <div class="alert alert-danger">
+                                            {{ form.non_field_errors }}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="row">
+                                        <!--  Antb_Usage_No -->
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="{{ form.Antb_Usage_No.id_for_label }}" class="form-label">
+                                                    {{ form.Antb_Usage_No.label }}
+                                                </label>
+                                                {{ form.Antb_Usage_No }}
+                                                {% if form.Antb_Usage_No.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.Antb_Usage_No.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!--  Antb_Name -->
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="{{ form.Antb_Name.id_for_label }}" class="form-label">
+                                                    {{ form.Antb_Name.label }}
+                                                </label>
+                                                {{ form.Antb_Name }}
+                                                {% if form.Antb_Name.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.Antb_Name.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!--  Antb_Usage_Date -->
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="{{ form.Antb_Usage_Date.id_for_label }}" class="form-label">
+                                                    {{ form.Antb_Usage_Date.label }}
+                                                </label>
+                                                {{ form.Antb_Usage_Date }}
+                                                {% if form.Antb_Usage_Date.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.Antb_Usage_Date.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!--  Antb_Usage_Reason -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label for="{{ form.Antb_Usage_Reason.id_for_label }}" class="form-label">
+                                                    {{ form.Antb_Usage_Reason.label }}
+                                                </label>
+                                                {{ form.Antb_Usage_Reason }}
+                                                {% if form.Antb_Usage_Reason.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.Antb_Usage_Reason.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if not is_readonly %}
+                    <button type="button" id="add-antibiotic" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> {% trans "Add Antibiotic Course" %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!--  Section 5: Functional Assessment -->
+        <div class="card card-outline card-purple">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-walking"></i>
+                    {% trans "5. Functional Status Assessment" %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <!--  Func_Status -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="form-label font-weight-bold">
+                                {{ followup_form.Func_Status.label }}
+                                {% if followup_form.Func_Status.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            <div>
+                                {% for choice_value, choice_label in followup_form.Func_Status.field.choices %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="Func_Status" 
+                                               id="id_Func_Status_{{ forloop.counter }}" 
+                                               value="{{ choice_value }}"
+                                               {% if followup_form.Func_Status.value == choice_value %}checked{% endif %}
+                                               {% if is_readonly %}disabled{% endif %}>
+                                        <label class="form-check-label" for="id_Func_Status_{{ forloop.counter }}">
+                                            {{ choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if followup_form.Func_Status.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ followup_form.Func_Status.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Functional Assessment Details -->
+                <div id="functional-section" class="mt-4" style="display: none;">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        {% trans "Please assess the patient's functional aspects" %}
+                    </div>
+
+                    <div class="row">
+                        <!--  5a. Mobility -->
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100 border-left-primary">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-walking mr-2"></i>
+                                    {{ followup_form.Mobility.label }}
+                                </h6>
+                                <div class="form-group">
+                                    {% for choice_value, choice_label in followup_form.Mobility.field.choices %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                type="radio" 
+                                                name="Mobility" 
+                                                id="id_Mobility_{{ forloop.counter }}" 
+                                                value="{{ choice_value }}"
+                                                {% if followup_form.Mobility.value == choice_value %}checked{% endif %}
+                                                {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="id_Mobility_{{ forloop.counter }}">
+                                                {{ choice_label }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    {% if followup_form.Mobility.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ followup_form.Mobility.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--  5b. Personal_Hygiene -->
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100 border-left-success">
+                                <h6 class="text-success mb-3">
+                                    <i class="fas fa-hands-wash mr-2"></i>
+                                    {{ followup_form.Personal_Hygiene.label }}
+                                </h6>
+                                <div class="form-group">
+                                    {% for choice_value, choice_label in followup_form.Personal_Hygiene.field.choices %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                type="radio" 
+                                                name="Personal_Hygiene" 
+                                                id="id_Personal_Hygiene_{{ forloop.counter }}" 
+                                                value="{{ choice_value }}"
+                                                {% if followup_form.Personal_Hygiene.value == choice_value %}checked{% endif %}
+                                                {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="id_Personal_Hygiene_{{ forloop.counter }}">
+                                                {{ choice_label }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    {% if followup_form.Personal_Hygiene.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ followup_form.Personal_Hygiene.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--  5c. Daily_Activities -->
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100 border-left-warning">
+                                <h6 class="text-warning mb-3">
+                                    <i class="fas fa-briefcase mr-2"></i>
+                                    {{ followup_form.Daily_Activities.label }}
+                                </h6>
+                                <div class="form-group">
+                                    {% for choice_value, choice_label in followup_form.Daily_Activities.field.choices %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                type="radio" 
+                                                name="Daily_Activities" 
+                                                id="id_Daily_Activities_{{ forloop.counter }}" 
+                                                value="{{ choice_value }}"
+                                                {% if followup_form.Daily_Activities.value == choice_value %}checked{% endif %}
+                                                {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="id_Daily_Activities_{{ forloop.counter }}">
+                                                {{ choice_label }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    {% if followup_form.Daily_Activities.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ followup_form.Daily_Activities.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--  5d. Pain_Discomfort -->
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100 border-left-danger">
+                                <h6 class="text-danger mb-3">
+                                    <i class="fas fa-heartbeat mr-2"></i>
+                                    {{ followup_form.Pain_Discomfort.label }}
+                                </h6>
+                                <div class="form-group">
+                                    {% for choice_value, choice_label in followup_form.Pain_Discomfort.field.choices %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                type="radio" 
+                                                name="Pain_Discomfort" 
+                                                id="id_Pain_Discomfort_{{ forloop.counter }}" 
+                                                value="{{ choice_value }}"
+                                                {% if followup_form.Pain_Discomfort.value == choice_value %}checked{% endif %}
+                                                {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="id_Pain_Discomfort_{{ forloop.counter }}">
+                                                {{ choice_label }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    {% if followup_form.Pain_Discomfort.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ followup_form.Pain_Discomfort.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--  5e. Anxiety -->
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100 border-left-info">
+                                <h6 class="text-info mb-3">
+                                    <i class="fas fa-brain mr-2"></i>
+                                    {{ followup_form.Anxiety.label }}
+                                </h6>
+                                <div class="form-group">
+                                    {% for choice_value, choice_label in followup_form.Anxiety.field.choices %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" 
+                                                type="radio" 
+                                                name="Anxiety" 
+                                                id="id_Anxiety_{{ forloop.counter }}" 
+                                                value="{{ choice_value }}"
+                                                {% if followup_form.Anxiety.value == choice_value %}checked{% endif %}
+                                                {% if is_readonly %}disabled{% endif %}>
+                                            <label class="form-check-label" for="id_Anxiety_{{ forloop.counter }}">
+                                                {{ choice_label }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    {% if followup_form.Anxiety.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ followup_form.Anxiety.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--  5f. FBSI -->
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100 border-left-secondary">
+                                <h6 class="text-secondary mb-3">
+                                    <i class="fas fa-star mr-2"></i>
+                                    {{ followup_form.FBSI.label }}
+                                </h6>
+                                <div class="form-group">
+                                    <select class="form-control form-select" 
+                                            name="FBSI" 
+                                            id="id_FBSI"
+                                            {% if is_readonly %}disabled{% endif %}>
+                                        <option value="">---------</option>
+                                        {% for choice_value, choice_label in followup_form.FBSI.field.choices %}
+                                            <option value="{{ choice_value }}"
+                                                    {% if followup_form.FBSI.value|stringformat:"s" == choice_value|stringformat:"s" %}selected{% endif %}>
+                                                {{ choice_value }}. {{ choice_label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    
+                                    {% if followup_form.FBSI.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ followup_form.FBSI.errors }}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <small class="form-text text-muted mt-2">
+                                        <i class="fas fa-info-circle"></i>
+                                        {% trans "Functional Bloodstream Infection Score (0-7)" %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card">
+            <div class="card-body text-center">
+                {% if not is_readonly %}
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> {% trans "Save Information" %}
+                    </button>
+                    <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}" 
+                       class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+                    </a>
+                {% else %}
+                    <a href="{% url 'study_43en:followup_28_update' usubjid=enrollment_case.USUBJID.USUBJID %}" 
+                       class="btn btn-warning btn-lg">
+                        <i class="fas fa-edit"></i> {% trans "Edit" %}
+                    </a>
+                    <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}" 
+                       class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Change Reason Modal -->
+{% if not is_readonly %}
+    {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+<!-- Validation Error Modal -->
+{% if show_validation_modal %}
+<div class="modal fade" id="validationErrorModal" tabindex="-1" role="dialog" aria-labelledby="validationErrorModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="validationErrorModalLabel">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          {% trans "Data Entry Error" %}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3"><strong>{% trans "Please check and correct the following errors:" %}</strong></p>
+        <div class="list-group">
+          {% for error in validation_errors %}
+          <div class="list-group-item list-group-item-danger border-left-danger pl-3">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-times-circle text-danger mt-1 mr-2"></i>
+              <div>
+                <strong>{{ error.field }}:</strong>
+                <span class="text-dark">{{ error.message }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        
+        <div class="alert alert-info mt-3 mb-0">
+          <i class="fas fa-info-circle mr-2"></i>
+          {% trans "After closing this popup, please correct the error fields and try again." %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnCloseValidationModal">
+          <i class="fas fa-check mr-2"></i>
+          {% trans "Got it, let me fix" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+<!-- Datepicker Scripts -->
+{% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+<!-- Change Reason Handler -->
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
+
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function() {
+    console.log(" Initializing Follow-up Day 28 form...");
+
+    // ==========================================
+    // AUTO-SHOW VALIDATION ERROR MODAL
+    // ==========================================
+    {% if show_validation_modal %}
+    console.log(' Validation errors detected - showing modal');
+    $('#validationErrorModal').modal('show');
+    
+    $('#btnCloseValidationModal').on('click', function() {
+        console.log(' User clicked "Got it" button');
+        $('#validationErrorModal').modal('hide');
+    });
+    
+    $('#validationErrorModal').on('hidden.bs.modal', function() {
+        console.log(' Modal closed - ready to fix errors');
+        $('html, body').animate({
+            scrollTop: $('#followUpForm').offset().top - 100
+        }, 500);
+    });
+    {% endif %}
+
+    // ==========================================
+    // CONFIGURATION
+    // ==========================================
+    const PREFIX_REHOSP = 'rehospitalization';
+    const PREFIX_ANTIBIO = 'antibiotic';
+
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+    
+    function toggleSection(radioName, sectionId, showValue = 'Yes') {
+        const selectedValue = $(`input[name="${radioName}"]:checked`).val();
+        console.log(`Toggle ${sectionId}: ${radioName} = ${selectedValue}`);
+        
+        if (selectedValue === showValue) {
+            $(sectionId).slideDown(300);
+        } else {
+            $(sectionId).slideUp(300);
+        }
+    }
+
+    function initializeSections() {
+        //  EvaluatedAtDay28
+        const evaluated = $('input[name="EvaluatedAtDay28"]:checked').val();
+        if (evaluated !== 'Yes') {
+            $('#evaluatedate-field, #outcome28days-field').hide();
+        }
+
+        //  Dead
+        const dead = $('input[name="Dead"]:checked').val();
+        if (dead !== 'Yes') {
+            $('#deathdate-field, #deathreason-field').hide();
+        }
+
+        //  Toggle sections
+        toggleSection('Rehospitalized', '#rehospitalization-section');
+        toggleSection('Antb_Usage', '#antibiotic-section');
+        toggleSection('Func_Status', '#functional-section');
+    }
+
+    // ==========================================
+    // EVENT HANDLERS
+    // ==========================================
+
+    //  EvaluatedAtDay28 toggle
+    $(document).on('change', 'input[name="EvaluatedAtDay28"]', function() {
+        if ($(this).val() === 'Yes') {
+            $('#evaluatedate-field, #outcome28days-field').slideDown(300);
+        } else {
+            $('#evaluatedate-field, #outcome28days-field').slideUp(300);
+        }
+    });
+
+    //  Dead toggle
+    $(document).on('change', 'input[name="Dead"]', function() {
+        if ($(this).val() === 'Yes') {
+            $('#deathdate-field, #deathreason-field').slideDown(300);
+        } else {
+            $('#deathdate-field, #deathreason-field').slideUp(300);
+        }
+    });
+
+    //  Rehospitalized toggle
+    $(document).on('change', 'input[name="Rehospitalized"]', function() {
+        toggleSection('Rehospitalized', '#rehospitalization-section');
+    });
+
+    //  Antb_Usage toggle
+    $(document).on('change', 'input[name="Antb_Usage"]', function() {
+        toggleSection('Antb_Usage', '#antibiotic-section');
+    });
+
+    //  Func_Status toggle
+    $(document).on('change', 'input[name="Func_Status"]', function() {
+        toggleSection('Func_Status', '#functional-section');
+    });
+
+    // ==========================================
+    // ADD REHOSPITALIZATION FORM
+    // ==========================================
+    $('#add-rehospitalization').click(function() {
+        console.log('🏥 Adding rehospitalization form...');
+        
+        const container = $('#rehospitalization-formset');
+        const totalForms = parseInt($(`#id_${PREFIX_REHOSP}-TOTAL_FORMS`).val());
+        
+        console.log(`Current total forms: ${totalForms}`);
+        
+        // Calculate next episode number from EXISTING forms
+        let maxEpisode = 0;
+        $('.rehospitalization-form').each(function() {
+            const episodeInput = $(this).find('input[id$="-REHOSP_No"]'); //  Updated field name
+            if (episodeInput.length) {
+                const episodeVal = parseInt(episodeInput.val());
+                console.log(`Found episode: ${episodeVal}`);
+                if (!isNaN(episodeVal) && episodeVal > maxEpisode) {
+                    maxEpisode = episodeVal;
+                }
+            }
+        });
+        const newEpisode = maxEpisode + 1;
+        
+        console.log(`Max episode: ${maxEpisode}, New episode: ${newEpisode}`);
+
+        const newFormHtml = `
+            <div class="rehospitalization-form card mb-2" style="animation: fadeIn 0.3s ease-in;">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_REHOSP}-${totalForms}-REHOSP_No" class="form-label">No.</label>
+                                <input type="number" name="${PREFIX_REHOSP}-${totalForms}-REHOSP_No" 
+                                       value="${newEpisode}" readonly class="form-control" 
+                                       id="id_${PREFIX_REHOSP}-${totalForms}-REHOSP_No">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_REHOSP}-${totalForms}-ReHospDate" class="form-label">Readmitted Date</label>
+                                <input type="text" name="${PREFIX_REHOSP}-${totalForms}-ReHospDate" 
+                                       class="datepicker form-control" autocomplete="off" 
+                                       placeholder="DD/MM/YYYY"
+                                       id="id_${PREFIX_REHOSP}-${totalForms}-ReHospDate">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_REHOSP}-${totalForms}-ReHospLocate" class="form-label">Hospital</label>
+                                <input type="text" name="${PREFIX_REHOSP}-${totalForms}-ReHospLocate" 
+                                       class="form-control" placeholder="Hospital location..."
+                                       id="id_${PREFIX_REHOSP}-${totalForms}-ReHospLocate">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_REHOSP}-${totalForms}-REHOSPDAYS" class="form-label">Duration</label>
+                                <input type="text" name="${PREFIX_REHOSP}-${totalForms}-REHOSPDAYS" 
+                                       class="form-control" placeholder="e.g., 5 days"
+                                       id="id_${PREFIX_REHOSP}-${totalForms}-REHOSPDAYS">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_REHOSP}-${totalForms}-ReHospReason" class="form-label">Reason</label>
+                                <textarea name="${PREFIX_REHOSP}-${totalForms}-ReHospReason" 
+                                          class="form-control" rows="2" placeholder="Reason..."
+                                          id="id_${PREFIX_REHOSP}-${totalForms}-ReHospReason"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="${PREFIX_REHOSP}-${totalForms}-id">
+                    <input type="hidden" name="${PREFIX_REHOSP}-${totalForms}-USUBJID">
+                </div>
+            </div>
+        `;
+
+        container.append(newFormHtml);
+        $(`#id_${PREFIX_REHOSP}-TOTAL_FORMS`).val(totalForms + 1);
+
+        // Initialize datepicker for new form
+        const newForm = container.find('.rehospitalization-form:last');
+        newForm.find('.datepicker').datepicker({
+            format: 'dd/mm/yyyy',
+            autoclose: true,
+            todayHighlight: true,
+            orientation: 'bottom auto'
+        });
+
+        console.log(` Added rehospitalization form #${totalForms}, Episode: ${newEpisode}`);
+    });
+
+    // ==========================================
+    // ADD ANTIBIOTIC FORM
+    // ==========================================
+    $('#add-antibiotic').click(function() {
+        console.log(' Adding antibiotic form...');
+        
+        const container = $('#antibiotic-formset');
+        const totalForms = parseInt($(`#id_${PREFIX_ANTIBIO}-TOTAL_FORMS`).val());
+        
+        console.log(`Current total forms: ${totalForms}`);
+        
+        // Calculate next episode number from EXISTING forms
+        let maxEpisode = 0;
+        $('.antibiotic-form').each(function() {
+            const episodeInput = $(this).find('input[id$="-Antb_Usage_No"]'); //  Updated field name
+            if (episodeInput.length) {
+                const episodeVal = parseInt(episodeInput.val());
+                console.log(`Found episode: ${episodeVal}`);
+                if (!isNaN(episodeVal) && episodeVal > maxEpisode) {
+                    maxEpisode = episodeVal;
+                }
+            }
+        });
+        const newEpisode = maxEpisode + 1;
+        
+        console.log(`Max episode: ${maxEpisode}, New episode: ${newEpisode}`);
+
+        const newFormHtml = `
+            <div class="antibiotic-form card mb-2" style="animation: fadeIn 0.3s ease-in;">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_No" class="form-label">No.</label>
+                                <input type="number" name="${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_No" 
+                                       value="${newEpisode}" readonly class="form-control" 
+                                       id="id_${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_No">
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_ANTIBIO}-${totalForms}-Antb_Name" class="form-label">Antibiotic Name</label>
+                                <input type="text" name="${PREFIX_ANTIBIO}-${totalForms}-Antb_Name" 
+                                       class="form-control" placeholder="Antibiotic name..."
+                                       id="id_${PREFIX_ANTIBIO}-${totalForms}-Antb_Name">
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_Date" class="form-label">Duration</label>
+                                <input type="text" name="${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_Date" 
+                                       class="form-control" placeholder="e.g., 7 days"
+                                       id="id_${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_Date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="id_${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_Reason" class="form-label">Reason</label>
+                                <textarea name="${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_Reason" 
+                                          class="form-control" rows="2" placeholder="Reason..."
+                                          id="id_${PREFIX_ANTIBIO}-${totalForms}-Antb_Usage_Reason"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="${PREFIX_ANTIBIO}-${totalForms}-id">
+                    <input type="hidden" name="${PREFIX_ANTIBIO}-${totalForms}-USUBJID">
+                </div>
+            </div>
+        `;
+
+        container.append(newFormHtml);
+        $(`#id_${PREFIX_ANTIBIO}-TOTAL_FORMS`).val(totalForms + 1);
+
+        console.log(` Added antibiotic form #${totalForms}, Episode: ${newEpisode}`);
+    });
+
+    // ==========================================
+    // INITIALIZATION
+    // ==========================================
+    setTimeout(initializeSections, 200);
+
+    console.log(" Follow-up Day 28 form initialized successfully!");
+});
+</script>
+{% endblock %}

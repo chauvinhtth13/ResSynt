@@ -10,8 +10,9 @@ This ensures makemigrations study_43en includes audit tables.
 # ==========================================
 # AUDIT LOG MODELS (Created via factory)
 # ==========================================
-from backends.audit_logs.models import create_audit_models
+from backends.audit_logs.models.base import create_audit_models
 AuditLog, AuditLogDetail = create_audit_models('study_43en')
+
 
 # ==========================================
 # BASE MODELS (MIXINS)

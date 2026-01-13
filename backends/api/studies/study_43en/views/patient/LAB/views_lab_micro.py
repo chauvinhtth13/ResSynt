@@ -23,6 +23,7 @@ from backends.studies.study_43en.models.patient import (
     ENR_CASE,
     LAB_Microbiology,
 )
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 
 # Import forms
 from backends.studies.study_43en.forms.patient.LAB_microbiology import (
@@ -92,7 +93,13 @@ def get_enrollment_with_cultures(request, usubjid):
 
 @login_required
 @require_crf_view('lab_microbiology', redirect_to='study_43en:patient_list')
-@audit_log(model_name='LAB_MICROBIOLOGY', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='LAB_MICROBIOLOGY',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def microbiology_list(request, usubjid):
     """
     Display list of LAB microbiology cultures for a patient
@@ -160,7 +167,7 @@ def microbiology_list(request, usubjid):
         f" Loaded {cultures.count()} cultures "
         f"({summary['kpn_positive_count']} KPN+)"
     )
-    return render(request, 'studies/study_43en/CRF/patient/lab_microbiology_list.html', context)
+    return render(request, 'studies/study_43en/patient/form/lab_microbiology_list.html', context)
 
 
 # ==========================================
@@ -169,7 +176,13 @@ def microbiology_list(request, usubjid):
 
 @login_required
 @require_crf_add('lab_microbiology', redirect_to='study_43en:patient_list')
-@audit_log(model_name='LAB_MICROBIOLOGY', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='LAB_MICROBIOLOGY',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def microbiology_create(request, usubjid):
     """
     Create new LAB microbiology culture
@@ -264,7 +277,7 @@ def microbiology_create(request, usubjid):
         'selected_site_id': screening_case.SITEID,
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/lab_microbiology_list.html', context)
+    return render(request, 'studies/study_43en/patient/form/lab_microbiology_list.html', context)
 
 
 # ==========================================
@@ -273,7 +286,13 @@ def microbiology_create(request, usubjid):
 
 @login_required
 @require_crf_change('lab_microbiology', redirect_to='study_43en:patient_list')
-@audit_log(model_name='LAB_MICROBIOLOGY', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='LAB_MICROBIOLOGY',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def microbiology_update(request, usubjid, culture_id):
     """
     Update LAB microbiology culture WITH UNIVERSAL AUDIT SYSTEM
@@ -332,7 +351,7 @@ def microbiology_update(request, usubjid, culture_id):
         request=request,
         instance=culture,
         form_class=LABMicrobiologyCultureForm,
-        template_name='studies/study_43en/CRF/patient/lab_microbiology_list.html',
+        template_name='studies/study_43en/patient/form/lab_microbiology_list.html',
         redirect_url=reverse('study_43en:microbiology_list', kwargs={'usubjid': usubjid}),
         extra_context={
             'usubjid': usubjid,

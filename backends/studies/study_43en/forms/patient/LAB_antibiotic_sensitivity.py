@@ -128,10 +128,10 @@ class AntibioticSensitivityForm(forms.ModelForm):
                 'max': '100',
                 'step': '0.1'
             }),
-            'TESTDATE': forms.DateInput(attrs={
-                'type': 'date',
+            'TESTDATE': forms.DateInput(format='%d/%m/%Y', attrs={
+                'type': 'text',
                 'class': 'form-control datepicker',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
             'INTERPRETATION_STANDARD': forms.Select(attrs={
                 'class': 'form-control'
@@ -153,6 +153,10 @@ class AntibioticSensitivityForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.culture = kwargs.pop('culture', None)
         super().__init__(*args, **kwargs)
+        
+        # 🚀 Set date input formats for dd/mm/yyyy
+        if 'TESTDATE' in self.fields:
+            self.fields['TESTDATE'].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         # Get culture from instance if not provided
         if not self.culture and self.instance and self.instance.pk:

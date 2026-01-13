@@ -1,0 +1,355 @@
+{% extends 'studies\study_43en\home_dashboard.html' %}
+{% load static %}
+{% load i18n %}
+{% load study_43en_tags %}
+
+{% block title %}{% trans "Danh Sách Xét Nghiệm" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}">{% trans "Bệnh nhân" %} {{ usubjid }}</a></li>
+<li class="breadcrumb-item active">{% trans "Xét nghiệm" %}</li>
+{% endblock %}
+
+{% block dashboard_css %}
+{% include 'studies/study_43en/includes/crf_styles.html' %}
+<style>
+  /* Page-specific overrides only - base styles in crf-forms.css */
+  .info-label {
+    color: #495057;
+    margin-bottom: 5px;
+  }
+  
+  .patient-info-box .info-value {
+    font-size: 1.1rem;
+    color: #667eea;
+    font-weight: 600;
+  }
+  
+  /* ========== TABLE STYLES ========== */
+  .table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  
+  .table {
+    margin-bottom: 0;
+  }
+  
+  .table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  
+  .table thead th {
+    border: none;
+    font-weight: 600;
+    padding: 15px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .table tbody tr {
+    transition: all 0.2s ease;
+  }
+  
+  .table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateX(3px);
+  }
+  
+  .table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+  }
+  
+  .lab-type-name {
+    font-weight: 600;
+    color: #495057;
+    font-size: 1rem;
+  }
+  
+  /* ========== BADGES ========== */
+  .badge {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 4px;
+  }
+  
+  .badge-success {
+    background-color: #10b981;
+  }
+  
+  .badge-secondary {
+    background-color: #6c757d;
+  }
+  
+  .badge-warning {
+    background-color: #f59e0b;
+  }
+  
+  /* ========== BUTTONS ========== */
+  .btn {
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #64408a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  }
+  
+  .btn-info {
+    background-color: #06b6d4;
+    border-color: #06b6d4;
+  }
+  
+  .btn-info:hover {
+    background-color: #0891b2;
+    border-color: #0891b2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(6, 182, 212, 0.3);
+  }
+  
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+  }
+  
+  .btn i {
+    margin-right: 5px;
+  }
+  
+  /* ========== TEST COUNT DISPLAY ========== */
+  .test-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .test-count-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+  }
+  
+  .test-count-fraction {
+    color: #667eea;
+  }
+  
+  /* ========== NO PERMISSION MESSAGE ========== */
+  .no-permission-msg {
+    color: #6c757d;
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+  
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 768px) {
+    .card-header {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+    
+    .ml-auto {
+      margin-left: 0 !important;
+      margin-top: 10px;
+    }
+    
+    .patient-info-box {
+      padding: 15px;
+    }
+    
+    .table thead th {
+      font-size: 0.75rem;
+      padding: 10px;
+    }
+    
+    .table tbody td {
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-flask mr-2"></i>{% trans "Thông Tin Xét Nghiệm Của Bệnh Nhân" %}
+        </h3>
+      </div>
+      
+      <div class="card-body">
+        <!-- Patient Information Box -->
+        <div class="patient-info-box">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="info-label">
+                <i class="fas fa-user-tag mr-2"></i>{% trans "Mã bệnh nhân" %}
+              </div>
+              <div class="info-value">{{ usubjid }}</div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-label">
+                <i class="fas fa-hospital mr-2"></i>{% trans "Site ID" %}
+              </div>
+              <div class="info-value">{{ screening_case.SITEID }}</div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-label">
+                <i class="fas fa-calendar-check mr-2"></i>{% trans "Ngày đăng ký" %}
+              </div>
+              <div class="info-value">
+                {% if enrollment_case.ENRDATE %}
+                  {{ enrollment_case.ENRDATE|date:"d/m/Y" }}
+                {% else %}
+                  N/A
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Laboratory Tests Table -->
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <th class="text-center" width="30%">
+                  <i class="fas fa-vials mr-2"></i>{% trans "Lần Xét Nghiệm" %}
+                </th>
+                <th class="text-center" width="30%">
+                  <i class="fas fa-chart-bar mr-2"></i>{% trans "Số lượng xét nghiệm" %}
+                </th>
+                <th class="text-center" width="40%">
+                  <i class="fas fa-tools mr-2"></i>{% trans "Thao Tác" %}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lab_type, lab_type_name in lab_types %}
+                <tr>
+                  <td class="text-center">
+                    <span class="lab-type-name">{{ lab_type_name }}</span>
+                  </td>
+                  <td class="text-center">
+                    <div class="test-count">
+                      {% with tests=tests_by_lab_type|get_item:lab_type %}
+                        {% if tests %}
+                          <span class="test-count-number">
+                            <span class="test-count-fraction">{{ tests|count_performed }}</span> / {{ tests|length }}
+                          </span>
+                          {% if tests|count_performed > 0 %}
+                            <span class="badge badge-success">
+                              <i class="fas fa-check-circle mr-1"></i>{% trans "Đã thực hiện" %}
+                            </span>
+                          {% elif tests|count_performed == 0 and tests|length > 0 %}
+                            <span class="badge badge-secondary">
+                              <i class="fas fa-clock mr-1"></i>{% trans "Chưa thực hiện" %}
+                            </span>
+                          {% endif %}
+                        {% else %}
+                          <span class="test-count-number">0</span>
+                          <span class="badge badge-warning">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>{% trans "Chưa khởi tạo" %}
+                          </span>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    {% with tests=tests_by_lab_type|get_item:lab_type %}
+                      {% if tests %}
+                        {#  VIEW button - READ ONLY #}
+                        {% if perms.study_43en.view_laboratorytest %}
+                          <a href="{% url 'study_43en:laboratory_test_view' usubjid=usubjid lab_type=lab_type %}" 
+                            class="btn btn-info btn-sm">
+                            <i class="fas fa-eye"></i> {% trans "Xem" %}
+                          </a>
+                        {% endif %}
+                        
+                        {#  EDIT button - CAN MODIFY #}
+                        {% if perms.study_43en.change_laboratorytest %}
+                          <a href="{% url 'study_43en:laboratory_test_bulk_update' usubjid=usubjid lab_type=lab_type %}" 
+                            class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> {% trans "Chỉnh sửa" %}
+                          </a>
+                        {% endif %}
+                        
+                        {# Show message if no permission #}
+                        {% if not perms.study_43en.view_laboratorytest and not perms.study_43en.change_laboratorytest %}
+                          <span class="no-permission-msg">
+                            <i class="fas fa-lock mr-1"></i>{% trans "Không có quyền truy cập" %}
+                          </span>
+                        {% endif %}
+                      {% else %}
+                        {# CREATE button #}
+                        {% if perms.study_43en.add_laboratorytest %}
+                          <a href="{% url 'study_43en:laboratory_test_create' usubjid=usubjid lab_type=lab_type %}" 
+                            class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> {% trans "Tạo xét nghiệm" %}
+                          </a>
+                        {% else %}
+                          <span class="no-permission-msg">
+                            <i class="fas fa-lock mr-1"></i>{% trans "Không có quyền tạo" %}
+                          </span>
+                        {% endif %}
+                      {% endif %}
+                    {% endwith %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-between mt-4">
+          <div>
+            <a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}" 
+               class="btn btn-secondary">
+              <i class="fas fa-arrow-left mr-1"></i>{% trans "Quay Lại" %}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script nonce="{{ request.csp_nonce }}">
+  $(document).ready(function() {
+    console.log('=== LABORATORY TEST LIST ===');
+    console.log('Patient ID:', "{{ usubjid }}");
+    
+    // Row hover effect
+    $('tbody tr').hover(
+      function() { 
+        $(this).addClass('bg-light'); 
+      },
+      function() { 
+        $(this).removeClass('bg-light'); 
+      }
+    );
+    
+    console.log('Laboratory test list initialized');
+  });
+</script>
+{% endblock %}

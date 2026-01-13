@@ -79,7 +79,8 @@ class ScreeningCaseForm(forms.ModelForm):
     
     SCREENINGFORMDATE = forms.DateField(
         required=False,
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control datepicker'}),
+        input_formats=['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'type': 'text', 'class': 'form-control datepicker', 'placeholder': 'DD/MM/YYYY'}),
         label=_('Screening Form Date')
     )
     

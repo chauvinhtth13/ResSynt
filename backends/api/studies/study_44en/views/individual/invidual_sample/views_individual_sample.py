@@ -22,6 +22,7 @@ from backends.studies.study_44en.models.individual import (
 )
 from backends.studies.study_44en.forms.individual import Individual_FoodFrequencyForm
 from backends.api.studies.study_44en.views.views_base import get_filtered_individuals
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 
 # Import audit utilities
 from backends.audit_logs.utils.decorators import audit_log
@@ -156,7 +157,13 @@ def individual_sample_create(request, subjectid):
 
 @login_required
 @require_crf_change('individual_sample')
-@audit_log(model_name='Individual_Sample', get_patient_id_from='subjectid')
+@audit_log(
+    model_name='Individual_Sample',
+    get_patient_id_from='subjectid',
+    patient_model=Individual,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def individual_sample_update(request, subjectid):
     """
     UPDATE existing sample and food frequency data

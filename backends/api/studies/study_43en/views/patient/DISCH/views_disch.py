@@ -26,6 +26,10 @@ from backends.audit_logs.utils.permission_decorators import (
     check_instance_site_access,
 )
 
+# Import models for audit
+from backends.studies.study_43en.models.patient import SCR_CASE
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
+
 # Import helpers
 from .helpers import (
     get_discharge_with_related,
@@ -43,7 +47,13 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @require_crf_add('disch_case', redirect_to='study_43en:patient_list')
-@audit_log(model_name='DISCHARGECASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='DISCHARGECASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def discharge_create(request, usubjid):
     """
     Create new discharge case (NO AUDIT)
@@ -129,7 +139,7 @@ def discharge_create(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/discharge_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/discharge_form.html', context)
 
 
 # ==========================================
@@ -138,7 +148,13 @@ def discharge_create(request, usubjid):
 
 @login_required
 @require_crf_change('disch_case', redirect_to='study_43en:patient_list')
-@audit_log(model_name='DISCHARGECASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='DISCHARGECASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def discharge_update(request, usubjid):
     """
     Update discharge case WITH UNIVERSAL AUDIT SYSTEM (Tier 3)
@@ -185,7 +201,7 @@ def discharge_update(request, usubjid):
             'current_version': discharge_case.version,
         }
         
-        return render(request, 'studies/study_43en/CRF/patient/discharge_form.html', context)
+        return render(request, 'studies/study_43en/patient/form/discharge_form.html', context)
     
     #  POST - USE UNIVERSAL AUDIT SYSTEM (Tier 3)
     logger.info(" Using Universal Audit System (Tier 3)")
@@ -227,7 +243,7 @@ def discharge_update(request, usubjid):
         main_instance=discharge_case,
         forms_config=forms_config,
         save_callback=save_callback,
-        template_name='studies/study_43en/CRF/patient/discharge_form.html',
+        template_name='studies/study_43en/patient/form/discharge_form.html',
         redirect_url=reverse('study_43en:patient_detail', kwargs={'usubjid': usubjid}),
         extra_context={
             'screening_case': screening_case,
@@ -246,7 +262,13 @@ def discharge_update(request, usubjid):
 
 @login_required
 @require_crf_view('disch_case', redirect_to='study_43en:patient_list')
-@audit_log(model_name='DISCHARGECASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='DISCHARGECASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def discharge_view(request, usubjid):
     """
     View discharge case (read-only)
@@ -295,4 +317,4 @@ def discharge_view(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/discharge_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/discharge_form.html', context)

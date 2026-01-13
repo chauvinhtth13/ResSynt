@@ -19,6 +19,7 @@ from backends.studies.study_43en.models.contact import (
     ENR_CONTACT,
     SAM_CONTACT
 )
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 
 # Import audit utilities
 from backends.audit_logs.utils.decorators import audit_log
@@ -128,7 +129,7 @@ def contact_sample_collection_list(request, usubjid):
     
     logger.info(f" Loaded {samples.count()} contact samples")
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_sample_collection_list.html', context)
+    return render(request, 'studies/study_43en/contact/list/contact_sample_collection_list.html', context)
 
 
 # ==========================================
@@ -137,7 +138,13 @@ def contact_sample_collection_list(request, usubjid):
 
 @login_required
 @require_crf_add('sam_contact', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTSAMPLECOLLECTION', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTSAMPLECOLLECTION',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contact_sample_collection_create(request, usubjid, sample_type):
     """
     Create new contact sample collection (NO AUDIT)
@@ -221,7 +228,7 @@ def contact_sample_collection_create(request, usubjid, sample_type):
             'is_readonly': False,
             'selected_site_id': screening_contact.SITEID,
         }
-        return render(request, 'studies/study_43en/CRF/contact/contact_sample_collection_form.html', context)
+        return render(request, 'studies/study_43en/contact/form/contact_sample_collection_form.html', context)
     
     # GET - Show blank form
     logger.info(" Showing blank form for contact sample")
@@ -240,7 +247,7 @@ def contact_sample_collection_create(request, usubjid, sample_type):
         'selected_site_id': screening_contact.SITEID,
     }
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_sample_collection_form.html', context)
+    return render(request, 'studies/study_43en/contact/form/contact_sample_collection_form.html', context)
 
 
 # ==========================================
@@ -249,7 +256,13 @@ def contact_sample_collection_create(request, usubjid, sample_type):
 
 @login_required
 @require_crf_change('sam_contact', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTSAMPLECOLLECTION', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTSAMPLECOLLECTION',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contact_sample_collection_update(request, usubjid, sample_type):
     """
     Update contact sample collection WITH UNIVERSAL AUDIT SYSTEM (Tier 1)
@@ -299,7 +312,7 @@ def contact_sample_collection_update(request, usubjid, sample_type):
             'current_version': sample.version,
         }
         
-        return render(request, 'studies/study_43en/CRF/contact/contact_sample_collection_form.html', context)
+        return render(request, 'studies/study_43en/contact/form/contact_sample_collection_form.html', context)
     
     #  POST - USE UNIVERSAL AUDIT SYSTEM (Tier 1)
     logger.info(" Using Universal Audit System (Tier 1) for contact sample")
@@ -308,7 +321,7 @@ def contact_sample_collection_update(request, usubjid, sample_type):
         request=request,
         instance=sample,
         form_class=ContactSampleCollectionForm,
-        template_name='studies/study_43en/CRF/contact/contact_sample_collection_form.html',
+        template_name='studies/study_43en/contact/form/contact_sample_collection_form.html',
         redirect_url=reverse('study_43en:contact_sample_collection_list', kwargs={'usubjid': usubjid}),
         extra_context={
             'sample': sample,
@@ -329,7 +342,13 @@ def contact_sample_collection_update(request, usubjid, sample_type):
 
 @login_required
 @require_crf_view('sam_contact', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTSAMPLECOLLECTION', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTSAMPLECOLLECTION',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contact_sample_collection_view(request, usubjid, sample_type):
     """
     View contact sample in read-only mode
@@ -381,4 +400,4 @@ def contact_sample_collection_view(request, usubjid, sample_type):
         'selected_site_id': screening_contact.SITEID,
     }
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_sample_collection_form.html', context)
+    return render(request, 'studies/study_43en/contact/form/contact_sample_collection_form.html', context)

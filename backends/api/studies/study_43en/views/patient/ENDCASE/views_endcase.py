@@ -25,6 +25,10 @@ from backends.audit_logs.utils.permission_decorators import (
     check_instance_site_access,
 )
 
+# Import models for audit
+from backends.studies.study_43en.models.patient import SCR_CASE
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
+
 # Import helpers
 from .helpers import (
     get_endcase_with_related,
@@ -40,7 +44,13 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @require_crf_add('endcasecrf', redirect_to='study_43en:patient_list')
-@audit_log(model_name='ENDCASECRF', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENDCASECRF',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def endcase_create(request, usubjid):
     """
     Create new end case CRF (NO AUDIT)
@@ -76,7 +86,7 @@ def endcase_create(request, usubjid):
         return process_crf_create(
             request=request,
             form_class=EndCaseCRFForm,
-            template_name='studies/study_43en/CRF/patient/endcase_form.html',
+            template_name='studies/study_43en/patient/form/endcase_form.html',
             redirect_url=reverse('study_43en:patient_detail', kwargs={'usubjid': usubjid}),
             pre_save_callback=pre_save,
             extra_context={
@@ -114,7 +124,7 @@ def endcase_create(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/endcase_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/endcase_form.html', context)
 
 
 # ==========================================
@@ -123,7 +133,13 @@ def endcase_create(request, usubjid):
 
 @login_required
 @require_crf_change('endcasecrf', redirect_to='study_43en:patient_list')
-@audit_log(model_name='ENDCASECRF', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENDCASECRF',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def endcase_update(request, usubjid):
     """
     Update end case CRF WITH UNIVERSAL AUDIT SYSTEM (Tier 1)
@@ -168,7 +184,7 @@ def endcase_update(request, usubjid):
             'current_version': endcase.version,
         }
         
-        return render(request, 'studies/study_43en/CRF/patient/endcase_form.html', context)
+        return render(request, 'studies/study_43en/patient/form/endcase_form.html', context)
     
     #  POST - USE UNIVERSAL AUDIT SYSTEM (Tier 1)
     logger.info(" Using Universal Audit System (Tier 1)")
@@ -178,7 +194,7 @@ def endcase_update(request, usubjid):
         request=request,
         instance=endcase,
         form_class=EndCaseCRFForm,
-        template_name='studies/study_43en/CRF/patient/endcase_form.html',
+        template_name='studies/study_43en/patient/form/endcase_form.html',
         redirect_url=reverse('study_43en:patient_detail', kwargs={'usubjid': usubjid}),
         extra_context={
             'endcase': endcase,
@@ -196,7 +212,13 @@ def endcase_update(request, usubjid):
 
 @login_required
 @require_crf_view('endcasecrf', redirect_to='study_43en:patient_list')
-@audit_log(model_name='ENDCASECRF', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENDCASECRF',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def endcase_view(request, usubjid):
     """
     View end case CRF in read-only mode
@@ -242,4 +264,4 @@ def endcase_view(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/endcase_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/endcase_form.html', context)

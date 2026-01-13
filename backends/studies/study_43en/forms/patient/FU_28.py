@@ -69,12 +69,14 @@ class FollowUpCaseForm(forms.ModelForm):
         ]
         widgets = {
             'EvaluateDate': forms.DateInput(
+                format='%d/%m/%Y',
                 attrs={
                     'class': 'datepicker form-control',
                     'placeholder': 'DD/MM/YYYY'
                 }
             ),
             'DeathDate': forms.DateInput(
+                format='%d/%m/%Y',
                 attrs={
                     'class': 'datepicker form-control',
                     'placeholder': 'DD/MM/YYYY'
@@ -141,6 +143,12 @@ class FollowUpCaseForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Set input_formats for date fields (DD/MM/YYYY)
+        date_fields = ['EvaluateDate', 'DeathDate']
+        for field_name in date_fields:
+            if field_name in self.fields:
+                self.fields[field_name].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         # Make all fields optional by default (validation will be in clean())
         radio_fields = ['EvaluatedAtDay28', 'Rehospitalized', 'Dead', 'Antb_Usage', 'Func_Status']
@@ -213,6 +221,7 @@ class RehospitalizationForm(forms.ModelForm):
                 }
             ),
             'ReHospDate': forms.DateInput(
+                format='%d/%m/%Y',
                 attrs={
                     'class': 'datepicker form-control',
                     'placeholder': 'DD/MM/YYYY'
@@ -251,6 +260,10 @@ class RehospitalizationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Episode is auto-generated, not required from user
         self.fields['REHOSP_No'].required = False
+        
+        # Set input_formats for date field (DD/MM/YYYY)
+        if 'ReHospDate' in self.fields:
+            self.fields['ReHospDate'].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         # Make all fields optional (will be validated if row has data)
         for field_name in self.fields:

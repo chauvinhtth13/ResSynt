@@ -23,6 +23,7 @@ from backends.studies.study_43en.models.patient import (
     LAB_Microbiology,
     AntibioticSensitivity,
 )
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 
 # Import forms
 from backends.studies.study_43en.forms.patient.LAB_antibiotic_sensitivity import (
@@ -105,7 +106,13 @@ def get_culture_with_tests(request, usubjid, culture_id):
 
 @login_required
 @require_crf_view('antibioticsensitivity', redirect_to='study_43en:patient_list')
-@audit_log(model_name='ANTIBIOTIC_SENSITIVITY', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ANTIBIOTIC_SENSITIVITY',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def antibiotic_list(request, usubjid, culture_id):
     """
     Display antibiotic sensitivity tests for a specific culture
@@ -529,7 +536,7 @@ def antibiotic_list(request, usubjid, culture_id):
                 'edit_post_data': dict(request.POST.items()),  # Pass POST data for re-submit
             }
             
-            return render(request, 'studies/study_43en/CRF/patient/antibiotic_sensitivity_list.html', context)
+            return render(request, 'studies/study_43en/patient/form/antibiotic_sensitivity_list.html', context)
         
         # STEP 5: Reasons valid → save with audit
         sanitized_reasons = validation_result.get('sanitized_reasons', reasons_data)
@@ -656,7 +663,7 @@ def antibiotic_list(request, usubjid, culture_id):
     }
     
     logger.info(f" Loaded {tests.count()} antibiotic tests for {culture.LAB_CULTURE_ID}")
-    return render(request, 'studies/study_43en/CRF/patient/antibiotic_sensitivity_list.html', context)
+    return render(request, 'studies/study_43en/patient/form/antibiotic_sensitivity_list.html', context)
 
 #  NEW: Add "Other" Antibiotic (AJAX)
 @login_required
@@ -756,7 +763,13 @@ def antibiotic_create_other(request, usubjid, culture_id):
 
 @login_required
 @require_crf_add('antibioticsensitivity', redirect_to='study_43en:patient_list')
-@audit_log(model_name='ANTIBIOTIC_SENSITIVITY', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ANTIBIOTIC_SENSITIVITY',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def antibiotic_create(request, usubjid, culture_id):
     """
     Add antibiotic sensitivity tests using inline formset
@@ -840,7 +853,7 @@ def antibiotic_create(request, usubjid, culture_id):
         'selected_site_id': screening_case.SITEID,
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/LAB/antibiotic_sensitivity_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/LAB/antibiotic_sensitivity_form.html', context)
 
 
 # ==========================================
@@ -849,7 +862,13 @@ def antibiotic_create(request, usubjid, culture_id):
 
 @login_required
 @require_crf_change('antibioticsensitivity', redirect_to='study_43en:patient_list')
-@audit_log(model_name='ANTIBIOTIC_SENSITIVITY', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ANTIBIOTIC_SENSITIVITY',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def antibiotic_update(request, usubjid, culture_id, test_id):
     """
     Update antibiotic sensitivity test WITH UNIVERSAL AUDIT SYSTEM
@@ -894,7 +913,7 @@ def antibiotic_update(request, usubjid, culture_id, test_id):
         request=request,
         instance=test,
         form_class=AntibioticSensitivityForm,
-        template_name='studies/study_43en/CRF/patient/antibiotic_sensitivity_list.html',
+        template_name='studies/study_43en/patient/form/antibiotic_sensitivity_list.html',
         redirect_url=reverse('study_43en:antibiotic_list', kwargs={
             'usubjid': usubjid,
             'culture_id': culture_id
@@ -1027,4 +1046,4 @@ def antibiotic_statistics(request, usubjid):
     }
     
     logger.info(f" Generated statistics: {stats['total_tests']} tests analyzed")
-    return render(request, 'studies/study_43en/CRF/patient/antibiotic_statistics.html', context)
+    return render(request, 'studies/study_43en/patient/list/antibiotic_statistics.html', context)

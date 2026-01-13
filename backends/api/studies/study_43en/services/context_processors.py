@@ -100,9 +100,11 @@ def upcoming_appointments(request):
     
     # ==========================================
     # SLOW PATH: Database operations (only for study pages)
+    # 🚀 OPTIMIZED: Use direct query instead of get_filtered_queryset
     # ==========================================
     from django.conf import settings
     from django.db import connections
+    from django.core.cache import cache
     
     # Check if study database is configured
     if 'db_study_43en' not in settings.DATABASES:
@@ -115,7 +117,6 @@ def upcoming_appointments(request):
         return _EMPTY_NOTIFICATIONS
     
     from backends.studies.study_43en.models.schedule import FollowUpStatus
-    from backends.studies.study_43en.utils.site_utils import get_site_filter_params, get_filtered_queryset
     
     # ==========================================
     # QUERY PARAMETERS
@@ -123,25 +124,26 @@ def upcoming_appointments(request):
     today = date.today()
     upcoming_date = today + timedelta(days=3)
     
-    #  Use proper site filtering from middleware
-    site_filter, filter_type = get_site_filter_params(request)
-    
     #  Get read notifications from session
     read_notifications = request.session.get('read_notifications', [])
     
+    # 🚀 Cache key for notifications (per user, per day)
+    user_id = request.user.id
+    cache_key = f"notifications_43en_{user_id}_{today.isoformat()}"
+    
     # ==========================================
-    # QUERY FollowUpStatus WITH SITE FILTERING
+    # QUERY FollowUpStatus - DIRECT QUERY (skip cache overhead)
     # ==========================================
     try:
-        #  Use get_filtered_queryset to match dashboard logic
-        followups = get_filtered_queryset(FollowUpStatus, site_filter, filter_type)
-        
-        # Filter: upcoming within 3 days, not completed
-        followups = followups.filter(
+        # 🚀 Direct query - no get_filtered_queryset to avoid cache load
+        # ⚠️ NOTE: FollowUpStatus has NO SITEID field - it's a denormalized table
+        followups = FollowUpStatus.objects.using('db_study_43en').filter(
             EXPECTED_DATE__gte=today,
             EXPECTED_DATE__lte=upcoming_date,
-            STATUS__in=['UPCOMING', 'LATE']  # Exclude COMPLETED and MISSED
-        ).order_by('EXPECTED_DATE', 'USUBJID')
+            STATUS__in=['UPCOMING', 'LATE']
+        ).only(
+            'USUBJID', 'VISIT', 'EXPECTED_DATE', 'STATUS', 'SUBJECT_TYPE', 'PHONE', 'INITIAL'
+        ).order_by('EXPECTED_DATE', 'USUBJID')[:50]  # Limit to 50 notifications
         
     except Exception as e:
         # Fallback if query fails
@@ -243,9 +245,6 @@ def upcoming_appointments(request):
         'upcoming_count': len(upcoming),
         'unread_count': unread_count,
         'upcoming_patients': upcoming,
-        'site_filtered_notifications': True,
-        'notification_site_filter': site_filter,
-        'notification_filter_type': filter_type
     }
 
 
@@ -257,7 +256,8 @@ def upcoming_appointments(request):
 def dashboard_stats(request):
     """
     Provide quick statistics for dashboard
-    Only computed if user is authenticated and on dashboard page
+    
+    🚀 OPTIMIZED: Only computed on DASHBOARD page, not on CRF forms
     
     Returns:
         dict: patient_count, contact_count, pending_followups
@@ -265,8 +265,18 @@ def dashboard_stats(request):
     if not request.user.is_authenticated:
         return {}
     
-    # Only compute for dashboard page to avoid overhead
-    if not request.path.startswith('/studies/43en/'):
+    # 🚀 CRITICAL: Only compute for actual dashboard page, NOT for all /studies/43en/ paths
+    # This prevents expensive queries on every CRF form load
+    path = request.path
+    
+    # Only run on dashboard pages
+    is_dashboard = (
+        path == '/studies/43en/' or 
+        path == '/studies/43en/dashboard/' or
+        path.endswith('/dashboard/') and '/studies/43en/' in path
+    )
+    
+    if not is_dashboard:
         return {}
     
     # Check if study database is configured
@@ -286,15 +296,35 @@ def dashboard_stats(request):
         from backends.studies.study_43en.models.patient import SCR_CASE
         from backends.studies.study_43en.models.contact import SCR_CONTACT
         from backends.studies.study_43en.models.schedule import FollowUpStatus
-        from backends.studies.study_43en.utils.site_utils import get_site_filter_params, get_filtered_queryset
         
-        #  Use proper site filtering from middleware
-        site_filter, filter_type = get_site_filter_params(request)
+        # 🚀 OPTIMIZED: Direct count queries instead of loading all objects
+        # Get site filter from middleware context
+        selected_site_id = getattr(request, 'selected_site_id', 'all')
+        can_access_all = getattr(request, 'can_access_all_sites', False)
+        user_sites = getattr(request, 'user_sites', [])
         
-        # Patient count with site filtering
-        patient_count = get_filtered_queryset(SCR_CASE, site_filter, filter_type).filter(is_confirmed=True).count()
-        contact_count = get_filtered_queryset(SCR_CONTACT, site_filter, filter_type).count()
-        pending_followups = get_filtered_queryset(FollowUpStatus, site_filter, filter_type).filter(
+        # Build site filter
+        if selected_site_id and selected_site_id != 'all':
+            site_filter = {'SITEID': selected_site_id}
+        elif can_access_all:
+            site_filter = {}  # No filter - see all
+        elif user_sites:
+            site_filter = {'SITEID__in': list(user_sites)}
+        else:
+            site_filter = {'SITEID__in': []}  # No access
+        
+        # Direct COUNT queries - no bulk caching
+        patient_count = SCR_CASE.objects.using('db_study_43en').filter(
+            is_confirmed=True, **site_filter
+        ).count()
+        
+        contact_count = SCR_CONTACT.objects.using('db_study_43en').filter(
+            **site_filter
+        ).count()
+        
+        # ⚠️ NOTE: FollowUpStatus does NOT have SITEID field
+        # It's a denormalized table - no site filtering needed here
+        pending_followups = FollowUpStatus.objects.using('db_study_43en').filter(
             STATUS__in=['UPCOMING', 'LATE']
         ).count()
         

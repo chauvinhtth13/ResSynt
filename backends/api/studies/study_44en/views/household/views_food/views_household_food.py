@@ -24,6 +24,7 @@ from backends.studies.study_44en.models.household import (
     HH_FoodFrequency,
     HH_FoodSource
 )
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 
 # Import forms
 from backends.studies.study_44en.forms.household import (
@@ -208,7 +209,13 @@ def household_food_create(request, hhid):
 
 @login_required
 @require_crf_change('hh_foodfrequency')
-@audit_log(model_name='HH_FOODFREQUENCY', get_patient_id_from='hhid')
+@audit_log(
+    model_name='HH_FOODFREQUENCY',
+    get_patient_id_from='hhid',
+    patient_model=HH_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def household_food_update(request, hhid):
     """
     Update food data WITH UNIVERSAL AUDIT SYSTEM (Tier 2)

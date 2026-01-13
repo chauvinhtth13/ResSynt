@@ -1,0 +1,244 @@
+{% extends 'studies\study_43en\home_dashboard.html' %}
+{% load static i18n %}
+
+{% block dashboard_css %}
+{% include 'studies/study_43en/includes/crf_styles.html' %}
+{% endblock %}
+
+{% block title %}{% trans "Screening List - Study 43EN" %}{% endblock %}
+
+
+{% block dashboard_content %}
+<div class="card">
+  <div class="card-header bg-patient-gradient">
+    <div class="d-flex justify-content-between align-items-center">
+      <h3 class="card-title text-white mb-0">
+        <i class="fas fa-user-md"></i>
+        {% trans "Danh sách bệnh nhân sàng lọc 43EN" %}
+      </h3>
+      <div class="card-tools">
+        {% if perms.study_43en.add_scr_case %}
+        <button type="button" class="btn btn-light btn-sm" data-toggle="modal" data-target="#siteSelectionModal">
+          <i class="fas fa-plus-circle me-1"></i> {% trans "Thêm mới" %}
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div class="card-body">
+    {% if total_cases == 0 %}
+      <div class="alert alert-info text-center">
+        <h4><i class="fas fa-info-circle"></i> {% trans "Chưa có bệnh nhân nào!" %}</h4>
+        <p>{% trans "Hiện tại chưa có bệnh nhân nào được sàng lọc." %}</p>
+        {% if perms.study_43en.add_scr_case %}
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#siteSelectionModal">
+          <i class="fas fa-plus-circle"></i> {% trans "Thêm mới sàng lọc" %}
+        </button>
+        {% endif %}
+      </div>
+    {% else %}
+      <!-- Search & Filter -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <form method="get" class="d-flex">
+            <input type="text" name="q" class="form-control" 
+                   placeholder="{% trans 'Tìm kiếm SCRID, USUBJID...' %}" 
+                   value="{{ query }}">
+            <button type="submit" class="btn btn-primary ms-2">
+              <i class="fas fa-search"></i> {% trans "Tìm" %}
+            </button>
+          </form>
+        </div>
+        <div class="col-md-6 text-end">
+          <span class="badge bg-info">
+            {% trans "Tổng số:" %} {{ total_cases }}
+          </span>
+          <span class="badge bg-success">
+            {% trans "Đủ điều kiện:" %} {{ eligible_cases }}
+          </span>
+        </div>
+      </div>
+
+      <div class="table-outline-wrapper">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover table-patient">
+            <thead>
+                <tr>
+                    <th class="text-center">{% trans "Mã sàng lọc" %}</th>
+                    <th class="text-center">{% trans "Mã bệnh nhân" %}</th>
+                    <th class="text-center">{% trans "Chữ cái đầu" %}</th>
+                    <th class="text-center">{% trans "Ngày sàng lọc" %}</th>
+                    <th class="text-center">{% trans "Trạng thái" %}</th>
+                    <th class="text-center" width="150">{% trans "Thao tác" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for case in page_obj %}
+            <tr>
+              <td class="text-center">
+                <strong>{{ case.SCRID }}</strong>
+              </td>
+              <td class="text-center">
+                <span>{{ case.USUBJID|default:"-" }}</span>
+              </td>
+              <td class="text-center">
+                {{ case.INITIAL|default:"-" }}
+              </td>
+              <td class="text-center">
+                {{ case.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}
+              </td>
+              <td class="text-center">
+                {% if case.is_confirmed %}
+                  <span class="badge bg-success">
+                    <i class="fas fa-check-circle"></i> {% trans "Đủ điều kiện" %}
+                  </span>
+                {% else %}
+                  <span class="badge bg-danger">
+                    <i class="fas fa-times-circle"></i> {% trans "Không đủ điều kiện" %}
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="{% url 'study_43en:screening_case_view' case.SCRID %}" 
+                     class="btn btn-info btn-view-screening" 
+                     data-scrid="{{ case.SCRID }}"
+                     title="{% trans 'Xem chi tiết' %}">
+                    <i class="fas fa-eye"></i> {% trans "View" %}
+                  </a>
+                  
+                  {% if perms.study_43en.change_scr_case %}
+                  <a href="{% url 'study_43en:screening_case_update' case.SCRID %}" 
+                     class="btn btn-warning btn-edit-screening" 
+                     data-scrid="{{ case.SCRID }}"
+                     title="{% trans 'Chỉnh sửa' %}">
+                    <i class="fas fa-edit"></i> {% trans "Edit" %}
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">
+                  {% trans "Đầu" %}
+                </a>
+              </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active">
+                  <span class="page-link">{{ num }}</span>
+                </li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">
+                    {{ num }}
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
+                  {% trans "Cuối" %}
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- Include Site Selection Modal -->
+{% include 'studies/study_43en/includes/site_selection_modal.html' %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'base/js/jquery-3.7.1.min.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}">
+(function() {
+  'use strict';
+  
+  if (window.screeningListInitialized) {
+    console.warn('[ScreeningList] Already initialized, skipping...');
+    return;
+  }
+  window.screeningListInitialized = true;
+  
+  $(document).ready(function() {
+    
+    // Test if modal exists
+    console.log('[ScreeningList] Modal element exists:', $('#siteSelectionModal').length > 0);
+    
+    // Manual modal trigger - ALWAYS use this instead of data-toggle
+    $(document).on('click', '[data-target="#siteSelectionModal"]', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('[ScreeningList] Create button clicked');
+      console.log('[ScreeningList] Modal element exists:', $('#siteSelectionModal').length);
+      console.log('[ScreeningList] jQuery version:', $.fn.jquery);
+      console.log('[ScreeningList] Bootstrap modal available:', typeof $.fn.modal);
+      
+      // Force show modal
+      if (typeof $.fn.modal !== 'undefined') {
+        console.log('[ScreeningList] Showing modal...');
+        $('#siteSelectionModal').modal('show');
+      } else {
+        console.error('[ScreeningList] Bootstrap modal not available!');
+        alert('Modal system not loaded. Please refresh the page.');
+      }
+      
+      return false;
+    });
+    
+    //  FORCE NAVIGATION - Bypass all handlers
+    $(document).on('click', '.btn-edit-screening, .btn-view-screening', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      var href = $(this).attr('href');
+      var scrid = $(this).data('scrid');
+      var action = $(this).hasClass('btn-edit-screening') ? 'Edit' : 'View';
+      
+      console.log(`[ScreeningList] ${action} clicked:`, {
+        scrid: scrid,
+        href: href
+      });
+      
+      //  FORCE navigation
+      console.log(`[ScreeningList] Force navigating to: ${href}`);
+      window.location.href = href;
+      
+      return false;
+    });
+    
+    // Row hover
+    $('tbody tr').hover(
+      function() { $(this).addClass('table-active'); },
+      function() { $(this).removeClass('table-active'); }
+    );
+    
+    console.log('[ScreeningList] Initialized successfully');
+  });
+  
+})();
+</script>
+{% endblock %}

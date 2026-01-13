@@ -21,6 +21,7 @@ from django.urls import reverse
 
 from backends.studies.study_44en.models.individual import Individual
 from backends.studies.study_44en.forms.individual import IndividualForm
+from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 
 # Import audit utilities
 from backends.audit_logs.utils.detector import ChangeDetector
@@ -212,7 +213,13 @@ def individual_create(request):
 
 @login_required
 @require_crf_change('individual')
-@audit_log(model_name='Individual', get_patient_id_from='subjectid')
+@audit_log(
+    model_name='Individual',
+    get_patient_id_from='subjectid',
+    patient_model=Individual,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def individual_update(request, subjectid):
     """
     UPDATE with MANUAL AUDIT handling
