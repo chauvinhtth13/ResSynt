@@ -20,6 +20,9 @@ from django.contrib.auth import get_user_model
 from backends.studies.study_44en.models import AuditLog, AuditLogDetail
 from backends.audit_logs.utils.permission_decorators import require_crf_view
 
+# Explicit database alias for reliable routing
+DB_ALIAS = 'db_study_44en'
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -43,8 +46,8 @@ def audit_log_list(request):
     logger.info(f"=== AUDIT LOG LIST (44EN) ===")
     logger.info(f"User: {request.user.username}")
     
-    # Get all logs - database routing handled automatically
-    logs = AuditLog.objects.all()
+    # Get all logs with explicit database routing
+    logs = AuditLog.objects.using(DB_ALIAS).all()
     
     filters = {}
     
@@ -117,8 +120,8 @@ def audit_log_list(request):
     
     logger.info(f"Found {paginator.count} audit logs")
     
-    # Get filter options
-    user_ids = AuditLog.objects\
+    # Get filter options (with explicit DB routing)
+    user_ids = AuditLog.objects.using(DB_ALIAS)\
         .values_list('user_id', flat=True)\
         .distinct()
     
@@ -126,12 +129,12 @@ def audit_log_list(request):
         .filter(id__in=list(user_ids))\
         .order_by('username')
     
-    actions = AuditLog.objects\
+    actions = AuditLog.objects.using(DB_ALIAS)\
         .values_list('action', flat=True)\
         .distinct()\
         .order_by('action')
     
-    model_names = AuditLog.objects\
+    model_names = AuditLog.objects.using(DB_ALIAS)\
         .values_list('model_name', flat=True)\
         .distinct()\
         .order_by('model_name')
@@ -160,11 +163,15 @@ def audit_log_detail(request, log_id):
     logger.info(f"=== AUDIT LOG DETAIL (44EN) ===")
     logger.info(f"User: {request.user.username}, Log ID: {log_id}")
     
-    # Database routing handled automatically
-    log = get_object_or_404(AuditLog, id=log_id)
+    # Use explicit database routing
+    try:
+        log = AuditLog.objects.using(DB_ALIAS).get(id=log_id)
+    except AuditLog.DoesNotExist:
+        messages.error(request, 'Audit log không tồn tại!')
+        return redirect('study_44en:audit_log_list')
     
-    # Get change details
-    details = AuditLogDetail.objects.filter(audit_log=log).order_by('field_name')
+    # Get change details (with explicit DB routing)
+    details = AuditLogDetail.objects.using(DB_ALIAS).filter(audit_log=log).order_by('field_name')
     
     changes = []
     for detail in details:

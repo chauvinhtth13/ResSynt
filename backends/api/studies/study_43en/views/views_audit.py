@@ -20,10 +20,10 @@ from django.contrib.auth import get_user_model
 
 from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 from backends.audit_logs.utils.permission_decorators import require_crf_view
-from backends.studies.study_43en.utils.site_utils import (
-    get_site_filter_params,
-    get_filtered_queryset
-)
+from backends.studies.study_43en.utils.site_utils import get_site_filter_params
+
+# Explicit database alias for reliable routing
+DB_ALIAS = 'db_study_43en'
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -62,9 +62,19 @@ def audit_log_list(request):
     
     logger.info(f" Site filter: {site_filter}, Type: {filter_type}")
     
-    # Get filtered queryset based on site access
-    # Database routing is handled automatically by TenantRouter
-    logs = get_filtered_queryset(AuditLog, site_filter, filter_type)
+    # Get filtered queryset with explicit database routing
+    # NOTE: AuditLog doesn't have site_objects manager, so we filter SITEID directly
+    if filter_type == 'all':
+        logs = AuditLog.objects.using(DB_ALIAS).all()
+    elif filter_type == 'single':
+        logs = AuditLog.objects.using(DB_ALIAS).filter(SITEID=site_filter)
+    elif filter_type == 'multiple':
+        if site_filter:
+            logs = AuditLog.objects.using(DB_ALIAS).filter(SITEID__in=site_filter)
+        else:
+            logs = AuditLog.objects.using(DB_ALIAS).none()
+    else:
+        logs = AuditLog.objects.using(DB_ALIAS).all()
     
     # ==========================================
     # 3. APPLY USER FILTERS
@@ -154,8 +164,8 @@ def audit_log_list(request):
     # 5. GET FILTER OPTIONS (DISTINCT & SORTED)
     # ==========================================
     
-    # Get unique user_ids from audit logs
-    user_ids = AuditLog.objects\
+    # Get unique user_ids from audit logs (with explicit DB routing)
+    user_ids = AuditLog.objects.using(DB_ALIAS)\
         .values_list('user_id', flat=True)\
         .distinct()
     
@@ -164,14 +174,14 @@ def audit_log_list(request):
         .filter(id__in=list(user_ids))\
         .order_by('username')
     
-    #  Get unique actions (sorted)
-    actions = AuditLog.objects\
+    # Get unique actions (sorted) - with explicit DB routing
+    actions = AuditLog.objects.using(DB_ALIAS)\
         .values_list('action', flat=True)\
         .distinct()\
         .order_by('action')
     
-    #  Get unique model names (sorted)
-    model_names = AuditLog.objects\
+    # Get unique model names (sorted) - with explicit DB routing
+    model_names = AuditLog.objects.using(DB_ALIAS)\
         .values_list('model_name', flat=True)\
         .distinct()\
         .order_by('model_name')
@@ -220,8 +230,12 @@ def audit_log_detail(request, log_id):
     # ==========================================
     # 1. GET AUDIT LOG
     # ==========================================
-    # Database routing is handled automatically by TenantRouter
-    log = get_object_or_404(AuditLog, id=log_id)
+    # Use explicit database routing
+    try:
+        log = AuditLog.objects.using(DB_ALIAS).get(id=log_id)
+    except AuditLog.DoesNotExist:
+        messages.error(request, 'Audit log không tồn tại!')
+        return redirect('study_43en:audit_log_list')
     
     logger.info(f"📄 Log: {log.action} on {log.model_name} by {log.username}")
     
@@ -255,7 +269,7 @@ def audit_log_detail(request, log_id):
     # ==========================================
     # 3. GET CHANGE DETAILS
     # ==========================================
-    details = AuditLogDetail.objects.filter(audit_log=log).order_by('field_name')
+    details = AuditLogDetail.objects.using(DB_ALIAS).filter(audit_log=log).order_by('field_name')
     
     changes = []
     for detail in details:
