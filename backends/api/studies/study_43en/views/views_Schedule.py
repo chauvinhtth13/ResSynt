@@ -223,7 +223,7 @@ def followup_tracking_list(request):
         'upcoming_count': upcoming_count,
     }
     
-    return render(request, 'studies/study_43en/CRF/base/followup_tracking_list.html', context)
+    return render(request, 'studies/study_43en/base/followup_tracking_list.html', context)
 
 
 @login_required

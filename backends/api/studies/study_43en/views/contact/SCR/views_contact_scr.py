@@ -190,7 +190,7 @@ def screening_contact_create(request):
                         max_num = num
             
             instance.SCRID = f"CS-{siteid}-{max_num + 1:04d}"
-            logger.info(f"📝 Generated Contact SCRID: {instance.SCRID}")
+            logger.info(f" Generated Contact SCRID: {instance.SCRID}")
     
     def post_save(instance):
         """Redirect to enrollment if confirmed"""

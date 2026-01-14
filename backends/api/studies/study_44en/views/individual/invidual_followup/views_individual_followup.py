@@ -142,7 +142,7 @@ def individual_followup_create(request, subjectid):
         
         try:
             with transaction.atomic(using='db_study_44en'):
-                logger.info("📝 Saving follow-up data...")
+                logger.info(" Saving follow-up data...")
                 
                 # Create follow-up record
                 followup = Individual_FollowUp(MEMBERID=individual)
@@ -253,7 +253,7 @@ def individual_followup_update(request, subjectid, followup_id):
     4. Save with audit
     """
     logger.info("=" * 80)
-    logger.info("=== 📝 INDIVIDUAL FOLLOW-UP UPDATE START ===")
+    logger.info("===  INDIVIDUAL FOLLOW-UP UPDATE START ===")
     logger.info("=" * 80)
     logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, FU ID: {followup_id}, Method: {request.method}")
     
@@ -310,12 +310,12 @@ def individual_followup_update(request, subjectid, followup_id):
     # Form field changes (VISIT_TIME, ASSESSED, ASSESSMENT_DATE)
     form_changes = detect_followup_form_field_changes(request, followup)
     all_changes.extend(form_changes)
-    logger.info(f"📝 Form field changes: {len(form_changes)}")
+    logger.info(f" Form field changes: {len(form_changes)}")
     
     # Flat field changes (symptoms, hospitalizations, medications)
     flat_changes = detect_followup_flat_field_changes(request, followup)
     all_changes.extend(flat_changes)
-    logger.info(f"📝 Flat field changes: {len(flat_changes)}")
+    logger.info(f" Flat field changes: {len(flat_changes)}")
     
     # Filter out changes where values are actually the same after normalization
     def normalize_for_compare(val):
@@ -341,7 +341,7 @@ def individual_followup_update(request, subjectid, followup_id):
             logger.info(f"   ⏭️ Skipping {c['field']}: '{old_norm}' == '{new_norm}' (same after normalize)")
     
     all_changes = filtered_changes
-    logger.info(f"📝 TOTAL changes (after normalize filter): {len(all_changes)}")
+    logger.info(f" TOTAL changes (after normalize filter): {len(all_changes)}")
     
     # ===================================
     # STEP 2: No changes → save directly
@@ -349,7 +349,7 @@ def individual_followup_update(request, subjectid, followup_id):
     if not all_changes:
         try:
             with transaction.atomic(using='db_study_44en'):
-                logger.info("📝 No changes detected - saving directly without audit...")
+                logger.info(" No changes detected - saving directly without audit...")
                 
                 # Update VISIT_TIME
                 visit_time = request.POST.get('VISIT_TIME', '').strip()
@@ -470,7 +470,7 @@ def individual_followup_update(request, subjectid, followup_id):
     
     try:
         with transaction.atomic(using='db_study_44en'):
-            logger.info("📝 Saving with audit...")
+            logger.info(" Saving with audit...")
             
             # Update VISIT_TIME
             visit_time = request.POST.get('VISIT_TIME', '').strip()
@@ -529,7 +529,7 @@ def individual_followup_update(request, subjectid, followup_id):
     }
     
     logger.info("=" * 80)
-    logger.info("=== 📝 FOLLOW-UP UPDATE END - Rendering template ===")
+    logger.info("===  FOLLOW-UP UPDATE END - Rendering template ===")
     logger.info("=" * 80)
     
     return render(request, 'studies/study_44en/CRF/individual/followup_form.html', context)

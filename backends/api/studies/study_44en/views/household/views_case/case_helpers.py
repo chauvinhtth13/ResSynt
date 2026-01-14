@@ -71,7 +71,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
             # ===================================
             # 1. SAVE MAIN HOUSEHOLD FORM
             # ===================================
-            logger.info("📝 Step 1: Saving household form...")
+            logger.info(" Step 1: Saving household form...")
             
             household = household_form.save(commit=False)
             set_audit_metadata(household, request.user)
@@ -85,7 +85,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
             # ===================================
             # 2. SAVE PERSONAL DATA (ADDRESS)
             # ===================================
-            logger.info("📝 Step 2: Saving personal data (address)...")
+            logger.info(" Step 2: Saving personal data (address)...")
             
             personal_data = personal_data_form.save(commit=False)
             personal_data.HHID = household
@@ -101,7 +101,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
             # ===================================
             # 3. SAVE MEMBER FORMSET
             # ===================================
-            logger.info("📝 Step 3: Saving members...")
+            logger.info(" Step 3: Saving members...")
             
             saved_members = member_formset.save(commit=False)
             
@@ -117,7 +117,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
             # 4. SAVE AUDIT LOG (if reasons provided)
             # ===================================
             if change_reasons and all_changes:
-                logger.info("📝 Step 4: Saving audit log...")
+                logger.info(" Step 4: Saving audit log...")
                 
                 combined_reason = "; ".join([
                     f"{field}: {reason}" 

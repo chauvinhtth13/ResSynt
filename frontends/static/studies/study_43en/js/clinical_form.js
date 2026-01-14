@@ -447,7 +447,7 @@ console.log(' Clinical form module loaded v3.0');
 
     // ========== UI ENHANCEMENTS ==========
     initUIEnhancements: function() {
-      console.log('🎨 Init UI enhancements...');
+      console.log(' Init UI enhancements...');
 
       // Form dirty detection
       if (!this.state.isReadonly) {

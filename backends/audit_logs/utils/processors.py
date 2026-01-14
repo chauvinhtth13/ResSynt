@@ -230,7 +230,7 @@ class AuditProcessor(BaseAuditProcessor):
             
             #  FIX: Re-initialize form from current POST data
             # This ensures form reflects the LATEST submission, not the original one
-            logger.debug(f"📝 Re-initializing form from POST data")
+            logger.debug(f" Re-initializing form from POST data")
             logger.debug(f"   POST keys: {list(request.POST.keys())[:10]}")
             
             form = form_class(request.POST, instance=instance, **form_kwargs)

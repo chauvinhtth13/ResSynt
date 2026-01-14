@@ -219,7 +219,7 @@ def household_create(request):
 def household_update(request, hhid):
     """Update household with change detection"""
     logger.info("="*80)
-    logger.info(f"=== 📝 HOUSEHOLD UPDATE START ===")
+    logger.info(f"===  HOUSEHOLD UPDATE START ===")
     logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
     logger.info("="*80)
     

@@ -733,7 +733,7 @@ def export_data_page(request):
         'estimated_counts': json.dumps(estimated_counts),  #  Convert to JSON string
     }
     
-    return render(request, 'studies/study_43en/CRF/base/export_data.html', context)
+    return render(request, 'studies/study_43en/base/export_data.html', context)
 
 
 

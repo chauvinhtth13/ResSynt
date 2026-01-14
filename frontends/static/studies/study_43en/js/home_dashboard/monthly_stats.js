@@ -43,6 +43,13 @@
     // ========================================================================
     
     document.addEventListener('DOMContentLoaded', function() {
+        // Only load if on dashboard page with stats chart
+        const chartCanvas = document.getElementById('monthlyChart');
+        if (!chartCanvas) {
+            console.log('[Monthly Stats] Chart canvas not found - skipping load');
+            return;
+        }
+        
         console.log('[Monthly Stats] Initializing...');
         
         // Initialize

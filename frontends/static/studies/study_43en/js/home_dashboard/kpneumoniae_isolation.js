@@ -29,6 +29,13 @@
     // ========================================================================
     
     document.addEventListener('DOMContentLoaded', function() {
+        // Only load if on dashboard page with target container
+        const container = document.getElementById('kpneumoniaeTableContainer');
+        if (!container) {
+            console.log('[K. pneumoniae] Container not found - skipping load');
+            return;
+        }
+        
         console.log('[K. pneumoniae] Initializing...');
         loadKpneumoniaeData();
     });

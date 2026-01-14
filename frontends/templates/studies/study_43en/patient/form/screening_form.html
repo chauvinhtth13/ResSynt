@@ -4,26 +4,26 @@
 
 
 {% block title %}
-  {% if is_readonly %}
-    {% trans "View Screening Information" %}
-  {% elif is_create %}
-    {% trans "Create Patient 43EN" %}
-  {% else %}
-    {% trans "Update Patient 43EN" %}
-  {% endif %}
+ {% if is_readonly %}
+ {% trans "View Screening Information" %}
+ {% elif is_create %}
+ {% trans "Create Patient 43EN" %}
+ {% else %}
+ {% trans "Update Patient 43EN" %}
+ {% endif %}
 {% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
 <li class="breadcrumb-item"><a href="{% url 'study_43en:screening_case_list' %}">{% trans "Screening 43EN" %}</a></li>
 <li class="breadcrumb-item active">
-  {% if is_readonly %}
-    {% trans "View" %}
-  {% elif is_create %}
-    {% trans "Create" %}
-  {% else %}
-    {% trans "Update" %}
-  {% endif %}
+ {% if is_readonly %}
+ {% trans "View" %}
+ {% elif is_create %}
+ {% trans "Create" %}
+ {% else %}
+ {% trans "Update" %}
+ {% endif %}
 </li>
 {% endblock %}
 
@@ -33,652 +33,652 @@
 
 {% block dashboard_content %}
 <div class="row">
-  <div class="col-md-12">
-    <!-- Screening Form Container -->
-    <div class="screening-case-container">
-      <div class="screening-case-header">
-        <i class="fas fa-user-check"></i> {% trans "Screening Form 43EN" %}
-      </div>
-      <div class="screening-case-content">
-        
-        {% if not is_readonly %}
-        <form method="post" id="screeningForm">
-          {% csrf_token %}
-          
-          <!--  Hidden field for optimistic locking -->
-          {{ form.version }}
-          
-          <!--  Basic Information Card -->
-          <div class="card card-default">
-            <div class="card-header">
-              <h3 class="card-title">
-                <i class="fas fa-info-circle"></i>
-                {% trans "Basic Information" %}
-              </h3>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <!--  SCRID - Using form field -->
-                {% if form.SCRID %}
-                <div class="col-md-6">
-                  <div class="form-group {% if not is_create %}required-field{% endif %}">
-                    <label for="{{ form.SCRID.id_for_label }}">{{ form.SCRID.label }}</label>
-                    {{ form.SCRID }}
-                    {% if form.SCRID.help_text %}
-                      <small class="form-text text-muted">{{ form.SCRID.help_text }}</small>
-                    {% endif %}
-                    {% if form.SCRID.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in form.SCRID.errors %}{{ error }}{% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-                {% endif %}
-                
-                <!--  SITEID - Using form field (ALWAYS LOCKED) -->
-                <div class="col-md-6">
-                  <div class="form-group required-field">
-                    <label for="{{ form.SITEID.id_for_label }}">{{ form.SITEID.label }}</label>
-                    <input type="text" 
-                          class="form-control" 
-                          id="{{ form.SITEID.id_for_label }}" 
-                          name="SITEID" 
-                          value="{% if form.instance.SITEID %}{{ form.instance.SITEID }}{% elif current_siteid %}{{ current_siteid }}{% else %}{{ form.SITEID.value }}{% endif %}" 
-                          readonly
-                          disabled
-                          style="background-color: #e9ecef; font-weight: bold;">
-                    <!-- Hidden field to submit value since disabled fields don't submit -->
-                    <input type="hidden" name="SITEID" value="{% if form.instance.SITEID %}{{ form.instance.SITEID }}{% elif current_siteid %}{{ current_siteid }}{% else %}{{ form.SITEID.value }}{% endif %}">
-                    <small class="form-text text-muted">
-                      <i class="fas fa-lock"></i>
-                      {% trans "Site ID is locked and cannot be changed" %}
-                    </small>
-                    {% if form.SITEID.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in form.SITEID.errors %}{{ error }}{% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-                
-                <!--  STUDYID - Using form field -->
-                <div class="col-md-6">
-                  <div class="form-group required-field">
-                    <label for="{{ form.STUDYID.id_for_label }}">{{ form.STUDYID.label }}</label>
-                    {{ form.STUDYID }}
-                    {% if form.STUDYID.help_text %}
-                      <small class="form-text text-muted">{{ form.STUDYID.help_text }}</small>
-                    {% endif %}
-                    {% if form.STUDYID.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in form.STUDYID.errors %}{{ error }}{% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-                
-                <!--  INITIAL - Using form field -->
-                <div class="col-md-6">
-                  <div class="form-group required-field">
-                    <label for="{{ form.INITIAL.id_for_label }}">{{ form.INITIAL.label }}</label>
-                    {{ form.INITIAL }}
-                    {% if form.INITIAL.help_text %}
-                      <small class="form-text text-muted">{{ form.INITIAL.help_text }}</small>
-                    {% endif %}
-                    {% if form.INITIAL.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in form.INITIAL.errors %}{{ error }}{% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-                
-                <!--  SCREENINGFORMDATE - Using form field label -->
-                <div class="col-md-6">
-                  <div class="form-group required-field">
-                    <label for="id_SCREENINGFORMDATE">
-                      {{ form.SCREENINGFORMDATE.label }}
-                    </label>
-                    
-                    {% if is_create %}
-                      <!-- Create mode: Normal input -->
-                      <input type="text" 
-                             name="SCREENINGFORMDATE" 
-                             id="id_SCREENINGFORMDATE"
-                             class="form-control datepicker"
-                             value="{{ form.SCREENINGFORMDATE.value|date:'d/m/Y' }}"
-                             placeholder="DD/MM/YYYY"
-                             data-initial-value="">
-                    {% else %}
-                      <!-- Update mode: Readonly but send value -->
-                      <input type="text" 
-                             name="SCREENINGFORMDATE" 
-                             id="id_SCREENINGFORMDATE"
-                             class="form-control datepicker"
-                             value="{% if form.instance.SCREENINGFORMDATE %}{{ form.instance.SCREENINGFORMDATE|date:'d/m/Y' }}{% endif %}"
-                             placeholder="DD/MM/YYYY"
-                             data-initial-value="{% if form.instance.SCREENINGFORMDATE %}{{ form.instance.SCREENINGFORMDATE|date:'d/m/Y' }}{% endif %}"
-                             readonly>
-                    {% endif %}
-                    
-                    {% if form.SCREENINGFORMDATE.help_text %}
-                      <small class="form-text text-muted">{{ form.SCREENINGFORMDATE.help_text }}</small>
-                    {% endif %}
-                    {% if form.SCREENINGFORMDATE.errors %}
-                      <div class="invalid-feedback d-block">
-                        {{ form.SCREENINGFORMDATE.errors }}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-                
-                <!--  USUBJID (if exists) - Using form field -->
-                {% if form.USUBJID %}
-                  <div class="col-md-6">
-                    <div class="form-group">
-                      <label for="{{ form.USUBJID.id_for_label }}">{{ form.USUBJID.label }}</label>
-                      {{ form.USUBJID }}
-                      {% if form.USUBJID.help_text %}
-                        <small class="form-text text-muted">{{ form.USUBJID.help_text }}</small>
-                      {% endif %}
-                      {% if form.USUBJID.errors %}
-                        <div class="invalid-feedback d-block">
-                          {% for error in form.USUBJID.errors %}{{ error }}{% endfor %}
-                        </div>
-                      {% endif %}
-                    </div>
-                  </div>
-                {% endif %}
-                
-                <!--  SUBJID (if exists) - Using form field -->
-                {% if form.SUBJID %}
-                  <div class="col-md-6">
-                    <div class="form-group">
-                      <label for="{{ form.SUBJID.id_for_label }}">{{ form.SUBJID.label }}</label>
-                      {{ form.SUBJID }}
-                      {% if form.SUBJID.help_text %}
-                        <small class="form-text text-muted">{{ form.SUBJID.help_text }}</small>
-                      {% endif %}
-                      {% if form.SUBJID.errors %}
-                        <div class="invalid-feedback d-block">
-                          {% for error in form.SUBJID.errors %}{{ error }}{% endfor %}
-                        </div>
-                      {% endif %}
-                    </div>
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-          
-          <!--  Eligibility Criteria Card -->
-          <div class="card card-default mt-3">
-            <div class="card-header">
-              <h3 class="card-title">
-                <i class="fas fa-check-circle"></i>
-                {% trans "Eligibility Criteria" %}
-              </h3>
-            </div>
-            <div class="card-body">
-              
-              <!--  Criterion 1: Age > 16 -->
-              <div class="form-group">
-                <label class="control-label">
-                  1. {{ form.UPPER16AGE.label }}
-                </label>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_UPPER16AGE_1" 
-                         name="UPPER16AGE" 
-                         value="1" 
-                         class="custom-control-input" 
-                         {% if form.instance.UPPER16AGE == True %}checked{% endif %} 
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.UPPER16AGE == True %}1{% elif form.instance.UPPER16AGE == False %}0{% else %}{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_UPPER16AGE_1">
-                    {% trans "Yes" %}
-                  </label>
-                </div>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_UPPER16AGE_0" 
-                         name="UPPER16AGE" 
-                         value="0" 
-                         class="custom-control-input" 
-                         {% if form.instance.UPPER16AGE == False or form.instance.UPPER16AGE == None %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.UPPER16AGE == True %}1{% elif form.instance.UPPER16AGE == False %}0{% else %}0{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_UPPER16AGE_0">
-                    {% trans "No" %}
-                  </label>
-                </div>
-                {% if form.UPPER16AGE.help_text %}
-                  <small class="form-text text-muted">{{ form.UPPER16AGE.help_text }}</small>
-                {% endif %}
-              </div>
+ <div class="col-md-12">
+ <!-- Screening Form Container -->
+ <div class="screening-case-container">
+ <div class="screening-case-header">
+ <i class="fas fa-user-check"></i> {% trans "Screening Form 43EN" %}
+ </div>
+ <div class="screening-case-content">
 
-              <!--  Criterion 2: Infection timing -->
-              <div class="form-group">
-                <label class="control-label">
-                  2. {{ form.INFPRIOR2OR48HRSADMIT.label }}
-                </label>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_INFPRIOR2OR48HRSADMIT_1" 
-                         name="INFPRIOR2OR48HRSADMIT" 
-                         value="1" 
-                         class="custom-control-input" 
-                         {% if form.instance.INFPRIOR2OR48HRSADMIT == True %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.INFPRIOR2OR48HRSADMIT == True %}1{% elif form.instance.INFPRIOR2OR48HRSADMIT == False %}0{% else %}{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_INFPRIOR2OR48HRSADMIT_1">
-                    {% trans "Yes" %}
-                  </label>
-                </div>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_INFPRIOR2OR48HRSADMIT_0" 
-                         name="INFPRIOR2OR48HRSADMIT" 
-                         value="0" 
-                         class="custom-control-input" 
-                         {% if form.instance.INFPRIOR2OR48HRSADMIT == False or form.instance.INFPRIOR2OR48HRSADMIT == None %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.INFPRIOR2OR48HRSADMIT == True %}1{% elif form.instance.INFPRIOR2OR48HRSADMIT == False %}0{% else %}0{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_INFPRIOR2OR48HRSADMIT_0">
-                    {% trans "No" %}
-                  </label>
-                </div>
-                {% if form.INFPRIOR2OR48HRSADMIT.help_text %}
-                  <small class="form-text text-muted">{{ form.INFPRIOR2OR48HRSADMIT.help_text }}</small>
-                {% endif %}
-              </div>
+ {% if not is_readonly %}
+ <form method="post" id="screeningForm">
+ {% csrf_token %}
 
-              <!--  Criterion 3: K.pneumoniae isolated -->
-              <div class="form-group">
-                <label class="control-label">
-                  3. {{ form.ISOLATEDKPNFROMINFECTIONORBLOOD.label }}
-                </label>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_ISOLATEDKPNFROMINFECTIONORBLOOD_1" 
-                         name="ISOLATEDKPNFROMINFECTIONORBLOOD" 
-                         value="1" 
-                         class="custom-control-input" 
-                         {% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == True %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == True %}1{% elif form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == False %}0{% else %}{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_ISOLATEDKPNFROMINFECTIONORBLOOD_1">
-                    {% trans "Yes" %}
-                  </label>
-                </div>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_ISOLATEDKPNFROMINFECTIONORBLOOD_0" 
-                         name="ISOLATEDKPNFROMINFECTIONORBLOOD" 
-                         value="0" 
-                         class="custom-control-input" 
-                         {% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == False or form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == None %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == True %}1{% elif form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == False %}0{% else %}0{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_ISOLATEDKPNFROMINFECTIONORBLOOD_0">
-                    {% trans "No" %}
-                  </label>
-                </div>
-                {% if form.ISOLATEDKPNFROMINFECTIONORBLOOD.help_text %}
-                  <small class="form-text text-muted">{{ form.ISOLATEDKPNFROMINFECTIONORBLOOD.help_text }}</small>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+ <!-- Hidden field for optimistic locking -->
+ {{ form.version }}
 
-          <!--  Exclusion Criteria Card -->
-          <div class="card card-default mt-3">
-            <div class="card-header bg-danger text-white">
-              <h3 class="card-title">
-                <i class="fas fa-times-circle"></i>
-                {% trans "Exclusion Criteria" %}
-              </h3>
-            </div>
-            <div class="card-body">
-              
-              <!--  Criterion 4: K.pneumoniae untreated stable -->
-              <div class="form-group">
-                <label class="control-label">
-                  4. {{ form.KPNISOUNTREATEDSTABLE.label }}
-                </label>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_KPNISOUNTREATEDSTABLE_1" 
-                         name="KPNISOUNTREATEDSTABLE" 
-                         value="1" 
-                         class="custom-control-input" 
-                         {% if form.instance.KPNISOUNTREATEDSTABLE == True %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.KPNISOUNTREATEDSTABLE == True %}1{% elif form.instance.KPNISOUNTREATEDSTABLE == False %}0{% else %}{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_KPNISOUNTREATEDSTABLE_1">
-                    {% trans "Yes" %}
-                  </label>
-                </div>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_KPNISOUNTREATEDSTABLE_0" 
-                         name="KPNISOUNTREATEDSTABLE" 
-                         value="0" 
-                         class="custom-control-input" 
-                         {% if form.instance.KPNISOUNTREATEDSTABLE == False or form.instance.KPNISOUNTREATEDSTABLE == None %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.KPNISOUNTREATEDSTABLE == True %}1{% elif form.instance.KPNISOUNTREATEDSTABLE == False %}0{% else %}0{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_KPNISOUNTREATEDSTABLE_0">
-                    {% trans "No" %}
-                  </label>
-                </div>
-                {% if form.KPNISOUNTREATEDSTABLE.help_text %}
-                  <small class="form-text text-muted">{{ form.KPNISOUNTREATEDSTABLE.help_text }}</small>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+ <!-- Basic Information Card -->
+ <div class="card card-default">
+ <div class="card-header">
+ <h3 class="card-title">
+ <i class="fas fa-info-circle"></i>
+ {% trans "Basic Information" %}
+ </h3>
+ </div>
+ <div class="card-body">
+ <div class="row">
+ <!-- SCRID - Using form field -->
+ {% if form.SCRID %}
+ <div class="col-md-6">
+ <div class="form-group {% if not is_create %}required-field{% endif %}">
+ <label for="{{ form.SCRID.id_for_label }}">{{ form.SCRID.label }}</label>
+ {{ form.SCRID }}
+ {% if form.SCRID.help_text %}
+ <small class="form-text text-muted">{{ form.SCRID.help_text }}</small>
+ {% endif %}
+ {% if form.SCRID.errors %}
+ <div class="invalid-feedback d-block">
+ {% for error in form.SCRID.errors %}{{ error }}{% endfor %}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ {% endif %}
 
-          <!--  Consent Card -->
-          <div class="card card-default mt-3">
-            <div class="card-header bg-success text-white">
-              <h3 class="card-title">
-                <i class="fas fa-user-check"></i>
-                {% trans "Study Consent" %}
-              </h3>
-            </div>
-            <div class="card-body">
-              
-              <!--  Criterion 5: Consent -->
-              <div class="form-group" id="consent_field">
-                <label class="control-label">
-                  5. {{ form.CONSENTTOSTUDY.label }}
-                </label>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_CONSENTTOSTUDY_1" 
-                         name="CONSENTTOSTUDY" 
-                         value="1" 
-                         class="custom-control-input" 
-                         {% if form.instance.CONSENTTOSTUDY == True %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.CONSENTTOSTUDY == True %}1{% elif form.instance.CONSENTTOSTUDY == False %}0{% else %}{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_CONSENTTOSTUDY_1">
-                    {% trans "Yes" %}
-                  </label>
-                </div>
-                <div class="custom-control custom-radio">
-                  <input type="radio" 
-                         id="id_CONSENTTOSTUDY_0" 
-                         name="CONSENTTOSTUDY" 
-                         value="0" 
-                         class="custom-control-input" 
-                         {% if form.instance.CONSENTTOSTUDY == False or form.instance.CONSENTTOSTUDY == None %}checked{% endif %}
-                         {% if is_readonly %}disabled{% endif %} 
-                         data-initial-value="{% if form.instance.CONSENTTOSTUDY == True %}1{% elif form.instance.CONSENTTOSTUDY == False %}0{% else %}0{% endif %}"
-                         required>
-                  <label class="custom-control-label" for="id_CONSENTTOSTUDY_0">
-                    {% trans "No" %}
-                  </label>
-                </div>
-                {% if form.CONSENTTOSTUDY.help_text %}
-                  <small class="form-text text-muted">{{ form.CONSENTTOSTUDY.help_text }}</small>
-                {% endif %}
-              </div>
-              
-              <!--  Unrecruited reason -->
-              <div class="form-group">
-                <label for="{{ form.UNRECRUITED_REASON.id_for_label }}">
-                  {{ form.UNRECRUITED_REASON.label }}
-                </label>
-                <textarea class="form-control" 
-                          id="{{ form.UNRECRUITED_REASON.id_for_label }}" 
-                          name="UNRECRUITED_REASON" 
-                          rows="3"
-                          data-initial-value="{{ form.instance.UNRECRUITED_REASON|default:'' }}"
-                          {% if is_readonly %}readonly{% endif %}>{% if form.UNRECRUITED_REASON.value %}{{ form.UNRECRUITED_REASON.value }}{% endif %}</textarea>
-                {% if form.UNRECRUITED_REASON.help_text %}
-                  <small class="form-text text-muted">{{ form.UNRECRUITED_REASON.help_text }}</small>
-                {% endif %}
-                {% if form.UNRECRUITED_REASON.errors %}
-                  <div class="invalid-feedback d-block">
-                    {% for error in form.UNRECRUITED_REASON.errors %}{{ error }}{% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-          
-          <!-- Eligibility Status Display -->
-          <div class="eligibility-status mt-3" style="display: none;">
-            <!-- Will be populated by JavaScript -->
-          </div>
-        
-          
-          <!--  Audit Trail Information -->
-          {% if form.instance.pk and form.instance.last_modified_at %}
-          <div class="card card-default mt-3">
-            <div class="card-header bg-light">
-              <h3 class="card-title">
-                <i class="fas fa-history"></i>
-                {% trans "Audit Trail" %}
-              </h3>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <p class="mb-2">
-                    <strong><i class="fas fa-user-edit mr-1"></i> {% trans "Last Modified By" %}:</strong>
-                    {{ form.instance.last_modified_by_username|default:"Unknown" }}
-                  </p>
-                  <p class="mb-2">
-                    <strong><i class="fas fa-clock mr-1"></i> {% trans "Last Modified At" %}:</strong>
-                    {{ form.instance.last_modified_at|date:"d/m/Y H:i" }}
-                  </p>
-                  <p class="mb-0">
-                    <strong><i class="fas fa-code-branch mr-1"></i> {% trans "Version" %}:</strong>
-                    v{{ form.instance.version }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-          
-          <!-- Action Buttons -->
-          <div class="mt-4">
-            <a href="{% url 'study_43en:screening_case_list' %}" class="btn btn-secondary">
-              <i class="fas fa-times-circle mr-1"></i> {% trans "Cancel" %}
-            </a>
-            <button type="reset" class="btn btn-warning btn-reset">
-              <i class="fas fa-undo mr-1"></i> {% trans "Reset" %}
-            </button>
-            <button type="submit" class="btn btn-primary" id="submitButton">
-              <i class="fas fa-save mr-1"></i> {% trans "Save" %}
-            </button>
-          </div>
-        </form>
-        
-        {% else %}
-        <!-- ========================================
-             READ-ONLY MODE
-             ======================================== -->
-        <div class="readonly-form">
-          <!--  Display all fields in read-only mode -->
-          <div class="card card-default">
-            <div class="card-header">
-              <h3 class="card-title">
-                <i class="fas fa-info-circle"></i>
-                {% trans "Basic Information" %}
-              </h3>
-              <span class="badge badge-info readonly-badge">
-                <i class="fas fa-eye"></i> {% trans "View Mode" %}
-              </span>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>{{ form.SCRID.label }}</label>
-                    <input type="text" class="form-control" value="{{ form.instance.SCRID }}" readonly>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>{{ form.SITEID.label }}</label>
-                    <input type="text" class="form-control" value="{{ form.instance.SITEID }}" readonly>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>{{ form.STUDYID.label }}</label>
-                    <input type="text" class="form-control" value="{{ form.instance.STUDYID }}" readonly>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>{{ form.INITIAL.label }}</label>
-                    <input type="text" class="form-control" value="{{ form.instance.INITIAL }}" readonly>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>{{ form.SCREENINGFORMDATE.label }}</label>
-                    <input type="text" class="form-control" 
-                           value="{% if form.instance.SCREENINGFORMDATE %}{{ form.instance.SCREENINGFORMDATE|date:'d/m/Y' }}{% endif %}" 
-                           readonly>
-                  </div>
-                </div>
-                {% if form.instance.USUBJID %}
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>{{ form.USUBJID.label }}</label>
-                    <input type="text" class="form-control" value="{{ form.instance.USUBJID }}" readonly>
-                  </div>
-                </div>
-                {% endif %}
-                {% if form.instance.SUBJID %}
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>{{ form.SUBJID.label }}</label>
-                    <input type="text" class="form-control" value="{{ form.instance.SUBJID }}" readonly>
-                  </div>
-                </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-          
-          <!--  Criteria in read-only -->
-          <div class="card card-default mt-3">
-            <div class="card-header">
-              <h3 class="card-title">
-                <i class="fas fa-check-circle"></i>
-                {% trans "Criteria" %}
-              </h3>
-            </div>
-            <div class="card-body">
-              <table class="table table-bordered">
-                <tbody>
-                  <tr class="table-success">
-                    <td width="70%">1. {{ form.UPPER16AGE.label }}</td>
-                    <td>
-                      {% if form.instance.UPPER16AGE %}
-                        <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
-                      {% else %}
-                        <span class="badge badge-secondary">{% trans "No" %}</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  <tr class="table-success">
-                    <td>2. {{ form.INFPRIOR2OR48HRSADMIT.label }}</td>
-                    <td>
-                      {% if form.instance.INFPRIOR2OR48HRSADMIT %}
-                        <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
-                      {% else %}
-                        <span class="badge badge-secondary">{% trans "No" %}</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  <tr class="table-success">
-                    <td>3. {{ form.ISOLATEDKPNFROMINFECTIONORBLOOD.label }}</td>
-                    <td>
-                      {% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD %}
-                        <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
-                      {% else %}
-                        <span class="badge badge-secondary">{% trans "No" %}</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  <tr class="table-danger">
-                    <td>4. {{ form.KPNISOUNTREATEDSTABLE.label }} {% trans "(Exclusion)" %}</td>
-                    <td>
-                      {% if form.instance.KPNISOUNTREATEDSTABLE %}
-                        <span class="badge badge-danger">{% trans "Yes" %}</span>
-                      {% else %}
-                        <span class="badge badge-success text-dark">{% trans "No" %}</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  <tr class="table-success">
-                    <td>5. {{ form.CONSENTTOSTUDY.label }}</td>
-                    <td>
-                      {% if form.instance.CONSENTTOSTUDY %}
-                        <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
-                      {% else %}
-                        <span class="badge badge-secondary">{% trans "No" %}</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              
-              {% if form.instance.UNRECRUITED_REASON %}
-              <div class="mt-3">
-                <label><strong>{{ form.UNRECRUITED_REASON.label }}:</strong></label>
-                <p class="p-2 bg-light border rounded">{{ form.instance.UNRECRUITED_REASON }}</p>
-              </div>
-              {% endif %}
-              
-          </div>
-          
-          <!-- Action buttons for read-only mode -->
-          <div class="mt-4">
-            <a href="{% url 'study_43en:screening_case_list' %}" class="btn btn-secondary">
-              <i class="fas fa-arrow-left mr-1"></i> {% trans "Back" %}
-            </a>
-            {% if perms.study_43en.change_scr_case %}
-            <a href="{% url 'study_43en:screening_case_update' form.instance.SCRID %}" class="btn btn-warning">
-              <i class="fas fa-edit mr-1"></i> {% trans "Edit" %}
-            </a>
-            {% endif %}
-            {% if form.instance.USUBJID and form.instance.UPPER16AGE and form.instance.INFPRIOR2OR48HRSADMIT and form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD and not form.instance.KPNISOUNTREATEDSTABLE and form.instance.CONSENTTOSTUDY %}
-              <a href="{% url 'study_43en:patient_detail' form.instance.USUBJID %}" class="btn btn-success">
-                <i class="fas fa-user-md mr-1"></i> {% trans "View Patient" %}
-              </a>
-            {% endif %}
-          </div>
-        </div>
-        {% endif %}
-        
-      </div> <!-- End screening-case-content -->
-    </div> <!-- End screening-case-container -->
-  </div>
+ <!-- SITEID - Using form field (ALWAYS LOCKED) -->
+ <div class="col-md-6">
+ <div class="form-group required-field">
+ <label for="{{ form.SITEID.id_for_label }}">{{ form.SITEID.label }}</label>
+ <input type="text"
+ class="form-control"
+ id="{{ form.SITEID.id_for_label }}"
+ name="SITEID"
+ value="{% if form.instance.SITEID %}{{ form.instance.SITEID }}{% elif current_siteid %}{{ current_siteid }}{% else %}{{ form.SITEID.value }}{% endif %}"
+ readonly
+ disabled
+ style="background-color: #e9ecef; font-weight: bold;">
+ <!-- Hidden field to submit value since disabled fields don't submit -->
+ <input type="hidden" name="SITEID" value="{% if form.instance.SITEID %}{{ form.instance.SITEID }}{% elif current_siteid %}{{ current_siteid }}{% else %}{{ form.SITEID.value }}{% endif %}">
+ <small class="form-text text-muted">
+ <i class="fas fa-lock"></i>
+ {% trans "Site ID is locked and cannot be changed" %}
+ </small>
+ {% if form.SITEID.errors %}
+ <div class="invalid-feedback d-block">
+ {% for error in form.SITEID.errors %}{{ error }}{% endfor %}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+
+ <!-- STUDYID - Using form field -->
+ <div class="col-md-6">
+ <div class="form-group required-field">
+ <label for="{{ form.STUDYID.id_for_label }}">{{ form.STUDYID.label }}</label>
+ {{ form.STUDYID }}
+ {% if form.STUDYID.help_text %}
+ <small class="form-text text-muted">{{ form.STUDYID.help_text }}</small>
+ {% endif %}
+ {% if form.STUDYID.errors %}
+ <div class="invalid-feedback d-block">
+ {% for error in form.STUDYID.errors %}{{ error }}{% endfor %}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+
+ <!-- INITIAL - Using form field -->
+ <div class="col-md-6">
+ <div class="form-group required-field">
+ <label for="{{ form.INITIAL.id_for_label }}">{{ form.INITIAL.label }}</label>
+ {{ form.INITIAL }}
+ {% if form.INITIAL.help_text %}
+ <small class="form-text text-muted">{{ form.INITIAL.help_text }}</small>
+ {% endif %}
+ {% if form.INITIAL.errors %}
+ <div class="invalid-feedback d-block">
+ {% for error in form.INITIAL.errors %}{{ error }}{% endfor %}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+
+ <!-- SCREENINGFORMDATE - Using form field label -->
+ <div class="col-md-6">
+ <div class="form-group required-field">
+ <label for="id_SCREENINGFORMDATE">
+ {{ form.SCREENINGFORMDATE.label }}
+</label>
+
+ {% if is_create %}
+ <!-- Create mode: Normal input -->
+ <input type="text"
+ name="SCREENINGFORMDATE"
+ id="id_SCREENINGFORMDATE"
+ class="form-control datepicker"
+ value="{{ form.SCREENINGFORMDATE.value|date:'d/m/Y' }}"
+ placeholder="DD/MM/YYYY"
+ data-initial-value="">
+ {% else %}
+ <!-- Update mode: Readonly but send value -->
+ <input type="text"
+ name="SCREENINGFORMDATE"
+ id="id_SCREENINGFORMDATE"
+ class="form-control datepicker"
+ value="{% if form.instance.SCREENINGFORMDATE %}{{ form.instance.SCREENINGFORMDATE|date:'d/m/Y' }}{% endif %}"
+ placeholder="DD/MM/YYYY"
+ data-initial-value="{% if form.instance.SCREENINGFORMDATE %}{{ form.instance.SCREENINGFORMDATE|date:'d/m/Y' }}{% endif %}"
+ readonly>
+ {% endif %}
+
+ {% if form.SCREENINGFORMDATE.help_text %}
+ <small class="form-text text-muted">{{ form.SCREENINGFORMDATE.help_text }}</small>
+ {% endif %}
+ {% if form.SCREENINGFORMDATE.errors %}
+ <div class="invalid-feedback d-block">
+ {{ form.SCREENINGFORMDATE.errors }}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+
+ <!-- USUBJID (if exists) - Using form field -->
+ {% if form.USUBJID %}
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="{{ form.USUBJID.id_for_label }}">{{ form.USUBJID.label }}</label>
+ {{ form.USUBJID }}
+ {% if form.USUBJID.help_text %}
+ <small class="form-text text-muted">{{ form.USUBJID.help_text }}</small>
+ {% endif %}
+ {% if form.USUBJID.errors %}
+ <div class="invalid-feedback d-block">
+ {% for error in form.USUBJID.errors %}{{ error }}{% endfor %}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ {% endif %}
+
+ <!-- SUBJID (if exists) - Using form field -->
+ {% if form.SUBJID %}
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="{{ form.SUBJID.id_for_label }}">{{ form.SUBJID.label }}</label>
+ {{ form.SUBJID }}
+ {% if form.SUBJID.help_text %}
+ <small class="form-text text-muted">{{ form.SUBJID.help_text }}</small>
+ {% endif %}
+ {% if form.SUBJID.errors %}
+ <div class="invalid-feedback d-block">
+ {% for error in form.SUBJID.errors %}{{ error }}{% endfor %}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+
+ <!-- Eligibility Criteria Card -->
+ <div class="card card-default mt-3">
+ <div class="card-header">
+ <h3 class="card-title">
+ <i class="fas fa-check-circle"></i>
+ {% trans "Eligibility Criteria" %}
+ </h3>
+ </div>
+ <div class="card-body">
+
+ <!-- Criterion 1: Age > 16 -->
+ <div class="form-group">
+ <label class="control-label">
+ 1. {{ form.UPPER16AGE.label }}
+</label>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_UPPER16AGE_1"
+ name="UPPER16AGE"
+ value="1"
+ class="custom-control-input"
+ {% if form.instance.UPPER16AGE == True %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.UPPER16AGE == True %}1{% elif form.instance.UPPER16AGE == False %}0{% else %}{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_UPPER16AGE_1">
+ {% trans "Yes" %}
+</label>
+ </div>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_UPPER16AGE_0"
+ name="UPPER16AGE"
+ value="0"
+ class="custom-control-input"
+ {% if form.instance.UPPER16AGE == False or form.instance.UPPER16AGE == None %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.UPPER16AGE == True %}1{% elif form.instance.UPPER16AGE == False %}0{% else %}0{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_UPPER16AGE_0">
+ {% trans "No" %}
+</label>
+ </div>
+ {% if form.UPPER16AGE.help_text %}
+ <small class="form-text text-muted">{{ form.UPPER16AGE.help_text }}</small>
+ {% endif %}
+ </div>
+
+ <!-- Criterion 2: Infection timing -->
+ <div class="form-group">
+ <label class="control-label">
+ 2. {{ form.INFPRIOR2OR48HRSADMIT.label }}
+</label>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_INFPRIOR2OR48HRSADMIT_1"
+ name="INFPRIOR2OR48HRSADMIT"
+ value="1"
+ class="custom-control-input"
+ {% if form.instance.INFPRIOR2OR48HRSADMIT == True %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.INFPRIOR2OR48HRSADMIT == True %}1{% elif form.instance.INFPRIOR2OR48HRSADMIT == False %}0{% else %}{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_INFPRIOR2OR48HRSADMIT_1">
+ {% trans "Yes" %}
+</label>
+ </div>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_INFPRIOR2OR48HRSADMIT_0"
+ name="INFPRIOR2OR48HRSADMIT"
+ value="0"
+ class="custom-control-input"
+ {% if form.instance.INFPRIOR2OR48HRSADMIT == False or form.instance.INFPRIOR2OR48HRSADMIT == None %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.INFPRIOR2OR48HRSADMIT == True %}1{% elif form.instance.INFPRIOR2OR48HRSADMIT == False %}0{% else %}0{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_INFPRIOR2OR48HRSADMIT_0">
+ {% trans "No" %}
+</label>
+ </div>
+ {% if form.INFPRIOR2OR48HRSADMIT.help_text %}
+ <small class="form-text text-muted">{{ form.INFPRIOR2OR48HRSADMIT.help_text }}</small>
+ {% endif %}
+ </div>
+
+ <!-- Criterion 3: K.pneumoniae isolated -->
+ <div class="form-group">
+ <label class="control-label">
+ 3. {{ form.ISOLATEDKPNFROMINFECTIONORBLOOD.label }}
+</label>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_ISOLATEDKPNFROMINFECTIONORBLOOD_1"
+ name="ISOLATEDKPNFROMINFECTIONORBLOOD"
+ value="1"
+ class="custom-control-input"
+ {% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == True %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == True %}1{% elif form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == False %}0{% else %}{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_ISOLATEDKPNFROMINFECTIONORBLOOD_1">
+ {% trans "Yes" %}
+</label>
+ </div>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_ISOLATEDKPNFROMINFECTIONORBLOOD_0"
+ name="ISOLATEDKPNFROMINFECTIONORBLOOD"
+ value="0"
+ class="custom-control-input"
+ {% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == False or form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == None %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == True %}1{% elif form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD == False %}0{% else %}0{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_ISOLATEDKPNFROMINFECTIONORBLOOD_0">
+ {% trans "No" %}
+</label>
+ </div>
+ {% if form.ISOLATEDKPNFROMINFECTIONORBLOOD.help_text %}
+ <small class="form-text text-muted">{{ form.ISOLATEDKPNFROMINFECTIONORBLOOD.help_text }}</small>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+
+ <!-- Exclusion Criteria Card -->
+ <div class="card card-default mt-3">
+ <div class="card-header bg-danger text-white">
+ <h3 class="card-title">
+ <i class="fas fa-times-circle"></i>
+ {% trans "Exclusion Criteria" %}
+ </h3>
+ </div>
+ <div class="card-body">
+
+ <!-- Criterion 4: K.pneumoniae untreated stable -->
+ <div class="form-group">
+ <label class="control-label">
+ 4. {{ form.KPNISOUNTREATEDSTABLE.label }}
+</label>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_KPNISOUNTREATEDSTABLE_1"
+ name="KPNISOUNTREATEDSTABLE"
+ value="1"
+ class="custom-control-input"
+ {% if form.instance.KPNISOUNTREATEDSTABLE == True %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.KPNISOUNTREATEDSTABLE == True %}1{% elif form.instance.KPNISOUNTREATEDSTABLE == False %}0{% else %}{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_KPNISOUNTREATEDSTABLE_1">
+ {% trans "Yes" %}
+</label>
+ </div>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_KPNISOUNTREATEDSTABLE_0"
+ name="KPNISOUNTREATEDSTABLE"
+ value="0"
+ class="custom-control-input"
+ {% if form.instance.KPNISOUNTREATEDSTABLE == False or form.instance.KPNISOUNTREATEDSTABLE == None %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.KPNISOUNTREATEDSTABLE == True %}1{% elif form.instance.KPNISOUNTREATEDSTABLE == False %}0{% else %}0{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_KPNISOUNTREATEDSTABLE_0">
+ {% trans "No" %}
+</label>
+ </div>
+ {% if form.KPNISOUNTREATEDSTABLE.help_text %}
+ <small class="form-text text-muted">{{ form.KPNISOUNTREATEDSTABLE.help_text }}</small>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+
+ <!-- Consent Card -->
+ <div class="card card-default mt-3">
+ <div class="card-header bg-success text-white">
+ <h3 class="card-title">
+ <i class="fas fa-user-check"></i>
+ {% trans "Study Consent" %}
+ </h3>
+ </div>
+ <div class="card-body">
+
+ <!-- Criterion 5: Consent -->
+ <div class="form-group" id="consent_field">
+ <label class="control-label">
+ 5. {{ form.CONSENTTOSTUDY.label }}
+</label>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_CONSENTTOSTUDY_1"
+ name="CONSENTTOSTUDY"
+ value="1"
+ class="custom-control-input"
+ {% if form.instance.CONSENTTOSTUDY == True %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.CONSENTTOSTUDY == True %}1{% elif form.instance.CONSENTTOSTUDY == False %}0{% else %}{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_CONSENTTOSTUDY_1">
+ {% trans "Yes" %}
+</label>
+ </div>
+ <div class="custom-control custom-radio">
+ <input type="radio"
+ id="id_CONSENTTOSTUDY_0"
+ name="CONSENTTOSTUDY"
+ value="0"
+ class="custom-control-input"
+ {% if form.instance.CONSENTTOSTUDY == False or form.instance.CONSENTTOSTUDY == None %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}
+ data-initial-value="{% if form.instance.CONSENTTOSTUDY == True %}1{% elif form.instance.CONSENTTOSTUDY == False %}0{% else %}0{% endif %}"
+ required>
+ <label class="custom-control-label" for="id_CONSENTTOSTUDY_0">
+ {% trans "No" %}
+</label>
+ </div>
+ {% if form.CONSENTTOSTUDY.help_text %}
+ <small class="form-text text-muted">{{ form.CONSENTTOSTUDY.help_text }}</small>
+ {% endif %}
+ </div>
+
+ <!-- Unrecruited reason -->
+ <div class="form-group">
+ <label for="{{ form.UNRECRUITED_REASON.id_for_label }}">
+ {{ form.UNRECRUITED_REASON.label }}
+</label>
+ <textarea class="form-control"
+ id="{{ form.UNRECRUITED_REASON.id_for_label }}"
+ name="UNRECRUITED_REASON"
+ rows="3"
+ data-initial-value="{{ form.instance.UNRECRUITED_REASON|default:'' }}"
+ {% if is_readonly %}readonly{% endif %}>{% if form.UNRECRUITED_REASON.value %}{{ form.UNRECRUITED_REASON.value }}{% endif %}</textarea>
+ {% if form.UNRECRUITED_REASON.help_text %}
+ <small class="form-text text-muted">{{ form.UNRECRUITED_REASON.help_text }}</small>
+ {% endif %}
+ {% if form.UNRECRUITED_REASON.errors %}
+ <div class="invalid-feedback d-block">
+ {% for error in form.UNRECRUITED_REASON.errors %}{{ error }}{% endfor %}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+
+ <!-- Eligibility Status Display -->
+ <div class="eligibility-status mt-3" style="display: none;">
+ <!-- Will be populated by JavaScript -->
+ </div>
+
+
+ <!-- Audit Trail Information -->
+ {% if form.instance.pk and form.instance.last_modified_at %}
+ <div class="card card-default mt-3">
+ <div class="card-header bg-light">
+ <h3 class="card-title">
+ <i class="fas fa-history"></i>
+ {% trans "Audit Trail" %}
+ </h3>
+ </div>
+ <div class="card-body">
+ <div class="row">
+ <div class="col-md-6">
+ <p class="mb-2">
+ <strong><i class="fas fa-user-edit mr-1"></i> {% trans "Last Modified By" %}:</strong>
+ {{ form.instance.last_modified_by_username|default:"Unknown" }}
+ </p>
+ <p class="mb-2">
+ <strong><i class="fas fa-clock mr-1"></i> {% trans "Last Modified At" %}:</strong>
+ {{ form.instance.last_modified_at|date:"d/m/Y H:i" }}
+ </p>
+ <p class="mb-0">
+ <strong><i class="fas fa-code-branch mr-1"></i> {% trans "Version" %}:</strong>
+ v{{ form.instance.version }}
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ {% endif %}
+
+ <!-- Action Buttons -->
+ <div class="mt-4">
+ <a href="{% url 'study_43en:screening_case_list' %}" class="btn btn-secondary">
+ <i class="fas fa-times-circle mr-1"></i> {% trans "Cancel" %}
+ </a>
+ <button type="reset" class="btn btn-warning btn-reset">
+ <i class="fas fa-undo mr-1"></i> {% trans "Reset" %}
+ </button>
+ <button type="submit" class="btn btn-primary" id="submitButton">
+ <i class="fas fa-save mr-1"></i> {% trans "Save" %}
+ </button>
+ </div>
+ </form>
+
+ {% else %}
+ <!-- ========================================
+ READ-ONLY MODE
+ ======================================== -->
+ <div class="readonly-form">
+ <!-- Display all fields in read-only mode -->
+ <div class="card card-default">
+ <div class="card-header">
+ <h3 class="card-title">
+
+ {% trans "Basic Information" %}
+ </h3>
+ <span class="badge badge-info readonly-badge">
+ {% trans "View Mode" %}
+</span>
+ </div>
+ <div class="card-body">
+ <div class="row">
+ <div class="col-md-6">
+ <div class="form-group">
+ <label>{{ form.SCRID.label }}</label>
+ <input type="text" class="form-control" value="{{ form.instance.SCRID }}" readonly>
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="form-group">
+ <label>{{ form.SITEID.label }}</label>
+ <input type="text" class="form-control" value="{{ form.instance.SITEID }}" readonly>
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="form-group">
+ <label>{{ form.STUDYID.label }}</label>
+ <input type="text" class="form-control" value="{{ form.instance.STUDYID }}" readonly>
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="form-group">
+ <label>{{ form.INITIAL.label }}</label>
+ <input type="text" class="form-control" value="{{ form.instance.INITIAL }}" readonly>
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="form-group">
+ <label>{{ form.SCREENINGFORMDATE.label }}</label>
+ <input type="text" class="form-control"
+ value="{% if form.instance.SCREENINGFORMDATE %}{{ form.instance.SCREENINGFORMDATE|date:'d/m/Y' }}{% endif %}"
+ readonly>
+ </div>
+ </div>
+ {% if form.instance.USUBJID %}
+ <div class="col-md-6">
+ <div class="form-group">
+ <label>{{ form.USUBJID.label }}</label>
+ <input type="text" class="form-control" value="{{ form.instance.USUBJID }}" readonly>
+ </div>
+ </div>
+ {% endif %}
+ {% if form.instance.SUBJID %}
+ <div class="col-md-6">
+ <div class="form-group">
+ <label>{{ form.SUBJID.label }}</label>
+ <input type="text" class="form-control" value="{{ form.instance.SUBJID }}" readonly>
+ </div>
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+
+ <!-- Criteria in read-only -->
+ <div class="card card-default mt-3">
+ <div class="card-header">
+ <h3 class="card-title">
+
+ {% trans "Criteria" %}
+ </h3>
+ </div>
+ <div class="card-body">
+ <table class="table table-bordered">
+ <tbody>
+ <tr class="table-success">
+ <td width="70%">1. {{ form.UPPER16AGE.label }}</td>
+ <td>
+ {% if form.instance.UPPER16AGE %}
+ <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
+ {% else %}
+ <span class="badge badge-secondary">{% trans "No" %}</span>
+ {% endif %}
+ </td>
+ </tr>
+ <tr class="table-success">
+ <td>2. {{ form.INFPRIOR2OR48HRSADMIT.label }}</td>
+ <td>
+ {% if form.instance.INFPRIOR2OR48HRSADMIT %}
+ <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
+ {% else %}
+ <span class="badge badge-secondary">{% trans "No" %}</span>
+ {% endif %}
+ </td>
+ </tr>
+ <tr class="table-success">
+ <td>3. {{ form.ISOLATEDKPNFROMINFECTIONORBLOOD.label }}</td>
+ <td>
+ {% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD %}
+ <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
+ {% else %}
+ <span class="badge badge-secondary">{% trans "No" %}</span>
+ {% endif %}
+ </td>
+ </tr>
+ <tr class="table-danger">
+ <td>4. {{ form.KPNISOUNTREATEDSTABLE.label }} {% trans "(Exclusion)" %}</td>
+ <td>
+ {% if form.instance.KPNISOUNTREATEDSTABLE %}
+ <span class="badge badge-danger">{% trans "Yes" %}</span>
+ {% else %}
+ <span class="badge badge-success text-dark">{% trans "No" %}</span>
+ {% endif %}
+ </td>
+ </tr>
+ <tr class="table-success">
+ <td>5. {{ form.CONSENTTOSTUDY.label }}</td>
+ <td>
+ {% if form.instance.CONSENTTOSTUDY %}
+ <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
+ {% else %}
+ <span class="badge badge-secondary">{% trans "No" %}</span>
+ {% endif %}
+ </td>
+ </tr>
+ </tbody>
+ </table>
+
+ {% if form.instance.UNRECRUITED_REASON %}
+ <div class="mt-3">
+ <label><strong>{{ form.UNRECRUITED_REASON.label }}:</strong></label>
+ <p class="p-2 bg-light border rounded">{{ form.instance.UNRECRUITED_REASON }}</p>
+ </div>
+ {% endif %}
+
+ </div>
+
+ <!-- Action buttons for read-only mode -->
+ <div class="mt-4">
+ <a href="{% url 'study_43en:screening_case_list' %}" class="btn btn-secondary">
+ <i class="fas fa-arrow-left mr-1"></i> {% trans "Back" %}
+ </a>
+ {% if perms.study_43en.change_scr_case %}
+ <a href="{% url 'study_43en:screening_case_update' form.instance.SCRID %}" class="btn btn-warning">
+ <i class="fas fa-edit mr-1"></i> {% trans "Edit" %}
+ </a>
+ {% endif %}
+ {% if form.instance.USUBJID and form.instance.UPPER16AGE and form.instance.INFPRIOR2OR48HRSADMIT and form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD and not form.instance.KPNISOUNTREATEDSTABLE and form.instance.CONSENTTOSTUDY %}
+ <a href="{% url 'study_43en:patient_detail' form.instance.USUBJID %}" class="btn btn-success">
+ {% trans "View Patient" %}
+ </a>
+ {% endif %}
+ </div>
+ </div>
+ {% endif %}
+
+ </div> <!-- End screening-case-content -->
+ </div> <!-- End screening-case-container -->
+ </div>
 </div>
 
-<!--  Include Change Reason Modal -->
+<!-- Include Change Reason Modal -->
 {% if not is_readonly %}
-  {% include 'default/change_reason_modal.html' %}
+ {% include 'default/change_reason_modal.html' %}
 {% endif %}
 
 {% endblock %}
@@ -686,18 +686,18 @@
 {% block dashboard_js %}
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
 
-<!--  Include Change Reason Handler -->
+<!-- Include Change Reason Handler -->
 {% if not is_readonly %}
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
 {% endif %}
 
 <!-- ✅ REFACTORED: Pass state to JS and load external file -->
 <script nonce="{{ request.csp_nonce }}">
-  // State configuration for screening-form.js
-  window.screeningFormState = {
-    isReadonly: {% if is_readonly %}true{% else %}false{% endif %},
-    isCreate: {% if is_create %}true{% else %}false{% endif %}
-  };
+ // State configuration for screening-form.js
+ window.screeningFormState = {
+ isReadonly: {% if is_readonly %}true{% else %}false{% endif %},
+ isCreate: {% if is_create %}true{% else %}false{% endif %}
+ };
 </script>
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/patient/screening-form.js' %}"></script>
 {% endblock %}

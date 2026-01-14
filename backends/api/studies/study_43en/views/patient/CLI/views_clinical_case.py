@@ -289,7 +289,7 @@ def clinical_case_update(request, usubjid):  #  RENAMED from clinical_update
       * 4 clinical formsets (FK to CLI_CASE)
     """
     logger.info("="*80)
-    logger.info("=== 📝 CLINICAL UPDATE START ===")
+    logger.info("===  CLINICAL UPDATE START ===")
     logger.info("="*80)
     logger.info(f" User: {request.user.username}, USUBJID: {usubjid}, Method: {request.method}")
     
@@ -404,7 +404,7 @@ def clinical_case_update(request, usubjid):  #  RENAMED from clinical_update
         logger.info(f" Context built with {len(context)} items")
         
         logger.info("="*80)
-        logger.info("=== 📝 CLINICAL UPDATE END (GET) - Rendering template ===")
+        logger.info("===  CLINICAL UPDATE END (GET) - Rendering template ===")
         logger.info("="*80)
         return render(request, 'studies/study_43en/patient/form/clinical_form.html', context)
     
@@ -532,7 +532,7 @@ def clinical_case_update(request, usubjid):  #  RENAMED from clinical_update
     # Use Universal Audit System
     logger.info(f" Step 6: Calling process_complex_update...")
     logger.info("="*80)
-    logger.info("=== 📝 CLINICAL UPDATE END (POST) - Delegating to Universal Audit System ===")
+    logger.info("===  CLINICAL UPDATE END (POST) - Delegating to Universal Audit System ===")
     logger.info("="*80)
     return process_complex_update(
         request=request,

@@ -35,11 +35,27 @@
     max-height: 400px;
     overflow-y: auto;
 }
-.site-stat {
-    padding: 0.75rem;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    background: #f8f9fa;
+.ward-table {
+    font-size: 0.95rem;
+}
+.ward-table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.ward-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+.ward-table .total-row {
+    background-color: #e9ecef;
+    font-weight: 700;
+    border-top: 2px solid #dee2e6;
+}
+.table-container {
+    max-height: 600px;
+    overflow-y: auto;
 }
 </style>
 {% endblock %}
@@ -67,7 +83,7 @@
                     <small>{% trans "Recent 30 days" %}: {{ recent_households_count|default:0 }}</small>
                 </div>
                 <div class="stat-icon">
-                    <i class="bi bi-house-door"></i>
+                    <i ></i>
                 </div>
             </div>
         </div>
@@ -83,7 +99,7 @@
                     <small>{% trans "Across all households" %}</small>
                 </div>
                 <div class="stat-icon">
-                    <i class="bi bi-people"></i>
+                    <i ></i>
                 </div>
             </div>
         </div>
@@ -99,7 +115,7 @@
                     <small>{% trans "Recent 30 days" %}: {{ recent_individuals_count|default:0 }}</small>
                 </div>
                 <div class="stat-icon">
-                    <i class="bi bi-person-check"></i>
+                    <i ></i>
                 </div>
             </div>
         </div>
@@ -115,7 +131,79 @@
                     <small>{% trans "Pending" %}: {{ pending_followups|default:0 }}</small>
                 </div>
                 <div class="stat-icon">
-                    <i class="bi bi-calendar-check"></i>
+                    <i ></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ward Distribution Table -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt text-primary me-2"></i>
+                        {% trans "Household Distribution by Ward" %}
+                    </h5>
+                    <span class="badge bg-primary">{{ ward_distribution|length|add:"-1" }} {% trans "Wards" %}</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-container">
+                    {% if ward_distribution %}
+                        <table class="table table-hover ward-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 10%">#</th>
+                                    <th style="width: 50%">{% trans "Ward/Commune" %}</th>
+                                    <th class="text-center" style="width: 20%">
+                                        {% trans "Total Households" %}
+                                    </th>
+                                    <th class="text-center" style="width: 20%">
+                                        {% trans "Total Participants" %}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ward_data in ward_distribution %}
+                                    <tr class="{% if ward_data.is_total %}total-row{% endif %}">
+                                        <td class="text-center">
+                                            {% if ward_data.is_total %}
+                                                <i ></i>
+                                            {% else %}
+                                                {{ forloop.counter }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if ward_data.is_total %}
+                                                <strong>{{ ward_data.ward }}</strong>
+                                            {% else %}
+                                                <i class="bi bi-geo-alt-fill text-muted me-2"></i>
+                                                {{ ward_data.ward }}
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary bg-opacity-75">
+                                                {{ ward_data.total_households }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success bg-opacity-75">
+                                                {{ ward_data.total_participants }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-muted text-center p-4 mb-0">
+                            {% trans "No ward distribution data available" %}
+                        </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -138,13 +226,16 @@
                     {% if recent_household_list %}
                         <div class="list-group list-group-flush">
                             {% for hh in recent_household_list %}
-                            <a href="{% url 'study_44en:household:detail' hh.HHID %}" 
-                               class="list-group-item list-group-item-action">
+                            <a href="#" class="list-group-item list-group-item-action">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <strong>{{ hh.HHID }}</strong>
                                         <small class="text-muted d-block">
-                                            {{ hh.WARD|default:"N/A" }}, {{ hh.CITY|default:"HCMC" }}
+                                            {% if hh.personal_data.WARD %}
+                                                {{ hh.personal_data.WARD }}{% if hh.personal_data.CITY %}, {{ hh.personal_data.CITY }}{% endif %}
+                                            {% else %}
+                                                {% trans "Address not available" %}
+                                            {% endif %}
                                         </small>
                                     </div>
                                     <small class="text-muted">{{ hh.last_modified_at|date:"d/m/Y" }}</small>
@@ -174,13 +265,17 @@
                     {% if recent_individual_list %}
                         <div class="list-group list-group-flush">
                             {% for ind in recent_individual_list %}
-                            <a href="{% url 'study_44en:individual:detail' ind.MEMBERID %}" 
-                               class="list-group-item list-group-item-action">
+                            <a href="#" class="list-group-item list-group-item-action">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <strong>{{ ind.MEMBERID }}</strong>
+                                        <strong>{{ ind.SUBJECTID }}</strong>
                                         <small class="text-muted d-block">
-                                            Age: {{ ind.AGE|default:"N/A" }} - {{ ind.EDUCATION|default:"N/A" }}
+                                            {% if ind.calculated_age %}
+                                                {% trans "Age" %}: {{ ind.age_in_years }}
+                                            {% endif %}
+                                            {% if ind.EDUCATION %}
+                                                - {{ ind.get_EDUCATION_display }}
+                                            {% endif %}
                                         </small>
                                     </div>
                                     <small class="text-muted">{{ ind.last_modified_at|date:"d/m/Y" }}</small>
@@ -200,5 +295,26 @@
 {% endblock %}
 
 {% block dashboard_js %}
-<!-- No additional JavaScript needed for now -->
+<!-- Minimal JavaScript - only for refresh if needed -->
+<script nonce="{{ request.csp_nonce }}">
+(function() {
+    'use strict';
+    
+    // Optional: Auto-refresh statistics every 5 minutes
+    // Uncomment if needed
+    /*
+    setInterval(function() {
+        fetch('/studies/44en/api/dashboard-stats/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update stat cards
+                    console.log('Stats updated:', data.data);
+                }
+            })
+            .catch(error => console.error('Refresh error:', error));
+    }, 300000); // 5 minutes
+    */
+})();
+</script>
 {% endblock %}

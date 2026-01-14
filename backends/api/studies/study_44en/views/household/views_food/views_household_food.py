@@ -131,7 +131,7 @@ def household_food_create(request, hhid):
         prefix='source'
     )
     
-    logger.info("📝 Validating forms...")
+    logger.info(" Validating forms...")
     
     # Backend validation (Django Forms)
     freq_valid = food_frequency_form.is_valid()
@@ -227,7 +227,7 @@ def household_food_update(request, hhid):
     - Helpers handle save logic
     """
     logger.info("="*80)
-    logger.info(f"=== 📝 HOUSEHOLD FOOD UPDATE START ===")
+    logger.info(f"===  HOUSEHOLD FOOD UPDATE START ===")
     logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
     logger.info("="*80)
     
@@ -276,7 +276,7 @@ def household_food_update(request, hhid):
         }
         
         logger.info("="*80)
-        logger.info(f"=== 📝 FOOD UPDATE END (GET) - Rendering template ===")
+        logger.info(f"===  FOOD UPDATE END (GET) - Rendering template ===")
         logger.info("="*80)
         
         return render(

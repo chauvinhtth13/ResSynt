@@ -177,7 +177,7 @@
                             {% elif followup.STATUS == 'MISSED' %}
                                 <span class="badge badge-danger  "><i class="fas fa-times-circle mr-1"></i>Bỏ lỡ</span>
                             {% elif followup.STATUS == 'UPCOMING' %}
-                                <span class="badge badge-primary "><i class="fas fa-calendar mr-1"></i>Sắp tới</span>
+                                <span class="badge badge-primary "><i ></i>Sắp tới</span>
                             {% endif %}
                         </td>
                         <td>
@@ -325,7 +325,7 @@
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
                             <span class="badge badge-primary ">Bệnh nhân</span>
                             {% else %}
-                            <span class="badge badge-info">Người tiếp xúc</span>
+                            <span class="badge badge-info text-dark">Người tiếp xúc</span>
                             {% endif %}
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>
@@ -466,7 +466,7 @@
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
                             <span class="badge badge-primary ">Bệnh nhân</span>
                             {% else %}
-                            <span class="badge badge-info">Người tiếp xúc</span>
+                            <span class="badge badge-info text-dark">Người tiếp xúc</span>
                             {% endif %}
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>

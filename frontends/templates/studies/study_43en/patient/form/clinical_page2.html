@@ -1,617 +1,617 @@
 {% load i18n %}
 <div class="tab-pane fade" id="page2" role="tabpanel" aria-labelledby="page2-tab">
-  <div class="clinical-case-container">
-    <div class="clinical-case-header">
-      <div class="row">
-        <div class="col">
-          <h4 class="m-0"><i class="fas fa-thermometer mr-2"></i>CLINICAL - SYMPTOMS</h4>
-        </div>
-        <div class="col text-right">
-          <span class="page-indicator">CL1 (2/3)</span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="clinical-case-content">
-      {# ========== SUBJECTIVE SYMPTOMS (HISTORY) ========== #}
-      <div class="form-section-header">
-        <i class="fas fa-comment-medical mr-2"></i>{% trans "Subjective Symptoms (Patient Reported)" %}
-      </div>
-      
-      <div class="numbered-item" data-number="9">
-        <label>{% trans "Subjective Symptoms" %}</label>
-        <p class="text-muted small">{% trans "Select all that apply" %}</p>
-        
-        <div class="checkbox-group mt-3">
-          <div class="row">
-            {#  General Symptoms #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.FEVER }}
-                <label class="form-check-label" for="{{ history_symptom_form.FEVER.id_for_label }}">
-                  <i class="fas fa-temperature-high text-danger mr-1"></i>{{ history_symptom_form.FEVER.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.FATIGUE }}
-                <label class="form-check-label" for="{{ history_symptom_form.FATIGUE.id_for_label }}">
-                  <i class="fas fa-tired text-warning mr-1"></i>{{ history_symptom_form.FATIGUE.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.MUSCLEPAIN }}
-                <label class="form-check-label" for="{{ history_symptom_form.MUSCLEPAIN.id_for_label }}">
-                  <i class="fas fa-dumbbell text-info mr-1"></i>{{ history_symptom_form.MUSCLEPAIN.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.LOSSAPPETITE }}
-                <label class="form-check-label" for="{{ history_symptom_form.LOSSAPPETITE.id_for_label }}">
-                  <i class="fas fa-utensils text-secondary mr-1"></i>{{ history_symptom_form.LOSSAPPETITE.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Respiratory Symptoms #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.COUGH }}
-                <label class="form-check-label" for="{{ history_symptom_form.COUGH.id_for_label }}">
-                  <i class="fas fa-lungs text-primary mr-1"></i>{{ history_symptom_form.COUGH.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.CHESTPAIN }}
-                <label class="form-check-label" for="{{ history_symptom_form.CHESTPAIN.id_for_label }}">
-                  <i class="fas fa-heartbeat text-danger mr-1"></i>{{ history_symptom_form.CHESTPAIN.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.SHORTBREATH }}
-                <label class="form-check-label" for="{{ history_symptom_form.SHORTBREATH.id_for_label }}">
-                  <i class="fas fa-wind text-info mr-1"></i>{{ history_symptom_form.SHORTBREATH.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Hepatic Symptoms #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.JAUNDICE }}
-                <label class="form-check-label" for="{{ history_symptom_form.JAUNDICE.id_for_label }}">
-                  <i class="fas fa-exclamation-triangle text-warning mr-1"></i>{{ history_symptom_form.JAUNDICE.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Urinary Symptoms #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.PAINURINATION }}
-                <label class="form-check-label" for="{{ history_symptom_form.PAINURINATION.id_for_label }}">
-                  <i class="fas fa-exclamation text-danger mr-1"></i>{{ history_symptom_form.PAINURINATION.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.BLOODYURINE }}
-                <label class="form-check-label" for="{{ history_symptom_form.BLOODYURINE.id_for_label }}">
-                  <i class="fas fa-tint text-danger mr-1"></i>{{ history_symptom_form.BLOODYURINE.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.CLOUDYURINE }}
-                <label class="form-check-label" for="{{ history_symptom_form.CLOUDYURINE.id_for_label }}">
-                  <i class="fas fa-cloud text-secondary mr-1"></i>{{ history_symptom_form.CLOUDYURINE.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.URINARYHESITANCY }}
-                <label class="form-check-label" for="{{ history_symptom_form.URINARYHESITANCY.id_for_label }}">
-                  <i class="fas fa-pause text-warning mr-1"></i>{{ history_symptom_form.URINARYHESITANCY.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Abdominal Pain #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.EPIGASTRICPAIN }}
-                <label class="form-check-label" for="{{ history_symptom_form.EPIGASTRICPAIN.id_for_label }}">
-                  <i class="fas fa-hand-point-up text-warning mr-1"></i>{{ history_symptom_form.EPIGASTRICPAIN.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.LOWERABDPAIN }}
-                <label class="form-check-label" for="{{ history_symptom_form.LOWERABDPAIN.id_for_label }}">
-                  <i class="fas fa-hand-point-down text-warning mr-1"></i>{{ history_symptom_form.LOWERABDPAIN.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.FLANKPAIN }}
-                <label class="form-check-label" for="{{ history_symptom_form.FLANKPAIN.id_for_label }}">
-                  <i class="fas fa-arrows-alt-h text-info mr-1"></i>{{ history_symptom_form.FLANKPAIN.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.SUBCOSTALPAIN }}
-                <label class="form-check-label" for="{{ history_symptom_form.SUBCOSTALPAIN.id_for_label }}">
-                  <i class="fas fa-compress text-danger mr-1"></i>{{ history_symptom_form.SUBCOSTALPAIN.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Neurological Symptoms #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.HEADACHE }}
-                <label class="form-check-label" for="{{ history_symptom_form.HEADACHE.id_for_label }}">
-                  <i class="fas fa-head-side-virus text-purple mr-1"></i>{{ history_symptom_form.HEADACHE.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.POORCONTACT }}
-                <label class="form-check-label" for="{{ history_symptom_form.POORCONTACT.id_for_label }}">
-                  <i class="fas fa-user-slash text-secondary mr-1"></i>{{ history_symptom_form.POORCONTACT.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.DELIRIUMAGITATION }}
-                <label class="form-check-label" for="{{ history_symptom_form.DELIRIUMAGITATION.id_for_label }}">
-                  <i class="fas fa-exclamation-circle text-danger mr-1"></i>{{ history_symptom_form.DELIRIUMAGITATION.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.SEIZURES }}
-                <label class="form-check-label" for="{{ history_symptom_form.SEIZURES.id_for_label }}">
-                  <i class="fas fa-bolt text-warning mr-1"></i>{{ history_symptom_form.SEIZURES.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  GI Symptoms #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.VOMITING }}
-                <label class="form-check-label" for="{{ history_symptom_form.VOMITING.id_for_label }}">
-                  <i class="fas fa-dizzy text-success mr-1"></i>{{ history_symptom_form.VOMITING.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.NAUSEA }}
-                <label class="form-check-label" for="{{ history_symptom_form.NAUSEA.id_for_label }}">
-                  <i class="fas fa-frown text-warning mr-1"></i>{{ history_symptom_form.NAUSEA.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Eye Symptoms #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.EYEPAIN }}
-                <label class="form-check-label" for="{{ history_symptom_form.EYEPAIN.id_for_label }}">
-                  <i class="fas fa-eye text-primary mr-1"></i>{{ history_symptom_form.EYEPAIN.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.REDEYES }}
-                <label class="form-check-label" for="{{ history_symptom_form.REDEYES.id_for_label }}">
-                  <i class="fas fa-eye text-danger mr-1"></i>{{ history_symptom_form.REDEYES.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.BLURREDVISION }}
-                <label class="form-check-label" for="{{ history_symptom_form.BLURREDVISION.id_for_label }}">
-                  <i class="fas fa-glasses text-secondary mr-1"></i>{{ history_symptom_form.BLURREDVISION.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Skin Symptoms #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ history_symptom_form.SKINLESIONS }}
-                <label class="form-check-label" for="{{ history_symptom_form.SKINLESIONS.id_for_label }}">
-                  <i class="fas fa-hand-sparkles text-info mr-1"></i>{{ history_symptom_form.SKINLESIONS.label }}
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {# Other Symptoms #}
-        <div class="form-check mt-3">
-          {{ history_symptom_form.OTHERSYMPTOM }}
-          <label class="form-check-label" for="{{ history_symptom_form.OTHERSYMPTOM.id_for_label }}">
-            <i class="fas fa-plus-circle text-primary mr-1"></i>{{ history_symptom_form.OTHERSYMPTOM.label }}
-          </label>
-        </div>
-        
-        <div id="othersymptom_detail" class="conditional-section mt-2" style="display:none;">
-          <label for="{{ history_symptom_form.SPECIFYOTHERSYMPTOM.id_for_label }}">{{ history_symptom_form.SPECIFYOTHERSYMPTOM.label }}</label>
-          {{ history_symptom_form.SPECIFYOTHERSYMPTOM }}
-        </div>
-      </div>
-      
-      {# ========== OBJECTIVE SYMPTOMS (72H) ========== #}
-      <div class="form-section-header">
-        <i class="fas fa-user-md mr-2"></i>{% trans "Objective Symptoms (Physical Examination within 72h)" %}
-      </div>
-      
-      <div class="numbered-item" data-number="10">
-        <label>{% trans "Physical Examination Findings" %}</label>
-        
-        {# BMI #}
-        <div class="row mt-3 mb-4">
-          <div class="col-md-3">
-            <label><i class="fas fa-weight text-primary mr-1"></i>{{ clinical_form.WEIGHT.label }}</label>
-            {{ clinical_form.WEIGHT }}
-          </div>
-          <div class="col-md-3">
-            <label><i class="fas fa-ruler-vertical text-info mr-1"></i>{{ clinical_form.HEIGHT.label }}</label>
-            {{ clinical_form.HEIGHT }}
-          </div>
-          <div class="col-md-3">
-            <label><i class="fas fa-calculator text-success mr-1"></i>{{ clinical_form.BMI.label }}</label>
-            {{ clinical_form.BMI }}
-            <small class="text-muted">{% trans "Auto-calculated" %}</small>
-          </div>
-        </div>
-        
-        {#  Physical Findings - Using form labels #}
-        <div class="checkbox-group">
-          <div class="row">
-            {# General #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.FEVER_2 }}
-                <label class="form-check-label" for="{{ symptom_72h_form.FEVER_2.id_for_label }}">
-                  <i class="fas fa-thermometer-full text-danger mr-1"></i>{{ symptom_72h_form.FEVER_2.label }}
-                </label>
-              </div>
-            </div>
-            
-            {# Skin #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.RASH }}
-                <label class="form-check-label" for="{{ symptom_72h_form.RASH.id_for_label }}">
-                  <i class="fas fa-allergies text-warning mr-1"></i>{{ symptom_72h_form.RASH.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.SKINBLEEDING }}
-                <label class="form-check-label" for="{{ symptom_72h_form.SKINBLEEDING.id_for_label }}">
-                  <i class="fas fa-band-aid text-danger mr-1"></i>{{ symptom_72h_form.SKINBLEEDING.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.MUCOSALBLEEDING }}
-                <label class="form-check-label" for="{{ symptom_72h_form.MUCOSALBLEEDING.id_for_label }}">
-                  <i class="fas fa-tint text-danger mr-1"></i>{{ symptom_72h_form.MUCOSALBLEEDING.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.SKINLESIONS_2 }}
-                <label class="form-check-label" for="{{ symptom_72h_form.SKINLESIONS_2.id_for_label }}">
-                  <i class="fas fa-hand-sparkles text-info mr-1"></i>{{ symptom_72h_form.SKINLESIONS_2.label }}
-                </label>
-              </div>
-            </div>
-            
-            {# Respiratory #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.LUNGCRACKLES }}
-                <label class="form-check-label" for="{{ symptom_72h_form.LUNGCRACKLES.id_for_label }}">
-                  <i class="fas fa-lungs text-info mr-1"></i>{{ symptom_72h_form.LUNGCRACKLES.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.CONSOLIDATIONSYNDROME }}
-                <label class="form-check-label" for="{{ symptom_72h_form.CONSOLIDATIONSYNDROME.id_for_label }}">
-                  <i class="fas fa-compress text-primary mr-1"></i>{{ symptom_72h_form.CONSOLIDATIONSYNDROME.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.PLEURALEFFUSION }}
-                <label class="form-check-label" for="{{ symptom_72h_form.PLEURALEFFUSION.id_for_label }}">
-                  <i class="fas fa-water text-primary mr-1"></i>{{ symptom_72h_form.PLEURALEFFUSION.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.PNEUMOTHORAX }}
-                <label class="form-check-label" for="{{ symptom_72h_form.PNEUMOTHORAX.id_for_label }}">
-                  <i class="fas fa-lungs text-danger mr-1"></i>{{ symptom_72h_form.PNEUMOTHORAX.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Cardiovascular - ADDED #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.HEARTMURMUR }}
-                <label class="form-check-label" for="{{ symptom_72h_form.HEARTMURMUR.id_for_label }}">
-                  <i class="fas fa-heartbeat text-danger mr-1"></i>{{ symptom_72h_form.HEARTMURMUR.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.ABNORHEARTSOUNDS }}
-                <label class="form-check-label" for="{{ symptom_72h_form.ABNORHEARTSOUNDS.id_for_label }}">
-                  <i class="fas fa-heart text-warning mr-1"></i>{{ symptom_72h_form.ABNORHEARTSOUNDS.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.JUGULARVEINDISTENTION }}
-                <label class="form-check-label" for="{{ symptom_72h_form.JUGULARVEINDISTENTION.id_for_label }}">
-                  <i class="fas fa-arrow-up text-info mr-1"></i>{{ symptom_72h_form.JUGULARVEINDISTENTION.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Hepatic - ADDED #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.LIVERFAILURESIGNS }}
-                <label class="form-check-label" for="{{ symptom_72h_form.LIVERFAILURESIGNS.id_for_label }}">
-                  <i class="fas fa-exclamation-triangle text-danger mr-1"></i>{{ symptom_72h_form.LIVERFAILURESIGNS.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.PORTALHYPERTENSIONSIGNS }}
-                <label class="form-check-label" for="{{ symptom_72h_form.PORTALHYPERTENSIONSIGNS.id_for_label }}">
-                  <i class="fas fa-arrows-alt-v text-warning mr-1"></i>{{ symptom_72h_form.PORTALHYPERTENSIONSIGNS.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.HEPATOSPLENOMEGALY }}
-                <label class="form-check-label" for="{{ symptom_72h_form.HEPATOSPLENOMEGALY.id_for_label }}">
-                  <i class="fas fa-notes-medical text-warning mr-1"></i>{{ symptom_72h_form.HEPATOSPLENOMEGALY.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Neurological - ADDED #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.CONSCIOUSNESSDISTURBANCE }}
-                <label class="form-check-label" for="{{ symptom_72h_form.CONSCIOUSNESSDISTURBANCE.id_for_label }}">
-                  <i class="fas fa-brain text-purple mr-1"></i>{{ symptom_72h_form.CONSCIOUSNESSDISTURBANCE.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.LIMBWEAKNESSPARALYSIS }}
-                <label class="form-check-label" for="{{ symptom_72h_form.LIMBWEAKNESSPARALYSIS.id_for_label }}">
-                  <i class="fas fa-hand-paper text-secondary mr-1"></i>{{ symptom_72h_form.LIMBWEAKNESSPARALYSIS.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.CRANIALNERVEPARALYSIS }}
-                <label class="form-check-label" for="{{ symptom_72h_form.CRANIALNERVEPARALYSIS.id_for_label }}">
-                  <i class="fas fa-head-side-mask text-danger mr-1"></i>{{ symptom_72h_form.CRANIALNERVEPARALYSIS.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.MENINGEALSIGNS }}
-                <label class="form-check-label" for="{{ symptom_72h_form.MENINGEALSIGNS.id_for_label }}">
-                  <i class="fas fa-head-side-cough text-danger mr-1"></i>{{ symptom_72h_form.MENINGEALSIGNS.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Ophthalmic - ADDED #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.REDEYES_2 }}
-                <label class="form-check-label" for="{{ symptom_72h_form.REDEYES_2.id_for_label }}">
-                  <i class="fas fa-eye text-danger mr-1"></i>{{ symptom_72h_form.REDEYES_2.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.HYPOPYON }}
-                <label class="form-check-label" for="{{ symptom_72h_form.HYPOPYON.id_for_label }}">
-                  <i class="fas fa-eye-slash text-warning mr-1"></i>{{ symptom_72h_form.HYPOPYON.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Other - ADDED #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.EDEMA }}
-                <label class="form-check-label" for="{{ symptom_72h_form.EDEMA.id_for_label }}">
-                  <i class="fas fa-splotch text-info mr-1"></i>{{ symptom_72h_form.EDEMA.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.CUSHINGOIDAPPEARANCE }}
-                <label class="form-check-label" for="{{ symptom_72h_form.CUSHINGOIDAPPEARANCE.id_for_label }}">
-                  <i class="fas fa-user-circle text-secondary mr-1"></i>{{ symptom_72h_form.CUSHINGOIDAPPEARANCE.label }}
-                </label>
-              </div>
-            </div>
-            
-            {#  Abdominal - ADDED #}
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.EPIGASTRICPAIN_2 }}
-                <label class="form-check-label" for="{{ symptom_72h_form.EPIGASTRICPAIN_2.id_for_label }}">
-                  <i class="fas fa-hand-point-up text-warning mr-1"></i>{{ symptom_72h_form.EPIGASTRICPAIN_2.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.LOWERABDPAIN_2 }}
-                <label class="form-check-label" for="{{ symptom_72h_form.LOWERABDPAIN_2.id_for_label }}">
-                  <i class="fas fa-hand-point-down text-warning mr-1"></i>{{ symptom_72h_form.LOWERABDPAIN_2.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.FLANKPAIN_2 }}
-                <label class="form-check-label" for="{{ symptom_72h_form.FLANKPAIN_2.id_for_label }}">
-                  <i class="fas fa-arrows-alt-h text-info mr-1"></i>{{ symptom_72h_form.FLANKPAIN_2.label }}
-                </label>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="form-check">
-                {{ symptom_72h_form.SUBCOSTALPAIN_2 }}
-                <label class="form-check-label" for="{{ symptom_72h_form.SUBCOSTALPAIN_2.id_for_label }}">
-                  <i class="fas fa-compress text-danger mr-1"></i>{{ symptom_72h_form.SUBCOSTALPAIN_2.label }}
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {# Other Findings #}
-        <div class="form-check mt-3">
-          {{ symptom_72h_form.OTHERSYMPTOM_2 }}
-          <label class="form-check-label" for="{{ symptom_72h_form.OTHERSYMPTOM_2.id_for_label }}">
-            <i class="fas fa-plus-circle text-primary mr-1"></i>{{ symptom_72h_form.OTHERSYMPTOM_2.label }}
-          </label>
-        </div>
-        
-        <div id="othersymptom_2_detail" class="conditional-section mt-2" style="display:none;">
-          <label for="{{ symptom_72h_form.SPECIFYOTHERSYMPTOM_2.id_for_label }}">{{ symptom_72h_form.SPECIFYOTHERSYMPTOM_2.label }}</label>
-          {{ symptom_72h_form.SPECIFYOTHERSYMPTOM_2 }}
-        </div>
-      </div>
-      
-      {# Navigation #}
-      <div class="d-flex justify-content-between mt-4">
-        <button type="button" class="btn btn-secondary" data-tab-action="prev">
-          <i class="fas fa-arrow-left mr-1"></i>{% trans "Previous" %}
-        </button>
-        <button type="button" class="btn btn-primary" data-tab-action="next">
-          {% trans "Next" %} <i class="fas fa-arrow-right ml-1"></i>
-        </button>
-      </div>
-    </div>
-  </div>
+ <div class="clinical-case-container">
+ <div class="clinical-case-header">
+ <div class="row">
+ <div class="col">
+ <h4 class="m-0">CLINICAL - SYMPTOMS</h4>
+ </div>
+ <div class="col text-right">
+ <span class="page-indicator">CL1 (2/3)</span>
+ </div>
+ </div>
+ </div>
+
+ <div class="clinical-case-content">
+ {# ========== SUBJECTIVE SYMPTOMS (HISTORY) ========== #}
+ <div class="form-section-header">
+ {% trans "Subjective Symptoms (Patient Reported)" %}
+ </div>
+
+ <div class="numbered-item" data-number="9">
+ <label>{% trans "Subjective Symptoms" %}</label>
+ <p class="text-muted small">{% trans "Select all that apply" %}</p>
+
+ <div class="checkbox-group mt-3">
+ <div class="row">
+ {# General Symptoms #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.FEVER }}
+ <label class="form-check-label" for="{{ history_symptom_form.FEVER.id_for_label }}">
+ {{ history_symptom_form.FEVER.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.FATIGUE }}
+ <label class="form-check-label" for="{{ history_symptom_form.FATIGUE.id_for_label }}">
+ {{ history_symptom_form.FATIGUE.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.MUSCLEPAIN }}
+ <label class="form-check-label" for="{{ history_symptom_form.MUSCLEPAIN.id_for_label }}">
+ {{ history_symptom_form.MUSCLEPAIN.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.LOSSAPPETITE }}
+ <label class="form-check-label" for="{{ history_symptom_form.LOSSAPPETITE.id_for_label }}">
+ {{ history_symptom_form.LOSSAPPETITE.label }}
+</label>
+ </div>
+ </div>
+
+ {# Respiratory Symptoms #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.COUGH }}
+ <label class="form-check-label" for="{{ history_symptom_form.COUGH.id_for_label }}">
+ {{ history_symptom_form.COUGH.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.CHESTPAIN }}
+ <label class="form-check-label" for="{{ history_symptom_form.CHESTPAIN.id_for_label }}">
+ {{ history_symptom_form.CHESTPAIN.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.SHORTBREATH }}
+ <label class="form-check-label" for="{{ history_symptom_form.SHORTBREATH.id_for_label }}">
+ {{ history_symptom_form.SHORTBREATH.label }}
+</label>
+ </div>
+ </div>
+
+ {# Hepatic Symptoms #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.JAUNDICE }}
+ <label class="form-check-label" for="{{ history_symptom_form.JAUNDICE.id_for_label }}">
+ {{ history_symptom_form.JAUNDICE.label }}
+</label>
+ </div>
+ </div>
+
+ {# Urinary Symptoms #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.PAINURINATION }}
+ <label class="form-check-label" for="{{ history_symptom_form.PAINURINATION.id_for_label }}">
+ {{ history_symptom_form.PAINURINATION.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.BLOODYURINE }}
+ <label class="form-check-label" for="{{ history_symptom_form.BLOODYURINE.id_for_label }}">
+ {{ history_symptom_form.BLOODYURINE.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.CLOUDYURINE }}
+ <label class="form-check-label" for="{{ history_symptom_form.CLOUDYURINE.id_for_label }}">
+ {{ history_symptom_form.CLOUDYURINE.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.URINARYHESITANCY }}
+ <label class="form-check-label" for="{{ history_symptom_form.URINARYHESITANCY.id_for_label }}">
+ {{ history_symptom_form.URINARYHESITANCY.label }}
+</label>
+ </div>
+ </div>
+
+ {# Abdominal Pain #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.EPIGASTRICPAIN }}
+ <label class="form-check-label" for="{{ history_symptom_form.EPIGASTRICPAIN.id_for_label }}">
+ {{ history_symptom_form.EPIGASTRICPAIN.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.LOWERABDPAIN }}
+ <label class="form-check-label" for="{{ history_symptom_form.LOWERABDPAIN.id_for_label }}">
+ {{ history_symptom_form.LOWERABDPAIN.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.FLANKPAIN }}
+ <label class="form-check-label" for="{{ history_symptom_form.FLANKPAIN.id_for_label }}">
+ {{ history_symptom_form.FLANKPAIN.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.SUBCOSTALPAIN }}
+ <label class="form-check-label" for="{{ history_symptom_form.SUBCOSTALPAIN.id_for_label }}">
+ {{ history_symptom_form.SUBCOSTALPAIN.label }}
+</label>
+ </div>
+ </div>
+
+ {# Neurological Symptoms #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.HEADACHE }}
+ <label class="form-check-label" for="{{ history_symptom_form.HEADACHE.id_for_label }}">
+ {{ history_symptom_form.HEADACHE.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.POORCONTACT }}
+ <label class="form-check-label" for="{{ history_symptom_form.POORCONTACT.id_for_label }}">
+ {{ history_symptom_form.POORCONTACT.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.DELIRIUMAGITATION }}
+ <label class="form-check-label" for="{{ history_symptom_form.DELIRIUMAGITATION.id_for_label }}">
+ {{ history_symptom_form.DELIRIUMAGITATION.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.SEIZURES }}
+ <label class="form-check-label" for="{{ history_symptom_form.SEIZURES.id_for_label }}">
+ {{ history_symptom_form.SEIZURES.label }}
+</label>
+ </div>
+ </div>
+
+ {# GI Symptoms #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.VOMITING }}
+ <label class="form-check-label" for="{{ history_symptom_form.VOMITING.id_for_label }}">
+ {{ history_symptom_form.VOMITING.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.NAUSEA }}
+ <label class="form-check-label" for="{{ history_symptom_form.NAUSEA.id_for_label }}">
+ {{ history_symptom_form.NAUSEA.label }}
+</label>
+ </div>
+ </div>
+
+ {# Eye Symptoms #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.EYEPAIN }}
+ <label class="form-check-label" for="{{ history_symptom_form.EYEPAIN.id_for_label }}">
+ {{ history_symptom_form.EYEPAIN.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.REDEYES }}
+ <label class="form-check-label" for="{{ history_symptom_form.REDEYES.id_for_label }}">
+ {{ history_symptom_form.REDEYES.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.BLURREDVISION }}
+ <label class="form-check-label" for="{{ history_symptom_form.BLURREDVISION.id_for_label }}">
+ {{ history_symptom_form.BLURREDVISION.label }}
+</label>
+ </div>
+ </div>
+
+ {# Skin Symptoms #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ history_symptom_form.SKINLESIONS }}
+ <label class="form-check-label" for="{{ history_symptom_form.SKINLESIONS.id_for_label }}">
+ {{ history_symptom_form.SKINLESIONS.label }}
+</label>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ {# Other Symptoms #}
+ <div class="form-check mt-3">
+ {{ history_symptom_form.OTHERSYMPTOM }}
+ <label class="form-check-label" for="{{ history_symptom_form.OTHERSYMPTOM.id_for_label }}">
+ {{ history_symptom_form.OTHERSYMPTOM.label }}
+</label>
+ </div>
+
+ <div id="othersymptom_detail" class="conditional-section mt-2" style="display:none;">
+ <label for="{{ history_symptom_form.SPECIFYOTHERSYMPTOM.id_for_label }}">{{ history_symptom_form.SPECIFYOTHERSYMPTOM.label }}</label>
+ {{ history_symptom_form.SPECIFYOTHERSYMPTOM }}
+ </div>
+ </div>
+
+ {# ========== OBJECTIVE SYMPTOMS (72H) ========== #}
+ <div class="form-section-header">
+ {% trans "Objective Symptoms (Physical Examination within 72h)" %}
+ </div>
+
+ <div class="numbered-item" data-number="10">
+ <label>{% trans "Physical Examination Findings" %}</label>
+
+ {# BMI #}
+ <div class="row mt-3 mb-4">
+ <div class="col-md-3">
+ <label>{{ clinical_form.WEIGHT.label }}</label>
+ {{ clinical_form.WEIGHT }}
+ </div>
+ <div class="col-md-3">
+ <label>{{ clinical_form.HEIGHT.label }}</label>
+ {{ clinical_form.HEIGHT }}
+ </div>
+ <div class="col-md-3">
+ <label>{{ clinical_form.BMI.label }}</label>
+ {{ clinical_form.BMI }}
+ <small class="text-muted">{% trans "Auto-calculated" %}</small>
+ </div>
+ </div>
+
+ {# Physical Findings - Using form labels #}
+ <div class="checkbox-group">
+ <div class="row">
+ {# General #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.FEVER_2 }}
+ <label class="form-check-label" for="{{ symptom_72h_form.FEVER_2.id_for_label }}">
+ {{ symptom_72h_form.FEVER_2.label }}
+</label>
+ </div>
+ </div>
+
+ {# Skin #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.RASH }}
+ <label class="form-check-label" for="{{ symptom_72h_form.RASH.id_for_label }}">
+ {{ symptom_72h_form.RASH.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.SKINBLEEDING }}
+ <label class="form-check-label" for="{{ symptom_72h_form.SKINBLEEDING.id_for_label }}">
+ {{ symptom_72h_form.SKINBLEEDING.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.MUCOSALBLEEDING }}
+ <label class="form-check-label" for="{{ symptom_72h_form.MUCOSALBLEEDING.id_for_label }}">
+ {{ symptom_72h_form.MUCOSALBLEEDING.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.SKINLESIONS_2 }}
+ <label class="form-check-label" for="{{ symptom_72h_form.SKINLESIONS_2.id_for_label }}">
+ {{ symptom_72h_form.SKINLESIONS_2.label }}
+</label>
+ </div>
+ </div>
+
+ {# Respiratory #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.LUNGCRACKLES }}
+ <label class="form-check-label" for="{{ symptom_72h_form.LUNGCRACKLES.id_for_label }}">
+ {{ symptom_72h_form.LUNGCRACKLES.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.CONSOLIDATIONSYNDROME }}
+ <label class="form-check-label" for="{{ symptom_72h_form.CONSOLIDATIONSYNDROME.id_for_label }}">
+ {{ symptom_72h_form.CONSOLIDATIONSYNDROME.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.PLEURALEFFUSION }}
+ <label class="form-check-label" for="{{ symptom_72h_form.PLEURALEFFUSION.id_for_label }}">
+ {{ symptom_72h_form.PLEURALEFFUSION.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.PNEUMOTHORAX }}
+ <label class="form-check-label" for="{{ symptom_72h_form.PNEUMOTHORAX.id_for_label }}">
+ {{ symptom_72h_form.PNEUMOTHORAX.label }}
+</label>
+ </div>
+ </div>
+
+ {# Cardiovascular - ADDED #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.HEARTMURMUR }}
+ <label class="form-check-label" for="{{ symptom_72h_form.HEARTMURMUR.id_for_label }}">
+ {{ symptom_72h_form.HEARTMURMUR.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.ABNORHEARTSOUNDS }}
+ <label class="form-check-label" for="{{ symptom_72h_form.ABNORHEARTSOUNDS.id_for_label }}">
+ {{ symptom_72h_form.ABNORHEARTSOUNDS.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.JUGULARVEINDISTENTION }}
+ <label class="form-check-label" for="{{ symptom_72h_form.JUGULARVEINDISTENTION.id_for_label }}">
+ {{ symptom_72h_form.JUGULARVEINDISTENTION.label }}
+</label>
+ </div>
+ </div>
+
+ {# Hepatic - ADDED #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.LIVERFAILURESIGNS }}
+ <label class="form-check-label" for="{{ symptom_72h_form.LIVERFAILURESIGNS.id_for_label }}">
+ {{ symptom_72h_form.LIVERFAILURESIGNS.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.PORTALHYPERTENSIONSIGNS }}
+ <label class="form-check-label" for="{{ symptom_72h_form.PORTALHYPERTENSIONSIGNS.id_for_label }}">
+ {{ symptom_72h_form.PORTALHYPERTENSIONSIGNS.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.HEPATOSPLENOMEGALY }}
+ <label class="form-check-label" for="{{ symptom_72h_form.HEPATOSPLENOMEGALY.id_for_label }}">
+ {{ symptom_72h_form.HEPATOSPLENOMEGALY.label }}
+</label>
+ </div>
+ </div>
+
+ {# Neurological - ADDED #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.CONSCIOUSNESSDISTURBANCE }}
+ <label class="form-check-label" for="{{ symptom_72h_form.CONSCIOUSNESSDISTURBANCE.id_for_label }}">
+ {{ symptom_72h_form.CONSCIOUSNESSDISTURBANCE.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.LIMBWEAKNESSPARALYSIS }}
+ <label class="form-check-label" for="{{ symptom_72h_form.LIMBWEAKNESSPARALYSIS.id_for_label }}">
+ {{ symptom_72h_form.LIMBWEAKNESSPARALYSIS.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.CRANIALNERVEPARALYSIS }}
+ <label class="form-check-label" for="{{ symptom_72h_form.CRANIALNERVEPARALYSIS.id_for_label }}">
+ {{ symptom_72h_form.CRANIALNERVEPARALYSIS.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.MENINGEALSIGNS }}
+ <label class="form-check-label" for="{{ symptom_72h_form.MENINGEALSIGNS.id_for_label }}">
+ {{ symptom_72h_form.MENINGEALSIGNS.label }}
+</label>
+ </div>
+ </div>
+
+ {# Ophthalmic - ADDED #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.REDEYES_2 }}
+ <label class="form-check-label" for="{{ symptom_72h_form.REDEYES_2.id_for_label }}">
+ {{ symptom_72h_form.REDEYES_2.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.HYPOPYON }}
+ <label class="form-check-label" for="{{ symptom_72h_form.HYPOPYON.id_for_label }}">
+ {{ symptom_72h_form.HYPOPYON.label }}
+</label>
+ </div>
+ </div>
+
+ {# Other - ADDED #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.EDEMA }}
+ <label class="form-check-label" for="{{ symptom_72h_form.EDEMA.id_for_label }}">
+ {{ symptom_72h_form.EDEMA.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.CUSHINGOIDAPPEARANCE }}
+ <label class="form-check-label" for="{{ symptom_72h_form.CUSHINGOIDAPPEARANCE.id_for_label }}">
+ {{ symptom_72h_form.CUSHINGOIDAPPEARANCE.label }}
+</label>
+ </div>
+ </div>
+
+ {# Abdominal - ADDED #}
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.EPIGASTRICPAIN_2 }}
+ <label class="form-check-label" for="{{ symptom_72h_form.EPIGASTRICPAIN_2.id_for_label }}">
+ {{ symptom_72h_form.EPIGASTRICPAIN_2.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.LOWERABDPAIN_2 }}
+ <label class="form-check-label" for="{{ symptom_72h_form.LOWERABDPAIN_2.id_for_label }}">
+ {{ symptom_72h_form.LOWERABDPAIN_2.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.FLANKPAIN_2 }}
+ <label class="form-check-label" for="{{ symptom_72h_form.FLANKPAIN_2.id_for_label }}">
+ {{ symptom_72h_form.FLANKPAIN_2.label }}
+</label>
+ </div>
+ </div>
+
+ <div class="col-md-3">
+ <div class="form-check">
+ {{ symptom_72h_form.SUBCOSTALPAIN_2 }}
+ <label class="form-check-label" for="{{ symptom_72h_form.SUBCOSTALPAIN_2.id_for_label }}">
+ {{ symptom_72h_form.SUBCOSTALPAIN_2.label }}
+</label>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ {# Other Findings #}
+ <div class="form-check mt-3">
+ {{ symptom_72h_form.OTHERSYMPTOM_2 }}
+ <label class="form-check-label" for="{{ symptom_72h_form.OTHERSYMPTOM_2.id_for_label }}">
+ {{ symptom_72h_form.OTHERSYMPTOM_2.label }}
+</label>
+ </div>
+
+ <div id="othersymptom_2_detail" class="conditional-section mt-2" style="display:none;">
+ <label for="{{ symptom_72h_form.SPECIFYOTHERSYMPTOM_2.id_for_label }}">{{ symptom_72h_form.SPECIFYOTHERSYMPTOM_2.label }}</label>
+ {{ symptom_72h_form.SPECIFYOTHERSYMPTOM_2 }}
+ </div>
+ </div>
+
+ {# Navigation #}
+ <div class="d-flex justify-content-between mt-4">
+ <button type="button" class="btn btn-secondary" data-tab-action="prev">
+ {% trans "Previous" %}
+ </button>
+ <button type="button" class="btn btn-primary" data-tab-action="next">
+ {% trans "Next" %}
+ </button>
+ </div>
+ </div>
+ </div>
 </div>
 
 <script nonce="{{ request.csp_nonce }}">
 // Toggle conditional sections
 $(document).ready(function() {
-  // History symptom other detail
-  $('#{{ history_symptom_form.OTHERSYMPTOM.id_for_label }}').change(function() {
-    $('#othersymptom_detail').toggle(this.checked);
-  });
-  
-  // 72H symptom other detail
-  $('#{{ symptom_72h_form.OTHERSYMPTOM_2.id_for_label }}').change(function() {
-    $('#othersymptom_2_detail').toggle(this.checked);
-  });
-  
-  // Initialize on load
-  if ($('#{{ history_symptom_form.OTHERSYMPTOM.id_for_label }}').is(':checked')) {
-    $('#othersymptom_detail').show();
-  }
-  
-  if ($('#{{ symptom_72h_form.OTHERSYMPTOM_2.id_for_label }}').is(':checked')) {
-    $('#othersymptom_2_detail').show();
-  }
+ // History symptom other detail
+ $('#{{ history_symptom_form.OTHERSYMPTOM.id_for_label }}').change(function() {
+ $('#othersymptom_detail').toggle(this.checked);
+ });
+
+ // 72H symptom other detail
+ $('#{{ symptom_72h_form.OTHERSYMPTOM_2.id_for_label }}').change(function() {
+ $('#othersymptom_2_detail').toggle(this.checked);
+ });
+
+ // Initialize on load
+ if ($('#{{ history_symptom_form.OTHERSYMPTOM.id_for_label }}').is(':checked')) {
+ $('#othersymptom_detail').show();
+ }
+
+ if ($('#{{ symptom_72h_form.OTHERSYMPTOM_2.id_for_label }}').is(':checked')) {
+ $('#othersymptom_2_detail').show();
+ }
 });
 </script>

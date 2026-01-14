@@ -55,7 +55,7 @@
     <div class="card mt-3">
         <div class="card-header bg-primary text-white">
             <h5 class="card-title mb-0">
-                <i class="fas fa-calendar-alt mr-2"></i>
+                <i ></i>
                 {% trans "Contact Follow-up Schedule" %}
             </h5>
         </div>
@@ -135,7 +135,7 @@
                             <tr>
                                 <td class="text-center"><strong>1</strong></td>
                                 <td class="text-center">
-                                    <i class="fas fa-clipboard-check text-primary mr-2"></i>
+                                    <i ></i>
                                     <strong>{% trans "Contact Screening" %}</strong>
                                 </td>
                                 <td class="text-center">
@@ -154,12 +154,12 @@
                                     <div class="btn-group btn-group-sm btn-action-group" role="group">
                                         <a href="{% url 'study_43en:screening_contact_view' SCRID=screening_contact.SCRID %}" 
                                         class="btn btn-info">
-                                            <i class="fas fa-eye"></i> {% trans "View" %}
+                                            <i ></i> {% trans "View" %}
                                         </a>
                                         {% if perms.study_43en.change_scr_contact %}
                                         <a href="{% url 'study_43en:screening_contact_update' SCRID=screening_contact.SCRID %}" 
                                         class="btn btn-warning">
-                                            <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            <i ></i> {% trans "Edit" %}
                                         </a>
                                         {% endif %}
                                     </div>
@@ -170,7 +170,7 @@
                         <tr>
                             <td class="text-center"><strong>2</strong></td>
                             <td class="text-center">
-                                <i class="fas fa-user-plus text-success mr-2"></i>
+                                <i ></i>
                                 <strong>{% trans "Contact Enrollment" %}</strong>
                             </td>
                             <td class="text-center">
@@ -211,12 +211,12 @@
                                     <div class="btn-group btn-group-sm btn-action-group" role="group">
                                         <a href="{% url 'study_43en:enrollment_contact_view' usubjid=screening_contact.USUBJID %}" 
                                            class="btn btn-info" title="{% trans 'View Details' %}">
-                                            <i class="fas fa-eye"></i> {% trans "View" %}
+                                            <i ></i> {% trans "View" %}
                                         </a>
                                         {% if perms.study_43en.change_enr_contact %}
                                         <a href="{% url 'study_43en:enrollment_contact_update' usubjid=screening_contact.USUBJID %}" 
                                            class="btn btn-warning" title="{% trans 'Edit' %}">
-                                            <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            <i ></i> {% trans "Edit" %}
                                         </a>
                                         {% endif %}
                                     </div>
@@ -229,7 +229,7 @@
                         <tr>
                             <td class="text-center"><strong>3</strong></td>
                             <td class="text-center">
-                                <i class="fas fa-vial text-purple mr-2"></i>
+                                <i ></i>
                                 <strong>{% trans "Contact Sample Collection" %}</strong>
                                 {% if sample_count > 0 %}
                                     <span class="badge bg-info ms-2">{{ sample_count }} {% trans "samples" %}</span>
@@ -281,7 +281,7 @@
                         <tr>
                             <td class="text-center"><strong>4</strong></td>
                             <td class="text-center">
-                                <i class="fas fa-calendar-check text-success mr-2"></i>
+                                <i ></i>
                                 <strong>{% trans "Contact Follow-up Day 28" %}</strong>
                             </td>
                             <td class="text-center">
@@ -323,12 +323,12 @@
                                         <div class="btn-group btn-group-sm btn-action-group" role="group">
                                             <a href="{% url 'study_43en:contact_followup_28_view' usubjid=screening_contact.USUBJID %}" 
                                                class="btn btn-info" title="{% trans 'View Follow-up Day 28' %}">
-                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                                <i ></i> {% trans "View" %}
                                             </a>
                                             {% if perms.study_43en.change_fu_contact_28 %}
                                             <a href="{% url 'study_43en:contact_followup_28_update' usubjid=screening_contact.USUBJID %}" 
                                                class="btn btn-primary btn-sm btn-action-single">
-                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                <i ></i> {% trans "Edit" %}
                                             </a>
                                             {% endif %}
                                         </div>
@@ -347,7 +347,7 @@
                         <tr>
                             <td class="text-center"><strong>5</strong></td>
                             <td class="text-center">
-                                <i class="fas fa-calendar-alt text-info mr-2"></i>
+                                <i ></i>
                                 <strong>{% trans "Contact Follow-up Day 90" %}</strong>
                             </td>
                             <td class="text-center">
@@ -389,12 +389,12 @@
                                         <div class="btn-group btn-group-sm btn-action-group" role="group">
                                             <a href="{% url 'study_43en:contact_followup_90_view' usubjid=screening_contact.USUBJID %}" 
                                                class="btn btn-info" title="{% trans 'View Follow-up Day 90' %}">
-                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                                <i ></i> {% trans "View" %}
                                             </a>
                                             {% if perms.study_43en.change_fu_contact_90 %}
                                             <a href="{% url 'study_43en:contact_followup_90_update' usubjid=screening_contact.USUBJID %}" 
                                                class="btn btn-warning" title="{% trans 'Edit Follow-up Day 90' %}">
-                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                <i ></i> {% trans "Edit" %}
                                             </a>
                                             {% endif %}
                                         </div>
@@ -413,7 +413,7 @@
                         <tr>
                             <td class="text-center"><strong>6</strong></td>
                             <td class="text-center">
-                                <i class="fas fa-flag-checkered text-danger mr-2"></i>
+                                <i ></i>
                                 <strong>{% trans "End of Study CRF" %}</strong>
                             </td>
                             <td class="text-center">
@@ -453,12 +453,12 @@
                                 <div class="btn-group btn-group-sm btn-action-group" role="group">
                                     <a href="{% url 'study_43en:contactendcasecrf_view' usubjid=screening_contact.USUBJID %}" 
                                        class="btn btn-info">
-                                        <i class="fas fa-eye"></i> {% trans "View" %}
+                                        <i ></i> {% trans "View" %}
                                     </a>
                                     {% if perms.study_43en.change_contactendcasecrf %}
                                     <a href="{% url 'study_43en:contactendcasecrf_update' usubjid=screening_contact.USUBJID %}" 
                                        class="btn btn-warning">
-                                        <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                        <i ></i> {% trans "Edit" %}
                                     </a>
                                 <div>
                                     {% endif %}

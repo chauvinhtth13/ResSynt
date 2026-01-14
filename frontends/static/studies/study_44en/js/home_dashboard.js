@@ -1565,7 +1565,7 @@ const DashboardCharts = (function($) {
         CONFIG.siteId = config.siteId || 'all';           //  STORE site_id
         CONFIG.filterType = config.filterType || '';      //  STORE filter_type
 
-        console.log('📍 Using Site ID:', CONFIG.siteId);
+        console.log(' Using Site ID:', CONFIG.siteId);
 
         //  SKIP counter animation - handled by home_dashboard.html
         // The counters are already initialized with or without animation

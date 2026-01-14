@@ -211,7 +211,7 @@ def individual_exposure_update(request, subjectid):
     4. Save with audit
     """
     logger.info("=" * 80)
-    logger.info("=== 📝 INDIVIDUAL EXPOSURE UPDATE START ===")
+    logger.info("===  INDIVIDUAL EXPOSURE UPDATE START ===")
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}")
     logger.info("=" * 80)
     
@@ -293,7 +293,7 @@ def individual_exposure_update(request, subjectid):
         form_changes = detector.detect_changes(old_form_data, new_form_data)
         
         # DEBUG: Log all form changes before filter
-        logger.info("📝 Form changes BEFORE filter:")
+        logger.info(" Form changes BEFORE filter:")
         for c in form_changes:
             logger.info(f"   - {c['field']}: '{c.get('old_value')}' → '{c.get('new_value')}'")
         
@@ -304,19 +304,19 @@ def individual_exposure_update(request, subjectid):
                        and c['field'].upper() not in flat_field_names
                        and c['field'].lower() not in flat_field_names]
         
-        logger.info(f"📝 Form changes AFTER filter: {len(form_changes)}")
+        logger.info(f" Form changes AFTER filter: {len(form_changes)}")
         all_changes.extend(form_changes)
     
     # Flat field changes (water, treatment, comorbidities + radio buttons)
     flat_changes = detect_exp1_flat_field_changes(request, exposure)
     
     # DEBUG: Log flat changes
-    logger.info("📝 Flat changes detected:")
+    logger.info(" Flat changes detected:")
     for c in flat_changes:
         logger.info(f"   - {c['field']}: '{c.get('old_value')}' → '{c.get('new_value')}'")
     
     all_changes.extend(flat_changes)
-    logger.info(f"📝 Total before final filter: {len(all_changes)}")
+    logger.info(f" Total before final filter: {len(all_changes)}")
     
     # IMPROVED: Filter out changes where values are actually the same
     # Normalize both values for comparison
@@ -341,7 +341,7 @@ def individual_exposure_update(request, subjectid):
             logger.info(f"   ⏭️ Skipping {c['field']}: '{old_norm}' == '{new_norm}' (same after normalize)")
     
     all_changes = filtered_changes
-    logger.info(f"📝 TOTAL changes (after normalize filter): {len(all_changes)}")
+    logger.info(f" TOTAL changes (after normalize filter): {len(all_changes)}")
     
     # ===================================
     # STEP 2: No changes → save directly
@@ -740,12 +740,12 @@ def individual_exposure_2_update(request, subjectid):
                        and c['field'].lower() not in flat_field_names]
         
         all_changes.extend(form_changes)
-        logger.info(f"📝 Form changes (after filter): {len(form_changes)}")
+        logger.info(f" Form changes (after filter): {len(form_changes)}")
     
     # Flat field changes (vaccines, hospitalizations, medications + radio buttons)
     flat_changes = detect_exp2_flat_field_changes(request, exposure)
     all_changes.extend(flat_changes)
-    logger.info(f"📝 Flat changes: {len(flat_changes)}")
+    logger.info(f" Flat changes: {len(flat_changes)}")
     
     # IMPROVED: Filter out changes where values are actually the same
     def normalize_for_compare(val):
@@ -769,7 +769,7 @@ def individual_exposure_2_update(request, subjectid):
             logger.info(f"   ⏭️ Skipping {c['field']}: '{old_norm}' == '{new_norm}' (same after normalize)")
     
     all_changes = filtered_changes
-    logger.info(f"📝 TOTAL changes: {len(all_changes)}")
+    logger.info(f" TOTAL changes: {len(all_changes)}")
     
     # ===================================
     # STEP 2: No changes → save directly
@@ -1099,7 +1099,7 @@ def individual_exposure_3_update(request, subjectid):
             logger.info(f"   ⏭️ Skipping {c['field']}: '{old_norm}' == '{new_norm}' (same after normalize)")
     
     all_changes = filtered_changes
-    logger.info(f"📝 TOTAL changes: {len(all_changes)}")
+    logger.info(f" TOTAL changes: {len(all_changes)}")
     
     # ===================================
     # STEP 2: No changes → save directly

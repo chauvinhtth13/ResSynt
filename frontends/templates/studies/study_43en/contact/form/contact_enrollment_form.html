@@ -379,7 +379,7 @@
     <div class="card card-primary">
       <div class="card-header">
         <h3 class="card-title">
-          <i class="fas fa-users mr-2"></i>
+          <i ></i>
           {% if is_readonly %}
             {% trans "Contact Information" %} {{ screening_contact.USUBJID }}
           {% else %}
@@ -392,7 +392,7 @@
         <div class="card-tools">
           <a href="{% url 'study_43en:enrollment_contact_update' usubjid=screening_contact.USUBJID %}" 
              class="btn btn-light btn-sm">
-            <i class="fas fa-edit"></i> {% trans "Edit" %}
+            <i ></i> {% trans "Edit" %}
           </a>
         </div>
         {% endif %}
@@ -425,7 +425,7 @@
         
         {% if medhisdrug_formset.errors %}
         <div class="alert alert-warning">
-          <h5><i class="fas fa-pills"></i> {% trans "Medication Errors" %}</h5>
+          <h5><i ></i> {% trans "Medication Errors" %}</h5>
           <ul class="mb-0">
             {% for error in medhisdrug_formset.errors %}
               <li>{{ error }}</li>
@@ -456,7 +456,7 @@
           {# ========== ENROLLMENT CONTACT CONTAINER ========== #}
           <div class="enr-case-container">
             <div class="enr-case-header">
-              <i class="fas fa-users mr-2"></i>ENROLLMENT - CONTACT
+              <i ></i>ENROLLMENT - CONTACT
             </div>
             
             <div class="enr-case-content">

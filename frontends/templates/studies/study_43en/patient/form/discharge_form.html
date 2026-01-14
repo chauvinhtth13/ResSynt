@@ -4,25 +4,25 @@
 
 {% block title %}
 {% if is_readonly %}
-    {% trans "View Discharge Information" %}
+ {% trans "View Discharge Information" %}
 {% else %}
-    {% if is_create %}
-        {% trans "Create New Discharge" %}
-    {% else %}
-        {% trans "Update Discharge" %}
-    {% endif %}
+ {% if is_create %}
+ {% trans "Create New Discharge" %}
+ {% else %}
+ {% trans "Update Discharge" %}
+ {% endif %}
 {% endif %}
 {% endblock %}
 
 {% block page_title %}
 {% if is_readonly %}
-    {% trans "View Discharge Information" %}
+ {% trans "View Discharge Information" %}
 {% else %}
-    {% if is_create %}
-        {% trans "Create New Discharge" %}
-    {% else %}
-        {% trans "Update Discharge" %}
-    {% endif %}
+ {% if is_create %}
+ {% trans "Create New Discharge" %}
+ {% else %}
+ {% trans "Update Discharge" %}
+ {% endif %}
 {% endif %}
 {% endblock %}
 
@@ -33,437 +33,437 @@
 
 {% block breadcrumb %}
 <ol class="breadcrumb float-sm-right">
-    <li class="breadcrumb-item">
-        <a href="{% url 'study_43en:patient_list' %}">
-            <i class="fas fa-users"></i> {% trans "Patient List" %}
-        </a>
-    </li>
-    <li class="breadcrumb-item">
-        <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}">
-            {{ enrollment_case.USUBJID.USUBJID }}
-        </a>
-    </li>
-    <li class="breadcrumb-item active">
-        {% trans "Discharge" %}
-    </li>
+ <li class="breadcrumb-item">
+ <a href="{% url 'study_43en:patient_list' %}">
+ <i class="fas fa-users"></i> {% trans "Patient List" %}
+ </a>
+ </li>
+ <li class="breadcrumb-item">
+ <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}">
+ {{ enrollment_case.USUBJID.USUBJID }}
+ </a>
+ </li>
+ <li class="breadcrumb-item active">
+ {% trans "Discharge" %}
+ </li>
 </ol>
 {% endblock %}
 
 {% block dashboard_content %}
 <div class="container-fluid">
-    <!-- Discharge Form Container -->
-    <div class="discharge-case-container">
-        <div class="discharge-case-header">
-            <i class="fas fa-hospital-user"></i> {% trans "Discharge Form" %}
-        </div>
-        <div class="discharge-case-content">
-    
-    <!-- Patient Info Card -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="card card-outline card-primary">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-user-injured"></i> 
-                        {% trans "Patient Information" %}
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <strong>{% trans "Patient ID" %}:</strong><br>
-                            <span class="text-primary font-weight-bold">
-                                {{ enrollment_case.USUBJID.USUBJID }}
-                            </span>
-                        </div>
-                        <div class="col-md-3">
-                            <strong>{% trans "Screening Date" %}:</strong><br>
-                            {{ screening_case.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}
-                        </div>
-                        <div class="col-md-3">
-                            <strong>{% trans "Enrollment Date" %}:</strong><br>
-                            {{ enrollment_case.ENRDATE|date:"d/m/Y"|default:"-" }}
-                        </div>
-                        <div class="col-md-3">
-                            <strong>{% trans "Status" %}:</strong><br>
-                            {% if discharge_case %}
-                                <span class="badge badge-success">
-                                    <i class="fas fa-check-circle"></i> {% trans "Data Available" %}
-                                </span>
-                            {% else %}
-                                <span class="badge badge-warning">
-                                    <i class="fas fa-exclamation-triangle"></i> {% trans "No Data" %}
-                                </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+ <!-- Discharge Form Container -->
+ <div class="discharge-case-container">
+ <div class="discharge-case-header">
+ <i class="fas fa-hospital-user"></i> {% trans "Discharge Form" %}
+ </div>
+ <div class="discharge-case-content">
 
-    <!-- Main Form -->
-    <form id="dischargeForm" method="post" novalidate 
-          data-is-create="{{ is_create|yesno:'true,false' }}"
-          {% if is_readonly %}class="readonly-form"{% endif %}>
-        {% csrf_token %}
+ <!-- Patient Info Card -->
+ <div class="row mb-3">
+ <div class="col-12">
+ <div class="card card-outline card-primary">
+ <div class="card-header">
+ <h3 class="card-title">
+ <i class="fas fa-user-injured"></i>
+ {% trans "Patient Information" %}
+ </h3>
+ </div>
+ <div class="card-body">
+ <div class="row">
+ <div class="col-md-3">
+ <strong>{% trans "Patient ID" %}:</strong><br>
+ <span class="text-primary font-weight-bold">
+ {{ enrollment_case.USUBJID.USUBJID }}
+</span>
+ </div>
+ <div class="col-md-3">
+ <strong>{% trans "Screening Date" %}:</strong><br>
+ {{ screening_case.SCREENINGFORMDATE|date:"d/m/Y"|default:"-" }}
+ </div>
+ <div class="col-md-3">
+ <strong>{% trans "Enrollment Date" %}:</strong><br>
+ {{ enrollment_case.ENRDATE|date:"d/m/Y"|default:"-" }}
+ </div>
+ <div class="col-md-3">
+ <strong>{% trans "Status" %}:</strong><br>
+ {% if discharge_case %}
+ <span class="badge badge-success">
+ <i class="fas fa-check-circle"></i> {% trans "Data Available" %}
+</span>
+ {% else %}
+ <span class="badge badge-warning">
+ <i class="fas fa-exclamation-triangle"></i> {% trans "No Data" %}
+</span>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-        <!-- Section 1: Discharge Date -->
-        <div class="card card-outline card-info">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-calendar-alt"></i>
-                    {{ discharge_form.DISCHDATE.label }}
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="id_DISCHDATE" class="form-label">
-                                {{ discharge_form.DISCHDATE.label }}
-                                <span class="text-danger">*</span>
-                            </label>
-                            {{ discharge_form.DISCHDATE }}
-                            {% if discharge_form.DISCHDATE.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ discharge_form.DISCHDATE.errors }}
-                                </div>
-                            {% endif %}
-                            {% if discharge_form.DISCHDATE.help_text %}
-                                <small class="form-text text-muted">
-                                    {{ discharge_form.DISCHDATE.help_text }}
-                                </small>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+ <!-- Main Form -->
+ <form id="dischargeForm" method="post" novalidate
+ data-is-create="{{ is_create|yesno:'true,false' }}"
+ {% if is_readonly %}class="readonly-form"{% endif %}>
+ {% csrf_token %}
 
-        <!-- Section 2: ICD-10 Diagnosis Codes -->
-        <div class="card card-outline card-warning">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-diagnoses"></i>
-                    {% trans "Discharge Diagnosis (ICD-10)" %}
-                </h3>
-            </div>
-            <div class="card-body">
-                <div id="icd-section">
-                    <h5 class="text-muted mb-3">
-                        <i class="fas fa-list"></i>
-                        {% trans "ICD-10 Code List" %}
-                    </h5>
-                    
-                    <div id="icd-formset">
-                        {{ icd_formset.management_form }}
-                        {% for form in icd_formset %}
-                            <div class="icd-form card mb-2">
-                                <div class="card-body">
-                                    {% if form.non_field_errors %}
-                                        <div class="alert alert-danger">
-                                            {{ form.non_field_errors }}
-                                        </div>
-                                    {% endif %}
-                                    
-                                    <div class="row">
-                                        <div class="col-md-2">
-                                            <div class="form-group">
-                                                <label for="{{ form.ICD_SEQUENCE.id_for_label }}" class="form-label">
-                                                    {{ form.ICD_SEQUENCE.label }}
-                                                </label>
-                                                {{ form.ICD_SEQUENCE }}
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="{{ form.ICDCODE.id_for_label }}" class="form-label">
-                                                    {{ form.ICDCODE.label }}
-                                                </label>
-                                                {{ form.ICDCODE }}
-                                                {% if form.ICDCODE.errors %}
-                                                    <div class="invalid-feedback d-block">
-                                                        {{ form.ICDCODE.errors }}
-                                                    </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="{{ form.ICDDETAIL.id_for_label }}" class="form-label">
-                                                    {{ form.ICDDETAIL.label }}
-                                                </label>
-                                                {{ form.ICDDETAIL }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {% for hidden in form.hidden_fields %}
-                                        {{ hidden }}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    
-                    {% if not is_readonly %}
-                    <button type="button" id="add-icd" class="btn btn-success btn-sm">
-                        <i class="fas fa-plus"></i> {% trans "Add ICD-10 Code" %}
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+ <!-- Section 1: Discharge Date -->
+ <div class="card card-outline card-info">
+ <div class="card-header">
+ <h3 class="card-title">
+ <i class="fas fa-calendar-alt"></i>
+ {{ discharge_form.DISCHDATE.label }}
+ </h3>
+ </div>
+ <div class="card-body">
+ <div class="row">
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="id_DISCHDATE" class="form-label">
+ {{ discharge_form.DISCHDATE.label }}
+ <span class="text-danger">*</span>
+</label>
+ {{ discharge_form.DISCHDATE }}
+ {% if discharge_form.DISCHDATE.errors %}
+ <div class="invalid-feedback d-block">
+ {{ discharge_form.DISCHDATE.errors }}
+ </div>
+ {% endif %}
+ {% if discharge_form.DISCHDATE.help_text %}
+ <small class="form-text text-muted">
+ {{ discharge_form.DISCHDATE.help_text }}
+ </small>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-        <!-- Section 3: Discharge Status -->
-        <div class="card card-outline card-success">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-clipboard-check"></i>
-                    {{ discharge_form.DISCHSTATUS.label }}
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="id_DISCHSTATUS" class="form-label">
-                                {{ discharge_form.DISCHSTATUS.label }}
-                            </label>
-                            {{ discharge_form.DISCHSTATUS }}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="id_DISCHSTATUSDETAIL" class="form-label">
-                                {{ discharge_form.DISCHSTATUSDETAIL.label }}
-                            </label>
-                            {{ discharge_form.DISCHSTATUSDETAIL }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+ <!-- Section 2: ICD-10 Diagnosis Codes -->
+ <div class="card card-outline card-warning">
+ <div class="card-header">
+ <h3 class="card-title">
+ <i class="fas fa-diagnoses"></i>
+ {% trans "Discharge Diagnosis (ICD-10)" %}
+ </h3>
+ </div>
+ <div class="card-body">
+ <div id="icd-section">
+ <h5 class="text-muted mb-3">
+ <i class="fas fa-list"></i>
+ {% trans "ICD-10 Code List" %}
+ </h5>
 
-        <!-- Section 4: Transfer to Hospital -->
-        <div class="card card-outline card-danger">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-ambulance"></i>
-                    {{ discharge_form.TRANSFERHOSP.label }}
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <label class="form-label">
-                                {{ discharge_form.TRANSFERHOSP.label }}
-                                <span class="text-danger">*</span>
-                            </label>
-                            <div>
-                                {% for choice_value, choice_label in discharge_form.TRANSFERHOSP.field.choices %}
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" 
-                                               type="radio" 
-                                               name="TRANSFERHOSP" 
-                                               id="id_TRANSFERHOSP_{{ forloop.counter }}" 
-                                               value="{{ choice_value }}"
-                                               {% if discharge_form.TRANSFERHOSP.value == choice_value %}checked{% endif %}
-                                               {% if is_readonly %}disabled{% endif %}>
-                                        <label class="form-check-label" for="id_TRANSFERHOSP_{{ forloop.counter }}">
-                                            {{ choice_label }}
-                                        </label>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            {% if discharge_form.TRANSFERHOSP.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ discharge_form.TRANSFERHOSP.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+ <div id="icd-formset">
+ {{ icd_formset.management_form }}
+ {% for form in icd_formset %}
+ <div class="icd-form card mb-2">
+ <div class="card-body">
+ {% if form.non_field_errors %}
+ <div class="alert alert-danger">
+ {{ form.non_field_errors }}
+ </div>
+ {% endif %}
 
-                <!-- Transfer Details (Conditional) -->
-                <div id="transfer-section" class="mt-3" style="display: none;">
-                    <hr class="my-3">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="id_TRANSFERREASON" class="form-label">
-                                    {{ discharge_form.TRANSFERREASON.label }}
-                                </label>
-                                {{ discharge_form.TRANSFERREASON }}
-                                {% if discharge_form.TRANSFERREASON.help_text %}
-                                    <small class="form-text text-muted">
-                                        {{ discharge_form.TRANSFERREASON.help_text }}
-                                    </small>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="id_TRANSFERLOCATION" class="form-label">
-                                    {{ discharge_form.TRANSFERLOCATION.label }}
-                                </label>
-                                {{ discharge_form.TRANSFERLOCATION }}
-                                {% if discharge_form.TRANSFERLOCATION.help_text %}
-                                    <small class="form-text text-muted">
-                                        {{ discharge_form.TRANSFERLOCATION.help_text }}
-                                    </small>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+ <div class="row">
+ <div class="col-md-2">
+ <div class="form-group">
+ <label for="{{ form.ICD_SEQUENCE.id_for_label }}" class="form-label">
+ {{ form.ICD_SEQUENCE.label }}
+</label>
+ {{ form.ICD_SEQUENCE }}
+ </div>
+ </div>
+ <div class="col-md-4">
+ <div class="form-group">
+ <label for="{{ form.ICDCODE.id_for_label }}" class="form-label">
+ {{ form.ICDCODE.label }}
+</label>
+ {{ form.ICDCODE }}
+ {% if form.ICDCODE.errors %}
+ <div class="invalid-feedback d-block">
+ {{ form.ICDCODE.errors }}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="{{ form.ICDDETAIL.id_for_label }}" class="form-label">
+ {{ form.ICDDETAIL.label }}
+</label>
+ {{ form.ICDDETAIL }}
+ </div>
+ </div>
+ </div>
 
-        <!-- Section 5: Death Information -->
-        <div class="card card-outline card-dark">
-            <div class="card-header bg-dark text-white">
-                <h3 class="card-title">
-                    <i class="fas fa-cross"></i>
-                    {% trans "Death Information" %}
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label">
-                                {{ discharge_form.DEATHATDISCH.label }}
-                                <span class="text-danger">*</span>
-                            </label>
-                            <div>
-                                {% for choice_value, choice_label in discharge_form.DEATHATDISCH.field.choices %}
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" 
-                                               type="radio" 
-                                               name="DEATHATDISCH" 
-                                               id="id_DEATHATDISCH_{{ forloop.counter }}" 
-                                               value="{{ choice_value }}"
-                                               {% if discharge_form.DEATHATDISCH.value == choice_value %}checked{% endif %}
-                                               {% if is_readonly %}disabled{% endif %}>
-                                        <label class="form-check-label" for="id_DEATHATDISCH_{{ forloop.counter }}">
-                                            {{ choice_label }}
-                                        </label>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            {% if discharge_form.DEATHATDISCH.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ discharge_form.DEATHATDISCH.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-md-6" id="death-section" style="display: none;">
-                        <div class="form-group">
-                            <label for="id_DEATHCAUSE" class="form-label">
-                                {{ discharge_form.DEATHCAUSE.label }}
-                            </label>
-                            {{ discharge_form.DEATHCAUSE }}
-                            {% if discharge_form.DEATHCAUSE.help_text %}
-                                <small class="form-text text-muted">
-                                    {{ discharge_form.DEATHCAUSE.help_text }}
-                                </small>
-                            {% endif %}
-                            {% if discharge_form.DEATHCAUSE.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ discharge_form.DEATHCAUSE.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+ {% for hidden in form.hidden_fields %}
+ {{ hidden }}
+ {% endfor %}
+ </div>
+ </div>
+ {% endfor %}
+ </div>
 
-        <!-- Action Buttons -->
-        <div class="card">
-            <div class="card-body text-center">
-                {% if not is_readonly %}
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fas fa-save"></i> 
-                        {% if is_create %}
-                            {% trans "Save Information" %}
-                        {% else %}
-                            {% trans "Update Information" %}
-                        {% endif %}
-                    </button>
-                    <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}" 
-                       class="btn btn-secondary btn-lg">
-                        <i class="fas fa-arrow-left"></i> {% trans "Back" %}
-                    </a>
-                {% else %}
-                    <a href="{% url 'study_43en:discharge_update' usubjid=enrollment_case.USUBJID.USUBJID %}" 
-                       class="btn btn-warning btn-lg">
-                        <i class="fas fa-edit"></i> {% trans "Edit" %}
-                    </a>
-                    <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}" 
-                       class="btn btn-secondary btn-lg">
-                        <i class="fas fa-arrow-left"></i> {% trans "Back" %}
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    </form>
+ {% if not is_readonly %}
+ <button type="button" id="add-icd" class="btn btn-success btn-sm">
+ <i class="fas fa-plus"></i> {% trans "Add ICD-10 Code" %}
+ </button>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+
+ <!-- Section 3: Discharge Status -->
+ <div class="card card-outline card-success">
+ <div class="card-header">
+ <h3 class="card-title">
+ <i class="fas fa-clipboard-check"></i>
+ {{ discharge_form.DISCHSTATUS.label }}
+ </h3>
+ </div>
+ <div class="card-body">
+ <div class="row">
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="id_DISCHSTATUS" class="form-label">
+ {{ discharge_form.DISCHSTATUS.label }}
+</label>
+ {{ discharge_form.DISCHSTATUS }}
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="id_DISCHSTATUSDETAIL" class="form-label">
+ {{ discharge_form.DISCHSTATUSDETAIL.label }}
+</label>
+ {{ discharge_form.DISCHSTATUSDETAIL }}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Section 4: Transfer to Hospital -->
+ <div class="card card-outline card-danger">
+ <div class="card-header">
+ <h3 class="card-title">
+ <i class="fas fa-ambulance"></i>
+ {{ discharge_form.TRANSFERHOSP.label }}
+ </h3>
+ </div>
+ <div class="card-body">
+ <div class="row">
+ <div class="col-md-12">
+ <div class="form-group">
+ <label class="form-label">
+ {{ discharge_form.TRANSFERHOSP.label }}
+ <span class="text-danger">*</span>
+</label>
+ <div>
+ {% for choice_value, choice_label in discharge_form.TRANSFERHOSP.field.choices %}
+ <div class="form-check form-check-inline">
+ <input class="form-check-input"
+ type="radio"
+ name="TRANSFERHOSP"
+ id="id_TRANSFERHOSP_{{ forloop.counter }}"
+ value="{{ choice_value }}"
+ {% if discharge_form.TRANSFERHOSP.value == choice_value %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}>
+ <label class="form-check-label" for="id_TRANSFERHOSP_{{ forloop.counter }}">
+ {{ choice_label }}
+</label>
+ </div>
+ {% endfor %}
+ </div>
+ {% if discharge_form.TRANSFERHOSP.errors %}
+ <div class="invalid-feedback d-block">
+ {{ discharge_form.TRANSFERHOSP.errors }}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+
+ <!-- Transfer Details (Conditional) -->
+ <div id="transfer-section" class="mt-3" style="display: none;">
+ <hr class="my-3">
+ <div class="row">
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="id_TRANSFERREASON" class="form-label">
+ {{ discharge_form.TRANSFERREASON.label }}
+</label>
+ {{ discharge_form.TRANSFERREASON }}
+ {% if discharge_form.TRANSFERREASON.help_text %}
+ <small class="form-text text-muted">
+ {{ discharge_form.TRANSFERREASON.help_text }}
+ </small>
+ {% endif %}
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="id_TRANSFERLOCATION" class="form-label">
+ {{ discharge_form.TRANSFERLOCATION.label }}
+</label>
+ {{ discharge_form.TRANSFERLOCATION }}
+ {% if discharge_form.TRANSFERLOCATION.help_text %}
+ <small class="form-text text-muted">
+ {{ discharge_form.TRANSFERLOCATION.help_text }}
+ </small>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Section 5: Death Information -->
+ <div class="card card-outline card-dark">
+ <div class="card-header bg-dark text-white">
+ <h3 class="card-title">
+ <i class="fas fa-cross"></i>
+ {% trans "Death Information" %}
+ </h3>
+ </div>
+ <div class="card-body">
+ <div class="row">
+ <div class="col-md-6">
+ <div class="form-group">
+ <label class="form-label">
+ {{ discharge_form.DEATHATDISCH.label }}
+ <span class="text-danger">*</span>
+</label>
+ <div>
+ {% for choice_value, choice_label in discharge_form.DEATHATDISCH.field.choices %}
+ <div class="form-check form-check-inline">
+ <input class="form-check-input"
+ type="radio"
+ name="DEATHATDISCH"
+ id="id_DEATHATDISCH_{{ forloop.counter }}"
+ value="{{ choice_value }}"
+ {% if discharge_form.DEATHATDISCH.value == choice_value %}checked{% endif %}
+ {% if is_readonly %}disabled{% endif %}>
+ <label class="form-check-label" for="id_DEATHATDISCH_{{ forloop.counter }}">
+ {{ choice_label }}
+</label>
+ </div>
+ {% endfor %}
+ </div>
+ {% if discharge_form.DEATHATDISCH.errors %}
+ <div class="invalid-feedback d-block">
+ {{ discharge_form.DEATHATDISCH.errors }}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ <div class="col-md-6" id="death-section" style="display: none;">
+ <div class="form-group">
+ <label for="id_DEATHCAUSE" class="form-label">
+ {{ discharge_form.DEATHCAUSE.label }}
+</label>
+ {{ discharge_form.DEATHCAUSE }}
+ {% if discharge_form.DEATHCAUSE.help_text %}
+ <small class="form-text text-muted">
+ {{ discharge_form.DEATHCAUSE.help_text }}
+ </small>
+ {% endif %}
+ {% if discharge_form.DEATHCAUSE.errors %}
+ <div class="invalid-feedback d-block">
+ {{ discharge_form.DEATHCAUSE.errors }}
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Action Buttons -->
+ <div class="card">
+ <div class="card-body text-center">
+ {% if not is_readonly %}
+ <button type="submit" class="btn btn-primary btn-lg">
+ <i class="fas fa-save"></i>
+ {% if is_create %}
+ {% trans "Save Information" %}
+ {% else %}
+ {% trans "Update Information" %}
+ {% endif %}
+ </button>
+ <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}"
+ class="btn btn-secondary btn-lg">
+ <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+ </a>
+ {% else %}
+ <a href="{% url 'study_43en:discharge_update' usubjid=enrollment_case.USUBJID.USUBJID %}"
+ class="btn btn-warning btn-lg">
+ <i ></i> {% trans "Edit" %}
+ </a>
+ <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID.USUBJID %}"
+ class="btn btn-secondary btn-lg">
+ {% trans "Back" %}
+ </a>
+ {% endif %}
+ </div>
+ </div>
+ </form>
 </div>
 
 <!-- Change Reason Modal -->
 {% if not is_readonly %}
-    {% include 'default/change_reason_modal.html' %}
+ {% include 'default/change_reason_modal.html' %}
 {% endif %}
 
 <!-- Validation Error Modal -->
 {% if show_validation_modal %}
 <div class="modal fade" id="validationErrorModal" tabindex="-1" role="dialog" aria-labelledby="validationErrorModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-    <div class="modal-content border-danger">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="validationErrorModalLabel">
-          <i class="fas fa-exclamation-triangle mr-2"></i>
-          {% trans "Validation Error" %}
-        </h5>
-      </div>
-      <div class="modal-body">
-        <p class="mb-3"><strong>{% trans "Please check and fix the following errors:" %}</strong></p>
-        <div class="list-group">
-          {% for error in validation_errors %}
-          <div class="list-group-item list-group-item-danger border-left-danger pl-3">
-            <div class="d-flex align-items-start">
-              <i class="fas fa-times-circle text-danger mt-1 mr-2"></i>
-              <div>
-                <strong>{{ error.field }}:</strong>
-                <span class="text-dark">{{ error.message }}</span>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        
-        <div class="alert alert-info mt-3 mb-0">
-          <i class="fas fa-info-circle mr-2"></i>
-          {% trans "After closing this popup, please fix the fields with errors and try again." %}
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="btnCloseValidationModal">
-          <i class="fas fa-check mr-2"></i>
-          {% trans "OK, I'll fix it" %}
-        </button>
-      </div>
-    </div>
-  </div>
+ <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+ <div class="modal-content border-danger">
+ <div class="modal-header bg-danger text-white">
+ <h5 class="modal-title" id="validationErrorModalLabel">
+
+ {% trans "Validation Error" %}
+ </h5>
+ </div>
+ <div class="modal-body">
+ <p class="mb-3"><strong>{% trans "Please check and fix the following errors:" %}</strong></p>
+ <div class="list-group">
+ {% for error in validation_errors %}
+ <div class="list-group-item list-group-item-danger border-left-danger pl-3">
+ <div class="d-flex align-items-start">
+
+ <div>
+ <strong>{{ error.field }}:</strong>
+ <span class="text-dark">{{ error.message }}</span>
+ </div>
+ </div>
+ </div>
+ {% endfor %}
+ </div>
+
+ <div class="alert alert-info mt-3 mb-0">
+
+ {% trans "After closing this popup, please fix the fields with errors and try again." %}
+ </div>
+ </div>
+ <div class="modal-footer">
+ <button type="button" class="btn btn-primary" id="btnCloseValidationModal">
+
+ {% trans "OK, I'll fix it" %}
+ </button>
+ </div>
+ </div>
+ </div>
 </div>
 {% endif %}
 
-        </div> <!-- End discharge-case-content -->
-    </div> <!-- End discharge-case-container -->
+ </div> <!-- End discharge-case-content -->
+ </div> <!-- End discharge-case-container -->
 </div>
 
 {% endblock %}
@@ -477,142 +477,142 @@
 
 <script nonce="{{ request.csp_nonce }}">
 $(document).ready(function() {
-    console.log(" Initializing Discharge form...");
+ console.log(" Initializing Discharge form...");
 
-    // ==========================================
-    // AUTO-SHOW VALIDATION ERROR MODAL
-    // ==========================================
-    {% if show_validation_modal %}
-    console.log(' Validation errors detected - showing modal');
-    $('#validationErrorModal').modal('show');
-    
-    $('#btnCloseValidationModal').on('click', function() {
-        console.log(' User clicked "OK, I\'ll fix it" button');
-        $('#validationErrorModal').modal('hide');
-    });
-    
-    $('#validationErrorModal').on('hidden.bs.modal', function() {
-        console.log(' Modal closed - ready to fix errors');
-        $('html, body').animate({
-            scrollTop: $('#dischargeForm').offset().top - 100
-        }, 500);
-    });
-    {% endif %}
+ // ==========================================
+ // AUTO-SHOW VALIDATION ERROR MODAL
+ // ==========================================
+ {% if show_validation_modal %}
+ console.log(' Validation errors detected - showing modal');
+ $('#validationErrorModal').modal('show');
 
-    // ==========================================
-    // CONFIGURATION
-    // ==========================================
-    const PREFIX_ICD = 'icd';
+ $('#btnCloseValidationModal').on('click', function() {
+ console.log(' User clicked "OK, I\'ll fix it" button');
+ $('#validationErrorModal').modal('hide');
+ });
 
-    // ==========================================
-    // HELPER FUNCTIONS
-    // ==========================================
-    
-    function toggleSection(radioName, sectionId, showValue = 'Yes') {
-        const selectedValue = $(`input[name="${radioName}"]:checked`).val();
-        console.log(`Toggle ${sectionId}: ${radioName} = ${selectedValue}`);
-        
-        if (selectedValue === showValue) {
-            $(sectionId).slideDown(300);
-        } else {
-            $(sectionId).slideUp(300);
-        }
-    }
+ $('#validationErrorModal').on('hidden.bs.modal', function() {
+ console.log(' Modal closed - ready to fix errors');
+ $('html, body').animate({
+ scrollTop: $('#dischargeForm').offset().top - 100
+ }, 500);
+ });
+ {% endif %}
 
-    function initializeSections() {
-        // TRANSFERHOSP → Transfer details
-        toggleSection('TRANSFERHOSP', '#transfer-section');
-        
-        // DEATHATDISCH → Death cause
-        toggleSection('DEATHATDISCH', '#death-section');
-    }
+ // ==========================================
+ // CONFIGURATION
+ // ==========================================
+ const PREFIX_ICD = 'icd';
 
-    // ==========================================
-    // EVENT HANDLERS
-    // ==========================================
+ // ==========================================
+ // HELPER FUNCTIONS
+ // ==========================================
 
-    $(document).on('change', 'input[name="TRANSFERHOSP"]', function() {
-        toggleSection('TRANSFERHOSP', '#transfer-section');
-    });
+ function toggleSection(radioName, sectionId, showValue = 'Yes') {
+ const selectedValue = $(`input[name="${radioName}"]:checked`).val();
+ console.log(`Toggle ${sectionId}: ${radioName} = ${selectedValue}`);
 
-    $(document).on('change', 'input[name="DEATHATDISCH"]', function() {
-        toggleSection('DEATHATDISCH', '#death-section');
-    });
+ if (selectedValue === showValue) {
+ $(sectionId).slideDown(300);
+ } else {
+ $(sectionId).slideUp(300);
+ }
+ }
 
-    // ==========================================
-    // ADD ICD FORM
-    // ==========================================
-    $('#add-icd').click(function() {
-        console.log('🏥 Adding ICD form...');
-        
-        const container = $('#icd-formset');
-        const totalForms = parseInt($(`#id_${PREFIX_ICD}-TOTAL_FORMS`).val());
-        
-        console.log(`Current total forms: ${totalForms}`);
-        
-        // Calculate next sequence number from EXISTING forms
-        let maxSequence = 0;
-        $('.icd-form').each(function() {
-            const sequenceInput = $(this).find('input[id$="-ICD_SEQUENCE"]');
-            if (sequenceInput.length) {
-                const sequenceVal = parseInt(sequenceInput.val());
-                console.log(`Found sequence: ${sequenceVal}`);
-                if (!isNaN(sequenceVal) && sequenceVal > maxSequence) {
-                    maxSequence = sequenceVal;
-                }
-            }
-        });
-        const newSequence = maxSequence + 1;
-        
-        console.log(`Max sequence: ${maxSequence}, New sequence: ${newSequence}`);
+ function initializeSections() {
+ // TRANSFERHOSP → Transfer details
+ toggleSection('TRANSFERHOSP', '#transfer-section');
 
-        const newFormHtml = `
-            <div class="icd-form card mb-2" style="animation: fadeIn 0.3s ease-in;">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label for="id_${PREFIX_ICD}-${totalForms}-ICD_SEQUENCE" class="form-label">{% trans "Sequence No." %}</label>
-                                <input type="number" name="${PREFIX_ICD}-${totalForms}-ICD_SEQUENCE" 
-                                       value="${newSequence}" readonly class="form-control" 
-                                       id="id_${PREFIX_ICD}-${totalForms}-ICD_SEQUENCE">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="id_${PREFIX_ICD}-${totalForms}-ICDCODE" class="form-label">{% trans "ICD-10 Code" %}</label>
-                                <input type="text" name="${PREFIX_ICD}-${totalForms}-ICDCODE" 
-                                       class="form-control" placeholder="e.g., A41.5, J18.9"
-                                       id="id_${PREFIX_ICD}-${totalForms}-ICDCODE">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="id_${PREFIX_ICD}-${totalForms}-ICDDETAIL" class="form-label">{% trans "Diagnosis Details" %}</label>
-                                <textarea name="${PREFIX_ICD}-${totalForms}-ICDDETAIL" 
-                                          class="form-control" rows="2" placeholder="{% trans 'Diagnosis details (optional)' %}"
-                                          id="id_${PREFIX_ICD}-${totalForms}-ICDDETAIL"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <input type="hidden" name="${PREFIX_ICD}-${totalForms}-id">
-                    <input type="hidden" name="${PREFIX_ICD}-${totalForms}-USUBJID">
-                </div>
-            </div>
-        `;
+ // DEATHATDISCH → Death cause
+ toggleSection('DEATHATDISCH', '#death-section');
+ }
 
-        container.append(newFormHtml);
-        $(`#id_${PREFIX_ICD}-TOTAL_FORMS`).val(totalForms + 1);
+ // ==========================================
+ // EVENT HANDLERS
+ // ==========================================
 
-        console.log(` Added ICD form #${totalForms}, Sequence: ${newSequence}`);
-    });
+ $(document).on('change', 'input[name="TRANSFERHOSP"]', function() {
+ toggleSection('TRANSFERHOSP', '#transfer-section');
+ });
 
-    // ==========================================
-    // INITIALIZATION
-    // ==========================================
-    setTimeout(initializeSections, 200);
+ $(document).on('change', 'input[name="DEATHATDISCH"]', function() {
+ toggleSection('DEATHATDISCH', '#death-section');
+ });
 
-    console.log(" Discharge form initialized successfully!");
+ // ==========================================
+ // ADD ICD FORM
+ // ==========================================
+ $('#add-icd').click(function() {
+ console.log(' Adding ICD form...');
+
+ const container = $('#icd-formset');
+ const totalForms = parseInt($(`#id_${PREFIX_ICD}-TOTAL_FORMS`).val());
+
+ console.log(`Current total forms: ${totalForms}`);
+
+ // Calculate next sequence number from EXISTING forms
+ let maxSequence = 0;
+ $('.icd-form').each(function() {
+ const sequenceInput = $(this).find('input[id$="-ICD_SEQUENCE"]');
+ if (sequenceInput.length) {
+ const sequenceVal = parseInt(sequenceInput.val());
+ console.log(`Found sequence: ${sequenceVal}`);
+ if (!isNaN(sequenceVal) && sequenceVal > maxSequence) {
+ maxSequence = sequenceVal;
+ }
+ }
+ });
+ const newSequence = maxSequence + 1;
+
+ console.log(`Max sequence: ${maxSequence}, New sequence: ${newSequence}`);
+
+ const newFormHtml = `
+ <div class="icd-form card mb-2" style="animation: fadeIn 0.3s ease-in;">
+ <div class="card-body">
+ <div class="row">
+ <div class="col-md-2">
+ <div class="form-group">
+ <label for="id_${PREFIX_ICD}-${totalForms}-ICD_SEQUENCE" class="form-label">{% trans "Sequence No." %}</label>
+ <input type="number" name="${PREFIX_ICD}-${totalForms}-ICD_SEQUENCE"
+ value="${newSequence}" readonly class="form-control"
+ id="id_${PREFIX_ICD}-${totalForms}-ICD_SEQUENCE">
+ </div>
+ </div>
+ <div class="col-md-4">
+ <div class="form-group">
+ <label for="id_${PREFIX_ICD}-${totalForms}-ICDCODE" class="form-label">{% trans "ICD-10 Code" %}</label>
+ <input type="text" name="${PREFIX_ICD}-${totalForms}-ICDCODE"
+ class="form-control" placeholder="e.g., A41.5, J18.9"
+ id="id_${PREFIX_ICD}-${totalForms}-ICDCODE">
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="form-group">
+ <label for="id_${PREFIX_ICD}-${totalForms}-ICDDETAIL" class="form-label">{% trans "Diagnosis Details" %}</label>
+ <textarea name="${PREFIX_ICD}-${totalForms}-ICDDETAIL"
+ class="form-control" rows="2" placeholder="{% trans 'Diagnosis details (optional)' %}"
+ id="id_${PREFIX_ICD}-${totalForms}-ICDDETAIL"></textarea>
+ </div>
+ </div>
+ </div>
+ <input type="hidden" name="${PREFIX_ICD}-${totalForms}-id">
+ <input type="hidden" name="${PREFIX_ICD}-${totalForms}-USUBJID">
+ </div>
+ </div>
+ `;
+
+ container.append(newFormHtml);
+ $(`#id_${PREFIX_ICD}-TOTAL_FORMS`).val(totalForms + 1);
+
+ console.log(` Added ICD form #${totalForms}, Sequence: ${newSequence}`);
+ });
+
+ // ==========================================
+ // INITIALIZATION
+ // ==========================================
+ setTimeout(initializeSections, 200);
+
+ console.log(" Discharge form initialized successfully!");
 });
 </script>
 {% endblock %}

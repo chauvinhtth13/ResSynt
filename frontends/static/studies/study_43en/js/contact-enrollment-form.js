@@ -85,7 +85,7 @@
       const show = $('input[name="UNDERLYINGCONDS"]:checked').val() === 'True';
       
       $('#underlying-conditions-section').toggle(show);
-      console.log('🩺 Underlying conditions:', show ? 'show' : 'hide');
+      console.log(' Underlying conditions:', show ? 'show' : 'hide');
       
       // If hiding, uncheck all underlying checkboxes
       if (!show) {
@@ -98,7 +98,7 @@
     //  Other disease specification
     $('#id_OTHERDISEASE').on('change', function() {
       $('#other-disease-detail').toggle(this.checked);
-      console.log('📝 Other disease:', this.checked ? 'show' : 'hide');
+      console.log(' Other disease:', this.checked ? 'show' : 'hide');
       
       // Clear field if unchecking
       if (!this.checked) {
@@ -113,7 +113,7 @@
   // AGE CALCULATION - Display only
   // ==========================================
   function initAgeCalculation() {
-    console.log('🎂 Init age calculation...');
+    console.log(' Init age calculation...');
     
     const $day = $('#id_DAYOFBIRTH');
     const $month = $('#id_MONTHOFBIRTH');
@@ -154,7 +154,7 @@
         
         // Display result
         $display.html(`<i class="fas fa-check-circle text-success"></i><span class="ml-2"><strong>${age} years old</strong></span>`);
-        console.log('🎂 Calculated age:', age);
+        console.log(' Calculated age:', age);
         
       } catch (e) {
         $display.html('<i class="fas fa-times-circle text-danger"></i><span class="ml-2 text-danger">Invalid date</span>');
@@ -268,7 +268,7 @@
   // UI ENHANCEMENTS
   // ==========================================
   function initUIEnhancements() {
-    console.log('🎨 Init UI enhancements...');
+    console.log(' Init UI enhancements...');
     
     //  Ethnicity autocomplete
     const $ethnicity = $('#id_ETHNICITY');
@@ -284,7 +284,7 @@
         autoFirst: true
       });
       
-      console.log('📝 Ethnicity autocomplete enabled');
+      console.log(' Ethnicity autocomplete enabled');
     }
     
     //  Relationship autocomplete

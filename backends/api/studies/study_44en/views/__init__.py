@@ -5,9 +5,10 @@ Study 44EN Views
 """
 
 from .views_base import *
-from .views_dashboard import *
+from .views_audit import *
 
 __all__ = [
     'household_list',
-    'dashboard_44en',
+    'audit_log_list',
+    'audit_log_detail',
 ]
