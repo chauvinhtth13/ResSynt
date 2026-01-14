@@ -199,11 +199,13 @@ def audit_log_detail(request, log_id):
     if hasattr(log, 'verify_integrity'):
         is_verified = log.verify_integrity()
     
+    study_code = getattr(request, 'study_code', '').lower()
     context = {
         'log': log,
         'user': user,
         'changes': changes,
         'is_verified': is_verified,
+        'study_code': study_code,
     }
     
     return render(request, 'audit_log/audit_log_detail.html', context)

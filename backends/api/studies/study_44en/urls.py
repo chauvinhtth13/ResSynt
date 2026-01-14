@@ -5,6 +5,8 @@ Main URL Configuration for Study 44EN
 
 from django.urls import path, include
 
+from backends.api.studies.study_44en.services import dashboard
+
 # Import views
 from .views import views_base, views_audit
 
@@ -13,7 +15,7 @@ app_name = 'study_44en'
 
 urlpatterns = [
     # ===== DASHBOARD =====
-    path('dashboard/', views_base.dashboard, name='dashboard'),
+    path('dashboard/', dashboard.home_dashboard, name='home_dashboard'),
     
     # ===== HOUSEHOLD MODULE =====
     path('household/', include(('backends.api.studies.study_44en.views.household.urls', 'household'))),

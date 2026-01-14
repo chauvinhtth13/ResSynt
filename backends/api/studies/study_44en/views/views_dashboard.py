@@ -22,7 +22,6 @@ from backends.audit_logs.utils.permission_decorators import (
 
 
 @login_required
-@require_crf_view('dashboard')
 def dashboard_44en(request):
     """
     Main dashboard for Study 44EN
@@ -75,7 +74,7 @@ def dashboard_44en(request):
         'recent_individual_list': recent_individual_list,
     }
     
-    return render(request, 'studies/study_44en/dashboard.html', context)
+    return render(request, 'studies/study_44en/home_dashboard.html', context)
 
 
 __all__ = ['dashboard_44en']

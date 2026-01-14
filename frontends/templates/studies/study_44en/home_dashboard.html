@@ -1,5 +1,5 @@
-<!-- frontends/templates/studies/study_44en/dashboard.html -->
-{% extends 'studies\study_43en\home_dashboard.html' %}
+<!-- frontends/templates/studies/study_44en/home_dashboard.html -->
+{% extends 'default/dashboard.html' %}
 {% load static %}
 {% load i18n %}
 
@@ -42,6 +42,10 @@
     background: #f8f9fa;
 }
 </style>
+{% endblock %}
+
+{% block sidebar %}
+{% include 'studies/study_44en/sidebar.html' %}
 {% endblock %}
 
 {% block dashboard_content %}
