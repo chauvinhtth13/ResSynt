@@ -1,0 +1,204 @@
+<!-- frontends/templates/studies/study_44en/home_dashboard.html -->
+{% extends 'default/dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Dashboard Overview" %} - Study 44EN{% endblock %}
+
+{% block dashboard_css %}
+<style>
+.stat-card {
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+    transition: transform 0.2s;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.stat-icon {
+    font-size: 2rem;
+    opacity: 0.3;
+}
+.recent-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+.site-stat {
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+}
+</style>
+{% endblock %}
+
+{% block sidebar %}
+{% include 'studies/study_44en/sidebar.html' %}
+{% endblock %}
+
+{% block dashboard_content %}
+<!-- Header -->
+<div class="mb-4">
+    <h2 class="mb-1">{% trans "Study 44EN Dashboard" %}</h2>
+    <p class="text-muted">{% trans "Household & Individual Survey Overview" %}</p>
+</div>
+
+<!-- Main Statistics -->
+<div class="row g-4 mb-4">
+    <!-- Total Households -->
+    <div class="col-md-3">
+        <div class="stat-card bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">{% trans "Total Households" %}</div>
+                    <div class="stat-value">{{ total_households|default:0 }}</div>
+                    <small>{% trans "Recent 30 days" %}: {{ recent_households_count|default:0 }}</small>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-house-door"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Members -->
+    <div class="col-md-3">
+        <div class="stat-card bg-success text-white">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">{% trans "Total Members" %}</div>
+                    <div class="stat-value">{{ total_members|default:0 }}</div>
+                    <small>{% trans "Across all households" %}</small>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Individuals -->
+    <div class="col-md-3">
+        <div class="stat-card bg-info text-white">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">{% trans "Total Individuals" %}</div>
+                    <div class="stat-value">{{ total_individuals|default:0 }}</div>
+                    <small>{% trans "Recent 30 days" %}: {{ recent_individuals_count|default:0 }}</small>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-person-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Follow-ups -->
+    <div class="col-md-3">
+        <div class="stat-card bg-warning text-dark">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">{% trans "Follow-ups" %}</div>
+                    <div class="stat-value">{{ total_followups|default:0 }}</div>
+                    <small>{% trans "Pending" %}: {{ pending_followups|default:0 }}</small>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Enrollments -->
+<div class="row g-4">
+    <!-- Recent Households -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    {% trans "Recent Households" %}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="recent-list">
+                    {% if recent_household_list %}
+                        <div class="list-group list-group-flush">
+                            {% for hh in recent_household_list %}
+                            <a href="{% url 'study_44en:household:detail' hh.HHID %}" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ hh.HHID }}</strong>
+                                        <small class="text-muted d-block">
+                                            {{ hh.WARD|default:"N/A" }}, {{ hh.CITY|default:"HCMC" }}
+                                        </small>
+                                    </div>
+                                    <small class="text-muted">{{ hh.last_modified_at|date:"d/m/Y" }}</small>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center p-4 mb-0">{% trans "No recent households" %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Individuals -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    {% trans "Recent Individuals" %}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="recent-list">
+                    {% if recent_individual_list %}
+                        <div class="list-group list-group-flush">
+                            {% for ind in recent_individual_list %}
+                            <a href="{% url 'study_44en:individual:detail' ind.MEMBERID %}" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ ind.MEMBERID }}</strong>
+                                        <small class="text-muted d-block">
+                                            Age: {{ ind.AGE|default:"N/A" }} - {{ ind.EDUCATION|default:"N/A" }}
+                                        </small>
+                                    </div>
+                                    <small class="text-muted">{{ ind.last_modified_at|date:"d/m/Y" }}</small>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center p-4 mb-0">{% trans "No recent individuals" %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<!-- No additional JavaScript needed for now -->
+{% endblock %}

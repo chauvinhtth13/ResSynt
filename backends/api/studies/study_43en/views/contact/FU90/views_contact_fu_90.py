@@ -8,13 +8,15 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
-# Import models
-from backends.studies.study_43en.models.contact import ContactMedicationHistory90
 # Import forms
 from backends.studies.study_43en.forms.contact.contact_FU_90 import (
     ContactFollowUp90Form,
     ContactMedicationHistory90FormSet,
 )
+
+# Import models
+from backends.studies.study_43en.models.contact import SCR_CONTACT, ContactMedicationHistory90
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 
 # Import utilities
 from backends.audit_logs.utils.decorators import audit_log
@@ -45,7 +47,13 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @require_crf_add('fu_contact_90', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTFOLLOWUP90', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTFOLLOWUP90',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contact_followup_90_create(request, usubjid):
     """
     Create new contact follow-up Day 90 (NO AUDIT)
@@ -130,7 +138,7 @@ def contact_followup_90_create(request, usubjid):
         'followup_type': '90',
     }
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_followup_90.html', context)
+    return render(request, 'studies/study_43en/contact/form/contact_followup_90.html', context)
 
 
 # ==========================================
@@ -139,7 +147,13 @@ def contact_followup_90_create(request, usubjid):
 
 @login_required
 @require_crf_change('fu_contact_90', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTFOLLOWUP90', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTFOLLOWUP90',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contact_followup_90_update(request, usubjid):
     """
     Update contact follow-up Day 90 WITH UNIVERSAL AUDIT SYSTEM (Tier 3)
@@ -184,7 +198,7 @@ def contact_followup_90_update(request, usubjid):
             'followup_type': '90',
         }
         
-        return render(request, 'studies/study_43en/CRF/contact/contact_followup_90.html', context)
+        return render(request, 'studies/study_43en/contact/form/contact_followup_90.html', context)
     
     #  POST - USE UNIVERSAL AUDIT SYSTEM (Tier 3)
     logger.info(" Using Universal Audit System (Tier 3)")
@@ -226,7 +240,7 @@ def contact_followup_90_update(request, usubjid):
         main_instance=followup_case,
         forms_config=forms_config,
         save_callback=save_callback,
-        template_name='studies/study_43en/CRF/contact/contact_followup_90.html',
+        template_name='studies/study_43en/contact/form/contact_followup_90.html',
         redirect_url=reverse('study_43en:contact_detail', kwargs={'usubjid': usubjid}),
         extra_context={
             'enrollment_contact': enrollment_contact,
@@ -245,7 +259,13 @@ def contact_followup_90_update(request, usubjid):
 
 @login_required
 @require_crf_view('fu_contact_90', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTFOLLOWUP90', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTFOLLOWUP90',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contact_followup_90_view(request, usubjid):
     """
     View contact follow-up Day 90 (read-only)
@@ -290,4 +310,4 @@ def contact_followup_90_view(request, usubjid):
         'followup_type': '90',
     }
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_followup_90.html', context)
+    return render(request, 'studies/study_43en/contact/form/contact_followup_90.html', context)

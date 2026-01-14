@@ -30,6 +30,10 @@ from backends.audit_logs.utils.permission_decorators import (
     check_instance_site_access,
 )
 
+# Import models for audit
+from backends.studies.study_43en.models.patient import SCR_CASE
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
+
 # Import helpers
 from .helpers import (
     get_followup_with_related,
@@ -47,7 +51,13 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @require_crf_add('fu_case_28', redirect_to='study_43en:patient_list')
-@audit_log(model_name='FOLLOWUPCASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='FOLLOWUPCASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def followup_28_create(request, usubjid):
     """
     Create new follow-up Day 28 (NO AUDIT)
@@ -147,7 +157,7 @@ def followup_28_create(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/followup_28_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/followup_28_form.html', context)
 
 
 # ==========================================
@@ -156,7 +166,13 @@ def followup_28_create(request, usubjid):
 
 @login_required
 @require_crf_change('fu_case_28', redirect_to='study_43en:patient_list')
-@audit_log(model_name='FOLLOWUPCASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='FOLLOWUPCASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def followup_28_update(request, usubjid):
     """
     Update follow-up Day 28 WITH UNIVERSAL AUDIT SYSTEM (Tier 3)
@@ -208,7 +224,7 @@ def followup_28_update(request, usubjid):
             'current_version': followup_case.version,
         }
         
-        return render(request, 'studies/study_43en/CRF/patient/followup_28_form.html', context)
+        return render(request, 'studies/study_43en/patient/form/followup_28_form.html', context)
     
     #  POST - USE UNIVERSAL AUDIT SYSTEM (Tier 3)
     logger.info(" Using Universal Audit System (Tier 3)")
@@ -257,7 +273,7 @@ def followup_28_update(request, usubjid):
         main_instance=followup_case,
         forms_config=forms_config,
         save_callback=save_callback,
-        template_name='studies/study_43en/CRF/patient/followup_28_form.html',
+        template_name='studies/study_43en/patient/form/followup_28_form.html',
         redirect_url=reverse('study_43en:patient_detail', kwargs={'usubjid': usubjid}),
         extra_context={
             'screening_case': screening_case,
@@ -276,7 +292,13 @@ def followup_28_update(request, usubjid):
 
 @login_required
 @require_crf_view('fu_case_28', redirect_to='study_43en:patient_list')
-@audit_log(model_name='FOLLOWUPCASE', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='FOLLOWUPCASE',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def followup_28_view(request, usubjid):
     """
     View follow-up Day 28 (read-only)
@@ -331,4 +353,4 @@ def followup_28_view(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/followup_28_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/followup_28_form.html', context)

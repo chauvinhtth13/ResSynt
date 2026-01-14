@@ -8,6 +8,7 @@ from functools import wraps
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
+from django.urls import reverse
 
 from backends.tenancy.utils import TenancyUtils  #  IMPORT
 
@@ -49,7 +50,13 @@ def require_study_permission(permission_codename: str, redirect_to: str = None):
                 if redirect_to:
                     return redirect(redirect_to)
                 else:
-                    return redirect('study_43en:home_dashboard')
+                    # Redirect to current study's dashboard, fallback to select_study if not found
+                    from django.urls import reverse, NoReverseMatch
+                    study_namespace = f'study_{study.code.lower()}'
+                    try:
+                        return redirect(reverse(f'{study_namespace}:home_dashboard'))
+                    except NoReverseMatch:
+                        return redirect('select_study')
             
             return view_func(request, *args, **kwargs)
         
@@ -139,7 +146,16 @@ def check_site_access(get_site_from: str = 'instance'):
                         f"(site={user_site}) -> target={site_id}"
                     )
                     messages.error(request, 'Bạn không có quyền truy cập site này!')
-                    return redirect('study_43en:home_dashboard')
+                    # Redirect to current study's dashboard, fallback to select_study if not found
+                    from django.urls import reverse, NoReverseMatch
+                    study = getattr(request, 'study', None)
+                    if study:
+                        study_namespace = f'study_{study.code.lower()}'
+                        try:
+                            return redirect(reverse(f'{study_namespace}:home_dashboard'))
+                        except NoReverseMatch:
+                            return redirect('select_study')
+                    return redirect('select_study')
             
             return view_func(request, *args, **kwargs)
         

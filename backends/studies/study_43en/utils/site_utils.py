@@ -264,33 +264,60 @@ def invalidate_cache(model_name=None, site_filter=None):
 
 def get_site_filtered_object_or_404(model, site_filter, filter_type, **kwargs):
     """
-    Get object with site filtering and 404 handling
+    🚀 OPTIMIZED: Get single object with site filtering - DIRECT query, no bulk cache
+    
+    This function queries DIRECTLY for the specific object instead of loading
+    all objects into cache then filtering. Much faster for single object lookups.
     
     Compatible with old function signature: get_site_filtered_object_or_404(model, site_id, USUBJID=...)
+    
+    Args:
+        model: Django model class
+        site_filter: 'all' | str | list (site IDs)
+        filter_type: 'all' | 'single' | 'multiple'
+        **kwargs: Lookup parameters (e.g., USUBJID='xxx')
+    
+    Returns:
+        Single model instance
+        
+    Raises:
+        PermissionDenied: If object not found or access denied
     """
     # Handle old signature: get_site_filtered_object_or_404(SCR_CASE, site_id, USUBJID=usubjid)
     if isinstance(site_filter, str) and filter_type not in ['all', 'single', 'multiple']:
         # Old signature: (model, site_id, **kwargs)
-        # site_filter is actually site_id
-        # filter_type is actually first kwarg key
         old_site_id = site_filter
         old_kwargs = {filter_type: kwargs.popitem()[1]} if kwargs else {}
         
         # Determine filter type from site_id
         if old_site_id == 'all':
             actual_filter_type = 'all'
+            actual_site_filter = 'all'
         else:
             actual_filter_type = 'single'
+            actual_site_filter = old_site_id
         
-        queryset = get_filtered_queryset(model, old_site_id, actual_filter_type)
+        site_filter = actual_site_filter
+        filter_type = actual_filter_type
         kwargs = old_kwargs
-    else:
-        # New signature
-        queryset = get_filtered_queryset(model, site_filter, filter_type)
     
+    # 🚀 DIRECT QUERY - Skip cache, query exactly what we need
     try:
-        obj = queryset.get(**kwargs)
+        base_qs = model.objects.using(DB_ALIAS)
+        
+        # Apply site filter if needed
+        if filter_type == 'single':
+            # Single site - add SITEID filter
+            base_qs = base_qs.filter(SITEID=site_filter)
+        elif filter_type == 'multiple' and site_filter:
+            # Multiple sites - add SITEID__in filter
+            base_qs = base_qs.filter(SITEID__in=site_filter)
+        # filter_type == 'all' - no site filter needed
+        
+        obj = base_qs.get(**kwargs)
+        logger.debug(f"[{model.__name__}] Direct query: found {kwargs}")
         return obj
+        
     except model.DoesNotExist:
         logger.warning(
             f"[{model.__name__}] Object not found. "

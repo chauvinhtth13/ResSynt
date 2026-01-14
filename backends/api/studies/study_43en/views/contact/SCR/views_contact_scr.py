@@ -10,6 +10,7 @@ from django.core.paginator import Paginator
 
 from backends.studies.study_43en.models.contact import SCR_CONTACT
 from backends.studies.study_43en.forms.contact.contact_SCR import ScreeningContactForm
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 
 # Audit utilities
 from backends.audit_logs.utils.decorators import audit_log
@@ -106,7 +107,7 @@ def screening_contact_list(request):
     user_sites = getattr(request, 'user_sites', set())
     user_sites_list = sorted(list(user_sites))  # Convert to sorted list for template
 
-    return render(request, 'studies/study_43en/CRF/contact/screening_contact_list.html', {
+    return render(request, 'studies/study_43en/contact/list/screening_contact_list.html', {
         'page_obj': page_obj,
         'total_cases': total_cases,
         'eligible_cases': eligible_cases,
@@ -123,7 +124,13 @@ def screening_contact_list(request):
 
 @login_required
 @require_crf_add('scr_contact', redirect_to='study_43en:screening_contact_list')
-@audit_log(model_name='SCREENINGCONTACT', get_patient_id_from='SCRID')
+@audit_log(
+    model_name='SCREENINGCONTACT',
+    get_patient_id_from='SCRID',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def screening_contact_create(request):
     """
     CREATE contact screening case - WITH SITE SELECTION MODAL
@@ -198,7 +205,7 @@ def screening_contact_create(request):
         return process_crf_create(
             request=request,
             form_class=ScreeningContactForm,
-            template_name='studies/study_43en/CRF/contact/screening_contact_form.html',
+            template_name='studies/study_43en/contact/form/screening_contact_form.html',
             redirect_url='study_43en:screening_contact_list',
             pre_save_callback=pre_save,
             post_save_callback=post_save,
@@ -226,7 +233,7 @@ def screening_contact_create(request):
     
     form = ScreeningContactForm(instance=instance, initial=initial_data)
     
-    return render(request, 'studies/study_43en/CRF/contact/screening_contact_form.html', {
+    return render(request, 'studies/study_43en/contact/form/screening_contact_form.html', {
         'form': form,
         'is_create': True,
         'selected_site_id': siteid,  # Show specific site
@@ -240,7 +247,13 @@ def screening_contact_create(request):
 
 @login_required
 @require_crf_change('scr_contact', redirect_to='study_43en:screening_contact_list')
-@audit_log(model_name='SCREENINGCONTACT', get_patient_id_from='SCRID')
+@audit_log(
+    model_name='SCREENINGCONTACT',
+    get_patient_id_from='SCRID',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def screening_contact_update(request, SCRID):
     """
     UPDATE contact screening case
@@ -271,7 +284,7 @@ def screening_contact_update(request, SCRID):
         # Get selected site from session
         selected_site_id = request.session.get('selected_site_id', 'all')
         
-        return render(request, 'studies/study_43en/CRF/contact/screening_contact_form.html', {
+        return render(request, 'studies/study_43en/contact/form/screening_contact_form.html', {
             'form': form,
             'is_create': False,
             'scrid': SCRID,
@@ -284,7 +297,7 @@ def screening_contact_update(request, SCRID):
         request=request,
         instance=screening_contact,
         form_class=ScreeningContactForm,
-        template_name='studies/study_43en/CRF/contact/screening_contact_form.html',
+        template_name='studies/study_43en/contact/form/screening_contact_form.html',
         redirect_url='study_43en:screening_contact_list',
         extra_context={
             'scrid': SCRID,
@@ -299,7 +312,13 @@ def screening_contact_update(request, SCRID):
 
 @login_required
 @require_crf_view('scr_contact', redirect_to='study_43en:screening_contact_list')
-@audit_log(model_name='SCREENINGCONTACT', get_patient_id_from='SCRID')
+@audit_log(
+    model_name='SCREENINGCONTACT',
+    get_patient_id_from='SCRID',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def screening_contact_view(request, SCRID):
     """
     READ contact screening case (read-only)
@@ -323,7 +342,7 @@ def screening_contact_view(request, SCRID):
         field.widget.attrs['readonly'] = True
         field.widget.attrs['disabled'] = True
     
-    return render(request, 'studies/study_43en/CRF/contact/screening_contact_form.html', {
+    return render(request, 'studies/study_43en/contact/form/screening_contact_form.html', {
         'form': form,
         'is_create': False,
         'is_readonly': True,

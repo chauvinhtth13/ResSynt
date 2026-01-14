@@ -23,6 +23,7 @@ from backends.studies.study_43en.models.contact import (
     SCR_CONTACT, ENR_CONTACT, ContactUnderlyingCondition, ENR_CONTACT_MedHisDrug
 )
 from backends.studies.study_43en.models.contact.PER_CONTACT_DATA import PERSONAL_CONTACT_DATA
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 
 from backends.studies.study_43en.forms.contact.contact_ENR import (
     ContactMedHisDrugFormSet,
@@ -160,7 +161,13 @@ def make_formset_readonly(formset):
 
 @login_required
 @require_crf_add('enr_contact', redirect_to='study_43en:screening_contact_list')
-@audit_log(model_name='ENROLLMENTCONTACT', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENROLLMENTCONTACT',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def enrollment_contact_create(request, usubjid):
     """
     Create new contact enrollment WITH personal data
@@ -252,7 +259,7 @@ def enrollment_contact_create(request, usubjid):
         'selected_site_id': screening_contact.SITEID,
     }
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_enrollment_form.html', context)
+    return render(request, 'studies/study_43en/contact/form/contact_enrollment_form.html', context)
 
 
 # ==========================================
@@ -261,7 +268,13 @@ def enrollment_contact_create(request, usubjid):
 
 @login_required
 @require_crf_change('enr_contact', redirect_to='study_43en:screening_contact_list')
-@audit_log(model_name='ENROLLMENTCONTACT', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENROLLMENTCONTACT',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def enrollment_contact_update(request, usubjid):
     """
     Update contact enrollment WITH UNIVERSAL AUDIT SYSTEM
@@ -312,7 +325,7 @@ def enrollment_contact_update(request, usubjid):
             'selected_site_id': request.session.get('selected_site_id', 'all'),
         }
         
-        return render(request, 'studies/study_43en/CRF/contact/contact_enrollment_form.html', context)
+        return render(request, 'studies/study_43en/contact/form/contact_enrollment_form.html', context)
     
     # ✨ POST - USE UNIVERSAL AUDIT SYSTEM (UPDATED)
     logger.info("✨ Using Universal Audit System (Tier 3)")
@@ -352,7 +365,7 @@ def enrollment_contact_update(request, usubjid):
         main_instance=enrollment_contact,
         forms_config=forms_config,
         save_callback=save_callback,
-        template_name='studies/study_43en/CRF/contact/contact_enrollment_form.html',
+        template_name='studies/study_43en/contact/form/contact_enrollment_form.html',
         redirect_url=reverse('study_43en:contact_detail', kwargs={'usubjid': usubjid}),
         extra_context={
             'enrollment_contact': enrollment_contact,
@@ -369,7 +382,13 @@ def enrollment_contact_update(request, usubjid):
 
 @login_required
 @require_crf_view('enr_contact', redirect_to='study_43en:screening_contact_list')
-@audit_log(model_name='ENROLLMENTCONTACT', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='ENROLLMENTCONTACT',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def enrollment_contact_view(request, usubjid):
     """
     View contact enrollment (read-only)
@@ -424,4 +443,4 @@ def enrollment_contact_view(request, usubjid):
         'selected_site_id': request.session.get('selected_site_id', 'all'),
     }
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_enrollment_form.html', context)
+    return render(request, 'studies/study_43en/contact/form/contact_enrollment_form.html', context)

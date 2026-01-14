@@ -29,21 +29,20 @@ logger = logging.getLogger(__name__)
 # SHARED UTILITIES
 # ==========================================
 
-def resolve_site_id(request, patient_id, scr_case_model=None, scr_contact_model=None):
+def resolve_site_id(request, patient_id, patient_model=None):
     """
     Resolve SITEID from multiple sources - shared utility to avoid duplication
     
     Priority order:
     1. From audit_data (set by view)
-    2. Query from database using patient_id (if models provided)
+    2. Query from database using patient_id (if patient_model provided)
     3. From session
     4. Extract from patient_id string pattern (format: XXX-X-XXX)
     
     Args:
         request: HttpRequest
-        patient_id: Patient identifier (USUBJID or SCRID)
-        scr_case_model: Optional - Model class for patient lookup
-        scr_contact_model: Optional - Model class for contact lookup
+        patient_id: Patient identifier (USUBJID, SCRID, SUBJECTID, HHID, etc.)
+        patient_model: Optional - Model class for patient/subject lookup (SCR_CASE, Individual, HH_CASE, etc.)
     
     Returns:
         str: Site ID or None
@@ -53,7 +52,7 @@ def resolve_site_id(request, patient_id, scr_case_model=None, scr_contact_model=
     
     # Try database lookup
     if not site_id and patient_id:
-        site_id = _lookup_site_from_db(patient_id, scr_case_model, scr_contact_model)
+        site_id = _lookup_site_from_db(patient_id, patient_model)
     
     # Try session
     if not site_id:
@@ -69,11 +68,15 @@ def resolve_site_id(request, patient_id, scr_case_model=None, scr_contact_model=
     return site_id
 
 
-def _lookup_site_from_db(patient_id, scr_case_model=None, scr_contact_model=None):
+def _lookup_site_from_db(patient_id, patient_model=None):
     """
     Query SITEID from database models with caching
     
     PERFORMANCE: Cache results to avoid repeated DB queries for same patient
+    
+    Args:
+        patient_id: Patient/Subject identifier
+        patient_model: Model class to query (SCR_CASE, Individual, HH_CASE, etc.)
     
     Returns:
         str: Site ID or None
@@ -91,23 +94,19 @@ def _lookup_site_from_db(patient_id, scr_case_model=None, scr_contact_model=None
     site_id = None
     
     try:
-        # Try USUBJID format using SCR_CASE model
-        if scr_case_model:
-            site_id = scr_case_model.objects.filter(
-                USUBJID=patient_id_str
-            ).values_list('SITEID', flat=True).first()
-            
-            if not site_id and patient_id_str.startswith('PS-'):
-                # Try SCRID format for patient screening (PS-XXX-XXXX)
-                site_id = scr_case_model.objects.filter(
-                    SCRID=patient_id_str
-                ).values_list('SITEID', flat=True).first()
-        
-        # Try SCRID format for contact screening (CS-XXX-XXXX)
-        if not site_id and scr_contact_model and patient_id_str.startswith('CS-'):
-            site_id = scr_contact_model.objects.filter(
-                SCRID=patient_id_str
-            ).values_list('SITEID', flat=True).first()
+        # Try generic lookup if model provided
+        if patient_model:
+            # Try common ID field names
+            for id_field in ['USUBJID', 'SCRID', 'SUBJECTID', 'HHID', 'MEMBERID']:
+                if hasattr(patient_model, id_field):
+                    try:
+                        site_id = patient_model.objects.filter(
+                            **{id_field: patient_id_str}
+                        ).values_list('SITEID', flat=True).first()
+                        if site_id:
+                            break
+                    except:
+                        continue
                 
     except Exception as e:
         logger.debug("Could not query SITEID from database: %s", e)
@@ -120,7 +119,7 @@ def _lookup_site_from_db(patient_id, scr_case_model=None, scr_contact_model=None
 
 
 def audit_log(model_name: str, get_patient_id_from: str = 'usubjid', 
-              scr_case_model=None, scr_contact_model=None,
+              patient_model=None,
               audit_log_model=None, audit_log_detail_model=None):
     """
     GENERIC Audit log decorator with automatic CREATE/VIEW logging
@@ -129,19 +128,23 @@ def audit_log(model_name: str, get_patient_id_from: str = 'usubjid',
     Automatically detects CREATE action from URL pattern.
     
     Args:
-        model_name: Name of the model (e.g., 'SCREENINGCASE')
+        model_name: Name of the model (e.g., 'SCREENINGCASE', 'Individual', 'HH_CASE')
         get_patient_id_from: Parameter name in URL kwargs for patient ID (default 'usubjid')
-        scr_case_model: Optional - SCR_CASE model class for SITEID lookup
-        scr_contact_model: Optional - SCR_CONTACT model class for SITEID lookup
-        audit_log_model: Optional - AuditLog model class (defaults to backends.audit_logs.models.AuditLog)
-        audit_log_detail_model: Optional - AuditLogDetail model class (defaults to backends.audit_logs.models.AuditLogDetail)
+        patient_model: Optional - Main patient/subject model class for SITEID lookup (SCR_CASE, Individual, HH_CASE, etc.)
+        audit_log_model: REQUIRED - AuditLog model class from your study
+        audit_log_detail_model: REQUIRED - AuditLogDetail model class from your study
     
     Example:
         from backends.studies.study_43en.models.patient import SCR_CASE
+        from backends.studies.study_43en.models import AuditLog, AuditLogDetail
         
-        @audit_log('SCREENINGCASE', 
-                   get_patient_id_from='usubjid', 
-                   scr_case_model=SCR_CASE)
+        @audit_log(
+            model_name='SCREENINGCASE',
+            get_patient_id_from='usubjid',
+            patient_model=SCR_CASE,
+            audit_log_model=AuditLog,
+            audit_log_detail_model=AuditLogDetail
+        )
         def my_view(request, usubjid):
             ...
     """
@@ -205,8 +208,7 @@ def audit_log(model_name: str, get_patient_id_from: str = 'usubjid',
                             model_name=model_name,
                             patient_id=patient_id or audit_data.get('patient_id'),
                             audit_data=audit_data,
-                            scr_case_model=scr_case_model,
-                            scr_contact_model=scr_contact_model,
+                            patient_model=patient_model,
                             audit_log_model=audit_log_model,
                             audit_log_detail_model=audit_log_detail_model
                         )
@@ -221,8 +223,7 @@ def audit_log(model_name: str, get_patient_id_from: str = 'usubjid',
                             action=action,
                             model_name=model_name,
                             patient_id=patient_id,
-                            scr_case_model=scr_case_model,
-                            scr_contact_model=scr_contact_model,
+                            patient_model=patient_model,
                             audit_log_model=audit_log_model
                         )
                     except Exception as e:
@@ -236,8 +237,7 @@ def audit_log(model_name: str, get_patient_id_from: str = 'usubjid',
                             action=action,
                             model_name=model_name,
                             patient_id=patient_id,
-                            scr_case_model=scr_case_model,
-                            scr_contact_model=scr_contact_model,
+                            patient_model=patient_model,
                             audit_log_model=audit_log_model
                         )
                     except Exception as e:
@@ -281,21 +281,20 @@ def _build_checksum_data(user_id, username, action, model_name, patient_id_str,
 
 
 def _create_simple_audit_log(request, action, model_name, patient_id,
-                             scr_case_model=None, scr_contact_model=None,
+                             patient_model=None,
                              audit_log_model=None):
     """
     GENERIC Create simple audit log for CREATE/VIEW (no change details)
     
     Automatically extracts site_id from multiple sources.
-    Uses provided model classes for SITEID lookup.
+    Uses provided model class for SITEID lookup.
     
     Args:
         request: Django request object
         action: Action type (CREATE, VIEW)
         model_name: Name of the model
         patient_id: Patient ID 
-        scr_case_model: Optional SCR_CASE model for SITEID lookup
-        scr_contact_model: Optional SCR_CONTACT model for SITEID lookup
+        patient_model: Optional - Main patient/subject model for SITEID lookup
         audit_log_model: REQUIRED - AuditLog model class from study app
     """
     if not audit_log_model:
@@ -303,7 +302,7 @@ def _create_simple_audit_log(request, action, model_name, patient_id,
         return
     
     # Use shared utility for SITEID resolution
-    site_id = resolve_site_id(request, patient_id, scr_case_model, scr_contact_model)
+    site_id = resolve_site_id(request, patient_id, patient_model)
     
     patient_id_str = str(patient_id) if patient_id else 'unknown'
     
@@ -340,12 +339,12 @@ def _create_simple_audit_log(request, action, model_name, patient_id,
 
 def _create_audit_log_with_details(request, action, model_name, 
                                    patient_id, audit_data,
-                                   scr_case_model=None, scr_contact_model=None,
+                                   patient_model=None,
                                    audit_log_model=None, audit_log_detail_model=None):
     """
     GENERIC Create audit log with proper data structure
     
-    Uses provided model classes for SITEID lookup.
+    Uses provided model class for SITEID lookup.
     
     Args:
         request: Django request object
@@ -353,8 +352,7 @@ def _create_audit_log_with_details(request, action, model_name,
         model_name: Name of the model
         patient_id: Patient ID
         audit_data: Dict containing changes, reasons_json, etc.
-        scr_case_model: Optional SCR_CASE model for SITEID lookup
-        scr_contact_model: Optional SCR_CONTACT model for SITEID lookup
+        patient_model: Optional - Main patient/subject model for SITEID lookup
         audit_log_model: REQUIRED - AuditLog model class from study app
         audit_log_detail_model: REQUIRED - AuditLogDetail model class from study app
     """
@@ -365,7 +363,7 @@ def _create_audit_log_with_details(request, action, model_name,
     # Use shared utility - but prefer audit_data first
     site_id = audit_data.get('site_id')
     if not site_id:
-        site_id = resolve_site_id(request, patient_id, scr_case_model, scr_contact_model)
+        site_id = resolve_site_id(request, patient_id, patient_model)
     
     patient_id_str = str(patient_id) if patient_id else 'unknown'
     

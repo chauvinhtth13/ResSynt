@@ -83,14 +83,10 @@ def select_study(request):
                     
                     # Fallback: construct URL from study code
                     study_code_lower = study.code.lower()
-                    try:
-                        return redirect(reverse(f'study_{study_code_lower}:home_dashboard'))
-                    except Exception as e:
-                        logger.warning(f"Cannot reverse namespace URL: {e}")
-                        # Last resort: direct URL
-                        dashboard_url = f'/studies/{study_code_lower}/dashboard/'
-                        logger.info(f"Redirecting to direct URL: {dashboard_url}")
-                        return redirect(dashboard_url)
+                    # Direct URL: /studies/{study_code}/dashboard/
+                    dashboard_url = f'/studies/{study_code_lower}/dashboard/'
+                    logger.info(f"Redirecting to direct URL: {dashboard_url}")
+                    return redirect(dashboard_url)
                 else:
                     context['error_message'] = LoginMessages.NO_STUDY_ACCESS
                     

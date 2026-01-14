@@ -170,7 +170,7 @@ def patient_list(request):
         'filter_type': filter_type,
     }
     
-    return render(request, 'studies/study_43en/CRF/base/patient_list.html', context)
+    return render(request, 'studies/study_43en/patient/list/patient_list.html', context)
 
 
 # ==========================================
@@ -220,15 +220,38 @@ def patient_detail(request, usubjid):
     
     # ==========================================
     # Laboratory, Microbiology, Sample
+    # 🚀 OPTIMIZED: Use direct queries with aggregation
     # ==========================================
     if enrollmentcase:
-        laboratory_count = get_filtered_queryset(LaboratoryTest, site_filter, filter_type).filter(USUBJID=enrollmentcase).count()
-        microbiology_count = get_filtered_queryset(LAB_Microbiology, site_filter, filter_type).filter(USUBJID=enrollmentcase).count()
-        sample_count = get_filtered_queryset(SAM_CASE, site_filter, filter_type).filter(USUBJID=enrollmentcase).count()
+        # Direct query to avoid loading all 2420 objects from cache
+        from django.db.models import Count, Max
         
-        latest_laboratory = get_filtered_queryset(LaboratoryTest, site_filter, filter_type).filter(USUBJID=enrollmentcase).order_by('-last_modified_at').first()
-        latest_microbiology = get_filtered_queryset(LAB_Microbiology, site_filter, filter_type).filter(USUBJID=enrollmentcase).order_by('-last_modified_at').first()
-        latest_sample = get_filtered_queryset(SAM_CASE, site_filter, filter_type).filter(USUBJID=enrollmentcase).order_by('-last_modified_at').first()
+        # Laboratory - single query for count + latest
+        lab_qs = LaboratoryTest.objects.using('db_study_43en').filter(USUBJID=enrollmentcase)
+        lab_stats = lab_qs.aggregate(
+            total=Count('id'),
+            latest_date=Max('last_modified_at')
+        )
+        laboratory_count = lab_stats['total']
+        latest_laboratory = lab_qs.order_by('-last_modified_at').first() if laboratory_count > 0 else None
+        
+        # Microbiology - single query
+        micro_qs = LAB_Microbiology.objects.using('db_study_43en').filter(USUBJID=enrollmentcase)
+        micro_stats = micro_qs.aggregate(
+            total=Count('id'),
+            latest_date=Max('last_modified_at')
+        )
+        microbiology_count = micro_stats['total']
+        latest_microbiology = micro_qs.order_by('-last_modified_at').first() if microbiology_count > 0 else None
+        
+        # Sample - single query
+        sample_qs = SAM_CASE.objects.using('db_study_43en').filter(USUBJID=enrollmentcase)
+        sample_stats = sample_qs.aggregate(
+            total=Count('id'),
+            latest_date=Max('last_modified_at')
+        )
+        sample_count = sample_stats['total']
+        latest_sample = sample_qs.order_by('-last_modified_at').first() if sample_count > 0 else None
     else:
         laboratory_count = microbiology_count = sample_count = 0
         latest_laboratory = latest_microbiology = latest_sample = None
@@ -237,49 +260,31 @@ def patient_detail(request, usubjid):
     has_microbiology_cultures = microbiology_count > 0
     
     # ==========================================
-    # Follow-ups
+    # Follow-ups, Discharge, End Case
+    # 🚀 OPTIMIZED: Direct queries for single objects
     # ==========================================
     fu_case_28 = None
-    has_followup = False
-    if enrollmentcase:
-        try:
-            fu_case_28 = get_filtered_queryset(FU_CASE_28, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_followup = True
-        except FU_CASE_28.DoesNotExist:
-            pass
-    
     fu_case_90 = None
-    has_followup90 = False
-    if enrollmentcase:
-        try:
-            fu_case_90 = get_filtered_queryset(FU_CASE_90, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_followup90 = True
-        except FU_CASE_90.DoesNotExist:
-            pass
-    
-    # ==========================================
-    # Discharge
-    # ==========================================
     disch_case = None
-    has_discharge = False
-    if enrollmentcase:
-        try:
-            disch_case = get_filtered_queryset(DISCH_CASE, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_discharge = True
-        except DISCH_CASE.DoesNotExist:
-            pass
-    
-    # ==========================================
-    # End Case
-    # ==========================================
     endcasecrf = None
-    has_endcasecrf = False
+    has_followup = has_followup90 = has_discharge = has_endcasecrf = False
+    
     if enrollmentcase:
-        try:
-            endcasecrf = get_filtered_queryset(EndCaseCRF, site_filter, filter_type).get(USUBJID=enrollmentcase)
-            has_endcasecrf = True
-        except EndCaseCRF.DoesNotExist:
-            pass
+        # Follow-up Day 28
+        fu_case_28 = FU_CASE_28.objects.using('db_study_43en').filter(USUBJID=enrollmentcase).first()
+        has_followup = fu_case_28 is not None
+        
+        # Follow-up Day 90
+        fu_case_90 = FU_CASE_90.objects.using('db_study_43en').filter(USUBJID=enrollmentcase).first()
+        has_followup90 = fu_case_90 is not None
+        
+        # Discharge
+        disch_case = DISCH_CASE.objects.using('db_study_43en').filter(USUBJID=enrollmentcase).first()
+        has_discharge = disch_case is not None
+        
+        # End Case
+        endcasecrf = EndCaseCRF.objects.using('db_study_43en').filter(USUBJID=enrollmentcase).first()
+        has_endcasecrf = endcasecrf is not None
     
     # ==========================================
     # Death Status
@@ -351,7 +356,7 @@ def patient_detail(request, usubjid):
         'expecteddates': expecteddates,
     }
     
-    return render(request, 'studies/study_43en/CRF/base/patient_detail.html', context)
+    return render(request, 'studies/study_43en/patient/list/patient_detail.html', context)
 
 
 # ==========================================
@@ -475,7 +480,7 @@ def contact_list(request):
         'filter_type': filter_type,
     }
     
-    return render(request, 'studies/study_43en/CRF/base/contact_list.html', context)
+    return render(request, 'studies/study_43en/contact/list/contact_list.html', context)
 
 
 # ==========================================
@@ -558,7 +563,7 @@ def contact_detail(request, usubjid):
             'contactexpecteddates': contactexpecteddates
         }
         
-        return render(request, 'studies/study_43en/CRF/base/contact_detail.html', context)
+        return render(request, 'studies/study_43en/contact/list/contact_detail.html', context)
         
     except Exception as e:
         messages.error(request, f'Không tìm thấy contact {usubjid} hoặc không có quyền truy cập')

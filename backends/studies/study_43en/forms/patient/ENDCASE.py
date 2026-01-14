@@ -63,25 +63,25 @@ class EndCaseCRFForm(forms.ModelForm):
         ]
         
         widgets = {
-            'ENDDATE': forms.DateInput(attrs={
+            'ENDDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
                 'placeholder': 'DD/MM/YYYY',
-                'type': 'date'
+                'type': 'text'
             }),
-            'ENDFORMDATE': forms.DateInput(attrs={
+            'ENDFORMDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
                 'placeholder': 'DD/MM/YYYY',
-                'type': 'date'
+                'type': 'text'
             }),
-            'WITHDRAWDATE': forms.DateInput(attrs={
+            'WITHDRAWDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
                 'placeholder': 'DD/MM/YYYY',
-                'type': 'date'
+                'type': 'text'
             }),
-            'LOSTTOFOLLOWUPDATE': forms.DateInput(attrs={
+            'LOSTTOFOLLOWUPDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
                 'placeholder': 'DD/MM/YYYY',
-                'type': 'date'
+                'type': 'text'
             }),
             'VICOMPLETED': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'V2COMPLETED': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -139,6 +139,12 @@ class EndCaseCRFForm(forms.ModelForm):
         
         self.patient = patient
         super().__init__(*args, **kwargs)
+        
+        # 🚀 Set date input formats for dd/mm/yyyy
+        date_fields = ['ENDDATE', 'ENDFORMDATE', 'WITHDRAWDATE', 'LOSTTOFOLLOWUPDATE']
+        for field_name in date_fields:
+            if field_name in self.fields:
+                self.fields[field_name].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         #  Make all fields optional initially (validation in clean())
         for field_name, field in self.fields.items():

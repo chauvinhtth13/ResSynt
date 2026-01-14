@@ -27,11 +27,11 @@ class LaboratoryTestForm(forms.ModelForm):
                 'class': 'form-check-input lab-performed-checkbox'
             }),
             'PERFORMEDDATE': forms.DateInput(
-                format='%Y-%m-%d',  #  Specify format
+                format='%d/%m/%Y',
                 attrs={
-                    'type': 'date',
+                    'type': 'text',
                     'class': 'form-control datepicker',
-                    'placeholder': 'YYYY-MM-DD'
+                    'placeholder': 'DD/MM/YYYY'
                 }
             ),
             'RESULT': forms.Textarea(attrs={
@@ -46,7 +46,7 @@ class LaboratoryTestForm(forms.ModelForm):
         
         # Make fields not required initially
         self.fields['PERFORMEDDATE'].required = False
-        self.fields['PERFORMEDDATE'].input_formats = ['%Y-%m-%d'] 
+        self.fields['PERFORMEDDATE'].input_formats = ['%d/%m/%Y', '%d-%m-%Y']
         self.fields['RESULT'].required = False
 
     
@@ -173,9 +173,10 @@ class OtherTestForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': _('e.g., Procalcitonin, D-Dimer'),
             }),
-            'OTHERTESTDTC': forms.DateInput(attrs={
-                'type': 'date',
+            'OTHERTESTDTC': forms.DateInput(format='%d/%m/%Y', attrs={
+                'type': 'text',
                 'class': 'form-control datepicker',
+                'placeholder': 'DD/MM/YYYY',
             }),
             'OTHERTESTRESULT': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -186,6 +187,9 @@ class OtherTestForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['SEQUENCE'].required = False
+        # Set date input format
+        if 'OTHERTESTDTC' in self.fields:
+            self.fields['OTHERTESTDTC'].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         if self.instance and self.instance.pk and not self.instance.OTHERTESTPERFORMED:
             self.fields['OTHERTESTDTC'].required = False
             self.fields['OTHERTESTRESULT'].required = False

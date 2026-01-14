@@ -52,13 +52,13 @@ class EnrollmentCaseForm(forms.ModelForm):
         ]
         widgets = {
             # Dates
-            'ENRDATE': forms.DateInput(attrs={
+            'ENRDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
-            'PRIORHOSPIADMISDATE': forms.DateInput(attrs={
+            'PRIORHOSPIADMISDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
             
             # Birth information
@@ -132,6 +132,12 @@ class EnrollmentCaseForm(forms.ModelForm):
 
     def __init__(self, *args, siteid=None, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Set input_formats for all date fields (DD/MM/YYYY)
+        date_fields = ['ENRDATE', 'PRIORHOSPIADMISDATE']
+        for field_name in date_fields:
+            if field_name in self.fields:
+                self.fields[field_name].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         # Get version for optimistic locking
         if self.instance and self.instance.pk:

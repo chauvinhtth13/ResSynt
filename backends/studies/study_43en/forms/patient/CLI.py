@@ -146,13 +146,13 @@ class ClinicalCaseForm(forms.ModelForm):
 
         widgets = {
             # Date widgets
-            'ADMISDATE': forms.DateInput(attrs={
+            'ADMISDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
-            'SYMPTOMONSETDATE': forms.DateInput(attrs={
+            'SYMPTOMONSETDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
             
             # Department Select
@@ -229,6 +229,12 @@ class ClinicalCaseForm(forms.ModelForm):
     
     def __init__(self, *args, siteid=None, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Set input_formats for all date fields (DD/MM/YYYY)
+        date_fields = ['ADMISDATE', 'SYMPTOMONSETDATE']
+        for field_name in date_fields:
+            if field_name in self.fields:
+                self.fields[field_name].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         # Get version for optimistic locking
         if self.instance and self.instance.pk:
@@ -389,6 +395,11 @@ class BaseSEQUENCEForm(forms.ModelForm):
         # SEQUENCE is auto-generated and hidden, not required for validation
         if 'SEQUENCE' in self.fields:
             self.fields['SEQUENCE'].required = False
+        
+        # Set input_formats for all date fields (DD/MM/YYYY)
+        for field_name, field in self.fields.items():
+            if isinstance(field, forms.DateField):
+                field.input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
 
 
 class PriorAntibioticForm(BaseSEQUENCEForm):
@@ -408,13 +419,13 @@ class PriorAntibioticForm(BaseSEQUENCEForm):
                 'class': 'form-control',
                 'placeholder': _('Dosage')
             }),
-            'PRIORANTIBIOSTARTDTC': forms.DateInput(attrs={
+            'PRIORANTIBIOSTARTDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
-            'PRIORANTIBIOENDDTC': forms.DateInput(attrs={
+            'PRIORANTIBIOENDDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
         }
     
@@ -457,13 +468,13 @@ class InitialAntibioticForm(BaseSEQUENCEForm):
                 'class': 'form-control',
                 'placeholder': _('Dosage')
             }),
-            'INITIALANTIBIOSTARTDTC': forms.DateInput(attrs={
+            'INITIALANTIBIOSTARTDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
-            'INITIALANTIBIOENDDTC': forms.DateInput(attrs={
+            'INITIALANTIBIOENDDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
         }
     
@@ -506,13 +517,13 @@ class MainAntibioticForm(BaseSEQUENCEForm):
                 'class': 'form-control',
                 'placeholder': _('Dosage')
             }),
-            'MAINANTIBIOSTARTDTC': forms.DateInput(attrs={
+            'MAINANTIBIOSTARTDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
-            'MAINANTIBIOENDDTC': forms.DateInput(attrs={
+            'MAINANTIBIOENDDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
         }
     
@@ -770,9 +781,9 @@ class ImproveSymptForm(BaseSEQUENCEForm):
                 'rows': 2,
                 'placeholder': _('Describe improvement conditions')
             }),
-            'SYMPTSDTC': forms.DateInput(attrs={
+            'SYMPTSDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
         }
     
@@ -819,13 +830,13 @@ class HospiProcessForm(BaseSEQUENCEForm):
                 'class': 'form-control',
                 'placeholder': _('Department name (e.g., ICU, Emergency)')
             }),
-            'STARTDTC': forms.DateInput(attrs={
+            'STARTDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
-            'ENDDTC': forms.DateInput(attrs={
+            'ENDDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
             'TRANSFER_REASON': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -929,9 +940,9 @@ class AEHospEventForm(BaseSEQUENCEForm):
                 'rows': 3,
                 'placeholder': _('Event details, clinical course, management...')
             }),
-            'AEDTC': forms.DateInput(attrs={
+            'AEDTC': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'datepicker form-control',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
         }
 

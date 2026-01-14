@@ -111,16 +111,16 @@ class LABMicrobiologyCultureForm(forms.ModelForm):
                 'placeholder': _('Lab specimen ID (SID)'),
                 'maxlength': 50
             }),
-            'SPECSAMPDATE': forms.DateInput(attrs={
-                'type': 'date',
+            'SPECSAMPDATE': forms.DateInput(format='%d/%m/%Y', attrs={
+                'type': 'text',
                 'class': 'form-control datepicker',
-                'placeholder': 'YYYY-MM-DD',
+                'placeholder': 'DD/MM/YYYY',
                 'required': True
             }),
-            'BACSTRAINISOLDATE': forms.DateInput(attrs={
-                'type': 'date',
+            'BACSTRAINISOLDATE': forms.DateInput(format='%d/%m/%Y', attrs={
+                'type': 'text',
                 'class': 'form-control datepicker',
-                'placeholder': 'YYYY-MM-DD'
+                'placeholder': 'DD/MM/YYYY'
             }),
             'RESULT': forms.Select(attrs={
                 'class': 'form-control culture-result-select',
@@ -176,7 +176,7 @@ class LABMicrobiologyCultureForm(forms.ModelForm):
             },
             'SPECSAMPDATE': {
                 'required': _('Sample collection date is required'),
-                'invalid': _('Invalid date format. Use YYYY-MM-DD'),
+                'invalid': _('Invalid date format. Use DD/MM/YYYY'),
             },
             'RESULT': {
                 'required': _('Culture result is required'),
@@ -191,6 +191,12 @@ class LABMicrobiologyCultureForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.usubjid = kwargs.pop('usubjid', None)
         super().__init__(*args, **kwargs)
+        
+        # 🚀 Set date input formats for dd/mm/yyyy (bootstrap-datepicker format)
+        date_fields = ['SPECSAMPDATE', 'BACSTRAINISOLDATE']
+        for field_name in date_fields:
+            if field_name in self.fields:
+                self.fields[field_name].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         # Get from instance if not provided
         if not self.usubjid and self.instance and self.instance.pk:
@@ -390,18 +396,22 @@ class LABMicrobiologyFilterForm(forms.Form):
     date_from = forms.DateField(
         required=False,
         label=_('From Date'),
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'form-control'
+        input_formats=['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={
+            'type': 'text',
+            'class': 'form-control datepicker',
+            'placeholder': 'DD/MM/YYYY'
         })
     )
     
     date_to = forms.DateField(
         required=False,
         label=_('To Date'),
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'form-control'
+        input_formats=['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={
+            'type': 'text',
+            'class': 'form-control datepicker',
+            'placeholder': 'DD/MM/YYYY'
         })
     )
 
@@ -414,60 +424,71 @@ def get_lab_culture_summary(usubjid):
     """
     Get summary statistics for LAB cultures
     
+    🚀 OPTIMIZED: Uses aggregation to reduce from ~50 queries to ~3 queries
+    
     Args:
         usubjid: ENR_CASE instance
     
     Returns:
         dict with summary data
     """
+    from django.db.models import Case, When, Value, IntegerField, Sum
+    
     cultures = LAB_Microbiology.objects.filter(USUBJID=usubjid)
     
-    total = cultures.count()
-    positive = cultures.filter(RESULT=LAB_Microbiology.ResultTypeChoices.POSITIVE).count()
-    kpn_positive = cultures.filter(IS_KLEBSIELLA=True).count()
-    negative = cultures.filter(RESULT=LAB_Microbiology.ResultTypeChoices.NEGATIVE).count()
-
+    # 🚀 Single aggregation query for all counts
+    summary = cultures.aggregate(
+        total=Count('id'),
+        positive=Count('id', filter=Q(RESULT=LAB_Microbiology.ResultTypeChoices.POSITIVE)),
+        kpn_positive=Count('id', filter=Q(IS_KLEBSIELLA=True)),
+        negative=Count('id', filter=Q(RESULT=LAB_Microbiology.ResultTypeChoices.NEGATIVE)),
+        no_result=Count('id', filter=Q(Q(RESULT__isnull=True) | Q(RESULT=''))),
+    )
     
-    # No result (NULL or empty)
-    no_result = cultures.filter(
-        Q(RESULT__isnull=True) | Q(RESULT='')
-    ).count()
+    total = summary['total']
+    positive = summary['positive']
+    kpn_positive = summary['kpn_positive']
+    negative = summary['negative']
+    no_result = summary['no_result']
     
-    # By specimen type
+    # 🚀 Single query for by_specimen_type using GROUP BY
+    specimen_stats = cultures.values('SPECSAMPLOC').annotate(
+        total=Count('id'),
+        positive_count=Count('id', filter=Q(RESULT=LAB_Microbiology.ResultTypeChoices.POSITIVE)),
+        kpn_count=Count('id', filter=Q(IS_KLEBSIELLA=True)),
+    ).filter(total__gt=0)
+    
+    # Build by_specimen dict
+    spec_label_map = dict(LAB_Microbiology.SpecimenLocationChoices.choices)
     by_specimen = {}
-    for spec_loc, spec_label in LAB_Microbiology.SpecimenLocationChoices.choices:
-        count = cultures.filter(SPECSAMPLOC=spec_loc).count()
-        positive_count = cultures.filter(
-            SPECSAMPLOC=spec_loc,
-            RESULT=LAB_Microbiology.ResultTypeChoices.POSITIVE
-        ).count()
-        kpn_count = cultures.filter(
-            SPECSAMPLOC=spec_loc,
-            IS_KLEBSIELLA=True
-        ).count()
+    for stat in specimen_stats:
+        spec_loc = stat['SPECSAMPLOC']
+        count = stat['total']
+        positive_count = stat['positive_count']
+        kpn_count = stat['kpn_count']
         
-        if count > 0:
-            by_specimen[spec_loc] = {
-                'label': spec_label,
-                'total': count,
-                'positive': positive_count,
-                'kpn_positive': kpn_count,
-                'positive_rate': round(positive_count / count * 100) if count > 0 else 0,
-                'kpn_rate': round(kpn_count / count * 100) if count > 0 else 0,
-            }
+        by_specimen[spec_loc] = {
+            'label': spec_label_map.get(spec_loc, spec_loc),
+            'total': count,
+            'positive': positive_count,
+            'kpn_positive': kpn_count,
+            'positive_rate': round(positive_count / count * 100) if count > 0 else 0,
+            'kpn_rate': round(kpn_count / count * 100) if count > 0 else 0,
+        }
     
-    # Recent cultures
+    # Recent cultures (1 query)
     recent_cultures = cultures.order_by('-SPECSAMPDATE', '-LAB_CASE_SEQ')[:5]
     
-    # Antibiotic test summary
-    total_tests = AntibioticSensitivity.objects.filter(
+    # 🚀 Single aggregation for antibiotic tests
+    antibiotic_stats = AntibioticSensitivity.objects.filter(
         LAB_CULTURE_ID__USUBJID=usubjid
-    ).count()
+    ).aggregate(
+        total_tests=Count('id'),
+        resistant_tests=Count('id', filter=Q(SENSITIVITY_LEVEL='R')),
+    )
     
-    resistant_tests = AntibioticSensitivity.objects.filter(
-        LAB_CULTURE_ID__USUBJID=usubjid,
-        SENSITIVITY_LEVEL='R'
-    ).count()
+    total_tests = antibiotic_stats['total_tests']
+    resistant_tests = antibiotic_stats['resistant_tests']
     
     return {
         'total_cultures': total,

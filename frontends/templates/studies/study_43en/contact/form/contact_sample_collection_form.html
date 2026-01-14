@@ -1,0 +1,1078 @@
+{% extends 'studies\study_43en\home_dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Contact Sample Information" %}{% endblock %}
+
+{% block dashboard_css %}
+{% include 'studies/study_43en/includes/crf_styles.html' %}
+<style>
+  /* Contact-specific purple theme */
+  .text-purple {
+    color: #667eea !important;
+  }
+  
+  .bg-purple {
+    background: var(--crf-gradient-primary);
+    color: white;
+  }
+  
+  .border-left-purple {
+    border-left: 3px solid #667eea !important;
+  }
+  
+  .btn-purple {
+    background: var(--crf-gradient-primary);
+    color: white;
+    border: none;
+    font-weight: 600;
+  }
+  
+  .btn-purple:hover {
+    filter: brightness(1.1);
+    color: white;
+  }
+  
+  .badge-purple {
+    background: var(--crf-gradient-primary);
+    color: white;
+  }
+  .card.border-primary .other-specify-container input[type="text"] {
+    border-left: 3px solid #667eea;
+  }
+  input[type="checkbox"]:checked + label {
+    color: #667eea;
+  }
+  #section-reason-ifno .reason-required-message {
+    padding: 10px;
+    background-color: #fff8f8;
+    border-radius: 5px;
+    border-left: 3px solid #dc3545;
+    margin-bottom: 15px;
+  }
+  #section-reason-ifno textarea:required {
+    border-left: 3px solid #dc3545;
+  }
+  #saveIndicator {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1050;
+    display: none;
+  }
+  
+  /* Validation Error Modal Styles */
+  #validationErrorModal .modal-content {
+    border: 2px solid #dc3545;
+    box-shadow: 0 0.5rem 1rem rgba(220, 53, 69, 0.3);
+  }
+  #validationErrorModal .border-left-danger {
+    border-left: 4px solid #dc3545 !important;
+  }
+  #validationErrorModal .list-group-item {
+    transition: all 0.2s ease;
+  }
+  #validationErrorModal .list-group-item:hover {
+    background-color: #f8d7da;
+    transform: translateX(5px);
+  }
+  
+  /* Contact info card */
+  .contact-info-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+  <div class="card shadow-lg mb-4">
+    <div class="card-header bg-purple text-white py-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-vial"></i>
+          {% if is_new %}
+            {% trans "Sample Collection" %}
+          {% else %}
+            {% trans "Sample Collection" %}
+          {% endif %}
+          - {{ sample_type_display }}
+          <span class="badge badge-light text-purple ml-2">CONTACT</span>
+        </h5>
+        <a href="{% url 'study_43en:contact_sample_collection_list' usubjid=usubjid %}" class="btn btn-light">
+          <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+        </a>
+      </div>
+    </div>
+    
+    <div class="card-body {% if is_view_only %}readonly-form{% endif %}">
+      <div id="saveIndicator" class="alert alert-success" role="alert">
+        <span class="message"></span>
+      </div>
+      
+      {#  Version info if updating #}
+      {% if not is_new and sample %}
+      <div class="alert alert-light border">
+        <div class="row">
+          <div class="col-md-4">
+            <small class="text-muted">
+              <i class="fas fa-code-branch"></i> {% trans "Version:" %} 
+              <strong>v{{ current_version }}</strong>
+            </small>
+          </div>
+          {% if sample.last_modified_by_username %}
+          <div class="col-md-4">
+            <small class="text-muted">
+              <i class="fas fa-user-edit"></i> {% trans "Modified by:" %} 
+              <strong>{{ sample.last_modified_by_username }}</strong>
+            </small>
+          </div>
+          {% endif %}
+          {% if sample.last_modified_at %}
+          <div class="col-md-4">
+            <small class="text-muted">
+              <i class="fas fa-clock"></i> {% trans "At:" %} 
+              <strong>{{ sample.last_modified_at|date:"d/m/Y H:i" }}</strong>
+            </small>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      
+      <form method="post" id="contactSampleCollectionForm" class="form" novalidate {% if not is_view_only %}data-ajax="true"{% endif %} data-is-new="{% if is_new %}true{% else %}false{% endif %}">
+        {% csrf_token %}
+        
+        {# Hidden fields #}
+        <input type="hidden" name="form_submitted" value="True">
+        <input type="hidden" name="sample_type" value="{{ sample_type }}">
+        <input type="hidden" name="force_save" value="1">
+        <input type="hidden" name="debug_info" value="contact_sample_form_version_1.0">
+        
+        {#  Version field for optimistic locking #}
+        {% if not is_new and sample %}
+        <input type="hidden" name="version" value="{{ current_version }}">
+        {% endif %}
+        
+        <input type="hidden" id="oldDataJson" name="oldDataJson">
+        <input type="hidden" id="newDataJson" name="newDataJson">
+        <input type="hidden" id="reasonsJson" name="reasonsJson">
+        <input type="hidden" id="change_reason" name="change_reason">
+        
+        {% if sample_type == '4' %}
+        <input type="hidden" name="BLOOD" value="False">
+        <input type="hidden" name="BLOODDATE" value="">
+        {% endif %}
+
+        {#  CONTACT INFO CARD - Different from Patient #}
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-purple">
+              <i class="fas fa-user-friends mr-2"></i>{% trans "Contact Information" %}
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "USUBJID" %}:</label>
+                  <p class="form-control-static">{{ enrollment_contact.USUBJID.USUBJID }}</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Contact Name" %}:</label>
+                  <p class="form-control-static">{{ screening_contact.INITIAL }}</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Relationship" %}:</label>
+                  <p class="form-control-static">
+                    {% if enrollment_contact.RELATIONSHIP %}
+                      <span class="badge badge-info contact-info-badge">
+                        {{ enrollment_contact.RELATIONSHIP }}
+                      </span>
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Related Patient" %}:</label>
+                  <p class="form-control-static">
+                    {% if screening_contact.SUBJIDENROLLSTUDY %}
+                      {{ screening_contact.SUBJIDENROLLSTUDY.USUBJID }}
+                    {% else %}
+                      <span class="text-muted">--</span>
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Sample Type" %}:</label>
+                  <p class="form-control-static">
+                    <span class="badge badge-purple">{{ sample_type_display }}</span>
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Collection Date" %}:</label>
+                  <p class="form-control-static">
+                  {% if sample and sample.STOOLDATE %}
+                    {{ sample.STOOLDATE|date:"d/m/Y" }}
+                  {% elif sample and sample.THROATSWABDATE %}
+                    {{ sample.THROATSWABDATE|date:"d/m/Y" }}
+                  {% elif sample and sample.RECTSWABDATE %}
+                    {{ sample.RECTSWABDATE|date:"d/m/Y" }}
+                  {% elif sample and sample.BLOODDATE and sample_type != '4' %}
+                    {{ sample.BLOODDATE|date:"d/m/Y" }}
+                  {% else %}
+                    <span class="text-muted">--</span>
+                  {% endif %}
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label class="font-weight-bold">{% trans "Status" %}:</label>
+                  <p class="form-control-static">
+                    {% if sample and sample.SAMPLE %}
+                      <span class="badge badge-success">{% trans "Collected" %}</span>
+                    {% elif sample %}
+                      <span class="badge badge-warning">{% trans "Not Collected" %}</span>
+                    {% else %}
+                      <span class="badge badge-secondary">{% trans "Not Created" %}</span>
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# Sample collected? #}
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-purple">
+              <i class="fas fa-vial mr-2"></i>{% trans "Was Sample Collected?" %}
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <div class="form-check form-check-inline">
+                <input type="radio" name="SAMPLE" id="SAMPLE_yes" value="True" class="form-check-input"
+                       {% if sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                <label for="SAMPLE_yes" class="form-check-label">
+                  <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input type="radio" name="SAMPLE" id="SAMPLE_no" value="False" class="form-check-input"
+                       {% if not sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                <label for="SAMPLE_no" class="form-check-label">
+                  <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# Section: If Yes - Sample Types #}
+        <div id="section-has-sample" class="mb-4" {% if not sample.SAMPLE %}style="display: none;"{% endif %}>
+          <div class="card mb-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0 text-purple">
+                <i class="fas fa-flask mr-2"></i>{% trans "Sample Types Collected" %}
+              </h5>
+            </div>
+            <div class="card-body">
+              
+              {#  STOOL SAMPLE #}
+              <div class="row mb-4">
+                <div class="col-lg-12 col-md-12">
+                  <div class="card h-100 border-left-purple">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <div class="form-check mb-0">
+                        <input type="checkbox" name="STOOL" id="id_STOOL" class="form-check-input sample-type-checkbox"
+                               {% if sample.STOOL %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                        <label for="id_STOOL" class="form-check-label font-weight-bold h5 mb-0">
+                          <i class="fas fa-flask text-brown mr-2"></i>{% trans "Stool Sample" %}
+                        </label>
+                      </div>
+                    </div>
+                    <div class="card-body py-3">
+                      <div class="stool-date-container" {% if not sample.STOOL %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                          <label for="id_STOOLDATE">
+                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Collection Date" %}:
+                          </label>
+                          <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker"
+                                 value="{{ sample.STOOLDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                                 {% if is_view_only %}disabled{% endif %}>
+                          <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans "Date validation is flexible for contacts" %}
+                          </small>
+                        </div>
+                        <div class="sample-culture-container mt-4">
+                          <h6 class="text-purple font-weight-bold mb-3">
+                            <i class="fas fa-microscope mr-2"></i>{% trans "Stool Culture Result" %}
+                          </h6>
+                          <div class="mb-3">
+                            <label class="font-weight-bold mb-2">{% trans "Result" %}:</label>
+                            <div class="btn-group btn-group-toggle d-flex flex-wrap" data-toggle="buttons">
+                              <label class="btn btn-outline-primary {% if sample.CULTRES_1 == 'Pos' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_1" value="Pos" {% if sample.CULTRES_1 == 'Pos' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-plus-circle mr-1"></i>{% trans "Positive" %}
+                              </label>
+                              <label class="btn btn-outline-success {% if sample.CULTRES_1 == 'Neg' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_1" value="Neg" {% if sample.CULTRES_1 == 'Neg' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-minus-circle mr-1"></i>{% trans "Negative" %}
+                              </label>
+                              <label class="btn btn-outline-secondary {% if sample.CULTRES_1 == 'NoApply' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_1" value="NoApply" {% if sample.CULTRES_1 == 'NoApply' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-ban mr-1"></i>{% trans "Not Applicable" %}
+                              </label>
+                              <label class="btn btn-outline-warning {% if sample.CULTRES_1 == 'NotPerformed' %}active{% endif %} mb-2">
+                                <input type="radio" name="CULTRES_1" value="NotPerformed" {% if sample.CULTRES_1 == 'NotPerformed' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-times-circle mr-1"></i>{% trans "Not Performed" %}
+                              </label>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-danger h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="KLEBPNEU_1" id="id_KLEBPNEU_1" class="form-check-input"
+                                           {% if sample.KLEBPNEU_1 %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                                    <label for="id_KLEBPNEU_1" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-bacteria text-danger mr-1"></i>{% trans "Klebsiella pneumoniae" %}
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-info h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="OTHERRES_1" id="id_OTHERRES_1" class="form-check-input"
+                                           {% if sample.OTHERRES_1 %}checked{% endif %} 
+                                           {% if is_view_only %}disabled{% endif %}>
+                                    <label for="id_OTHERRES_1" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                    </label>
+                                  </div>
+                                </div>
+                                <div class="card-body py-2" id="other_specify_container_1" style="{% if not sample.OTHERRES_1 %}display: none;{% endif %}">
+                                  <label class="text-muted small mb-1">
+                                    <i class="fas fa-edit mr-1"></i>{% trans "Specify organism:" %}
+                                  </label>
+                                  <input type="text" name="OTHERRESSPECIFY_1" id="id_OTHERRESSPECIFY_1"
+                                         class="form-control form-control-sm" value="{{ sample.OTHERRESSPECIFY_1|default:'' }}"
+                                         placeholder="{% trans 'Specify organism name' %}"
+                                         {% if is_view_only %}disabled{% endif %}>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {#  RECTAL SWAB - Same structure as Stool #}
+              <div class="row mb-4">
+                <div class="col-lg-12 col-md-12">
+                  <div class="card h-100 border-left-success">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <div class="form-check mb-0">
+                        <input type="checkbox" name="RECTSWAB" id="id_RECTSWAB" class="form-check-input sample-type-checkbox"
+                               {% if sample.RECTSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                        <label for="id_RECTSWAB" class="form-check-label font-weight-bold h5 mb-0">
+                          <i class="fas fa-swatchbook text-danger mr-2"></i>{% trans "Rectal Swab" %}
+                        </label>
+                      </div>
+                    </div>
+                    <div class="card-body py-3">
+                      <div class="rect-swab-date-container" {% if not sample.RECTSWAB %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                          <label for="id_RECTSWABDATE">
+                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Collection Date" %}:
+                          </label>
+                          <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker"
+                                 value="{{ sample.RECTSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                                 {% if is_view_only %}disabled{% endif %}>
+                          <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans "Date validation is flexible for contacts" %}
+                          </small>
+                        </div>
+                        <div class="sample-culture-container mt-4">
+                          <h6 class="text-success font-weight-bold mb-3">
+                            <i class="fas fa-microscope mr-2"></i>{% trans "Rectal Swab Culture Result" %}
+                          </h6>
+                          <div class="mb-3">
+                            <label class="font-weight-bold mb-2">{% trans "Result" %}:</label>
+                            <div class="btn-group btn-group-toggle d-flex flex-wrap" data-toggle="buttons">
+                              <label class="btn btn-outline-primary {% if sample.CULTRES_2 == 'Pos' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_2" value="Pos" {% if sample.CULTRES_2 == 'Pos' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-plus-circle mr-1"></i>{% trans "Positive" %}
+                              </label>
+                              <label class="btn btn-outline-success {% if sample.CULTRES_2 == 'Neg' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_2" value="Neg" {% if sample.CULTRES_2 == 'Neg' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-minus-circle mr-1"></i>{% trans "Negative" %}
+                              </label>
+                              <label class="btn btn-outline-secondary {% if sample.CULTRES_2 == 'NoApply' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_2" value="NoApply" {% if sample.CULTRES_2 == 'NoApply' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-ban mr-1"></i>{% trans "Not Applicable" %}
+                              </label>
+                              <label class="btn btn-outline-warning {% if sample.CULTRES_2 == 'NotPerformed' %}active{% endif %} mb-2">
+                                <input type="radio" name="CULTRES_2" value="NotPerformed" {% if sample.CULTRES_2 == 'NotPerformed' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-times-circle mr-1"></i>{% trans "Not Performed" %}
+                              </label>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-danger h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="KLEBPNEU_2" id="id_KLEBPNEU_2" class="form-check-input"
+                                           {% if sample.KLEBPNEU_2 %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                                    <label for="id_KLEBPNEU_2" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-bacteria text-danger mr-1"></i>{% trans "Klebsiella pneumoniae" %}
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-info h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="OTHERRES_2" id="id_OTHERRES_2" class="form-check-input"
+                                           {% if sample.OTHERRES_2 %}checked{% endif %} 
+                                           {% if is_view_only %}disabled{% endif %}>
+                                    <label for="id_OTHERRES_2" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                    </label>
+                                  </div>
+                                </div>
+                                <div class="card-body py-2" id="other_specify_container_2" style="{% if not sample.OTHERRES_2 %}display: none;{% endif %}">
+                                  <label class="text-muted small mb-1">
+                                    <i class="fas fa-edit mr-1"></i>{% trans "Specify organism:" %}
+                                  </label>
+                                  <input type="text" name="OTHERRESSPECIFY_2" id="id_OTHERRESSPECIFY_2"
+                                         class="form-control form-control-sm" value="{{ sample.OTHERRESSPECIFY_2|default:'' }}"
+                                         placeholder="{% trans 'Specify organism name' %}"
+                                         {% if is_view_only %}disabled{% endif %}>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {#  THROAT SWAB - Same structure #}
+              <div class="row mb-4">
+                <div class="col-lg-12 col-md-12">
+                  <div class="card h-100 border-left-info">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <div class="form-check mb-0">
+                        <input type="checkbox" name="THROATSWAB" id="id_THROATSWAB" class="form-check-input sample-type-checkbox"
+                               {% if sample.THROATSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                        <label for="id_THROATSWAB" class="form-check-label font-weight-bold h5 mb-0">
+                          <i class="fas fa-head-side-cough text-info mr-2"></i>{% trans "Throat Swab" %}
+                        </label>
+                      </div>
+                    </div>
+                    <div class="card-body py-3">
+                      <div class="throat-swab-date-container" {% if not sample.THROATSWAB %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                          <label for="id_THROATSWABDATE">
+                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Collection Date" %}:
+                          </label>
+                          <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker"
+                                 value="{{ sample.THROATSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                                 {% if is_view_only %}disabled{% endif %}>
+                          <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans "Date validation is flexible for contacts" %}
+                          </small>
+                        </div>
+                        <div class="sample-culture-container mt-4">
+                          <h6 class="text-info font-weight-bold mb-3">
+                            <i class="fas fa-microscope mr-2"></i>{% trans "Throat Swab Culture Result" %}
+                          </h6>
+                          <div class="mb-3">
+                            <label class="font-weight-bold mb-2">{% trans "Result" %}:</label>
+                            <div class="btn-group btn-group-toggle d-flex flex-wrap" data-toggle="buttons">
+                              <label class="btn btn-outline-primary {% if sample.CULTRES_3 == 'Pos' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_3" value="Pos" {% if sample.CULTRES_3 == 'Pos' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-plus-circle mr-1"></i>{% trans "Positive" %}
+                              </label>
+                              <label class="btn btn-outline-success {% if sample.CULTRES_3 == 'Neg' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_3" value="Neg" {% if sample.CULTRES_3 == 'Neg' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-minus-circle mr-1"></i>{% trans "Negative" %}
+                              </label>
+                              <label class="btn btn-outline-secondary {% if sample.CULTRES_3 == 'NoApply' %}active{% endif %} mr-2 mb-2">
+                                <input type="radio" name="CULTRES_3" value="NoApply" {% if sample.CULTRES_3 == 'NoApply' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-ban mr-1"></i>{% trans "Not Applicable" %}
+                              </label>
+                              <label class="btn btn-outline-warning {% if sample.CULTRES_3 == 'NotPerformed' %}active{% endif %} mb-2">
+                                <input type="radio" name="CULTRES_3" value="NotPerformed" {% if sample.CULTRES_3 == 'NotPerformed' %}checked{% endif %}
+                                       {% if is_view_only %}disabled{% endif %}>
+                                <i class="fas fa-times-circle mr-1"></i>{% trans "Not Performed" %}
+                              </label>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-danger h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="KLEBPNEU_3" id="id_KLEBPNEU_3" class="form-check-input"
+                                           {% if sample.KLEBPNEU_3 %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                                    <label for="id_KLEBPNEU_3" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-bacteria text-danger mr-1"></i>{% trans "Klebsiella pneumoniae" %}
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-md-12 mb-3">
+                              <div class="card border-left-info h-100">
+                                <div class="card-header bg-white py-2">
+                                  <div class="form-check mb-0">
+                                    <input type="checkbox" name="OTHERRES_3" id="id_OTHERRES_3" class="form-check-input"
+                                           {% if sample.OTHERRES_3 %}checked{% endif %} 
+                                           {% if is_view_only %}disabled{% endif %}>
+                                    <label for="id_OTHERRES_3" class="form-check-label font-weight-bold">
+                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                    </label>
+                                  </div>
+                                </div>
+                                <div class="card-body py-2" id="other_specify_container_3" style="{% if not sample.OTHERRES_3 %}display: none;{% endif %}">
+                                  <label class="text-muted small mb-1">
+                                    <i class="fas fa-edit mr-1"></i>{% trans "Specify organism:" %}
+                                  </label>
+                                  <input type="text" name="OTHERRESSPECIFY_3" id="id_OTHERRESSPECIFY_3"
+                                         class="form-control form-control-sm" value="{{ sample.OTHERRESSPECIFY_3|default:'' }}"
+                                         placeholder="{% trans 'Specify organism name' %}"
+                                         {% if is_view_only %}disabled{% endif %}>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {#  BLOOD SAMPLE - Only if not Sample 4 #}
+              {% if sample.SAMPLE_TYPE != '4' %}
+              <div class="row mb-4">
+                <div class="col-lg-12 col-md-12">
+                  <div class="card h-100 border-left-warning">
+                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                      <div class="form-check mb-0">
+                        <input type="checkbox" name="BLOOD" id="id_BLOOD" class="form-check-input sample-type-checkbox"
+                               {% if sample.BLOOD %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                        <label for="id_BLOOD" class="form-check-label font-weight-bold h5 mb-0">
+                          <i class="fas fa-tint text-danger mr-2"></i>{% trans "Blood Sample" %}
+                        </label>
+                      </div>
+                    </div>
+                    <div class="card-body py-3">
+                      <div class="blood-date-container" {% if not sample.BLOOD %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                          <label for="id_BLOODDATE">
+                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Collection Date" %}:
+                          </label>
+                          <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker"
+                                 value="{{ sample.BLOODDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                                 {% if is_view_only %}disabled{% endif %}>
+                          <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans "Date validation is flexible for contacts" %}
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {# Reason if not collected #}
+        <div id="section-reason-ifno" class="card shadow mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-purple">
+              <i class="fas fa-comment-alt mr-2"></i>{% trans "Notes" %}
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="id_REASONIFNO" class="font-weight-bold">
+                {% trans "Reason if not collected (if applicable)" %}:
+              </label>
+              <div class="reason-required-message text-danger mb-2" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i>
+                {% trans "No sample collected. Please provide reason!" %}
+              </div>
+              <textarea name="REASONIFNO" id="id_REASONIFNO" class="form-control" rows="3"
+                        {% if is_view_only %}disabled{% endif %}>{{ sample.REASONIFNO|default:'' }}</textarea>
+              <small class="form-text text-muted">
+                <i class="fas fa-info-circle mr-1"></i>
+                {% trans "Less strict requirements for contact samples. Provide reason if no sample was collected." %}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        {# Action buttons #}
+        <div class="text-center mt-4">
+          <button type="button" id="btnSaveSample" class="btn btn-purple btn-lg px-5">
+            <i class="fas fa-save mr-2"></i>
+            {% if is_new %}
+              {% trans "Save Contact Sample" %}
+            {% else %}
+              {% trans "Update Contact Sample" %}
+            {% endif %}
+          </button>
+          <a href="{% url 'study_43en:contact_sample_collection_list' usubjid=usubjid %}" class="btn btn-secondary btn-lg px-4 ml-2">
+            <i class="fas fa-times mr-2"></i> {% trans "Cancel" %}
+          </a>
+        </div>
+        
+        {# Messages #}
+        {% if messages %}
+        <div class="mt-3">
+          {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Change reason modal #}
+{% if not is_view_only %}
+  {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+{# Validation Error Modal #}
+{% if show_validation_modal %}
+<div class="modal fade" id="validationErrorModal" tabindex="-1" role="dialog" aria-labelledby="validationErrorModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="validationErrorModalLabel">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          {% trans "Contact Sample Data Entry Error" %}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3"><strong>{% trans "Please check and fix the following errors:" %}</strong></p>
+        <div class="list-group">
+          {% for error in validation_errors %}
+          <div class="list-group-item list-group-item-danger border-left-danger pl-3">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-times-circle text-danger mt-1 mr-2"></i>
+              <div>
+                <strong>{{ error.field }}:</strong>
+                <span class="text-dark">{{ error.message }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        
+        <div class="alert alert-info mt-3 mb-0">
+          <i class="fas fa-info-circle mr-2"></i>
+          {% trans "Contact sample has more flexible validation. Fix errors and try again." %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnCloseValidationModal">
+          <i class="fas fa-check mr-2"></i>
+          {% trans "OK, I'll fix it" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+{% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+{# Change reason handler #}
+{% if not is_view_only %}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
+{% endif %}
+
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function() {
+  console.log(' Contact sample form initialized');
+  console.log('Is new:', {{ is_new|lower }});
+  console.log('Is view only:', {{ is_view_only|lower }});
+  console.log('Contact USUBJID:', '{{ usubjid }}');
+  
+  // ==========================================
+  // AUTO-SHOW VALIDATION ERROR MODAL
+  // ==========================================
+  {% if show_validation_modal %}
+  console.log(' Validation errors detected - showing modal');
+  $('#validationErrorModal').modal('show');
+  
+  // Re-enable save button
+  $('#btnSaveSample').prop('disabled', false);
+  $('#btnSaveSample').html('<i class="fas fa-save mr-2"></i>{% if is_new %}{% trans "Save Contact Sample" %}{% else %}{% trans "Update Contact Sample" %}{% endif %}');
+  
+  // Handle close button
+  $('#btnCloseValidationModal').on('click', function() {
+    console.log(' User acknowledged validation errors');
+    $('#validationErrorModal').modal('hide');
+  });
+  
+  // After modal closes, scroll to form
+  $('#validationErrorModal').on('hidden.bs.modal', function() {
+    console.log(' Modal closed - ready to fix errors');
+    $('html, body').animate({
+      scrollTop: $('#contactSampleCollectionForm').offset().top - 100
+    }, 500);
+  });
+  {% endif %}
+  
+  // ==========================================
+  // SAVE BUTTON HANDLER
+  // ==========================================
+  $('#btnSaveSample').on('click', function(e) {
+    e.preventDefault();
+    console.log('💾 Save contact sample button clicked');
+    
+    const $btn = $(this);
+    const $form = $('#contactSampleCollectionForm');
+    
+    // Disable button to prevent double-submit
+    $btn.prop('disabled', true);
+    $btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>{% trans "Saving contact sample..." %}');
+    
+    // Validate form (less strict for contacts)
+    if (!validateContactSampleForm()) {
+      $btn.prop('disabled', false);
+      $btn.html('<i class="fas fa-save mr-2"></i>{% if is_new %}{% trans "Save Contact Sample" %}{% else %}{% trans "Update Contact Sample" %}{% endif %}');
+      return;
+    }
+    
+    // Submit form
+    console.log('📤 Submitting contact sample form');
+    $form.submit();
+  });
+  
+  // ==========================================
+  // FORM VALIDATION (LESS STRICT FOR CONTACTS)
+  // ==========================================
+  function validateContactSampleForm() {
+    let isValid = true;
+    
+    // Check if sample was collected
+    const sampleCollected = $('input[name="SAMPLE"]:checked').val() === 'True';
+    
+    if (sampleCollected) {
+      // Check if at least one sample type is selected
+      const hasStool = $('#id_STOOL').is(':checked');
+      const hasThroat = $('#id_THROATSWAB').is(':checked');
+      const hasRect = $('#id_RECTSWAB').is(':checked');
+      const hasBlood = $('#id_BLOOD').is(':checked');
+      
+      //  LESS STRICT: Only warning, not blocking
+      if (!hasStool && !hasThroat && !hasRect && !hasBlood) {
+        console.warn(' No sample type selected for contact');
+        if (!confirm('{% trans "No sample type selected. Continue?" %}')) {
+          isValid = false;
+        }
+      }
+      
+      // Check dates for selected samples (less strict)
+      if (hasStool && !$('#id_STOOLDATE').val()) {
+        alert('{% trans "Please enter stool sample collection date" %}');
+        isValid = false;
+      }
+      if (hasRect && !$('#id_RECTSWABDATE').val()) {
+        alert('{% trans "Please enter rectal swab collection date" %}');
+        isValid = false;
+      }
+      if (hasThroat && !$('#id_THROATSWABDATE').val()) {
+        alert('{% trans "Please enter throat swab collection date" %}');
+        isValid = false;
+      }
+      if (hasBlood && !$('#id_BLOODDATE').val()) {
+        alert('{% trans "Please enter blood sample collection date" %}');
+        isValid = false;
+      }
+    } else {
+      // If sample not collected, reason should be provided (but not required)
+      const reason = $('#id_REASONIFNO').val().trim();
+      if (!reason) {
+        console.warn(' No reason provided for contact sample not collected');
+        if (!confirm('{% trans "No reason provided. Continue?" %}')) {
+          isValid = false;
+        }
+      }
+    }
+    
+    return isValid;
+  }
+  
+  // ==========================================
+  // EXISTING LOGIC - SAME AS PATIENT
+  // ==========================================
+  
+  let savedCheckboxStates = {
+    STOOL: false,
+    THROATSWAB: false,
+    RECTSWAB: false,
+    BLOOD: false
+  };
+
+  function updateReasonIfNoVisibility() {
+    const hasStool = $('#id_STOOL').is(':checked');
+    const hasThroatSwab = $('#id_THROATSWAB').is(':checked');
+    const hasRectSwab = $('#id_RECTSWAB').is(':checked');
+    const hasBlood = $('#id_BLOOD').is(':checked');
+    const $reasonSection = $('#section-reason-ifno');
+    if (!hasStool && !hasThroatSwab && !hasRectSwab && !hasBlood) {
+      $reasonSection.find('.reason-required-message').show();
+      //  LESS STRICT: Not required for contacts
+      // $reasonSection.find('textarea[name="REASONIFNO"]').attr('required', true);
+    } else {
+      $reasonSection.find('.reason-required-message').hide();
+      $reasonSection.find('textarea[name="REASONIFNO"]').removeAttr('required');
+    }
+  }
+
+  // Toggle "Other" checkbox to show/hide specify field
+  function setupOtherOrganismToggle(otherResId, containerId) {
+    $(otherResId).change(function() {
+      const $container = $(containerId);
+      if ($(this).is(':checked')) {
+        $container.slideDown(200);
+      } else {
+        $container.slideUp(200);
+        $container.find('input[type="text"]').val('');
+      }
+    });
+  }
+
+  // Mutual exclusion between Klebsiella and Other Organism
+  function setupMutualExclusion(klebsiellaId, otherResId, otherContainerId) {
+    $(klebsiellaId).change(function() {
+      if ($(this).is(':checked')) {
+        $(otherResId).prop('checked', false);
+        $(otherContainerId).slideUp(200);
+        $(otherContainerId).find('input[type="text"]').val('');
+      }
+    });
+
+    $(otherResId).change(function() {
+      if ($(this).is(':checked')) {
+        $(klebsiellaId).prop('checked', false);
+      }
+    });
+  }
+
+  // Ẩn/hiện organism cards dựa trên kết quả nuôi cấy
+  function setupCultureResultToggle(cultureResultName, klebsiellaId, otherResId, otherContainerId) {
+    const $klebsiellaCard = $(klebsiellaId).closest('.col-lg-6');
+    const $otherCard = $(otherResId).closest('.col-lg-6');
+    
+    $(`input[name="${cultureResultName}"]`).change(function() {
+      const value = $(this).val();
+      if (value === 'Pos') {
+        $klebsiellaCard.slideDown(300);
+        $otherCard.slideDown(300);
+      } else {
+        $klebsiellaCard.slideUp(300);
+        $otherCard.slideUp(300);
+        // Reset selections
+        $(klebsiellaId).prop('checked', false);
+        $(otherResId).prop('checked', false);
+        $(otherContainerId).hide();
+        $(otherContainerId).find('input[type="text"]').val('');
+      }
+    });
+  }
+
+  // Setup "Other Organism" checkbox toggles
+  setupOtherOrganismToggle('#id_OTHERRES_1', '#other_specify_container_1');
+  setupOtherOrganismToggle('#id_OTHERRES_2', '#other_specify_container_2');
+  setupOtherOrganismToggle('#id_OTHERRES_3', '#other_specify_container_3');
+
+  // Setup mutual exclusion between Klebsiella and Other
+  setupMutualExclusion('#id_KLEBPNEU_1', '#id_OTHERRES_1', '#other_specify_container_1');
+  setupMutualExclusion('#id_KLEBPNEU_2', '#id_OTHERRES_2', '#other_specify_container_2');
+  setupMutualExclusion('#id_KLEBPNEU_3', '#id_OTHERRES_3', '#other_specify_container_3');
+
+  // Setup culture result toggles
+  setupCultureResultToggle('CULTRES_1', '#id_KLEBPNEU_1', '#id_OTHERRES_1', '#other_specify_container_1');
+  setupCultureResultToggle('CULTRES_2', '#id_KLEBPNEU_2', '#id_OTHERRES_2', '#other_specify_container_2');
+  setupCultureResultToggle('CULTRES_3', '#id_KLEBPNEU_3', '#id_OTHERRES_3', '#other_specify_container_3');
+
+  function setupSampleToggle(checkboxId, dateContainerClass, dateInputId) {
+    $(checkboxId).change(function() {
+      if ($(this).is(':checked')) {
+        $(dateContainerClass).slideDown(200);
+      } else {
+        $(dateContainerClass).slideUp(200);
+        $(dateInputId).val('');
+      }
+      updateReasonIfNoVisibility();
+    });
+  }
+
+  setupSampleToggle('#id_STOOL', '.stool-date-container', '#id_STOOLDATE');
+  setupSampleToggle('#id_THROATSWAB', '.throat-swab-date-container', '#id_THROATSWABDATE');
+  setupSampleToggle('#id_RECTSWAB', '.rect-swab-date-container', '#id_RECTSWABDATE');
+  setupSampleToggle('#id_BLOOD', '.blood-date-container', '#id_BLOODDATE');
+
+  function saveInitialCheckboxStates() {
+    savedCheckboxStates = {
+      STOOL: $('#id_STOOL').is(':checked'),
+      THROATSWAB: $('#id_THROATSWAB').is(':checked'),
+      RECTSWAB: $('#id_RECTSWAB').is(':checked'),
+      BLOOD: $('#id_BLOOD').is(':checked')
+    };
+  }
+
+  function restoreCheckboxStates() {
+    if (savedCheckboxStates.STOOL) $('#id_STOOL').prop('checked', true).trigger('change');
+    if (savedCheckboxStates.THROATSWAB) $('#id_THROATSWAB').prop('checked', true).trigger('change');
+    if (savedCheckboxStates.RECTSWAB) $('#id_RECTSWAB').prop('checked', true).trigger('change');
+    if (savedCheckboxStates.BLOOD) $('#id_BLOOD').prop('checked', true).trigger('change');
+    $('input[name="CULTRES_1"]:checked').trigger('change');
+    $('input[name="CULTRES_2"]:checked').trigger('change');
+    $('input[name="CULTRES_3"]:checked').trigger('change');
+  }
+
+  $('input[name="SAMPLE"]').change(function() {
+    if ($(this).val() === 'True') {
+      $('#section-has-sample').slideDown(300);
+      restoreCheckboxStates();
+    } else {
+      saveInitialCheckboxStates();
+      $('#section-has-sample').slideUp(300);
+      $('.sample-type-checkbox').prop('checked', false);
+    }
+    updateReasonIfNoVisibility();
+  });
+
+  // Fix button hover state for culture result buttons
+  $('input[name^="CULTRES_"]').change(function() {
+    const $label = $(this).closest('label');
+    const $btnGroup = $label.closest('.btn-group');
+    
+    // Remove active class from all buttons in this group
+    $btnGroup.find('label').removeClass('active');
+    
+    // Add active class to the selected button
+    $label.addClass('active');
+  });
+
+  // Initialize state
+  if ($('input[name="SAMPLE"][value="True"]').is(':checked')) {
+    $('#section-has-sample').show();
+  } else {
+    $('#section-has-sample').hide();
+  }
+  $('.sample-type-checkbox').each(function() {
+    $(this).trigger('change');
+  });
+  $('input[name="CULTRES_1"]:checked').trigger('change');
+  $('input[name="CULTRES_2"]:checked').trigger('change');
+  $('input[name="CULTRES_3"]:checked').trigger('change');
+  if ($('input[name="CULTRES_1"]:checked').val() === 'Pos') {
+    $('#id_KLEBPNEU_1').closest('.col-lg-6').show();
+    $('#id_OTHERRESSPECIFY_1').closest('.col-lg-6').show();
+  } else {
+    $('#id_KLEBPNEU_1').closest('.col-lg-6').hide();
+    $('#id_OTHERRESSPECIFY_1').closest('.col-lg-6').hide();
+  }
+  if ($('input[name="CULTRES_2"]:checked').val() === 'Pos') {
+    $('#id_KLEBPNEU_2').closest('.col-lg-6').show();
+    $('#id_OTHERRESSPECIFY_2').closest('.col-lg-6').show();
+  } else {
+    $('#id_KLEBPNEU_2').closest('.col-lg-6').hide();
+    $('#id_OTHERRESSPECIFY_2').closest('.col-lg-6').hide();
+  }
+  if ($('input[name="CULTRES_3"]:checked').val() === 'Pos') {
+    $('#id_KLEBPNEU_3').closest('.col-lg-6').show();
+    $('#id_OTHERRESSPECIFY_3').closest('.col-lg-6').show();
+  } else {
+    $('#id_KLEBPNEU_3').closest('.col-lg-6').hide();
+    $('#id_OTHERRESSPECIFY_3').closest('.col-lg-6').hide();
+  }
+  $('#id_KLEBPNEU_1').trigger('change');
+  $('#id_KLEBPNEU_2').trigger('change');
+  $('#id_KLEBPNEU_3').trigger('change');
+  saveInitialCheckboxStates();
+  updateReasonIfNoVisibility();
+
+  $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+      xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+    }
+  });
+  
+  // Show modal if has changes
+  {% if show_reason_form and detected_changes %}
+  console.log('🔔 Detected changes in contact sample, showing reason modal');
+  $('#changeReasonModal').modal('show');
+  {% endif %}
+  
+  console.log(' Contact sample form ready');
+});
+</script>
+{% endblock %}

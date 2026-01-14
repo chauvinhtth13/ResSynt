@@ -19,6 +19,7 @@ from backends.studies.study_43en.models.patient import (
     ENR_CASE,
     SAM_CASE
 )
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 
 # Import audit utilities
 from backends.audit_logs.utils.decorators import audit_log
@@ -139,7 +140,7 @@ def sample_collection_list(request, usubjid):
     
     logger.info(f" Loaded {samples.count()} samples")
     
-    return render(request, 'studies/study_43en/CRF/patient/sample_collection_list.html', context)
+    return render(request, 'studies/study_43en/patient/list/sample_collection_list.html', context)
 
 
 # ==========================================
@@ -148,7 +149,13 @@ def sample_collection_list(request, usubjid):
 
 @login_required
 @require_crf_add('sam_case', redirect_to='study_43en:patient_list')
-@audit_log(model_name='SAMPLECOLLECTION', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='SAMPLECOLLECTION',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def sample_collection_create(request, usubjid, sample_type):
     """
     Create new sample collection (NO AUDIT)
@@ -213,7 +220,7 @@ def sample_collection_create(request, usubjid, sample_type):
                 'selected_site_id': screening_case.SITEID,
             }
             
-            return render(request, 'studies/study_43en/CRF/patient/sample_collection_form.html', context)
+            return render(request, 'studies/study_43en/patient/form/sample_collection_form.html', context)
         
         # Save with pre-save callback
         try:
@@ -257,7 +264,7 @@ def sample_collection_create(request, usubjid, sample_type):
                 'selected_site_id': screening_case.SITEID,
             }
             
-            return render(request, 'studies/study_43en/CRF/patient/sample_collection_form.html', context)
+            return render(request, 'studies/study_43en/patient/form/sample_collection_form.html', context)
     
     # GET - Show blank form
     logger.info(" Showing blank form")
@@ -276,7 +283,7 @@ def sample_collection_create(request, usubjid, sample_type):
         'selected_site_id': screening_case.SITEID,
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/sample_collection_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/sample_collection_form.html', context)
 
 
 # ==========================================
@@ -285,7 +292,13 @@ def sample_collection_create(request, usubjid, sample_type):
 
 @login_required
 @require_crf_change('sam_case', redirect_to='study_43en:patient_list')
-@audit_log(model_name='SAMPLECOLLECTION', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='SAMPLECOLLECTION',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def sample_collection_update(request, usubjid, sample_type):
     """
     Update sample collection WITH UNIVERSAL AUDIT SYSTEM (Tier 1)
@@ -335,7 +348,7 @@ def sample_collection_update(request, usubjid, sample_type):
             'current_version': sample.version,
         }
         
-        return render(request, 'studies/study_43en/CRF/patient/sample_collection_form.html', context)
+        return render(request, 'studies/study_43en/patient/form/sample_collection_form.html', context)
     
     #  POST - USE UNIVERSAL AUDIT SYSTEM (Tier 1)
     logger.info(" Using Universal Audit System (Tier 1)")
@@ -345,7 +358,7 @@ def sample_collection_update(request, usubjid, sample_type):
         request=request,
         instance=sample,
         form_class=SampleCollectionForm,  # ← Dùng trực tiếp, form tự detect patient
-        template_name='studies/study_43en/CRF/patient/sample_collection_form.html',
+        template_name='studies/study_43en/patient/form/sample_collection_form.html',
         redirect_url=reverse('study_43en:sample_collection_list', kwargs={'usubjid': usubjid}),
         extra_context={
             'sample': sample,
@@ -366,7 +379,13 @@ def sample_collection_update(request, usubjid, sample_type):
 
 @login_required
 @require_crf_view('sam_case', redirect_to='study_43en:patient_list')
-@audit_log(model_name='SAMPLECOLLECTION', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='SAMPLECOLLECTION',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def sample_collection_view(request, usubjid, sample_type):
     """
     View sample in read-only mode
@@ -436,4 +455,4 @@ def sample_collection_view(request, usubjid, sample_type):
     
     logger.info(f" Readonly mode active - all modifications blocked")
     
-    return render(request, 'studies/study_43en/CRF/patient/sample_collection_form.html', context)
+    return render(request, 'studies/study_43en/patient/form/sample_collection_form.html', context)

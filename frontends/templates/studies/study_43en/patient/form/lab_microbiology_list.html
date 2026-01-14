@@ -1,0 +1,825 @@
+{% extends 'studies\study_43en\home_dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "LAB Microbiology Cultures" %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:patient_list' %}">{% trans "Patients" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}">{{ usubjid }}</a></li>
+<li class="breadcrumb-item active">{% trans "LAB Microbiology" %}</li>
+{% endblock %}
+
+{% block dashboard_css %}
+{% include 'studies/study_43en/includes/crf_styles.html' %}
+<!-- DataTables CSS from jsdelivr (CSP-compliant) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.8/css/dataTables.bootstrap5.min.css">
+<style>
+  /* All base styles now in crf-forms.css */
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="card-title">
+            <i class="fas fa-microscope mr-2"></i>
+            {% trans "LAB Microbiology Cultures" %}
+          </h3>
+          <div>
+            <a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}" 
+              class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+            </a>
+            
+            {% if summary.total_cultures > 0 %}
+            <a href="{% url 'study_43en:antibiotic_statistics' usubjid=usubjid %}"
+              class="btn btn-info">
+              <i class="fas fa-chart-bar"></i> {% trans "View Statistics" %}
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <!-- Patient Information -->
+        <div class="patient-info-box">
+          <div class="row">
+            <div class="col-md-3">
+              <strong><i class="fas fa-user-tag mr-2"></i>{% trans "Patient ID" %}:</strong>
+              {{ usubjid }}
+            </div>
+            <div class="col-md-3">
+              <strong><i class="fas fa-hospital mr-2"></i>{% trans "Site ID" %}:</strong>
+              {{ screening_case.SITEID }}
+            </div>
+            <div class="col-md-3">
+              <strong><i class="fas fa-flask mr-2"></i>{% trans "Total Cultures" %}:</strong>
+              {{ summary.total_cultures }}
+            </div>
+            <div class="col-md-3">
+              <strong><i class="fas fa-bacteria mr-2"></i>{% trans "KPN Positive" %}:</strong>
+              <span class="badge bg-danger">{{ summary.kpn_positive_count }}</span>
+              {% if summary.total_cultures > 0 %}
+                <small class="text-muted">({{ summary.kpn_rate }}%)</small>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        {% if summary.kpn_positive_count > 0 %}
+        <div class="kpn-info-alert">
+          <i class="fas fa-info-circle mr-2"></i>
+          <strong>{% trans "Klebsiella Detection" %}:</strong>
+          {% blocktrans count counter=summary.kpn_positive_count %}
+            You have {{ counter }} Klebsiella positive culture. Antibiotic sensitivity testing is available.
+          {% plural %}
+            You have {{ counter }} Klebsiella positive cultures. Antibiotic sensitivity testing is available.
+          {% endblocktrans %}
+        </div>
+        {% endif %}
+        
+        <!-- ============================================
+             SECTION 1: ADD NEW CULTURE FORM (INLINE)
+              UPDATED: All labels synced with forms.py
+             ============================================ -->
+        <div class="add-culture-section">
+          <h5>
+            <i class="fas fa-plus-circle mr-2"></i>
+            {% trans "Add New Culture" %}
+          </h5>
+          
+          <form method="post" action="{% url 'study_43en:microbiology_create' usubjid=usubjid %}" id="addCultureForm">
+            {% csrf_token %}
+            
+            <div class="row g-3">
+              <!--  Sampling site (was: Specimen Location) -->
+              <div class="col-md-6">
+                <label class="form-label">{% trans "Sampling site" %} *</label>
+                <select name="SPECSAMPLOC" id="addSpecimenLoc" class="form-select" required>
+                  <option value="">{% trans "Select sampling site" %}</option>
+                  {% for code, label in specimen_choices %}
+                    <option value="{{ code }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Select the anatomical location where the specimen was collected" %}
+                </small>
+              </div>
+              
+              <!--  Other (was: Other Specimen Type) -->
+              <div class="col-md-6" id="addOtherSpecimenContainer" style="display: none;">
+                <label class="form-label">{% trans "Other" %}</label>
+                <input type="text" name="OTHERSPECIMEN" id="addOtherSpecimen" class="form-control" 
+                       placeholder="{% trans 'Specify specimen type' %}">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Specify if specimen location is 'Other'" %}
+                </small>
+              </div>
+              
+              <!--  Sample ID (SID) - Updated -->
+              <div class="col-md-4">
+                <label class="form-label">{% trans "Sample ID (SID)" %}</label>
+                <input type="text" name="SPECIMENID" class="form-control" 
+                       placeholder="{% trans 'Lab specimen ID' %}">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Laboratory specimen identification number" %}
+                </small>
+              </div>
+              
+              <!--  Date of Specimen Collection (was: Sample Collection Date) -->
+              <div class="col-md-4">
+                <label class="form-label">{% trans "Date of Specimen Collection" %} *</label>
+                <input type="text" name="SPECSAMPDATE" class="form-control datepicker" placeholder="DD/MM/YYYY" required>
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Date when the specimen was collected from the patient" %}
+                </small>
+              </div>
+              
+              <!--  Culture Result - No change -->
+              <div class="col-md-4">
+                <label class="form-label">{% trans "Culture Result" %} *</label>
+                <select name="RESULT" id="addResult" class="form-select culture-result-select" required>
+                  <option value="">{% trans "Select result" %}</option>
+                  {% for code, label in result_choices %}
+                    <option value="{{ code }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Select the culture result" %}
+                </small>
+              </div>
+              
+              <!--  Organism Type (If Positive) - No change -->
+              <div class="col-md-4" id="addIfPositiveContainer" style="display: none;">
+                <label class="form-label">
+                  {% trans "Organism Type (If Positive)" %} *
+                  <span class="badge bg-warning text-dark">
+                    <i class="fas fa-bacteria"></i> {% trans "Positive Only" %}
+                  </span>
+                </label>
+                <select name="IFPOSITIVE" id="addIfPositive" class="form-select ifpositive-select">
+                  <option value="">{% trans "Select organism type" %}</option>
+                  {% for code, label in ifpositive_choices %}
+                    <option value="{{ code }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Required if culture result is positive" %}
+                </small>
+              </div>
+              
+              <!--  Specify Other Organism - No change -->
+              <div class="col-md-4" id="addSpecifyOtherContainer" style="display: none;">
+                <label class="form-label">
+                  {% trans "Specify Other Organism" %} *
+                </label>
+                <input type="text" name="SPECIFYOTHERSPECIMEN" id="addSpecifyOther" 
+                       class="form-control" maxlength="200"
+                       placeholder="{% trans 'e.g., E. coli, Pseudomonas aeruginosa' %}">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Required if organism type is 'Other'" %}
+                </small>
+              </div>
+              
+              <!--  Isolated Bacteria Date (was: Bacterial Strain Isolation Date) -->
+              <div class="col-md-4">
+                <label class="form-label">{% trans "Isolated Bacteria Date" %}</label>
+                <input type="text" name="BACSTRAINISOLDATE" class="form-control datepicker" placeholder="DD/MM/YYYY">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Date when bacteria was isolated from the culture" %}
+                </small>
+              </div>
+              
+              <!--  Result Details - No change -->
+              <div class="col-md-12">
+                <label class="form-label">{% trans "Result Details" %}</label>
+                <textarea name="RESULTDETAILS" id="addResultDetails" class="form-control" rows="2"
+                          placeholder="{% trans 'Additional details (optional)' %}"></textarea>
+                <small class="text-muted">
+                  <i class="fas fa-exclamation-triangle text-warning"></i> 
+                  <strong>{% trans "IMPORTANT" %}:</strong> {% trans "Include 'Klebsiella' in organism name to enable antibiotic testing" %}
+                </small>
+              </div>
+              
+              <!--  Department (was: Ordering Department) -->
+              <div class="col-md-6">
+                <label class="form-label">{% trans "Department" %}</label>
+                <input type="text" name="ORDEREDBYDEPT" class="form-control" 
+                       placeholder="{% trans 'e.g., ICU, Emergency, Internal Medicine' %}">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Department or unit that ordered the culture" %}
+                </small>
+              </div>
+              
+              <!--  Diagnosis of the department sending the test sample (was: Clinical Indication) -->
+              <div class="col-md-6">
+                <label class="form-label">{% trans "Diagnosis of the department sending the test sample" %}</label>
+                <input type="text" name="DEPTDIAGSENT" class="form-control" 
+                       placeholder="{% trans 'Clinical diagnosis or reason for culture' %}">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> {% trans "Clinical diagnosis or reason for ordering the culture" %}
+                </small>
+              </div>
+            </div>
+            
+            <!-- Add Button -->
+            <div class="mt-3">
+              <button type="submit" class="btn btn-success">
+                <i class="fas fa-plus"></i> {% trans "Add Culture" %}
+              </button>
+              <button type="reset" class="btn btn-secondary">
+                <i class="fas fa-undo"></i> {% trans "Reset" %}
+              </button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- ============================================
+             SECTION 2: CULTURES TABLE (LIST)
+              UPDATED: Table headers synced
+             ============================================ -->
+        <h5 class="mb-3">
+          <i class="fas fa-list mr-2"></i>
+          {% trans "Existing Cultures" %}
+          {% if summary %}
+            <span class="badge bg-info ms-2">{{ summary.total_cultures }}</span>
+          {% endif %}
+        </h5>
+        
+        {% if cultures %}
+          <div class="table-responsive">
+            <table class="table table-hover" id="culturesTable">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>{% trans "Culture ID" %}</th>
+                  <th>{% trans "Sampling site" %}</th>
+                  <th>{% trans "Sample ID" %}</th>
+                  <th>{% trans "Date of Specimen Collection" %}</th>
+                  <th>{% trans "Culture Result" %}</th>
+                  <th>{% trans "Result Details" %}</th>
+                  <th style="width: 150px;" class="text-center">{% trans "Actions" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for culture in cultures %}
+                  <tr {% if culture.IS_KLEBSIELLA %}class="table-warning"{% endif %}>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                      <span class="culture-id-badge">{{ culture.LAB_CULTURE_ID }}</span>
+                    </td>
+                    <td>
+                      {% if culture.SPECSAMPLOC == 'OTHER' %}
+                        <span class="badge bg-secondary">{{ culture.OTHERSPECIMEN|default:"Other" }}</span>
+                      {% else %}
+                        {{ culture.get_SPECSAMPLOC_display }}
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if culture.SPECIMENID %}
+                        <code>{{ culture.SPECIMENID }}</code>
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if culture.SPECSAMPDATE %}
+                        {{ culture.SPECSAMPDATE|date:"d/m/Y" }}
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if culture.RESULT == 'Positive' %}
+                        <span class="badge bg-danger">
+                          <i class="fas fa-plus-circle"></i> {% trans "Positive" %}
+                        </span>
+                        {% if culture.IS_KLEBSIELLA %}
+                          <span class="badge-kpn">
+                            <i class="fas fa-bacteria"></i> KPN+
+                          </span>
+                        {% endif %}
+                      {% elif culture.RESULT == 'Negative' %}
+                        <span class="badge bg-success">
+                          <i class="fas fa-minus-circle"></i> {% trans "Negative" %}
+                        </span>
+                      {% elif culture.RESULT == 'NoGrowth' %}
+                        <span class="badge bg-info">
+                          <i class="fas fa-flask"></i> {% trans "No Growth" %}
+                        </span>
+                      {% elif culture.RESULT == 'Contaminated' %}
+                        <span class="badge bg-warning text-dark">
+                          <i class="fas fa-exclamation-triangle"></i> {% trans "Contaminated" %}
+                        </span>
+                      {% elif culture.RESULT == 'NotPerformed' %}
+                        <span class="badge bg-secondary">
+                          <i class="fas fa-ban"></i> {% trans "Not Performed" %}
+                        </span>
+                      {% elif not culture.RESULT %}
+                        <span class="badge bg-secondary">
+                          <i class="fas fa-question-circle"></i> {% trans "No Result" %}
+                        </span>
+                      {% else %}
+                        <span class="badge bg-secondary">
+                          {{ culture.get_RESULT_display|default:"Unknown" }}
+                        </span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if culture.RESULTDETAILS %}
+                        <small>{{ culture.RESULTDETAILS|truncatewords:8 }}</small>
+                      {% elif culture.IFPOSITIVE %}
+                        <small class="text-muted">
+                          <i class="fas fa-bacteria"></i>
+                          {{ culture.get_IFPOSITIVE_display }}
+                        </small>
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                      <div class="action-btn-group justify-content-center">
+                        <button type="button" 
+                                class="btn btn-edit btn-sm" 
+                                data-culture-id="{{ culture.id }}"
+                                title="{% trans 'Edit' %}">
+                          <i class="fas fa-edit"></i> {% trans 'Edit' %}
+                        </button>
+                        
+                        {% if culture.is_testable_for_antibiotics %}
+                          <a href="{% url 'study_43en:antibiotic_list' usubjid=usubjid culture_id=culture.id %}"
+                             class="btn btn-antibiotic btn-sm"
+                             title="{% trans 'Antibiotic Sensitivity Tests' %}">
+                            <i class="fas fa-pills"></i> {% trans 'Tests' %}
+                            {% if culture.get_sensitivity_count > 0 %}
+                              <span class="badge bg-light text-dark ms-1">{{ culture.get_sensitivity_count }}</span>
+                            {% endif %}
+                          </a>
+                        {% else %}
+                          <button type="button" 
+                                  class="btn btn-secondary btn-sm"
+                                  disabled
+                                  title="{% trans 'Antibiotic testing only available for KPN+ cultures' %}">
+                            <i class="fas fa-pills"></i> {% trans 'Tests' %}
+                          </button>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="fas fa-microscope"></i>
+            <h4>{% trans "No cultures found" %}</h4>
+            <p class="text-muted">
+              {% trans "Use the form above to add your first culture" %}
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     EDIT MODAL (POPUP)
+      UPDATED: All labels synced
+     ============================================ -->
+<div class="modal fade" id="editCultureModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-edit mr-2"></i>
+          {% trans "Edit Culture" %}
+          <span id="editCultureIdDisplay" class="ms-2"></span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editCultureForm" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="culture_id" id="editCultureId">
+          
+          <div class="row g-3">
+            <!-- Sampling site -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Sampling site" %} *</label>
+              <select name="SPECSAMPLOC" id="editSpecimenLoc" class="form-select" required>
+                <option value="">{% trans "Select sampling site" %}</option>
+                {% for code, label in specimen_choices %}
+                  <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Other -->
+            <div class="col-md-6" id="editOtherSpecimenContainer" style="display: none;">
+              <label class="form-label">{% trans "Other" %}</label>
+              <input type="text" name="OTHERSPECIMEN" id="editOtherSpecimen" class="form-control">
+            </div>
+            
+            <!-- Sample ID (SID) -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Sample ID (SID)" %}</label>
+              <input type="text" name="SPECIMENID" id="editSpecimenId" class="form-control">
+            </div>
+            
+            <!-- Date of Specimen Collection -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Date of Specimen Collection" %} *</label>
+              <input type="text" name="SPECSAMPDATE" id="editSampleDate" class="form-control datepicker" placeholder="DD/MM/YYYY" required>
+            </div>
+            
+            <!-- Culture Result -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Culture Result" %} *</label>
+              <select name="RESULT" id="editResult" class="form-select culture-result-select" required>
+                <option value="">{% trans "Select result" %}</option>
+                {% for code, label in result_choices %}
+                  <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Organism Type (If Positive) -->
+            <div class="col-md-6" id="editIfPositiveContainer" style="display: none;">
+              <label class="form-label">
+                {% trans "Organism Type (If Positive)" %} *
+                <span class="badge bg-warning text-dark">
+                  <i class="fas fa-bacteria"></i> {% trans "Positive Only" %}
+                </span>
+              </label>
+              <select name="IFPOSITIVE" id="editIfPositive" class="form-select ifpositive-select">
+                <option value="">{% trans "Select organism type" %}</option>
+                {% for code, label in ifpositive_choices %}
+                  <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+              <small class="text-muted">
+                <i class="fas fa-info-circle"></i> {% trans "Required for positive results" %}
+              </small>
+            </div>
+
+            <!-- Specify Other Organism -->
+            <div class="col-md-6" id="editSpecifyOtherContainer" style="display: none;">
+              <label class="form-label">
+                {% trans "Specify Other Organism" %} *
+              </label>
+              <input type="text" name="SPECIFYOTHERSPECIMEN" id="editSpecifyOther" 
+                    class="form-control" maxlength="200"
+                    placeholder="{% trans 'e.g., E. coli, Pseudomonas aeruginosa' %}">
+              <small class="text-muted">
+                <i class="fas fa-info-circle"></i> {% trans "Required if 'Other' selected" %}
+              </small>
+            </div>
+            
+            <!-- Isolated Bacteria Date -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Isolated Bacteria Date" %}</label>
+              <input type="text" name="BACSTRAINISOLDATE" id="editIsolationDate" class="form-control datepicker" placeholder="DD/MM/YYYY">
+              <small class="text-muted">
+                <i class="fas fa-info-circle"></i> {% trans "When bacteria was isolated from sample" %}
+              </small>
+            </div>
+            
+            <!-- Result Details -->
+            <div class="col-12">
+              <label class="form-label">{% trans "Result Details" %}</label>
+              <textarea name="RESULTDETAILS" id="editResultDetails" class="form-control" rows="2"
+                        placeholder="{% trans 'Additional notes about the culture result (optional)' %}"></textarea>
+              <small class="text-muted">
+                <i class="fas fa-info-circle"></i>
+                {% trans "Optional: Add any additional details about the culture" %}
+              </small>
+            </div>
+            
+            <!-- Department -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Department" %}</label>
+              <input type="text" name="ORDEREDBYDEPT" id="editOrderedByDept" class="form-control">
+            </div>
+            
+            <!-- Diagnosis of the department sending the test sample -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Diagnosis of the department sending the test sample" %}</label>
+              <input type="text" name="DEPTDIAGSENT" id="editDeptDiagSent" class="form-control">
+            </div>
+          </div>
+          
+          <!-- Display KPN Status -->
+          <div id="editKpnStatus" class="mt-3" style="display: none;">
+            <div class="alert alert-warning">
+              <i class="fas fa-bacteria mr-2"></i>
+              <strong>{% trans "Klebsiella Detection" %}:</strong>
+              <span id="editKpnStatusText"></span>
+            </div>
+          </div>
+          
+          <!-- Form buttons -->
+          <div class="mt-3 d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              {% trans "Cancel" %}
+            </button>
+            <button type="submit" class="btn btn-warning" id="btnSaveEditCulture">
+              <i class="fas fa-save"></i> {% trans "Save Changes" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'default/change_reason_modal.html' %}
+
+{% if show_reason_form and edit_post_data %}
+<form id="hiddenEditCultureForm" method="post" action="{% url 'study_43en:microbiology_update' usubjid=usubjid culture_id=edit_culture_id %}" style="display: none;">
+  {% csrf_token %}
+  
+  {% for field_name, field_value in edit_post_data.items %}
+    <input type="hidden" name="{{ field_name }}" value="{{ field_value }}">
+  {% endfor %}
+</form>
+{% endif %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+<!-- DataTables JS from jsdelivr (CSP-compliant) -->
+<script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.8/js/jquery.dataTables.min.js"></script>
+<script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+<script nonce="{{ request.csp_nonce }}">
+// Wait for all scripts to load
+window.addEventListener('load', function() {
+$(document).ready(function() {
+  const usubjid = '{{ usubjid }}';
+  
+  console.log('🔬 LAB Microbiology Page Loaded for:', usubjid);
+  console.log('jQuery version:', $.fn.jquery);
+  console.log('DataTable available:', typeof $.fn.DataTable);
+  
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  });
+  
+  {% if show_reason_form and edit_post_data %}
+  console.log('📝 Changes detected - opening change reason modal');
+  $('#changeReasonModal').modal('show');
+  {% endif %}
+  
+  if ($('#culturesTable').length) {
+    if (typeof $.fn.DataTable !== 'undefined') {
+    $('#culturesTable').DataTable({
+      order: [[4, 'desc']],
+      pageLength: 25,
+      responsive: true,
+      language: {
+        search: "{% trans 'Search' %}:",
+        lengthMenu: "{% trans 'Show' %} _MENU_ {% trans 'entries' %}",
+        info: "{% trans 'Showing' %} _START_ {% trans 'to' %} _END_ {% trans 'of' %} _TOTAL_ {% trans 'cultures' %}",
+        infoEmpty: "{% trans 'No cultures found' %}",
+        infoFiltered: "({% trans 'filtered from' %} _MAX_ {% trans 'total' %})",
+        paginate: {
+          first: "{% trans 'First' %}",
+          last: "{% trans 'Last' %}",
+          next: "{% trans 'Next' %}",
+          previous: "{% trans 'Previous' %}"
+        }
+      }
+    });
+    } else {
+      console.error('❌ DataTable plugin not loaded!');
+    }
+  }
+  
+  $('#addSpecimenLoc').change(function() {
+    const isOther = $(this).val() === 'OTHER';
+    $('#addOtherSpecimenContainer').toggle(isOther);
+    $('#addOtherSpecimen').prop('required', isOther);
+  });
+  
+  $('#addResult').change(function() {
+    const isPositive = $(this).val() === 'Positive';
+    $('#addIfPositiveContainer').toggle(isPositive);
+    $('#addIfPositive').prop('required', isPositive);
+    
+    if (!isPositive) {
+      $('#addIfPositive').val('');
+      $('#addSpecifyOtherContainer').hide();
+      $('#addSpecifyOther').val('').prop('required', false);
+    }
+  });
+  
+  $('#addIfPositive').change(function() {
+    const isOther = $(this).val() === 'Other';
+    $('#addSpecifyOtherContainer').toggle(isOther);
+    $('#addSpecifyOther').prop('required', isOther);
+    
+    if (!isOther) {
+      $('#addSpecifyOther').val('');
+    }
+  });
+  
+  $(document).on('click', '.btn-edit', function() {
+    const cultureId = $(this).data('culture-id');
+    console.log(' Loading culture data for ID:', cultureId);
+    
+    const btn = $(this);
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+    
+    $.ajax({
+      url: `/studies/43en/${usubjid}/microbiology/${cultureId}/get/`,
+      method: 'GET',
+      success: function(response) {
+        console.log(' Culture data loaded:', response);
+        btn.prop('disabled', false).html('<i class="fas fa-edit"></i>');
+        
+        if (response.success && response.data) {
+          const d = response.data;
+
+          // Helper to convert yyyy-mm-dd to dd/mm/yyyy
+          function formatDateDMY(val) {
+            if (!val) return '';
+            const parts = val.split('-');
+            if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            return val;
+          }
+
+          $('#editCultureId').val(cultureId);
+          $('#editCultureIdDisplay').html(`<span class="culture-id-badge">${d.LAB_CULTURE_ID}</span>`);
+          $('#editSpecimenLoc').val(d.SPECSAMPLOC).trigger('change');
+          $('#editOtherSpecimen').val(d.OTHERSPECIMEN || '');
+          $('#editSpecimenId').val(d.SPECIMENID || '');
+          $('#editSampleDate').val(formatDateDMY(d.SPECSAMPDATE));
+
+          $('#editResult').val(d.RESULT || '').trigger('change');
+
+          setTimeout(() => {
+            $('#editIfPositive').val(d.IFPOSITIVE || '').trigger('change');
+
+            setTimeout(() => {
+              $('#editSpecifyOther').val(d.SPECIFYOTHERSPECIMEN || '');
+            }, 50);
+          }, 50);
+
+          $('#editIsolationDate').val(formatDateDMY(d.BACSTRAINISOLDATE));
+          $('#editResultDetails').val(d.RESULTDETAILS || '');
+          $('#editOrderedByDept').val(d.ORDEREDBYDEPT || '');
+          $('#editDeptDiagSent').val(d.DEPTDIAGSENT || '');
+
+          if (d.IS_KLEBSIELLA) {
+            $('#editKpnStatusText').html(
+              '{% trans "This culture is positive for Klebsiella (KPN+). Antibiotic testing is available." %}'
+            );
+            $('#editKpnStatus').show();
+          } else {
+            $('#editKpnStatus').hide();
+          }
+
+          const updateUrl = `/studies/43en/${usubjid}/microbiology/${cultureId}/update/`;
+          $('#editCultureForm').attr('action', updateUrl);
+
+          $('#editCultureModal').modal('show');
+        } else {
+          alert('Error: Invalid response');
+        }
+      },
+      error: function(xhr) {
+        console.error(' Error loading culture:', xhr);
+        btn.prop('disabled', false).html('<i class="fas fa-edit"></i>');
+        alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      }
+    });
+  });
+  
+  $('#editSpecimenLoc').change(function() {
+    const isOther = $(this).val() === 'OTHER';
+    $('#editOtherSpecimenContainer').toggle(isOther);
+    $('#editOtherSpecimen').prop('required', isOther);
+  });
+  
+  $('#editResult').change(function() {
+    const isPositive = $(this).val() === 'Positive';
+    $('#editIfPositiveContainer').toggle(isPositive);
+    $('#editIfPositive').prop('required', isPositive);
+    
+    if (!isPositive) {
+      $('#editIfPositive').val('');
+      $('#editSpecifyOtherContainer').hide();
+      $('#editSpecifyOther').val('').prop('required', false);
+      $('#editKpnStatus').hide();
+    }
+  });
+  
+  $('#editIfPositive').change(function() {
+    const isOther = $(this).val() === 'Other';
+    const isKpn = $(this).val() === 'Kpneumoniae';
+    
+    $('#editSpecifyOtherContainer').toggle(isOther);
+    $('#editSpecifyOther').prop('required', isOther);
+    
+    if (isKpn) {
+      $('#editKpnStatusText').html(
+        '<strong>🔬 {% trans "K. pneumoniae detected" %}!</strong> ' +
+        '{% trans "Antibiotic sensitivity testing will be available for this culture." %}'
+      );
+      $('#editKpnStatus').show();
+    } else {
+      $('#editKpnStatus').hide();
+    }
+    
+    if (!isOther) {
+      $('#editSpecifyOther').val('');
+    }
+  });
+  
+  function validateDates(sampleDate, isolationDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const errors = [];
+    
+    if (sampleDate) {
+      const sampDate = new Date(sampleDate);
+      sampDate.setHours(0, 0, 0, 0);
+      
+      if (sampDate > today) {
+        errors.push('<i class="fas fa-calendar-times text-danger"></i> <strong>{% trans "Sample date" %}</strong> {% trans "cannot be in the future" %}!');
+      }
+    }
+    
+    if (isolationDate) {
+      const isolDate = new Date(isolationDate);
+      isolDate.setHours(0, 0, 0, 0);
+      
+      if (isolDate > today) {
+        errors.push('<i class="fas fa-calendar-times text-danger"></i> <strong>{% trans "Isolation date" %}</strong> {% trans "cannot be in the future" %}!');
+      }
+      
+      if (sampleDate) {
+        const sampDate = new Date(sampleDate);
+        sampDate.setHours(0, 0, 0, 0);
+        
+        if (isolDate < sampDate) {
+          errors.push('<i class="fas fa-exclamation-triangle text-warning"></i> <strong>{% trans "Isolation date" %}</strong> {% trans "cannot be before sample date" %}!');
+        }
+      }
+    }
+    
+    if (errors.length > 0) {
+      Swal.fire({
+        icon: 'error',
+        title: ' {% trans "Invalid dates" %}!',
+        html: '<div style="text-align: left;">' + errors.join('<br><br>') + '</div>',
+        confirmButtonText: '<i class="fas fa-check"></i> {% trans "OK" %}',
+        confirmButtonColor: '#d33',
+        width: '500px'
+      });
+      return false;
+    }
+    
+    return true;
+  }
+  
+  $('#addCultureForm').on('submit', function(e) {
+    const sampleDate = $(this).find('input[name="SPECSAMPDATE"]').val();
+    const isolationDate = $(this).find('input[name="BACSTRAINISOLDATE"]').val();
+    
+    if (!validateDates(sampleDate, isolationDate)) {
+      e.preventDefault();
+      return false;
+    }
+  });
+  
+  $('#editCultureForm').on('submit', function(e) {
+    const sampleDate = $('#editSampleDate').val();
+    const isolationDate = $('#editIsolationDate').val();
+    
+    if (!validateDates(sampleDate, isolationDate)) {
+      e.preventDefault();
+      return false;
+    }
+  });
+  
+  console.log('✅ All handlers initialized');
+});
+});
+</script>
+
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
+
+{% endblock %}

@@ -1,0 +1,1054 @@
+{% extends 'studies\study_43en\home_dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+  {% if is_readonly %}
+    {% trans "View Contact Information 43EN" %}
+  {% else %}
+    {% trans "Contact Enrollment Form 43EN" %}
+  {% endif %}
+{% endblock %}
+
+{% block page_title %}
+  {% if is_readonly %}
+    {% trans "View Contact Information 43EN" %}
+  {% else %}
+    {% trans "Contact Enrollment Form 43EN" %}
+  {% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:screening_contact_list' %}">{% trans "Contact List 43EN" %}</a></li>
+<li class="breadcrumb-item active">{% trans "Contact Enrollment" %}</li>
+{% endblock %}
+
+{% block dashboard_css %}
+{% include 'studies/study_43en/includes/crf_styles.html' %}
+<style>
+  /* Contact-specific purple theme overrides */
+  .enr-case-header,
+  .card-header.bg-contact-gradient,
+  .card-primary .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  
+  /* ========== SECTION HEADERS ========== */
+  .form-section-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    padding: 12px 20px;
+    margin: 25px 0 20px 0;
+    border-left: 4px solid #4c51bf;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  /* ========== CONTACT BADGE ========== */
+  .contact-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    margin-left: 10px;
+  }
+  
+  /* ========== FORM CONTAINER ========== */
+  .enr-case-container {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    background: white;
+  }
+  
+  .enr-case-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 15px 20px;
+    color: white;
+    font-weight: 600;
+    font-size: 1.3rem;
+  }
+  
+  .enr-case-content {
+    padding: 25px;
+  }
+  
+  /* ========== FORM FIELDS ========== */
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+  
+  .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #495057;
+    display: block;
+  }
+  
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+  
+  .input-group-text {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+  }
+  
+  /* ========== NUMBERED ITEMS ========== */
+  .numbered-item {
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 15px;
+  }
+  
+  .numbered-item::before {
+    content: attr(data-number);
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: 700;
+    color: #667eea;
+    font-size: 1.1rem;
+    min-width: 25px;
+  }
+  
+  /* ========== CONDITIONAL SECTIONS ========== */
+  .conditional-section {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #667eea;
+    border-radius: 4px;
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  .conditional-section.show {
+    display: block;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* ========== UNDERLYING CONDITIONS GRID ========== */
+  .underlying-conditions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  
+  .underlying-condition-item {
+    background: white;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .underlying-condition-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  }
+  
+  .underlying-condition-item .form-check {
+    margin: 0;
+  }
+  
+  .underlying-condition-item .form-check-input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+  }
+  
+  .underlying-condition-item .form-check-label {
+    margin-left: 10px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .underlying-condition-item .form-check-input:checked ~ .form-check-label {
+    color: #667eea;
+    font-weight: 600;
+  }
+  
+  /* ========== MEDICATION TABLE ========== */
+  .medication-table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .medication-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  
+  .medication-table thead th {
+    padding: 12px;
+    font-weight: 600;
+    border: none;
+  }
+  
+  .medication-table tbody tr {
+    transition: background-color 0.2s ease;
+  }
+  
+  .medication-table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .medication-table td {
+    padding: 10px;
+    vertical-align: middle;
+  }
+  
+  /* ========== BUTTONS ========== */
+  .btn {
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #64408a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  }
+  
+  .btn-success {
+    background-color: #10b981;
+    border-color: #10b981;
+  }
+  
+  .btn-success:hover {
+    background-color: #059669;
+    border-color: #059669;
+  }
+  
+  .btn-danger {
+    background-color: #ef4444;
+    border-color: #ef4444;
+  }
+  
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+  }
+  
+  /* ========== READ-ONLY MODE ========== */
+  .view-only-form .form-control,
+  .view-only-form select,
+  .view-only-form input,
+  .view-only-form textarea {
+    pointer-events: none;
+    background-color: #f8f9fa !important;
+    border-color: #e9ecef !important;
+    color: #495057 !important;
+    opacity: 1;
+  }
+  
+  .view-only-form .btn:not(.btn-back):not(.btn-edit) {
+    display: none;
+  }
+  
+  .view-only-form .form-check-input:checked + .form-check-label::after {
+    content: "✓";
+    color: #10b981;
+    font-weight: bold;
+    margin-left: 8px;
+  }
+  
+  /* ========== RISK FACTORS SECTION ========== */
+  .risk-factor-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .risk-factor-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  }
+  
+  .risk-factor-label {
+    font-weight: 500;
+    color: #374151;
+  }
+  
+  .risk-factor-options {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  
+  .form-check-inline {
+    margin-right: 0;
+  }
+  
+  .form-check-inline .form-check-input {
+    margin-right: 8px;
+  }
+  
+  /* ========== ALERT MESSAGES ========== */
+  .alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .alert-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .alert-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  
+  .alert-info {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border-left: 4px solid #3b82f6;
+  }
+  
+  /* ========== UTILITIES ========== */
+  .text-muted {
+    color: #6b7280 !important;
+  }
+  
+  .mb-3 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .mt-3 {
+    margin-top: 1rem !important;
+  }
+  
+  .mt-4 {
+    margin-top: 1.5rem !important;
+  }
+  
+  /* ========== DATEPICKER ========== */
+  .datepicker {
+    cursor: pointer;
+  }
+  
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 768px) {
+    .underlying-conditions-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .risk-factor-options {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-users mr-2"></i>
+          {% if is_readonly %}
+            {% trans "Contact Information" %} {{ screening_contact.USUBJID }}
+          {% else %}
+            {% trans "Contact Enrollment Form" %} {{ screening_contact.USUBJID }}
+          {% endif %}
+          <span class="contact-badge">CONTACT</span>
+        </h3>
+        
+        {% if is_readonly %}
+        <div class="card-tools">
+          <a href="{% url 'study_43en:enrollment_contact_update' usubjid=screening_contact.USUBJID %}" 
+             class="btn btn-light btn-sm">
+            <i class="fas fa-edit"></i> {% trans "Edit" %}
+          </a>
+        </div>
+        {% endif %}
+      </div>
+      
+      <div class="card-body">
+        {# Error Messages #}
+        {% if form.errors and not is_readonly %}
+        <div class="alert alert-danger">
+          <h5><i class="fas fa-exclamation-triangle"></i> {% trans "Errors Found" %}</h5>
+          <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+              <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+
+        {% if personal_form.errors and not is_readonly %}
+        <div class="alert alert-danger">
+          <h5><i class="fas fa-exclamation-triangle"></i> {% trans "Personal Data Errors" %}</h5>
+          <ul class="mb-0">
+            {% for field, errors in personal_form.errors.items %}
+              <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        {% if medhisdrug_formset.errors %}
+        <div class="alert alert-warning">
+          <h5><i class="fas fa-pills"></i> {% trans "Medication Errors" %}</h5>
+          <ul class="mb-0">
+            {% for error in medhisdrug_formset.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        {% if underlying_form.errors %}
+        <div class="alert alert-warning">
+          <h5><i class="fas fa-heartbeat"></i> {% trans "Underlying Conditions Errors" %}</h5>
+          <ul class="mb-0">
+            {% for field, errors in underlying_form.errors.items %}
+              <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        {# Main Form #}
+        <form method="post" 
+              id="contactEnrollmentForm" 
+              data-screening-id="{{ screening_contact.USUBJID }}" 
+              {% if is_readonly %}class="view-only-form"{% endif %}>
+          {% csrf_token %}
+          {{ form.version }}
+          
+          {# ========== ENROLLMENT CONTACT CONTAINER ========== #}
+          <div class="enr-case-container">
+            <div class="enr-case-header">
+              <i class="fas fa-users mr-2"></i>ENROLLMENT - CONTACT
+            </div>
+            
+            <div class="enr-case-content">
+              {# Study Identifiers #}
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>{% trans "Study Code [43EN]" %}</label>
+                  <input type="text" class="form-control" value="43EN" readonly>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>{% trans "Site" %}</label>
+                  <input type="text" class="form-control" value="{{ screening_contact.SITEID }}" readonly>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>{% trans "Subject Type [B]" %}</label>
+                  <input type="text" class="form-control" value="B" readonly>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>{% trans "Contact ID" %}</label>
+                  <input type="text" class="form-control" value="{{ screening_contact.SUBJID }}" readonly>
+                </div>
+              </div>
+            </div>
+
+            {#  CONTACT INFORMATION SECTION #}
+            <div class="form-section-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <i class="fas fa-id-card mr-2"></i>{% trans "Contact Personal Information" %}
+              <small class="float-right text-white-50">
+                <i class="fas fa-lock mr-1"></i>{% trans "Confidential" %}
+              </small>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="{{ personal_form.FULLNAME.id_for_label }}" class="required">
+                    <i class="fas fa-user-friends mr-2"></i>{% trans "Contact Full Name" %}
+                    <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    {{ personal_form.FULLNAME }}
+                  </div>
+                  {% if personal_form.FULLNAME.errors %}
+                    <small class="text-danger">
+                      <i class="fas fa-exclamation-circle mr-1"></i>
+                      {{ personal_form.FULLNAME.errors.0 }}
+                    </small>
+                  {% endif %}
+                  <small class="form-text text-muted">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {% trans "Enter contact's full legal name" %}
+                  </small>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="{{ personal_form.PHONE.id_for_label }}" class="required">
+                    <i class="fas fa-phone mr-2"></i>{% trans "Contact Phone Number" %}
+                    <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    {{ personal_form.PHONE }}
+                  </div>
+                  {% if personal_form.PHONE.errors %}
+                    <small class="text-danger">
+                      <i class="fas fa-exclamation-circle mr-1"></i>
+                      {{ personal_form.PHONE.errors.0 }}
+                    </small>
+                  {% endif %}
+                  <small class="form-text text-muted">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {% trans "Format: 0XXXXXXXXX or +84XXXXXXXXX" %}
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            {# Privacy Notice for Contact #}
+            <div class="alert" style="background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%); border-left: 4px solid #ff9800;" role="alert">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-user-friends fa-2x mr-3" style="color: #ff9800;"></i>
+                <div>
+                  <strong><i class="fas fa-lock mr-1"></i>{% trans "Contact Privacy Notice" %}:</strong>
+                  {% trans "Contact's full name and phone number are confidential and will be protected according to data privacy regulations." %}
+                </div>
+              </div>
+            </div>
+              
+              {# ========== BASIC INFORMATION ========== #}
+              <div class="form-section-header">
+                <i class="fas fa-user mr-2"></i>{% trans "Contact Information" %}
+              </div>
+              
+              {# 1. Enrollment Date #}
+              <div class="numbered-item" data-number="1">
+                <label for="{{ form.ENRDATE.id_for_label }}">
+                  {% trans "Enrollment Date (YYYY-MM-DD)" %}
+                </label>
+                <div class="input-group">
+                  <div >
+                    <span ><i class="far fa-calendar-alt"></i></span>
+                  </div>
+                  {{ form.ENRDATE }}
+                </div>
+                {% if form.ENRDATE.errors %}
+                  <small class="text-danger">{{ form.ENRDATE.errors.0 }}</small>
+                {% endif %}
+              </div>
+              
+              {# 2.  CONTACT-SPECIFIC: Relationship to Patient #}
+              <div class="numbered-item" data-number="2">
+                <label for="{{ form.RELATIONSHIP.id_for_label }}">
+                  <i class="fas fa-link mr-2"></i>{% trans "Relationship to Patient" %}
+                </label>
+                <div class="input-group">
+                  <div >
+                    <span ><i class="fas fa-users"></i></span>
+                  </div>
+                  {{ form.RELATIONSHIP }}
+                </div>
+                <small class="form-text text-muted">
+                  {% trans "e.g., spouse, child, parent, sibling" %}
+                </small>
+                {% if form.RELATIONSHIP.errors %}
+                  <small class="text-danger">{{ form.RELATIONSHIP.errors.0 }}</small>
+                {% endif %}
+              </div>
+              
+              {# 3. Date of Birth #}
+              <div class="numbered-item" data-number="3">
+                <label>{% trans "Date of Birth" %}</label>
+                <div class="row">
+                  <div class="col-md-2">
+                    <label class="text-muted small">{% trans "Day" %}</label>
+                    {{ form.DAYOFBIRTH }}
+                  </div>
+                  <div class="col-md-2">
+                    <label class="text-muted small">{% trans "Month" %}</label>
+                    {{ form.MONTHOFBIRTH }}
+                  </div>
+                  <div class="col-md-2">
+                    <label class="text-muted small">{% trans "Year" %}</label>
+                    {{ form.YEAROFBIRTH }}
+                  </div>
+                  <div class="col-md-3">
+                    <label class="text-muted small">{% trans "Age if DOB unknown" %}</label>
+                    {{ form.AGEIFDOBUNKNOWN }}
+                  </div>
+                  <div class="col-md-3">
+                    <label class="text-muted small">{% trans "Calculated Age" %}</label>
+                    <div id="calculated-age-contact" class="form-control bg-light">
+                      <i class="fas fa-calculator text-muted"></i>
+                      <span class="ml-2">--</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {# 4. Sex #}
+              <div class="numbered-item" data-number="4">
+                <label for="{{ form.SEX.id_for_label }}">{% trans "Sex" %}</label>
+                {{ form.SEX }}
+              </div>
+              
+              {# 5. Ethnicity #}
+              <div class="numbered-item" data-number="5">
+                <label for="{{ form.ETHNICITY.id_for_label }}">{% trans "Ethnicity" %}</label>
+                <div class="input-group">
+                  <div >
+                    <span ><i class="fas fa-users"></i></span>
+                  </div>
+                  {{ form.ETHNICITY }}
+                </div>
+                
+                {#  CONTACT-SPECIFIC: Specify if Other Ethnicity #}
+                <div id="other-ethnicity-section" 
+                     class="conditional-section mt-3 {% if form.ETHNICITY.value == 'Other' or form.ETHNICITY.value == 'other' %}show{% endif %}">
+                  <label for="{{ form.SPECIFYIFOTHERETHNI.id_for_label }}">
+                    <i class="fas fa-edit mr-2"></i>{% trans "Specify Other Ethnicity" %}
+                  </label>
+                  {{ form.SPECIFYIFOTHERETHNI }}
+                  {% if form.SPECIFYIFOTHERETHNI.errors %}
+                    <small class="text-danger">{{ form.SPECIFYIFOTHERETHNI.errors.0 }}</small>
+                  {% endif %}
+                </div>
+              </div>
+              
+              {# 6. Occupation #}
+              <div class="numbered-item" data-number="6">
+                <label for="{{ form.OCCUPATION.id_for_label }}">{% trans "Occupation" %}</label>
+                <div class="input-group">
+                  <div >
+                    <span ><i class="fas fa-briefcase"></i></span>
+                  </div>
+                  {{ form.OCCUPATION }}
+                </div>
+              </div>
+              
+              {# ========== RISK FACTORS (ThreeStateChoices) ========== #}
+              <div class="form-section-header">
+                <i class="fas fa-exclamation-triangle mr-2"></i>{% trans "Risk Factors & Medical History" %}
+              </div>
+
+              {# 7. Healthcare Contact Risk Factors #}
+              <div class="numbered-item" data-number="7">
+                <label class="mb-3">{% trans "Healthcare Contact Before Enrollment?" %}</label>
+                
+                {# a. Hospital admission ≥2 days in last 6 months #}
+                <div class="risk-factor-item">
+                  <div class="row align-items-center">
+                    <div class="col-md-7">
+                      <span class="risk-factor-label">
+                        a. {% trans "Nhập viện ≥2 ngày trong 6 tháng qua?" %}
+                      </span>
+                    </div>
+                    <div class="col-md-5">
+                      <div class="risk-factor-options">
+                        <div class="form-check form-check-inline">
+                          <input type="radio" 
+                                name="HOSP2D6M" 
+                                value="yes" 
+                                id="id_HOSP2D6M_yes"
+                                {% if form.HOSP2D6M.value == 'yes' %}checked{% endif %}
+                                class="form-check-input">
+                          <label class="form-check-label" for="id_HOSP2D6M_yes">
+                            {% trans "Yes" %}
+                          </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="radio" 
+                                name="HOSP2D6M" 
+                                value="no" 
+                                id="id_HOSP2D6M_no"
+                                {% if form.HOSP2D6M.value == 'no' or not form.HOSP2D6M.value %}checked{% endif %}
+                                class="form-check-input">
+                          <label class="form-check-label" for="id_HOSP2D6M_no">
+                            {% trans "No" %}
+                          </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="radio" 
+                                name="HOSP2D6M" 
+                                value="unknown" 
+                                id="id_HOSP2D6M_unknown"
+                                {% if form.HOSP2D6M.value == 'unknown' %}checked{% endif %}
+                                class="form-check-input">
+                          <label class="form-check-label" for="id_HOSP2D6M_unknown">
+                            {% trans "Unknown" %}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {# b-f: Similar structure for other risk factors #}
+                {# DIAL3M, CATHETER3M, SONDE3M, HOMEWOUNDCARE, LONGTERMCAREFACILITY #}
+                {# ... (Copy structure from above) ... #}
+              </div>
+
+              {# 8. Medication History #}
+              <div class="numbered-item" data-number="8">
+                <label>{% trans "Medication History (Corticoid, PPI, etc.)" %}</label>
+                
+                <div class="risk-factor-item">
+                  <div class="row align-items-center">
+                    <div class="col-md-7">
+                      <span class="risk-factor-label">
+                        {% trans "Using Corticoid or PPI?" %}
+                      </span>
+                    </div>
+                    <div class="col-md-5">
+                      <div class="risk-factor-options">
+                        <div class="form-check form-check-inline">
+                          <input type="radio" 
+                                name="CORTICOIDPPI" 
+                                value="yes" 
+                                id="id_CORTICOIDPPI_yes"
+                                {% if form.CORTICOIDPPI.value == 'yes' %}checked{% endif %}
+                                class="form-check-input">
+                          <label class="form-check-label" for="id_CORTICOIDPPI_yes">
+                            {% trans "Yes" %}
+                          </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="radio" 
+                                name="CORTICOIDPPI" 
+                                value="no" 
+                                id="id_CORTICOIDPPI_no"
+                                {% if form.CORTICOIDPPI.value == 'no' or not form.CORTICOIDPPI.value %}checked{% endif %}
+                                class="form-check-input">
+                          <label class="form-check-label" for="id_CORTICOIDPPI_no">
+                            {% trans "No" %}
+                          </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="radio" 
+                                name="CORTICOIDPPI" 
+                                value="unknown" 
+                                id="id_CORTICOIDPPI_unknown"
+                                {% if form.CORTICOIDPPI.value == 'unknown' %}checked{% endif %}
+                                class="form-check-input">
+                          <label class="form-check-label" for="id_CORTICOIDPPI_unknown">
+                            {% trans "Unknown" %}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {#  CRITICAL: Management form MUST be outside conditional #}
+                {% if not is_readonly %}
+                <div style="display:none;" id="medication-management-forms">
+                  {{ medhisdrug_formset.management_form }}
+                </div>
+                {% endif %}
+                
+                {# Conditional Section: Medication History Table #}
+                <div id="medication-history-section" 
+                    class="conditional-section {% if form.CORTICOIDPPI.value == 'yes' %}show{% endif %}">
+                  <h6 class="text-primary mb-3">
+                    <i class="fas fa-pills mr-2"></i>{% trans "Medication History Details" %}
+                  </h6>
+                  
+                  <div class="table-responsive medication-table">
+                    <table class="table table-bordered table-sm mb-0">
+                      <thead>
+                        <tr>
+                          <th width="5%">#</th>
+                          <th width="30%">{% trans "Drug Name" %}</th>
+                          <th width="20%">{% trans "Dosage" %}</th>
+                          <th width="20%">{% trans "Duration" %}</th>
+                          <th width="25%">{% trans "Reason" %}</th>
+                        </tr>
+                      </thead>
+                      <tbody id="medication-formset-body">
+                        {% for med_form in medhisdrug_formset %}
+                        <tr class="formset-row">
+                          {{ med_form.id }}
+                          <td>{{ med_form.SEQUENCE }}</td>
+                          <td>{{ med_form.DRUGNAME }}</td>
+                          <td>{{ med_form.DOSAGE }}</td>
+                          <td>{{ med_form.USAGETIME }}</td>
+                          <td>{{ med_form.USAGEREASON }}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {% if not is_readonly %}
+                  <div class="mt-3">
+                    <button type="button" 
+                            id="add-medication-btn" 
+                            class="btn btn-success btn-sm">
+                      <i class="fas fa-plus mr-1"></i>{% trans "Add Medication" %}
+                    </button>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              {# ========== UNDERLYING CONDITIONS ========== #}
+              <div class="form-section-header">
+                <i class="fas fa-heartbeat mr-2"></i>{% trans "Underlying Conditions" %}
+              </div>
+              
+              <div class="numbered-item" data-number="9">
+                <label>{% trans "Does the contact have any underlying conditions?" %}</label>
+                
+                {# Main question: Has underlying conditions? #}
+                <div class="risk-factor-item mb-4">
+                  <div class="row align-items-center">
+                    <div class="col-md-7">
+                      <span class="risk-factor-label">
+                        <strong>{% trans "Có bệnh nền không?" %}</strong>
+                      </span>
+                    </div>
+                    <div class="col-md-5">
+                      <div class="risk-factor-options">
+                        <div class="form-check form-check-inline">
+                          <input type="radio" 
+                                name="UNDERLYINGCONDS" 
+                                value="True" 
+                                id="id_UNDERLYINGCONDS_yes"
+                                {% if form.UNDERLYINGCONDS.value %}checked{% endif %}
+                                class="form-check-input">
+                          <label class="form-check-label" for="id_UNDERLYINGCONDS_yes">
+                            <strong>{% trans "Có" %}</strong>
+                          </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="radio" 
+                                name="UNDERLYINGCONDS" 
+                                value="False" 
+                                id="id_UNDERLYINGCONDS_no"
+                                {% if form.UNDERLYINGCONDS.value == False and form.UNDERLYINGCONDS.value != None %}checked{% endif %}
+                                class="form-check-input">
+                          <label class="form-check-label" for="id_UNDERLYINGCONDS_no">
+                            <strong>{% trans "Không" %}</strong>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {# Conditional Section: Show only if has underlying conditions #}
+                <div id="underlying-conditions-section" 
+                     class="conditional-section {% if form.UNDERLYINGCONDS.value %}show{% endif %}">
+                  <h6 class="text-primary mb-3">
+                    <i class="fas fa-list mr-2"></i>{% trans "Select all that apply" %}
+                  </h6>
+                  
+                  <div class="underlying-conditions-grid">
+                  {% for field in underlying_form %}
+                    {% if field.name != 'OTHERDISEASESPECIFY' %}
+                    <div class="underlying-condition-item">
+                      <div class="form-check">
+                        {{ field }}
+                        <label class="form-check-label" for="{{ field.id_for_label }}">
+                          {{ field.label }}
+                        </label>
+                      </div>
+                    </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+                
+                {# Other Disease Specification #}
+                <div id="other-disease-detail" 
+                     class="conditional-section mt-3 {% if underlying_form.OTHERDISEASE.value %}show{% endif %}">
+                  <label for="{{ underlying_form.OTHERDISEASESPECIFY.id_for_label }}">
+                    <i class="fas fa-edit mr-2"></i>{{ underlying_form.OTHERDISEASESPECIFY.label }}
+                  </label>
+                  {{ underlying_form.OTHERDISEASESPECIFY }}
+                </div>
+              </div>{# End of underlying-conditions-section #}
+              </div>{# End of numbered-item 9 #}
+              
+              {# ========== AUDIT TRAIL ========== #}
+              {% if enrollment_contact %}
+              <div class="form-section-header">
+                <i class="fas fa-history mr-2"></i>{% trans "Audit Information" %}
+              </div>
+              
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>{% trans "Last Modified By" %}</label>
+                    <input type="text" 
+                           class="form-control" 
+                           value="{{ enrollment_contact.last_modified_by_username|default:'N/A' }}" 
+                           readonly>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>{% trans "Last Modified At" %}</label>
+                    <input type="text" 
+                           class="form-control"
+                           value="{{ enrollment_contact.last_modified_at|date:'d/m/Y H:i'|default:'N/A' }}" 
+                           readonly>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>{% trans "Version" %}</label>
+                    <input type="text" 
+                           class="form-control" 
+                           value="{{ enrollment_contact.version|default:'0' }}" 
+                           readonly>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          {# ========== FORM ACTIONS ========== #}
+          <div class="d-flex justify-content-between mt-4">
+            <div>
+              <a href="{% url 'study_43en:screening_contact_list' %}" 
+                 class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-1"></i>{% trans "Back" %}
+              </a>
+              
+              {% if not is_readonly %}
+              <button type="reset" class="btn btn-warning ml-2">
+                <i class="fas fa-undo mr-1"></i>{% trans "Reset" %}
+              </button>
+              {% endif %}
+            </div>
+            
+            <div>
+              {% if is_readonly and enrollment_contact %}
+              <a href="{% url 'study_43en:enrollment_contact_update' usubjid=screening_contact.USUBJID %}" 
+                 class="btn btn-primary">
+                <i class="fas fa-edit mr-1"></i>{% trans "Edit" %}
+              </a>
+              {% elif not is_readonly %}
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save mr-1"></i>{% trans "Save Information" %}
+              </button>
+              {% endif %}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ========== CHANGE REASON MODAL ========== #}
+{% if show_reason_form and detected_changes %}
+  {% include 'default/change_reason_modal.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+{% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+<script nonce="{{ request.csp_nonce }}">
+window.contactEnrollmentFormState = {
+  isReadonly: {% if is_readonly %}true{% else %}false{% endif %},
+  isCreate: {% if is_create %}true{% else %}false{% endif %},
+  selectedSiteId: "{{ selected_site_id|default:'all' }}"
+};
+</script>
+
+{# Moment.js #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+{# Awesomplete #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+
+{# Custom Scripts #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/contact-enrollment-form.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
+
+{# Scripts Loaded Check #}
+<script nonce="{{ request.csp_nonce }}">
+console.log('=== CONTACT ENROLLMENT FORM SCRIPTS DEBUG ===');
+console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+console.log('Moment loaded:', typeof moment !== 'undefined');
+console.log('Awesomplete loaded:', typeof Awesomplete !== 'undefined');
+console.log('contactEnrollmentFormState:', window.contactEnrollmentFormState);
+console.log('===========================================');
+</script>
+
+{# Formset Debug #}
+{% if not is_readonly %}
+<script nonce="{{ request.csp_nonce }}">
+$(document).ready(function() {
+    console.log('=== CONTACT FORMSET DEBUG ===');
+    console.log('Prefix:', '{{ medhisdrug_formset.prefix }}');
+    
+    const totalFormsName = '{{ medhisdrug_formset.management_form.TOTAL_FORMS.html_name }}';
+    const initialFormsName = '{{ medhisdrug_formset.management_form.INITIAL_FORMS.html_name }}';
+    
+    console.log('Expected field names:');
+    console.log('  TOTAL_FORMS:', totalFormsName);
+    console.log('  INITIAL_FORMS:', initialFormsName);
+    
+    const $totalForms = $('[name="' + totalFormsName + '"]');
+    const $initialForms = $('[name="' + initialFormsName + '"]');
+    
+    console.log('Found in DOM:');
+    console.log('  TOTAL_FORMS:', $totalForms.length > 0 ? 'YES (value: ' + $totalForms.val() + ')' : 'NO');
+    console.log('  INITIAL_FORMS:', $initialForms.length > 0 ? 'YES (value: ' + $initialForms.val() + ')' : 'NO');
+    
+    if ($totalForms.length === 0) {
+        console.error(' TOTAL_FORMS NOT FOUND! This will cause validation error.');
+    }
+    if ($initialForms.length === 0) {
+        console.error(' INITIAL_FORMS NOT FOUND! This will cause validation error.');
+    }
+    
+    console.log('=============================');
+});
+</script>
+{% endif %}
+
+{% endblock %}

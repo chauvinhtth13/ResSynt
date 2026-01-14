@@ -12,6 +12,10 @@ from django.urls import reverse
 # Import forms
 from backends.studies.study_43en.forms.contact.contact_ENDCASE import ContactEndCaseCRFForm
 
+# Import models
+from backends.studies.study_43en.models.contact import SCR_CONTACT
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
+
 # Import utilities
 from backends.audit_logs.utils.decorators import audit_log
 from backends.audit_logs.utils.processors import (
@@ -40,7 +44,13 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @require_crf_add('contactendcasecrf', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTENDCASECRF', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTENDCASECRF',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contactendcase_create(request, usubjid):
     """
     Create new contact end case CRF (NO AUDIT)
@@ -76,7 +86,7 @@ def contactendcase_create(request, usubjid):
         return process_crf_create(
             request=request,
             form_class=ContactEndCaseCRFForm,
-            template_name='studies/study_43en/CRF/contact/contact_endcase_form.html',
+            template_name='studies/study_43en/contact/form/contact_endcase_form.html',
             redirect_url=reverse('study_43en:contact_detail', kwargs={'usubjid': usubjid}),
             pre_save_callback=pre_save,
             extra_context={
@@ -114,7 +124,7 @@ def contactendcase_create(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_endcase_form.html', context)
+    return render(request, 'studies/study_43en/contact/form/contact_endcase_form.html', context)
 
 
 # ==========================================
@@ -123,7 +133,13 @@ def contactendcase_create(request, usubjid):
 
 @login_required
 @require_crf_change('contactendcasecrf', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTENDCASECRF', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTENDCASECRF',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contactendcase_update(request, usubjid):
     """
     Update contact end case CRF WITH UNIVERSAL AUDIT SYSTEM (Tier 1)
@@ -168,7 +184,7 @@ def contactendcase_update(request, usubjid):
             'current_version': endcase.version,
         }
         
-        return render(request, 'studies/study_43en/CRF/contact/contact_endcase_form.html', context)
+        return render(request, 'studies/study_43en/contact/form/contact_endcase_form.html', context)
     
     #  POST - USE UNIVERSAL AUDIT SYSTEM (Tier 1)
     logger.info(" Using Universal Audit System (Tier 1)")
@@ -178,7 +194,7 @@ def contactendcase_update(request, usubjid):
         request=request,
         instance=endcase,
         form_class=ContactEndCaseCRFForm,
-        template_name='studies/study_43en/CRF/contact/contact_endcase_form.html',
+        template_name='studies/study_43en/contact/form/contact_endcase_form.html',
         redirect_url=reverse('study_43en:contact_detail', kwargs={'usubjid': usubjid}),
         extra_context={
             'endcase': endcase,
@@ -196,7 +212,13 @@ def contactendcase_update(request, usubjid):
 
 @login_required
 @require_crf_view('contactendcasecrf', redirect_to='study_43en:contact_list')
-@audit_log(model_name='CONTACTENDCASECRF', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='CONTACTENDCASECRF',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CONTACT,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def contactendcase_view(request, usubjid):
     """
     View contact end case CRF in read-only mode
@@ -242,4 +264,4 @@ def contactendcase_view(request, usubjid):
         'today': date.today(),
     }
     
-    return render(request, 'studies/study_43en/CRF/contact/contact_endcase_form.html', context)
+    return render(request, 'studies/study_43en/contact/form/contact_endcase_form.html', context)

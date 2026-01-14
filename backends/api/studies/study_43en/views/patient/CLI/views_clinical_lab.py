@@ -17,6 +17,7 @@ from backends.studies.study_43en.models.patient import (
     ENR_CASE,
     LaboratoryTest,
 )
+from backends.studies.study_43en.models import AuditLog, AuditLogDetail
 
 # Import forms
 from backends.studies.study_43en.forms.patient.CLI_laboratory import LaboratoryTestFormSet
@@ -190,7 +191,7 @@ def laboratory_test_list(request, usubjid):
         'selected_site_id': screening_case.SITEID,
     }
     
-    return render(request, 'studies/study_43en/CRF/patient/laboratory_test_list.html', context)
+    return render(request, 'studies/study_43en/patient/list/laboratory_test_list.html', context)
 
 
 # ==========================================
@@ -199,7 +200,13 @@ def laboratory_test_list(request, usubjid):
 
 @login_required
 @require_crf_change('laboratorytest', redirect_to='study_43en:patient_list')
-@audit_log(model_name='LABORATORYTEST', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='LABORATORYTEST',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def laboratory_test_create(request, usubjid, lab_type):
     """
     Initialize laboratory tests for a specific timepoint (NO AUDIT)
@@ -257,7 +264,13 @@ def laboratory_test_create(request, usubjid, lab_type):
 
 @login_required
 @require_crf_change('laboratorytest', redirect_to='study_43en:patient_list')
-@audit_log(model_name='LABORATORYTEST', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='LABORATORYTEST',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def laboratory_test_bulk_update(request, usubjid, lab_type):
     """
     Bulk update laboratory tests WITH DATA_ENTERED TRACKING
@@ -363,7 +376,7 @@ def laboratory_test_bulk_update(request, usubjid, lab_type):
         
         return render(
             request, 
-            'studies/study_43en/CRF/patient/laboratory_test_bulk_update.html', 
+            'studies/study_43en/patient/form/laboratory_test_bulk_update.html', 
             context
         )
     
@@ -485,7 +498,7 @@ def laboratory_test_bulk_update(request, usubjid, lab_type):
         main_instance=enrollment_case,
         forms_config=forms_config,
         save_callback=save_callback,
-        template_name='studies/study_43en/CRF/patient/laboratory_test_bulk_update.html',
+        template_name='studies/study_43en/patient/form/laboratory_test_bulk_update.html',
         redirect_url=reverse('study_43en:laboratory_test_list', kwargs={'usubjid': usubjid}),
         skip_change_reason=is_first_data_entry_for_lab_tests,  #  KEY: Skip reason for first entry
         extra_context={
@@ -507,7 +520,13 @@ def laboratory_test_bulk_update(request, usubjid, lab_type):
 
 @login_required
 @require_crf_view('laboratorytest', redirect_to='study_43en:patient_list')
-@audit_log(model_name='LABORATORYTEST', get_patient_id_from='usubjid')
+@audit_log(
+    model_name='LABORATORYTEST',
+    get_patient_id_from='usubjid',
+    patient_model=SCR_CASE,
+    audit_log_model=AuditLog,
+    audit_log_detail_model=AuditLogDetail
+)
 def laboratory_test_view(request, usubjid, lab_type):
     """
     View laboratory tests (READ-ONLY) - Uses same template as bulk_update
@@ -569,6 +588,6 @@ def laboratory_test_view(request, usubjid, lab_type):
     
     return render(
         request, 
-        'studies/study_43en/CRF/patient/laboratory_test_bulk_update.html',  # ← Same template
+        'studies/study_43en/patient/form/laboratory_test_bulk_update.html',  # ← Same template
         context
     )

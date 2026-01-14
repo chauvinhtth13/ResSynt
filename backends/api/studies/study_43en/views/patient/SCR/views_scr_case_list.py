@@ -136,7 +136,7 @@ def screening_case_list(request):
     # Convert to list for template
     user_sites_list = sorted(list(user_sites))
 
-    return render(request, 'studies/study_43en/CRF/patient/screening_case_list.html', {
+    return render(request, 'studies/study_43en/patient/list/screening_case_list.html', {
         'page_obj': page_obj,
         'total_cases': total_cases,
         'eligible_cases': eligible_cases,

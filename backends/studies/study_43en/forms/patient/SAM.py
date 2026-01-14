@@ -105,10 +105,10 @@ class SampleCollectionForm(forms.ModelForm):
                 'data-toggle': 'collapse-stool-details'
             }),
             
-            'STOOLDATE': forms.DateInput(attrs={
+            'STOOLDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'form-control datepicker',
-                'type': 'date',
-                'placeholder': 'YYYY-MM-DD',
+                'type': 'text',
+                'placeholder': 'DD/MM/YYYY',
                 'data-window-check': 'true',
                 'data-sample-type': 'stool',
                 'autocomplete': 'off'
@@ -147,10 +147,10 @@ class SampleCollectionForm(forms.ModelForm):
                 'data-toggle': 'collapse-rectal-details'
             }),
             
-            'RECTSWABDATE': forms.DateInput(attrs={
+            'RECTSWABDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'form-control datepicker',
-                'type': 'date',
-                'placeholder': 'YYYY-MM-DD',
+                'type': 'text',
+                'placeholder': 'DD/MM/YYYY',
                 'data-window-check': 'true',
                 'data-sample-type': 'rectal',
                 'autocomplete': 'off'
@@ -189,10 +189,10 @@ class SampleCollectionForm(forms.ModelForm):
                 'data-toggle': 'collapse-throat-details'
             }),
             
-            'THROATSWABDATE': forms.DateInput(attrs={
+            'THROATSWABDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'form-control datepicker',
-                'type': 'date',
-                'placeholder': 'YYYY-MM-DD',
+                'type': 'text',
+                'placeholder': 'DD/MM/YYYY',
                 'data-window-check': 'true',
                 'data-sample-type': 'throat',
                 'autocomplete': 'off'
@@ -231,10 +231,10 @@ class SampleCollectionForm(forms.ModelForm):
                 'data-toggle': 'collapse-blood-details'
             }),
             
-            'BLOODDATE': forms.DateInput(attrs={
+            'BLOODDATE': forms.DateInput(format='%d/%m/%Y', attrs={
                 'class': 'form-control datepicker',
-                'type': 'date',
-                'placeholder': 'YYYY-MM-DD',
+                'type': 'text',
+                'placeholder': 'DD/MM/YYYY',
                 'data-window-check': 'true',
                 'data-sample-type': 'blood',
                 'autocomplete': 'off'
@@ -309,7 +309,7 @@ class SampleCollectionForm(forms.ModelForm):
                 'invalid_choice': _('Invalid sample type selected'),
             },
             'STOOLDATE': {
-                'invalid': _('Invalid date format. Use YYYY-MM-DD'),
+                'invalid': _('Invalid date format. Use DD/MM/YYYY'),
             },
         }
 
@@ -327,6 +327,12 @@ class SampleCollectionForm(forms.ModelForm):
         
         self.patient = patient
         super().__init__(*args, **kwargs)
+        
+        # 🚀 Set date input formats for dd/mm/yyyy (bootstrap-datepicker format)
+        date_fields = ['STOOLDATE', 'RECTSWABDATE', 'THROATSWABDATE', 'BLOODDATE']
+        for field_name in date_fields:
+            if field_name in self.fields:
+                self.fields[field_name].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
         
         # ==========================================
         # SETUP INITIAL VALUES
