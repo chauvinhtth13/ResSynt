@@ -32,12 +32,12 @@
                             <div class="input-group">
 
                                 <input type="text" class="form-control datepicker" name="date_from" id="date_from" 
-                                    value="{{ date_from|date:'Y-m-d' }}" placeholder="DD/MM/YYYY" data-provide="datepicker">
+                                    value="{% if date_from %}{{ date_from|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY" data-provide="datepicker">
                                 <div class="input-group-prepend input-group-append">
                                     <span class="input-group-text">đến</span>
                                 </div>
                                 <input type="text" class="form-control datepicker" name="date_to" id="date_to" 
-                                    value="{{ date_to|date:'Y-m-d' }}" placeholder="DD/MM/YYYY" data-provide="datepicker">
+                                    value="{% if date_to %}{{ date_to|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY" data-provide="datepicker">
                             </div>
                         </div>
                     </div>
@@ -619,7 +619,7 @@
                 
                 <div class="form-group">
                     <label for="missed_date_input" class="font-weight-bold">
-                        <i class="fas fa-calendar-times mr-1"></i>Ngày Missed <span class="text-danger">*</span>
+                        <i ></i>Ngày Missed <span class="text-danger">*</span>
                     </label>
                     <input type="text" class="form-control datepicker" id="missed_date_input" name="missed_date" placeholder="DD/MM/YYYY" required>
                     <small class="form-text text-muted">
@@ -630,7 +630,7 @@
                 
                 <div class="form-group">
                     <label for="missed_reason_input" class="font-weight-bold">
-                        <i class="fas fa-comment-alt mr-1"></i>Lý do Missed <span class="text-danger">*</span>
+                        <i ></i>Lý do Missed <span class="text-danger">*</span>
                     </label>
                     <textarea class="form-control" id="missed_reason_input" name="missed_reason" rows="3" 
                                 placeholder="Vui lòng nhập lý do (VD: Mất liên lạc, không trả lời điện thoại, chuyển địa chỉ...)" 
@@ -734,201 +734,190 @@
         };
         
         // ==========================================
-        //  FIXED: QUICK FILTERS
+        // QUICK FILTERS + DATE CONVERSION
         // ==========================================
+        
+        // Simple helper: DD/MM/YYYY → YYYY-MM-DD
+        function toIso(ddmmyyyy) {
+            if (!ddmmyyyy) return '';
+            const parts = ddmmyyyy.split('/');
+            if (parts.length === 3) {
+                return parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
+            }
+            return ddmmyyyy;
+        }
+
+        // Robust ISO date parser YYYY-MM-DD -> Date or null
+        function parseIsoDate(iso) {
+            if (!iso) return null;
+            // strip time if present (e.g. "2026-01-15 00:00:00" or ISO timestamp)
+            const dateOnly = iso.toString().split('T')[0].split(' ')[0];
+            const parts = dateOnly.split('-');
+            if (parts.length !== 3) return null;
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10);
+            const d = parseInt(parts[2], 10);
+            if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
+            // Month is 0-based in JS Date
+            const dt = new Date(y, m - 1, d);
+            // Validate constructed date matches parts (guards against invalid dates like 2026-02-30)
+            if (dt.getFullYear() !== y || dt.getMonth() !== (m - 1) || dt.getDate() !== d) return null;
+            return dt;
+        }
+
+        // Parse DD/MM/YYYY -> Date or null
+        function parseDmy(dmy) {
+            if (!dmy) return null;
+            const parts = dmy.split('/');
+            if (parts.length !== 3) return null;
+            const d = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10);
+            const y = parseInt(parts[2], 10);
+            if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
+            const dt = new Date(y, m - 1, d);
+            if (dt.getFullYear() !== y || dt.getMonth() !== (m - 1) || dt.getDate() !== d) return null;
+            return dt;
+        }
+        
+        // Quick filter buttons
         $('#thisWeek, #nextWeek, #thisMonth, #all').click(function() {
             const period = $(this).attr('id');
-            console.log('📅 Quick filter clicked:', period);
-            setDateRange(period);
-        });
-        
-        function setDateRange(period) {
             const today = new Date();
-            let from = new Date();
-            let to = new Date();
+            let from, to;
             
             if (period === 'thisWeek') {
-                // Tuần này: Từ thứ 2 đến Chủ nhật
                 const day = today.getDay();
                 const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-                from = new Date(today.setDate(diff));
+                from = new Date(today.getFullYear(), today.getMonth(), diff);
                 to = new Date(from);
                 to.setDate(from.getDate() + 6);
-                
-                console.log('📅 This week:', formatDate(from), 'to', formatDate(to));
-                
             } else if (period === 'nextWeek') {
-                // Tuần sau: Từ thứ 2 tuần sau đến Chủ nhật tuần sau
                 const day = today.getDay();
                 const diff = today.getDate() - day + (day === 0 ? -6 : 1) + 7;
-                from = new Date(today.setDate(diff));
+                from = new Date(today.getFullYear(), today.getMonth(), diff);
                 to = new Date(from);
                 to.setDate(from.getDate() + 6);
-                
-                console.log('📅 Next week:', formatDate(from), 'to', formatDate(to));
-                
             } else if (period === 'thisMonth') {
-                // Tháng này: Từ ngày 1 đến cuối tháng
                 from = new Date(today.getFullYear(), today.getMonth(), 1);
                 to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                
-                console.log('📅 This month:', formatDate(from), 'to', formatDate(to));
-                
-            } else if (period === 'all') {
-                //  FIXED: Tất cả = Từ ngày đầu tiên trong DB đến hôm nay
-                // Giả sử dữ liệu bắt đầu từ 01/01/2024 (có thể điều chỉnh)
+            } else {
                 from = new Date('2024-01-01');
-                to = new Date(); // Hôm nay
-                
-                console.log('📅 All records:', formatDate(from), 'to', formatDate(to));
+                to = new Date();
             }
             
-            // Set giá trị vào input (format Y-m-d)
-            const fromFormatted = formatDate(from);
-            const toFormatted = formatDate(to);
-            
-            console.log('📅 Setting dates:', fromFormatted, 'to', toFormatted);
-            
-            $('#date_from').val(fromFormatted);
-            $('#date_to').val(toFormatted);
-            
-            // Force update datepicker display
-            $('#date_from').datepicker('update');
-            $('#date_to').datepicker('update');
-            
-            // Submit form
+            $('#date_from').datepicker('setDate', from);
+            $('#date_to').datepicker('setDate', to);
             $('#filterForm').submit();
-        }
+        });
         
-        function formatDate(date) {
-            const month = '' + (date.getMonth() + 1);
-            const day = '' + date.getDate();
-            const year = date.getFullYear();
-            return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
-        }
+        // Convert dates before submit using hidden inputs
+        $('#filterForm').on('submit', function(e) {
+            const fromVal = $('#date_from').val();
+            const toVal = $('#date_to').val();
+            
+            // Remove old hidden inputs if any
+            $('#filterForm input[name=\"date_from_iso\"]').remove();
+            $('#filterForm input[name=\"date_to_iso\"]').remove();
+            
+            // Create hidden inputs with ISO format
+            if (fromVal) {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'date_from',
+                    value: toIso(fromVal)
+                }).appendTo('#filterForm');
+                $('#date_from').attr('name', 'date_from_display');
+            }
+            if (toVal) {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'date_to',
+                    value: toIso(toVal)
+                }).appendTo('#filterForm');
+                $('#date_to').attr('name', 'date_to_display');
+            }
+        });
         
         // ==========================================
-        // 🎯 COMPLETE FOLLOW-UP BUTTON
+        // COMPLETE FOLLOW-UP MODAL
         // ==========================================
         $('.complete-followup-btn').click(function() {
             const followupId = $(this).data('id');
             const usubjid = $(this).data('usubjid');
             const visit = $(this).data('visit');
-            const expected = $(this).data('expected');
+            const expected = $(this).data('expected'); // YYYY-MM-DD format
             
-            console.log('🎯 Opening complete modal for:', followupId, usubjid, visit);
-            
-            // Set form data
             $('#followup_id_complete').val(followupId);
             $('#complete_usubjid').text(usubjid);
             $('#complete_visit').text(visit);
-            $('#expected_date_display').text(new Date(expected).toLocaleDateString('vi-VN'));
             
-            // Set default actual date = expected date
-            $('#actual_date_complete').val(expected);
-            $('#actual_date_complete').attr('min', expected);
+            // Parse and display expected date using robust parser; fallback to table cell if needed
+            let expDate = parseIsoDate(expected);
+            if (!expDate) {
+                // fallback: read displayed date (DD/MM/YYYY) from the same table row
+                const rowDisplay = $(this).closest('tr').find('span.text-nowrap').first().text().trim();
+                expDate = parseDmy(rowDisplay);
+                if (expDate) {
+                    $('#expected_date_display').text(rowDisplay);
+                    $('#actual_date_complete').datepicker('setDate', expDate);
+                } else {
+                    $('#expected_date_display').text('-');
+                }
+            } else {
+                const expDisplay = expDate.getDate().toString().padStart(2, '0') + '/' + 
+                                   (expDate.getMonth() + 1).toString().padStart(2, '0') + '/' + 
+                                   expDate.getFullYear();
+                $('#expected_date_display').text(expDisplay);
+                $('#actual_date_complete').datepicker('setDate', expDate);
+            }
             
-            // Show modal (Bootstrap 4 style)
             $('#completeFollowupModal').modal('show');
         });
         
-        // ==========================================
-        //  CANCEL BUTTON - CLOSE MODAL
-        // ==========================================
         $('#cancelCompleteFollowup').click(function() {
-            console.log(' Cancel button clicked');
-            
-            // Reset form
             $('#completeFollowupForm')[0].reset();
-            
-            // Hide modal
             $('#completeFollowupModal').modal('hide');
         });
         
-        // ==========================================
-        // 💾 SAVE COMPLETE FOLLOW-UP
-        // ==========================================
         $('#saveCompleteFollowup').click(function() {
             const $btn = $(this);
             const followupId = $('#followup_id_complete').val();
-            const actualDate = $('#actual_date_complete').val();
+            const actualDate = $('#actual_date_complete').val(); // DD/MM/YYYY from datepicker
             
             if (!actualDate) {
                 toastr.error('Vui lòng chọn ngày hoàn thành!');
                 return;
             }
             
-            console.log('💾 Saving complete followup:', followupId, actualDate);
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Đang lưu...');
             
-            // Disable button
-            $btn.prop('disabled', true);
-            $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Đang lưu...');
-            
-            // Get CSRF token
-            const csrfToken = $('[name=csrfmiddlewaretoken]').val() || '{{ csrf_token }}';
-            
-            // AJAX request
             $.ajax({
                 url: `/studies/43en/followup-tracking/${followupId}/complete/`,
                 type: 'POST',
                 headers: {
-                    'X-CSRFToken': csrfToken,
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 data: {
-                    'actual_date': actualDate
+                    'actual_date': toIso(actualDate) // Convert to YYYY-MM-DD
                 },
                 success: function(response) {
-                    console.log(' Complete success:', response);
-                    
                     if (response.success) {
-                        // Show success message
                         toastr.success(response.message);
-                        
-                        // Hide modal
                         $('#completeFollowupModal').modal('hide');
-                        
-                        // Show sync info
-                        if (response.data && response.data.sync_success) {
-                            setTimeout(function() {
-                                toastr.success(response.data.sync_message, 'Đồng bộ CRF');
-                            }, 500);
-                        } else if (response.data && response.data.sync_message) {
-                            setTimeout(function() {
-                                toastr.info(response.data.sync_message, 'Thông báo');
-                            }, 500);
-                        }
-                        
-                        // Reload after 1.5 seconds
-                        setTimeout(function() {
-                            console.log(' Reloading page...');
-                            window.location.reload();
-                        }, 1500);
-                        
+                        setTimeout(() => window.location.reload(), 1500);
                     } else {
                         toastr.error(response.message);
-                        $btn.prop('disabled', false);
-                        $btn.html('<i class="fas fa-check-circle mr-1"></i>Xác nhận hoàn thành');
+                        $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i>Xác nhận hoàn thành');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error(' Complete error:', xhr, status, error);
-                    console.error('Response:', xhr.responseText);
-                    
-                    let errorMsg = 'Đã xảy ra lỗi!';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    } else if (xhr.status === 404) {
-                        errorMsg = 'Không tìm thấy lịch hẹn';
-                    } else if (xhr.status === 500) {
-                        errorMsg = 'Lỗi server, vui lòng thử lại';
-                    } else if (xhr.status === 0) {
-                        errorMsg = 'Không thể kết nối server';
-                    }
-                    
-                    toastr.error(errorMsg);
-                    $btn.prop('disabled', false);
-                    $btn.html('<i class="fas fa-check-circle mr-1"></i>Xác nhận hoàn thành');
+                error: function(xhr) {
+                    let msg = 'Đã xảy ra lỗi!';
+                    if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                    else if (xhr.status === 404) msg = 'Không tìm thấy lịch hẹn';
+                    else if (xhr.status === 500) msg = 'Lỗi server';
+                    toastr.error(msg);
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i>Xác nhận hoàn thành');
                 }
             });
         });
@@ -936,7 +925,7 @@
 
 
         // ==========================================
-        // MISSED FOLLOW-UP BUTTON
+        // MISSED FOLLOW-UP MODAL
         // ==========================================
         $('.missed-followup-btn').click(function() {
             const followupId = $(this).data('id');
@@ -944,26 +933,38 @@
             const visit = $(this).data('visit');
             const expected = $(this).data('expected');
             
-            console.log('Opening missed modal for:', followupId, usubjid, visit);
-            
             $('#followup_id_missed').val(followupId);
             $('#missed_usubjid').text(usubjid);
             $('#missed_visit').text(visit);
-            $('#missed_expected_date_display').text(new Date(expected).toLocaleDateString('vi-VN'));
             
-            $('#missed_date_input').val(new Date().toISOString().split('T')[0]);
-            $('#missed_date_input').attr('min', expected);
+            // Parse and display expected date using robust parser; fallback to table cell if needed
+            let missedExpDate = parseIsoDate(expected);
+            if (!missedExpDate) {
+                const rowDisplay = $(this).closest('tr').find('span.text-nowrap').first().text().trim();
+                missedExpDate = parseDmy(rowDisplay);
+                if (missedExpDate) {
+                    $('#missed_expected_date_display').text(rowDisplay);
+                } else {
+                    $('#missed_expected_date_display').text('-');
+                }
+            } else {
+                const expDisplay = missedExpDate.getDate().toString().padStart(2, '0') + '/' + 
+                                   (missedExpDate.getMonth() + 1).toString().padStart(2, '0') + '/' + 
+                                   missedExpDate.getFullYear();
+                $('#missed_expected_date_display').text(expDisplay);
+            }
+            
+            // Set today as default
+            $('#missed_date_input').datepicker('setDate', new Date());
             
             $('#missedFollowupModal').modal('show');
         });
 
-        // Cancel missed
         $('#cancelMissedFollowup').click(function() {
             $('#missedFollowupForm')[0].reset();
             $('#missedFollowupModal').modal('hide');
         });
 
-        // Save missed
         $('#saveMissedFollowup').click(function() {
             const $btn = $(this);
             const followupId = $('#followup_id_missed').val();
@@ -974,50 +975,38 @@
                 toastr.error('Vui lòng chọn ngày missed!');
                 return;
             }
-            
             if (!missedReason) {
                 toastr.error('Vui lòng nhập lý do!');
                 return;
             }
             
-            $btn.prop('disabled', true);
-            $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Đang lưu...');
-            
-            const csrfToken = $('[name=csrfmiddlewaretoken]').val() || '{{ csrf_token }}';
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Đang lưu...');
             
             $.ajax({
                 url: `/studies/43en/followup-tracking/${followupId}/missed/`,
                 type: 'POST',
                 headers: {
-                    'X-CSRFToken': csrfToken,
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 data: {
-                    'missed_date': missedDate,
+                    'missed_date': toIso(missedDate),
                     'missed_reason': missedReason
                 },
                 success: function(response) {
                     if (response.success) {
                         toastr.success(response.message);
                         $('#missedFollowupModal').modal('hide');
-                        
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 1500);
+                        setTimeout(() => window.location.reload(), 1500);
                     } else {
                         toastr.error(response.message);
-                        $btn.prop('disabled', false);
-                        $btn.html('<i class="fas fa-times-circle mr-1"></i>Xác nhận Missed');
+                        $btn.prop('disabled', false).html('<i class="fas fa-times-circle mr-1"></i>Xác nhận Missed');
                     }
                 },
                 error: function(xhr) {
-                    let errorMsg = 'Đã xảy ra lỗi!';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    }
-                    toastr.error(errorMsg);
-                    $btn.prop('disabled', false);
-                    $btn.html('<i class="fas fa-times-circle mr-1"></i>Xác nhận Missed');
+                    let msg = xhr.responseJSON?.message || 'Đã xảy ra lỗi!';
+                    toastr.error(msg);
+                    $btn.prop('disabled', false).html('<i class="fas fa-times-circle mr-1"></i>Xác nhận Missed');
                 }
             });
         });

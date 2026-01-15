@@ -118,6 +118,15 @@ def patient_list(request):
     else:
         crf_status_map = {}
     
+    # 🚀 BATCH: Get all discharge cases to check death status
+    discharge_map = {}
+    if enrollments:
+        enrollment_ids = [e.pk for e in enrollments]
+        discharges = DISCH_CASE.objects.using('db_study_43en').filter(
+            USUBJID__in=enrollment_ids
+        ).select_related('USUBJID')
+        discharge_map = {d.USUBJID_id: d for d in discharges}
+    
     # Process status (giờ chỉ là lookup, không query DB!)
     for case in page_obj:
         enrollment = enrollment_map.get(case.pk)
@@ -133,6 +142,17 @@ def patient_list(request):
         
         # Get CRF status từ batch results
         crf_status = crf_status_map.get(enrollment.pk, {})
+        
+        # 🔥 Check death status from discharge
+        discharge_case = discharge_map.get(enrollment.pk)
+        is_deceased = discharge_case and discharge_case.DEATHATDISCH == 'Yes'
+        
+        # If patient died, study ends early (no need for all CRFs)
+        if is_deceased:
+            case.process_status = 'completed'
+            case.process_label = 'Study Completed (Died)'
+            case.process_badge = 'dark'
+            continue
         
         # Check EndCaseCRF
         if crf_status.get('EndCaseCRF', False):

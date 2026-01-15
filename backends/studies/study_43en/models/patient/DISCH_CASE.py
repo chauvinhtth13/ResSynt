@@ -308,10 +308,13 @@ class DISCH_CASE(AuditFieldsMixin):
             if self.DISCHSTATUS and self.DISCHSTATUS != self.DischargeStatusChoices.DIED:
                 errors['DISCHSTATUS'] = _('Discharge status must be "Died" when death occurred')
         
-        # Validate death status consistency
+        # Validate death status consistency (only if death is YES)
+        # Allow changing DEATHATDISCH from Yes to No - DISCHSTATUS will be auto-cleared in save()
         if self.DISCHSTATUS == self.DischargeStatusChoices.DIED:
             if self.DEATHATDISCH != self.YesNoNAChoices.YES:
-                errors['DEATHATDISCH'] = _('Death at discharge must be "Yes" when discharge status is "Died"')
+                # Only raise error if DEATHCAUSE is still filled (indicates user wants to keep death status)
+                if self.DEATHCAUSE and self.DEATHCAUSE.strip():
+                    errors['DEATHATDISCH'] = _('Death at discharge must be "Yes" when discharge status is "Died"')
         
         if errors:
             raise ValidationError(errors)
@@ -346,6 +349,10 @@ class DISCH_CASE(AuditFieldsMixin):
         # Auto-set discharge status if death occurred
         if self.DEATHATDISCH == self.YesNoNAChoices.YES:
             self.DISCHSTATUS = self.DischargeStatusChoices.DIED
+        # Auto-clear discharge status if death changed from Yes to No
+        elif self.DEATHATDISCH == self.YesNoNAChoices.NO:
+            if self.DISCHSTATUS == self.DischargeStatusChoices.DIED:
+                self.DISCHSTATUS = None  # Clear status - user must select new status
         
         super().save(*args, **kwargs)
     
