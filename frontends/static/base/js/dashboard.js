@@ -178,7 +178,7 @@
         });
         
         if (resizedCount > 0) {
-          console.log(`📊 Resized ${resizedCount} chart(s)`);
+          console.log(` Resized ${resizedCount} chart(s)`);
         }
       });
     }

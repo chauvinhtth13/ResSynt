@@ -11,7 +11,7 @@ $(document).ready(function () {
         return;
     }
 
-    console.log('✅ Modal found - changes detected by backend');
+    console.log(' Modal found - changes detected by backend');
 
     // 🎯 AUTO-DETECT form (support all forms)
     let $form = $('#householdCaseForm');  // Household Case form
@@ -48,7 +48,7 @@ $(document).ready(function () {
     }
 
     if ($form.length === 0) {
-        console.error('❌ No form found!');
+        console.error(' No form found!');
         return;
     }
 

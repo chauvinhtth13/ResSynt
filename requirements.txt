@@ -69,6 +69,8 @@ django-debug-toolbar>=4.4.0     # Debug toolbar (dev only)
 gunicorn>=23.0.0                # WSGI HTTP Server
 
 # =============================================================================
-# Optional: Encrypted Fields (commented in settings)
+# Encrypted Fields - FOR PII DATA
 # =============================================================================
-# django-encrypted-model-fields>=0.6.5
+# Using django-fernet-encrypted-fields for field-level encryption
+# Requires: FERNET_KEYS and SALT_KEY in settings
+django-fernet-encrypted-fields>=0.3.1

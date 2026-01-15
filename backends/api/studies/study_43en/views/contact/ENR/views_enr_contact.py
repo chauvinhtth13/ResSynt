@@ -221,7 +221,7 @@ def enrollment_contact_create(request, usubjid):
             if enrollment:
                 messages.success(
                     request,
-                    f'✅ Đã tạo thông tin đăng ký cho contact {usubjid} thành công.'
+                    f' Đã tạo thông tin đăng ký cho contact {usubjid} thành công.'
                 )
                 return redirect('study_43en:contact_detail', usubjid=usubjid)
         else:

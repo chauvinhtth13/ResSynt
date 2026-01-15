@@ -46,12 +46,20 @@ class HH_PERSONAL_DATA(AuditFieldsMixin):
     # ==========================================
     # ADDRESS INFORMATION (ENCRYPTED)
     # ==========================================
+    HOUSE_NUMBER = EncryptedCharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_('House Number/Building Details'),
+        help_text=_('House number, building name, apartment, etc. (encrypted)')
+    )
+    
     STREET = EncryptedCharField(
         max_length=255,
         null=True,
         blank=True,
-        verbose_name=_('Street/Road/Block'),
-        help_text=_('Street address (encrypted)')
+        verbose_name=_('Street/Road Name'),
+        help_text=_('Street or road name (encrypted)')
     )
     
     WARD = EncryptedCharField(
@@ -92,7 +100,7 @@ class HH_PERSONAL_DATA(AuditFieldsMixin):
     @property
     def full_address(self):
         """Get full address (decrypted)"""
-        parts = [self.STREET, self.WARD, self.CITY]
+        parts = [self.HOUSE_NUMBER, self.STREET, self.WARD, self.CITY]
         result = ', '.join(filter(None, parts))
         return result if result else None
     

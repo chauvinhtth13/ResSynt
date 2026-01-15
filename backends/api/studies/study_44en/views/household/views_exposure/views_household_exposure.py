@@ -129,10 +129,10 @@ def household_exposure_create(request, hhid):
                 return redirect('study_44en:household:detail', hhid=hhid)
                 
         except Exception as e:
-            logger.error(f"❌ Create failed: {e}", exc_info=True)
+            logger.error(f" Create failed: {e}", exc_info=True)
             messages.error(request, f'Error: {str(e)}')
     else:
-        logger.error("❌ Form validation failed")
+        logger.error(" Form validation failed")
         messages.error(request, 'Please check form errors')
     
     context = {
@@ -170,7 +170,7 @@ def household_exposure_update(request, hhid):
     We handle audit manually because flat fields are not in forms
     """
     logger.info("="*80)
-    logger.info("=== 📝 HOUSEHOLD EXPOSURE UPDATE START ===")
+    logger.info("===  HOUSEHOLD EXPOSURE UPDATE START ===")
     logger.info("="*80)
     
     household, _ = get_household_with_related(request, hhid)
@@ -248,15 +248,15 @@ def household_exposure_update(request, hhid):
         new_form_data = detector.extract_new_data(exposure_form)
         form_changes = detector.detect_changes(old_form_data, new_form_data)
         all_changes.extend(form_changes)
-        logger.info(f"📝 Form changes: {len(form_changes)}")
+        logger.info(f" Form changes: {len(form_changes)}")
     
     # Flat field changes
     flat_changes = detect_flat_field_changes(request, exposure)
     all_changes.extend(flat_changes)
     # Loại bỏ các thay đổi mà giá trị cũ và mới đều rỗng hoặc giống nhau
     all_changes = [c for c in all_changes if (str(c.get('old_value', '')).strip() != str(c.get('new_value', '')).strip()) and not (str(c.get('old_value', '')).strip() == '' and str(c.get('new_value', '')).strip() == '')]
-    logger.info(f"📝 Flat changes: {len(flat_changes)}")
-    logger.info(f"📝 TOTAL changes: {len(all_changes)}")
+    logger.info(f" Flat changes: {len(flat_changes)}")
+    logger.info(f" TOTAL changes: {len(all_changes)}")
     
     # STEP 2: No changes → save directly
     if not all_changes:
@@ -288,7 +288,7 @@ def household_exposure_update(request, hhid):
                 messages.success(request, 'Updated successfully!')
                 return redirect('study_44en:household:detail', hhid=hhid)
         except Exception as e:
-            logger.error(f"❌ Save failed: {e}", exc_info=True)
+            logger.error(f" Save failed: {e}", exc_info=True)
             messages.error(request, f'Error: {str(e)}')
     
     # STEP 3: Has changes → collect reasons
@@ -428,7 +428,7 @@ def household_exposure_update(request, hhid):
             messages.success(request, f'Cập nhật thành công exposure cho hộ {hhid}!')
             return redirect('study_44en:household:detail', hhid=hhid)
     except Exception as e:
-        logger.error(f"❌ Save failed: {e}", exc_info=True)
+        logger.error(f" Save failed: {e}", exc_info=True)
         messages.error(request, f'Error: {str(e)}')
     
     # Re-render with errors

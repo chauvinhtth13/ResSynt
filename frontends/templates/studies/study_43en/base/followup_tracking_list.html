@@ -32,12 +32,12 @@
                             <div class="input-group">
 
                                 <input type="text" class="form-control datepicker" name="date_from" id="date_from" 
-                                    value="{{ date_from|date:'d/m/Y' }}" placeholder="DD/MM/YYYY">
+                                    value="{{ date_from|date:'Y-m-d' }}" placeholder="DD/MM/YYYY" data-provide="datepicker">
                                 <div class="input-group-prepend input-group-append">
                                     <span class="input-group-text">đến</span>
                                 </div>
                                 <input type="text" class="form-control datepicker" name="date_to" id="date_to" 
-                                    value="{{ date_to|date:'d/m/Y' }}" placeholder="DD/MM/YYYY">
+                                    value="{{ date_to|date:'Y-m-d' }}" placeholder="DD/MM/YYYY" data-provide="datepicker">
                             </div>
                         </div>
                     </div>
@@ -177,7 +177,7 @@
                             {% elif followup.STATUS == 'MISSED' %}
                                 <span class="badge badge-danger  "><i class="fas fa-times-circle mr-1"></i>Bỏ lỡ</span>
                             {% elif followup.STATUS == 'UPCOMING' %}
-                                <span class="badge badge-primary "><i class="fas fa-calendar mr-1"></i>Sắp tới</span>
+                                <span class="badge badge-primary "><i ></i>Sắp tới</span>
                             {% endif %}
                         </td>
                         <td>
@@ -325,7 +325,7 @@
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
                             <span class="badge badge-primary ">Bệnh nhân</span>
                             {% else %}
-                            <span class="badge badge-info">Người tiếp xúc</span>
+                            <span class="badge badge-info text-dark">Người tiếp xúc</span>
                             {% endif %}
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>
@@ -466,7 +466,7 @@
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
                             <span class="badge badge-primary ">Bệnh nhân</span>
                             {% else %}
-                            <span class="badge badge-info">Người tiếp xúc</span>
+                            <span class="badge badge-info text-dark">Người tiếp xúc</span>
                             {% endif %}
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>
@@ -783,9 +783,18 @@
                 console.log('📅 All records:', formatDate(from), 'to', formatDate(to));
             }
             
-            // Set giá trị vào input
-            $('#date_from').val(formatDate(from));
-            $('#date_to').val(formatDate(to));
+            // Set giá trị vào input (format Y-m-d)
+            const fromFormatted = formatDate(from);
+            const toFormatted = formatDate(to);
+            
+            console.log('📅 Setting dates:', fromFormatted, 'to', toFormatted);
+            
+            $('#date_from').val(fromFormatted);
+            $('#date_to').val(toFormatted);
+            
+            // Force update datepicker display
+            $('#date_from').datepicker('update');
+            $('#date_to').datepicker('update');
             
             // Submit form
             $('#filterForm').submit();
@@ -824,10 +833,10 @@
         });
         
         // ==========================================
-        // ❌ CANCEL BUTTON - CLOSE MODAL
+        //  CANCEL BUTTON - CLOSE MODAL
         // ==========================================
         $('#cancelCompleteFollowup').click(function() {
-            console.log('❌ Cancel button clicked');
+            console.log(' Cancel button clicked');
             
             // Reset form
             $('#completeFollowupForm')[0].reset();
@@ -903,7 +912,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('❌ Complete error:', xhr, status, error);
+                    console.error(' Complete error:', xhr, status, error);
                     console.error('Response:', xhr.responseText);
                     
                     let errorMsg = 'Đã xảy ra lỗi!';
@@ -1016,7 +1025,7 @@
         console.log(' Follow-up tracking ready');
         
         // ==========================================
-        // 📊 EXPORT EXCEL
+        //  EXPORT EXCEL
         // ==========================================
         $('#exportExcel').click(function() {
             const queryString = window.location.search;

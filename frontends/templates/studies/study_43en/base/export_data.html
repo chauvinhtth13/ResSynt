@@ -12,7 +12,7 @@
     <!-- Page Header -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-file-export mr-2"></i>Export Data
+            <i ></i>Export Data
         </h1>
         <a href="{% url 'study_43en:home_dashboard' %}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-arrow-left mr-1"></i>Back to Dashboard
@@ -29,7 +29,7 @@
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-hospital mr-2"></i>Site Selection
+                            <i ></i>Site Selection
                         </h6>
                     </div>
                     <div class="card-body">
@@ -51,7 +51,7 @@
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-file-medical mr-2"></i>CRF Selection
+                            <i ></i>CRF Selection
                         </h6>
                     </div>
                     <div class="card-body">
@@ -59,7 +59,7 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="text-primary mb-0">
-                                    <i class="fas fa-user-injured mr-2"></i>Patient CRFs
+                                    <i ></i>Patient CRFs
                                 </h6>
                                 <div class="btn-group btn-group-sm">
                                     <button type="button" class="btn btn-primary btn-select-patient" data-action="select">
@@ -203,7 +203,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="text-info mb-0">
-                                    <i class="fas fa-users mr-2"></i>Contact CRFs
+                                    <i ></i>Contact CRFs
                                 </h6>
                                 <div class="btn-group btn-group-sm">
                                     <button type="button" class="btn btn-info btn-select-contact" data-action="select">
@@ -260,7 +260,7 @@
                 <div class="card shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-calendar-alt mr-2"></i>Date Range Filter
+                            <i ></i>Date Range Filter
                         </h6>
                     </div>
                     <div class="card-body">
@@ -293,7 +293,7 @@
                 <div class="card shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-cog mr-2"></i>Export Options
+                            <i ></i>Export Options
                         </h6>
                     </div>
                     <div class="card-body">
@@ -302,13 +302,13 @@
                             <div class="custom-control custom-radio">
                                 <input class="custom-control-input" type="radio" name="export_format" id="format_excel" value="excel" checked>
                                 <label class="custom-control-label" for="format_excel">
-                                    <i class="fas fa-file-excel text-success mr-1"></i>Excel (.xlsx)
+                                    <i ></i>Excel (.xlsx)
                                 </label>
                             </div>
                             <div class="custom-control custom-radio">
                                 <input class="custom-control-input" type="radio" name="export_format" id="format_csv" value="csv">
                                 <label class="custom-control-label" for="format_csv">
-                                    <i class="fas fa-file-csv text-info mr-1"></i>CSV (.csv)
+                                    <i ></i>CSV (.csv)
                                 </label>
                             </div>
                         </div>
@@ -385,7 +385,7 @@
                                         <i class="fas fa-file-excel text-success mr-2"></i>
                                         <strong class="text-sm">{{ export.filename }}</strong>
                                     </div>
-                                    <span class="badge badge-info">{{ export.file_size }}</span>
+                                    <span class="badge badge-info text-dark">{{ export.file_size }}</span>
                                 </div>
                                 <div class="ml-4 mt-1">
                                     <small class="text-muted">
@@ -400,7 +400,6 @@
                             {% endfor %}
                         {% else %}
                             <p class="text-muted text-center mb-0 py-4">
-                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
                                 No recent exports yet
                             </p>
                         {% endif %}

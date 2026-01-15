@@ -146,12 +146,12 @@ def screening_contact_create(request):
     
     # Validate siteid exists
     if not siteid:
-        messages.error(request, _('❌ Missing SITEID. Please select a site first.'))
+        messages.error(request, _(' Missing SITEID. Please select a site first.'))
         return redirect('study_43en:screening_contact_list')
     
     # Validate siteid format
     if siteid not in ['003', '020', '011']:
-        messages.error(request, _('❌ Invalid SITEID. Must be 003, 020, or 011.'))
+        messages.error(request, _(' Invalid SITEID. Must be 003, 020, or 011.'))
         return redirect('study_43en:screening_contact_list')
     
     # 🔒 SECURITY FIX: Check user's ACTUAL site permissions (not just session)
@@ -190,7 +190,7 @@ def screening_contact_create(request):
                         max_num = num
             
             instance.SCRID = f"CS-{siteid}-{max_num + 1:04d}"
-            logger.info(f"📝 Generated Contact SCRID: {instance.SCRID}")
+            logger.info(f" Generated Contact SCRID: {instance.SCRID}")
     
     def post_save(instance):
         """Redirect to enrollment if confirmed"""

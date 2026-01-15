@@ -10,11 +10,15 @@ class HH_PersonalDataForm(forms.ModelForm):
     
     class Meta:
         model = HH_PERSONAL_DATA
-        fields = ['STREET', 'WARD', 'CITY']
+        fields = ['HOUSE_NUMBER', 'STREET', 'WARD', 'CITY']
         widgets = {
+            'HOUSE_NUMBER': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('House number, building, apartment')
+            }),
             'STREET': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('Street/Road/Block')
+                'placeholder': _('Street/Road Name')
             }),
             'WARD': forms.TextInput(attrs={
                 'class': 'form-control',

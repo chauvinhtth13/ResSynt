@@ -248,7 +248,7 @@
         
         {% if medhisdrug_formset.errors %}
         <div class="alert alert-warning">
-          <h5><i class="fas fa-pills"></i> {% trans "Medication Errors" %}</h5>
+          <h5><i ></i> {% trans "Medication Errors" %}</h5>
           <ul class="mb-0">
             {% for error in medhisdrug_formset.errors %}
               <li>{{ error }}</li>
@@ -279,7 +279,7 @@
           {# ========== ENROLLMENT CASE CONTAINER ========== #}
           <div class="enr-case-container">
             <div class="enr-case-header">
-              <i class="fas fa-user-circle mr-2"></i>ENROLLMENT - CASE
+              <i ></i>ENROLLMENT - CASE
             </div>
             
             <div class="enr-case-content">
@@ -313,9 +313,9 @@
               
               {#  THÊM SECTION MỚI: CONTACT INFORMATION #}
               <div class="form-section-header" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                <i class="fas fa-id-card mr-2"></i>{% trans "Personal Contact Information" %}
+                <i ></i>{% trans "Personal Contact Information" %}
                 <small class="float-right text-white-50">
-                  <i class="fas fa-lock mr-1"></i>{% trans "Confidential" %}
+                  <i ></i>{% trans "Confidential" %}
                 </small>
               </div>
               
@@ -328,7 +328,7 @@
                     </label>
                     <div class="input-group">
                       <div >
-                          <i class="fas fa-user-shield"></i>
+                          <i ></i>
                         </span>
                       </div>
                       {{ personal_form.FULLNAME }}
@@ -378,7 +378,7 @@
                 <div class="d-flex align-items-center">
                   <i class="fas fa-shield-alt fa-2x mr-3 text-warning"></i>
                   <div>
-                    <strong><i class="fas fa-lock mr-1"></i>{% trans "Privacy Notice" %}:</strong>
+                    <strong><i ></i>{% trans "Privacy Notice" %}:</strong>
                     {% trans "Full name and phone number are confidential personal information and will be protected according to data privacy regulations." %}
                   </div>
                 </div>
@@ -396,7 +396,7 @@
                 </label>
                 <div class="input-group">
                   <div >
-                    <span ><i class="far fa-calendar-alt"></i></span>
+                    <span ><i ></i></span>
                   </div>
                   {{ form.ENRDATE }}
                 </div>
@@ -412,7 +412,7 @@
                 </label>
                 <div class="input-group">
                   <div >
-                    <span ><i class="fas fa-hospital"></i></span>
+                    <span ><i ></i></span>
                   </div>
                   {{ form.RECRUITDEPT }}
                 </div>
@@ -459,7 +459,7 @@
                 <label for="{{ form.ETHNICITY.id_for_label }}">{% trans "Ethnicity" %}</label>
                 <div class="input-group">
                   <div >
-                    <span ><i class="fas fa-users"></i></span>
+                    <span ><i ></i></span>
                   </div>
                   {{ form.ETHNICITY }}
                 </div>
@@ -470,7 +470,7 @@
                 <label for="{{ form.OCCUPATION.id_for_label }}">{% trans "Occupation" %}</label>
                 <div class="input-group">
                   <div >
-                    <span ><i class="fas fa-briefcase"></i></span>
+                    <span ><i ></i></span>
                   </div>
                   {{ form.OCCUPATION }}
                 </div>
@@ -523,7 +523,7 @@
                       </label>
                       <div class="input-group">
                         <div >
-                          <span ><i class="far fa-calendar-alt"></i></span>
+                          <span ><i ></i></span>
                         </div>
                         {{ form.PRIORHOSPIADMISDATE }} 
                       </div>
@@ -539,7 +539,7 @@
                         </label>
                         <div class="input-group">
                           <div >
-                            <span ><i class="fas fa-hospital"></i></span>
+                            <span ><i ></i></span>
                           </div>
                           {{ form.HEALFACILITYNAME }}
                         </div>
@@ -561,231 +561,253 @@
                 <i class="fas fa-map-marked-alt mr-2"></i>{% trans "Epidemiology" %}
               </div>
 
-              {# 8. Address Information #}
-              <div class="numbered-item" data-number="9">
-                <label>{% trans "Current Residence Address" %}</label>
+            {# 8. Address Information #}
+            <div class="numbered-item" data-number="9">
+            <label>{% trans "Current Residence Address" %}</label>
+            
+            {# Primary Address Selection - NEW or OLD only #}
+            <div class="mb-4">
+                <div class="row">
+                <div class="col-md-12">
+                    <div class="address-selection-group">
+                    
+                    {# NEW Address Option #}
+                    <div class="address-option">
+                        <input type="radio" 
+                            name="PRIMARY_ADDRESS" 
+                            value="new" 
+                            id="id_PRIMARY_ADDRESS_new"
+                            {% if personal_form.PRIMARY_ADDRESS.value == 'new' or not personal_form.PRIMARY_ADDRESS.value %}checked{% endif %}
+                            class="address-system-radio">
+                        <label for="id_PRIMARY_ADDRESS_new" class="address-option-label">
+                        <div class="address-option-header">
+                            <i class="fas fa-map-marked-alt text-success"></i>
+                            <strong>Địa chỉ mới (Sau sáp nhập)</strong>
+                            <span class="badge badge-success ml-2">Không Quận</span>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            Chọn trực tiếp Phường/Xã (168 phường)
+                        </small>
+                        </label>
+                    </div>
+                    
+                    {# OLD Address Option #}
+                    <div class="address-option">
+                        <input type="radio" 
+                            name="PRIMARY_ADDRESS" 
+                            value="old" 
+                            id="id_PRIMARY_ADDRESS_old"
+                            {% if personal_form.PRIMARY_ADDRESS.value == 'old' %}checked{% endif %}
+                            class="address-system-radio">
+                        <label for="id_PRIMARY_ADDRESS_old" class="address-option-label">
+                        <div class="address-option-header">
+                            <i class="fas fa-archive text-secondary"></i>
+                            <strong>Địa chỉ cũ (Trước sáp nhập)</strong>
+                            <span class="badge badge-secondary ml-2">Có Quận</span>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            Quận → Phường/Xã (24 quận)
+                        </small>
+                        </label>
+                    </div>
+                    
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            {# NEW ADDRESS FIELDS (Direct Wards) #}
+            <div id="new-address-fields" class="address-fields-container" style="display: none;" data-address-mode="new">
+                <div class="address-subsection">
+                <div class="address-subsection-header">
+                    <i class="fas fa-map-marked-alt text-success mr-2"></i>
+                    <strong>Địa chỉ theo Đơn vị Hành chính mới</strong>
+                    <span class="badge badge-success ml-2">168 Phường</span>
+                </div>
                 
-                {# Address System Information Box #}
+                <div class="row mt-3">
+                    {# Ward - Direct Selection (NO District) #}
+                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                        Phường/Xã <span class="text-danger">*</span>
+                        </label>
+                        <select id="ward-select-new" class="form-control" {% if is_readonly %}disabled{% endif %}>
+                        <option value="">-- Đang tải... --</option>
+                        </select>
+                        <small class="text-muted">Chọn phường/xã (sau sáp nhập)</small>
+                        
+                        {# Hidden input for backend #}
+                        <input type="hidden" id="ward-hidden-input-new" name="WARD_NEW" 
+                            value="{{ personal_form.WARD_NEW.value|default:'' }}">
+                    </div>
+                    </div>
+                    
+                    {# Street #}
+                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Tên đường</label>
+                        <input type="text" 
+                            id="street-input-new"
+                            name="STREET_NEW"
+                            class="form-control"
+                            value="{{ personal_form.STREET_NEW.value|default:'' }}"
+                            placeholder="Nhập tên đường"
+                            {% if is_readonly %}disabled{% endif %}>
+                        <small class="text-muted">Nhập tên đường (nếu có)</small>
+                    </div>
+                    </div>
+                    
+                    {# House Number - NEW #}
+                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Số nhà / Chi tiết</label>
+                        <input type="text" 
+                            id="house-number-new"
+                            name="HOUSE_NUMBER_NEW"
+                            class="form-control"
+                            value="{{ personal_form.HOUSE_NUMBER_NEW.value|default:'' }}"
+                            placeholder="Ví dụ: 123/45, Tòa A, Căn hộ 6B"
+                            {% if is_readonly %}disabled{% endif %}>
+                        <small class="text-muted">Số nhà, tòa nhà, căn hộ, v.v.</small>
+                    </div>
+                    </div>
+                    
+                    {# City (Fixed) #}
+                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                        Tỉnh/Thành phố <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                            name="CITY_NEW" 
+                            class="form-control"
+                            value="{{ personal_form.CITY_NEW.value|default:'TP. Hồ Chí Minh' }}"
+                            placeholder="TP. Hồ Chí Minh"
+                            {% if is_readonly %}disabled{% endif %}>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            {# OLD ADDRESS FIELDS (With Districts) - SMART ADDRESS #}
+            <div id="old-address-fields" class="address-fields-container" style="display: none;" data-address-mode="old">
+                <div class="address-subsection">
+                <div class="address-subsection-header">
+                    <i class="fas fa-archive text-secondary mr-2"></i>
+                    <strong>Địa chỉ theo đơn vị hành chính cũ (HCM)</strong>
+                    <span class="badge badge-secondary ml-2">Smart Selection</span>
+                </div>
                 
-                {# Primary Address Selection #}
-                <div class="mb-4">
-                  
-                  <div class="row">
+                {# Smart Address Selection #}
+                <div class="row mt-3">
+                    {# District #}
+                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                        Quận/Huyện <span class="text-danger">*</span>
+                        </label>
+                        <select id="district-select" class="form-control" {% if is_readonly %}disabled{% endif %}>
+                        <option value="">-- Đang tải... --</option>
+                        </select>
+                        <small class="text-muted">Chọn quận/huyện trước</small>
+                        
+                        {# Hidden input for backend #}
+                        <input type="hidden" id="district-hidden-input" name="DISTRICT" 
+                            value="{{ personal_form.DISTRICT.value|default:'' }}">
+                    </div>
+                    </div>
+                    
+                    {# Ward #}
+                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                        Phường/Xã <span class="text-danger">*</span>
+                        </label>
+                        <select id="ward-select" class="form-control" disabled {% if is_readonly %}disabled{% endif %}>
+                        <option value="">-- Chọn quận/huyện trước --</option>
+                        </select>
+                        
+                        {# Hidden input for backend #}
+                        <input type="hidden" id="ward-hidden-input" name="WARD" 
+                            value="{{ personal_form.WARD.value|default:'' }}">
+                    </div>
+                    </div>
+                    
+                    {# Street Autocomplete #}
+                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Tên đường</label>
+                        <div class="position-relative">
+                        <input type="text" 
+                                id="street-autocomplete" 
+                                name="STREET"
+                                class="form-control"
+                                value="{{ personal_form.STREET.value|default:'' }}"
+                                placeholder="Gõ để tìm kiếm..." 
+                                autocomplete="off"
+                                {% if is_readonly %}disabled{% endif %}>
+                        <div id="street-suggestions" 
+                            class="list-group position-absolute w-100"
+                            style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+                        </div>
+                        </div>
+                        <small class="text-muted">Chọn quận để tìm đường</small>
+                    </div>
+                    </div>
+                    
+                    {# House Number - OLD #}
+                    <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Số nhà / Chi tiết</label>
+                        <input type="text" 
+                            id="full-address-input"
+                            name="HOUSE_NUMBER"
+                            class="form-control"
+                            value="{{ personal_form.HOUSE_NUMBER.value|default:'' }}"
+                            placeholder="Ví dụ: 123/45, Tòa A, Căn hộ 6B"
+                            {% if is_readonly %}disabled{% endif %}>
+                        <small class="text-muted">Số nhà, tòa nhà, căn hộ, v.v.</small>
+                    </div>
+                    </div>
+                </div>
+                
+                {# City (Fixed for OLD) #}
+                <div class="row">
                     <div class="col-md-12">
-                      <div class="address-selection-group">
-                        <div class="address-option">
-                          <input type="radio" 
-                                name="PRIMARY_ADDRESS" 
-                                value="new" 
-                                id="id_PRIMARY_ADDRESS_new"
-                                {% if personal_form.PRIMARY_ADDRESS.value == 'new' or not personal_form.PRIMARY_ADDRESS.value %}checked{% endif %}
-                                class="address-system-radio">
-                          <label for="id_PRIMARY_ADDRESS_new" class="address-option-label">
-                            <div class="address-option-header">
-                              <i class="fas  text-success"></i>
-                              <strong>Địa chỉ mới</strong>
-                              <span class="badge badge-success ml-2"></span>
-                            </div>
-                          </label>
-                        </div>
-                        
-                        <div class="address-option">
-                          <input type="radio" 
-                                name="PRIMARY_ADDRESS" 
-                                value="old" 
-                                id="id_PRIMARY_ADDRESS_old"
-                                {% if personal_form.PRIMARY_ADDRESS.value == 'old' %}checked{% endif %}
-                                class="address-system-radio">
-                          <label for="id_PRIMARY_ADDRESS_old" class="address-option-label">
-                            <div class="address-option-header">
-                              <i class="fas fa-archive text-secondary"></i>
-                              <strong>Địa chỉ cũ</strong>
-                              <span class="badge badge-secondary ml-2"></span>
-                            </div>
-                          </label>
-                        </div>
-                        
-                        <div class="address-option">
-                          <input type="radio" 
-                                name="PRIMARY_ADDRESS" 
-                                value="both" 
-                                id="id_PRIMARY_ADDRESS_both"
-                                {% if personal_form.PRIMARY_ADDRESS.value == 'both' %}checked{% endif %}
-                                class="address-system-radio">
-                          <label for="id_PRIMARY_ADDRESS_both" class="address-option-label">
-                            <div class="address-option-header">
-                              <i class="fas fa-layer-group text-primary"></i>
-                              <strong>Cả hai địa chỉ</strong>
-                              <span class="badge badge-primary ml-2"></span>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                        Tỉnh/Thành phố <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                            name="PROVINCECITY" 
+                            class="form-control"
+                            value="{{ personal_form.PROVINCECITY.value|default:'TP. Hồ Chí Minh' }}"
+                            placeholder="TP. Hồ Chí Minh"
+                            {% if is_readonly %}disabled{% endif %}>
                     </div>
-                  </div>
+                    </div>
                 </div>
-                
-                {# NEW ADDRESS FIELDS #}
-                <div id="new-address-fields" class="address-fields-container" style="display: none;">
-                  <div class="address-subsection">
-                    <div class="address-subsection-header">
-                      <i class="fas fa-map-marked-alt text-success mr-2"></i>
-                      <strong>Địa chỉ theo Đơn vị Hành chính mới</strong>
-                      <span class="badge badge-success ml-2"></span>
-                    </div>
-                    
-                    <div class="row mt-3">
-                      <div class="col-md-3">
-                        <div class="form-group">
-                          <label class="text-muted small">
-                            <i class="fas fa-road mr-1"></i>Đường/Số nhà
-                          </label>
-                          <div class="input-group">
-                            <div >
-                              <i class="fas fa-road"></i></span>
-                            </div>
-                            {{ personal_form.STREET_NEW }}
-                          </div>
-                          {% if personal_form.STREET_NEW.errors %}
-                            <small class="text-danger">{{ personal_form.STREET_NEW.errors.0 }}</small>
-                          {% endif %}
-                        </div>
-                      </div>
-                      
-                      <div class="col-md-3">
-                        <div class="form-group">
-                          <label class="text-muted small">
-                            <i class="fas fa-home mr-1"></i>Phường/Xã
-                          </label>
-                          <div class="input-group">
-                            <div >
-                              <i class="fas fa-home"></i></span>
-                            </div>
-                            {{ personal_form.WARD_NEW }}
-                          </div>
-                          {% if personal_form.WARD_NEW.errors %}
-                            <small class="text-danger">{{ personal_form.WARD_NEW.errors.0 }}</small>
-                          {% endif %}
-                        </div>
-                      </div>
-                      
-                      <div class="col-md-3">
-                        <div class="form-group">
-                          <label class="text-muted small">
-                            <i class="fas fa-flag mr-1"></i>Tỉnh/Thành phố
-                          </label>
-                          <div class="input-group">
-                            <div >
-                              <i class="fas fa-flag"></i></span>
-                            </div>
-                            {{ personal_form.CITY_NEW }}
-                          </div>
-                          {% if personal_form.CITY_NEW.errors %}
-                            <small class="text-danger">{{ personal_form.CITY_NEW.errors.0 }}</small>
-                          {% endif %}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-                
-                {# OLD ADDRESS FIELDS #}
-                <div id="old-address-fields" class="address-fields-container" style="display: none;">
-                  <div class="address-subsection">
-                    <div class="address-subsection-header">
-                      <i class="fas fa-archive text-secondary mr-2"></i>
-                      <strong>Địa chỉ theo đơn vị hành chính cũ</strong>
-                      <span class="badge badge-secondary ml-2"></span>
+            </div>
+            
+            {# Address Preview #}
+            <div class="mt-3">
+                <div class="alert alert-light border" style="background-color: #f8f9fa;">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                    <strong><i class="fas fa-eye text-primary mr-2"></i>Xem trước:</strong>
                     </div>
-                    
-                    <div class="row mt-3">
-                      <div class="col-md-3">
-                        <div class="form-group">
-                          <label class="text-muted small">
-                            <i class="fas fa-road mr-1"></i>Đường/Số nhà
-                          </label>
-                          <div class="input-group">
-                            <div >
-                              <i class="fas fa-road"></i></span>
-                            </div>
-                            {{ personal_form.STREET }}
-                          </div>
-                          {% if personal_form.STREET.errors %}
-                            <small class="text-danger">{{ personal_form.STREET.errors.0 }}</small>
-                          {% endif %}
-                        </div>
-                      </div>
-                      
-                      <div class="col-md-3">
-                        <div class="form-group">
-                          <label class="text-muted small">
-                            <i class="fas fa-home mr-1"></i>Phường/Xã
-                          </label>
-                          <div class="input-group">
-                            <div >
-                              <i class="fas fa-home"></i></span>
-                            </div>
-                            {{ personal_form.WARD }}
-                          </div>
-                          {% if personal_form.WARD.errors %}
-                            <small class="text-danger">{{ personal_form.WARD.errors.0 }}</small>
-                          {% endif %}
-                        </div>
-                      </div>
-                      
-                      <div class="col-md-3">
-                        <div class="form-group">
-                          <label class="text-muted small">
-                            <i class="fas fa-city mr-1"></i>Quận/Huyện
-                          </label>
-                          <div class="input-group">
-                            <div >
-                              <i class="fas fa-city"></i></span>
-                            </div>
-                            {{ personal_form.DISTRICT }}
-                          </div>
-                          {% if personal_form.DISTRICT.errors %}
-                            <small class="text-danger">{{ personal_form.DISTRICT.errors.0 }}</small>
-                          {% endif %}
-                        </div>
-                      </div>
-                      
-                      <div class="col-md-3">
-                        <div class="form-group">
-                          <label class="text-muted small">
-                            <i class="fas fa-flag mr-1"></i>Tỉnh/Thành phố
-                          </label>
-                          <div class="input-group">
-                            <div >
-                              <i class="fas fa-flag"></i></span>
-                            </div>
-                            {{ personal_form.PROVINCECITY }}
-                          </div>
-                          {% if personal_form.PROVINCECITY.errors %}
-                            <small class="text-danger">{{ personal_form.PROVINCECITY.errors.0 }}</small>
-                          {% endif %}
-                        </div>
-                      </div>
+                    <div class="col-md-10">
+                    <div id="address-preview" class="address-preview-content">
+                        <span class="text-muted font-italic">Địa chỉ sẽ hiển thị tại đây khi bạn nhập...</span>
                     </div>
-                  </div>
+                    </div>
                 </div>
-                
-                {# Address Preview #}
-                <div class="mt-3">
-                  <div class="alert alert-light border" style="background-color: #f8f9fa;">
-                    <div class="row align-items-center">
-                      <div class="col-md-2">
-                        <strong><i class="fas fa-eye text-primary mr-2"></i>Xem trước:</strong>
-                      </div>
-                      <div class="col-md-10">
-                        <div id="address-preview" class="address-preview-content">
-                          <span class="text-muted font-italic">Địa chỉ sẽ hiển thị tại đây khi bạn nhập...</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              </div>
+            </div>
+            </div>
               
               {# 9. Toilet Information #}
               <div class="row">
@@ -1387,8 +1409,6 @@
 {% endblock %}
 
 
-{% include 'studies/study_43en/includes/datepicker_scripts.html' %}
-
 {% block dashboard_js %}
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
 
@@ -1400,10 +1420,12 @@ window.enrollmentFormState = {
 };
 </script>
 
-
 {# Custom Scripts #}
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/enrollment-form.js' %}"></script>
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
+
+{# UPDATED: Use unified smart address script instead of old version #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_44en/js/smart_address_hcmc.js' %}"></script>
 
 {# Scripts Loaded Check #}
 <script>
@@ -1411,6 +1433,7 @@ console.log('=== ENROLLMENT FORM SCRIPTS DEBUG ===');
 console.log('jQuery loaded:', typeof jQuery !== 'undefined');
 console.log('Moment loaded:', typeof moment !== 'undefined');
 console.log('Awesomplete loaded:', typeof Awesomplete !== 'undefined');
+console.log('SmartAddress loaded:', typeof window.SmartAddress !== 'undefined');
 console.log('enrollmentFormState:', window.enrollmentFormState);
 console.log('=====================================');
 </script>
@@ -1437,10 +1460,10 @@ $(document).ready(function() {
     console.log('  INITIAL_FORMS:', $initialForms.length > 0 ? 'YES (value: ' + $initialForms.val() + ')' : 'NO');
     
     if ($totalForms.length === 0) {
-        console.error(' TOTAL_FORMS NOT FOUND! This will cause validation error.');
+        console.error('✗ TOTAL_FORMS NOT FOUND! This will cause validation error.');
     }
     if ($initialForms.length === 0) {
-        console.error(' INITIAL_FORMS NOT FOUND! This will cause validation error.');
+        console.error('✗ INITIAL_FORMS NOT FOUND! This will cause validation error.');
     }
     
     console.log('=====================');

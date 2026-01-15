@@ -75,7 +75,7 @@ def generate_contact_scrid(request):
         })
         
     except Exception as e:
-        logger.error(f"❌ Error generating Contact SCRID: {e}")
+        logger.error(f" Error generating Contact SCRID: {e}")
         return JsonResponse({
             'success': False,
             'error': str(e)

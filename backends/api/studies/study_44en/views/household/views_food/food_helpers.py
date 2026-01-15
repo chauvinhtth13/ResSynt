@@ -28,7 +28,7 @@ def set_audit_metadata(instance, user):
     """
     Set audit fields on instance
     
-    📝 TODO: Move to backends/audit_log/utils/view_helpers.py
+     TODO: Move to backends/audit_log/utils/view_helpers.py
     """
     if hasattr(instance, 'last_modified_by_id'):
         instance.last_modified_by_id = user.id
@@ -44,7 +44,7 @@ def make_form_readonly(form):
     """
     Make all form fields readonly
     
-    📝 TODO: Move to backends/audit_log/utils/view_helpers.py
+     TODO: Move to backends/audit_log/utils/view_helpers.py
     """
     for field in form.fields.values():
         field.disabled = True
@@ -127,7 +127,7 @@ def save_food_data(request, forms_dict, household, is_create=False):
             # ===================================
             # 1. SAVE FOOD FREQUENCY (MAIN)
             # ===================================
-            logger.info("📝 Step 1: Saving food frequency...")
+            logger.info(" Step 1: Saving food frequency...")
             
             food_frequency = forms_dict['main'].save(commit=False)
             food_frequency.HHID = household
@@ -145,7 +145,7 @@ def save_food_data(request, forms_dict, household, is_create=False):
             # 2. SAVE FOOD SOURCE (RELATED)
             # ===================================
             if 'related' in forms_dict and 'food_source' in forms_dict['related']:
-                logger.info("📝 Step 2: Saving food source...")
+                logger.info(" Step 2: Saving food source...")
                 
                 food_source = forms_dict['related']['food_source'].save(commit=False)
                 food_source.HHID = household
@@ -162,7 +162,7 @@ def save_food_data(request, forms_dict, household, is_create=False):
             
     except Exception as e:
         logger.error("="*80)
-        logger.error(f"❌ SAVE FAILED: {e}")
+        logger.error(f" SAVE FAILED: {e}")
         logger.error("="*80)
         logger.error(f"Full error:", exc_info=True)
         messages.error(request, f'Lỗi khi lưu: {str(e)}')
@@ -176,7 +176,7 @@ def save_food_data(request, forms_dict, household, is_create=False):
 def log_form_errors(form, form_name):
     """Log form validation errors"""
     if form.errors:
-        logger.warning(f"❌ {form_name} errors: {form.errors}")
+        logger.warning(f" {form_name} errors: {form.errors}")
         return True
     return False
 

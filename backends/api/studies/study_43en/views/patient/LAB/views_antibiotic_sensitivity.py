@@ -358,10 +358,10 @@ def antibiotic_list(request, usubjid, culture_id):
                             logger.info(f"     ⏭️  No changes detected for {test.AST_ID}")
                     
                     except AntibioticSensitivity.DoesNotExist:
-                        logger.warning(f"  ❌ Test {test_id} not found")
+                        logger.warning(f"   Test {test_id} not found")
                         continue
                     except Exception as e:
-                        logger.error(f"  ❌ Error processing test {test_id}: {e}", exc_info=True)
+                        logger.error(f"   Error processing test {test_id}: {e}", exc_info=True)
                         continue
                 
                 # Process NEW tests (identifier format: new_AntibioticName_Tier)
@@ -375,7 +375,7 @@ def antibiotic_list(request, usubjid, culture_id):
                     # Format: new_Ampicillin_Tier1 → antibiotic=Ampicillin, tier=Tier1
                     parts = identifier.replace('new_', '').rsplit('_', 1)
                     if len(parts) != 2:
-                        logger.warning(f"  ❌ Invalid new test identifier: {identifier}")
+                        logger.warning(f"   Invalid new test identifier: {identifier}")
                         continue
                     
                     antibiotic_name = parts[0]  # e.g., "Ampicillin"
@@ -408,7 +408,7 @@ def antibiotic_list(request, usubjid, culture_id):
 
         # FINAL SUMMARY LOG
         logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        logger.info(f"📊 PROCESSING SUMMARY:")
+        logger.info(f" PROCESSING SUMMARY:")
         logger.info(f"   Total POST sensitivity keys: {len(post_keys)}")
         logger.info(f"   Tests processed: {len(changes_by_test)}")
         logger.info(f"   Total changes detected: {len(all_changes)}")
@@ -484,7 +484,7 @@ def antibiotic_list(request, usubjid, culture_id):
                             logger.info(f" Updated (first-fill) {test.AST_ID}")
                     
                     except Exception as e:
-                        logger.error(f"❌ Error processing test {test_key}: {e}", exc_info=True)
+                        logger.error(f" Error processing test {test_key}: {e}", exc_info=True)
                         errors.append(f"Test {test_key}: {str(e)}")
                 
                 # Check for errors
@@ -616,7 +616,7 @@ def antibiotic_list(request, usubjid, culture_id):
                         logger.info(f" Updated (audit) {test.AST_ID}")
                 
                 except Exception as e:
-                    logger.error(f"❌ Error processing test {test_key}: {e}", exc_info=True)
+                    logger.error(f" Error processing test {test_key}: {e}", exc_info=True)
                     errors.append(f"Test {test_key}: {str(e)}")
             
             # Check for errors

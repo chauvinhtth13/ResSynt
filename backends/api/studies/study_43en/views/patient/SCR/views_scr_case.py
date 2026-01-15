@@ -181,7 +181,7 @@ def screening_case_create(request):
     
     logger.info("Form created with locked fields")
     
-    return render(request, 'studies/study_43en/CRF/patient/screening_form.html', {
+    return render(request, 'studies/study_43en/patient/form/screening_form.html', {
         'form': form,
         'is_create': True,
         'selected_site_id': selected_site_id,
@@ -239,7 +239,7 @@ def screening_case_update(request, SCRID):
             selected_site_id=selected_site_id  #  THÊM
         )
         
-        return render(request, 'studies/study_43en/CRF/patient/screening_form.html', {
+        return render(request, 'studies/study_43en/patient/form/screening_form.html', {
             'form': form,
             'is_create': False,
             'scrid': SCRID,
@@ -306,7 +306,7 @@ def screening_case_view(request, SCRID):
         field.widget.attrs['readonly'] = True
         field.widget.attrs['disabled'] = True
     
-    return render(request, 'studies/study_43en/CRF/patient/screening_form.html', {
+    return render(request, 'studies/study_43en/patient/form/screening_form.html', {
         'form': form,
         'is_create': False,
         'is_readonly': True,

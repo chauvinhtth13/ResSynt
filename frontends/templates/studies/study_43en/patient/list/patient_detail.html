@@ -22,7 +22,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <h4 class="card-title mb-0">
-                        <i class="fas fa-user-injured mr-2"></i>
+                        <i ></i>
                         {% trans "PATIENT DETAILS" %}
                     </h4>
                     {% if is_deceased %}
@@ -92,7 +92,7 @@
     <div class="card mt-3">
         <div class="card-header bg-primary text-white">
             <h5 class="card-title mb-0">
-                <i class="fas fa-calendar-alt mr-2"></i>
+                <i ></i>
                 {% trans "Patient Follow-up Schedule" %}
             </h5>
         </div>
@@ -186,7 +186,7 @@
                                     <tr>
                                         <td class="text-center"><strong>1</strong></td>
                                         <td class="text-center">
-                                            <i class="fas fa-clipboard-check text-primary mr-2"></i>
+                                            <i ></i>
                                             <strong>{% trans "ScreeningCase" %}</strong>
                                         </td>
                                         <td class="text-center">
@@ -200,12 +200,12 @@
                                              <div class="btn-group btn-group-sm btn-action-group" role="group">
                                                 <a href="{% url 'study_43en:screening_case_view' SCRID=screeningcase.SCRID %}" 
                                                 class="btn btn-info">
-                                                    <i class="fas fa-eye"></i> {% trans "View" %}
+                                                    <i ></i> {% trans "View" %}
                                                 </a>
                                                 {% if perms.study_43en.change_scr_case %}
                                                 <a href="{% url 'study_43en:screening_case_update' SCRID=screeningcase.SCRID %}" 
                                                 class="btn btn-warning">
-                                                    <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                    <i ></i> {% trans "Edit" %}
                                                 </a>
                                                 {% endif %}
                                             </div>
@@ -216,7 +216,7 @@
                                 <tr>
                                     <td class="text-center"><strong>2</strong></td>
                                     <td class="text-center">
-                                        <i class="fas fa-user-plus text-success mr-2"></i>
+                                        <i ></i>
                                         <strong>{% trans "EnrollmentCase" %}</strong>
                                    </td> 
                                     <td class="text-center">
@@ -256,12 +256,12 @@
                                             <div class="btn-group btn-group-sm btn-action-group" role="group">
                                                 <a href="{% url 'study_43en:enrollment_case_view' usubjid=screeningcase.USUBJID %}" 
                                                    class="btn btn-info">
-                                                    <i class="fas fa-eye"></i> {% trans "View" %}
+                                                    <i ></i> {% trans "View" %}
                                                 </a>
                                                 {% if perms.study_43en.change_enr_case %}
                                                 <a href="{% url 'study_43en:enrollment_case_update' usubjid=screeningcase.USUBJID %}" 
                                                    class="btn btn-warning">
-                                                    <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                    <i ></i> {% trans "Edit" %}
                                                 </a>
                                                 {% endif %}
                                             </div>
@@ -273,7 +273,7 @@
                             <tr>
                                 <td class="text-center"><strong>3</strong></td>
                                 <td class="text-center">
-                                    <i class="fas fa-stethoscope text-info mr-2"></i>
+                                    <i ></i>
                                     <strong>{% trans "ClinicalCase" %}</strong>
                                 </td>
                                 <td class="text-center">
@@ -313,12 +313,12 @@
                                         <div class="btn-group btn-group-sm btn-action-group" role="group">
                                             <a href="{% url 'study_43en:clinical_case_view' usubjid=screeningcase.USUBJID %}" 
                                             class="btn btn-info">
-                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                                <i ></i> {% trans "View" %}
                                             </a>
                                             {% if perms.study_43en.change_cli_case %}
                                             <a href="{% url 'study_43en:clinical_case_update' usubjid=screeningcase.USUBJID %}" 
                                             class="btn btn-warning">
-                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                <i ></i> {% trans "Edit" %}
                                             </a>
                                             {% endif %}
                                         </div>
@@ -330,12 +330,12 @@
                             <tr>
                                 <td class="text-center"><strong>4</strong></td>
                                 <td class="text-center">
-                                    <i class="fas fa-flask text-warning mr-2"></i>
+                                    <i ></i>
                                     <strong>{% trans "Laboratory" %}</strong>
                                 </td>
                                 <td class="text-center">
                                     {% if laboratory_count > 0 %}
-                                        <span class="badge bg-info badge-status">
+                                        <span >
                                             <i class="fas fa-vials"></i> {{ laboratory_count }} {% trans "samples" %}
                                         </span>
                                     {% else %}
@@ -370,12 +370,12 @@
                             <tr>
                                 <td class="text-center"><strong>5</strong></td>
                                 <td class="text-center">
-                                    <i class="fas fa-bacterium text-danger mr-2"></i>
+                                    <i ></i>
                                     <strong>{% trans "Microbiology" %}</strong>
                                 </td>
                                 <td class="text-center">
                                     {% if microbiology_count > 0 %}
-                                        <span class="badge bg-info badge-status">
+                                        <span >
                                             <i class="fas fa-bacteria"></i> {{ microbiology_count }} {% trans "samples" %}
                                         </span>
                                     {% else %}
@@ -410,13 +410,13 @@
                             <tr>
                                 <td class="text-center"><strong>6</strong></td>
                                 <td class="text-center">
-                                    <i class="fas fa-vial text-purple mr-2"></i>
+                                    <i ></i>
                                     <strong>{% trans "Sample Collection" %}</strong>
                                 </td>
                                 <td class="text-center">
                                     {% if sample_count > 0 %}
-                                        <span class="badge bg-info badge-status">
-                                            <i class="fas fa-syringe"></i> {{ sample_count }} {% trans "samples" %}
+                                        <span >
+                                            <i ></i> {{ sample_count }} {% trans "samples" %}
                                         </span>
                                     {% else %}
                                         <span class="badge bg-secondary badge-status">
@@ -450,7 +450,7 @@
                                 <tr>
                                     <td class="text-center"><strong>7</strong></td>
                                     <td class="text-center">
-                                        <i class="fas fa-calendar-check text-success mr-2"></i>
+                                        <i ></i>
                                         <strong>{% trans "Follow-up Day 28" %}</strong>
                                     </td>
                                     <td class="text-center">
@@ -490,12 +490,12 @@
                                         <div class="btn-group btn-group-sm btn-action-group" role="group">
                                             <a href="{% url 'study_43en:followup_28_view' usubjid=screeningcase.USUBJID %}" 
                                             class="btn btn-info">
-                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                                <i ></i> {% trans "View" %}
                                             </a>
                                             {% if perms.study_43en.change_fu_case_28 %}
                                             <a href="{% url 'study_43en:followup_28_update' usubjid=screeningcase.USUBJID %}" 
                                             class="btn btn-warning">
-                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                <i ></i> {% trans "Edit" %}
                                             </a>
                                         <div>
                                             {% endif %}
@@ -507,7 +507,7 @@
                                 <tr>
                                     <td class="text-center"><strong>8</strong></td>
                                     <td class="text-center">
-                                        <i class="fas fa-calendar-alt text-info mr-2"></i>
+                                        <i ></i>
                                         <strong>{% trans "Follow-up Day 90" %}</strong>
                                     </td>
                                     <td class="text-center">
@@ -547,12 +547,12 @@
                                         <div class="btn-group btn-group-sm btn-action-group" role="group">
                                             <a href="{% url 'study_43en:followup_90_view' usubjid=screeningcase.USUBJID %}" 
                                             class="btn btn-info">
-                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                                <i ></i> {% trans "View" %}
                                             </a>
                                             {% if perms.study_43en.change_fu_case_90 %}
                                             <a href="{% url 'study_43en:followup_90_update' usubjid=screeningcase.USUBJID %}" 
                                             class="btn btn-warning">
-                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                <i ></i> {% trans "Edit" %}
                                             </a>
                                             {% endif %}
                                         {% endif %}
@@ -563,7 +563,7 @@
                                 <tr>
                                     <td class="text-center"><strong>9</strong></td>
                                     <td class="text-center">
-                                        <i class="fas fa-stethoscope text-info mr-2"></i>
+                                        <i ></i>
                                         <strong>{% trans "DischargeCase" %}</strong>
                                     </td>
                                     <td class="text-center">
@@ -603,12 +603,12 @@
                                             <div class="btn-group btn-group-sm btn-action-group" role="group">
                                                 <a href="{% url 'study_43en:discharge_view' usubjid=screeningcase.USUBJID %}" 
                                                 class="btn btn-info">
-                                                    <i class="fas fa-eye"></i> {% trans "View" %}
+                                                    <i ></i> {% trans "View" %}
                                                 </a>
                                                 {% if perms.study_43en.change_disch_case %}
                                                 <a href="{% url 'study_43en:discharge_update' usubjid=screeningcase.USUBJID %}" 
                                                 class="btn btn-warning">
-                                                    <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                    <i ></i> {% trans "Edit" %}
                                                 </a>
                                             {% endif %}
                                         {% endif %}
@@ -619,7 +619,7 @@
                                 <tr>
                                     <td class="text-center"><strong>10</strong></td>
                                     <td class="text-center">
-                                        <i class="fas fa-flag-checkered text-danger mr-2"></i>
+                                        <i ></i>
                                         <strong>{% trans "End of Study CRF" %}</strong>
                                     </td>
                                     <td class="text-center">
@@ -659,12 +659,12 @@
                                         <div class="btn-group btn-group-sm btn-action-group" role="group">
                                             <a href="{% url 'study_43en:endcase_view' usubjid=screeningcase.USUBJID %}" 
                                             class="btn btn-info">
-                                                <i class="fas fa-eye"></i> {% trans "View" %}
+                                                <i ></i> {% trans "View" %}
                                             </a>
                                             {% if perms.study_43en.change_endcasecrf %}
                                             <a href="{% url 'study_43en:endcase_update' usubjid=screeningcase.USUBJID %}" 
                                             class="btn btn-warning">
-                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                <i ></i> {% trans "Edit" %}
                                             </a>
                                             {% endif %}
                                         {% endif %}

@@ -3,11 +3,11 @@ Dashboard Views for Study 43EN - COMPLETELY NEW & SIMPLIFIED
 =============================================================
 
 Following GUIDE.txt principles:
-✅ BACKEND-FIRST: All logic in Django
-✅ NO JavaScript logic: Pure backend data processing
-✅ Clean structure: Models → Views → Templates
-✅ Proper error handling with logging
-✅ Optimized queries with select_related/prefetch_related
+ BACKEND-FIRST: All logic in Django
+ NO JavaScript logic: Pure backend data processing
+ Clean structure: Models → Views → Templates
+ Proper error handling with logging
+ Optimized queries with select_related/prefetch_related
 
 Version: 2.0 (Complete rewrite)
 Author: Claude
@@ -102,7 +102,7 @@ def home_dashboard(request):
             ISOLATEDKPNFROMINFECTIONORBLOOD=True,
             KPNISOUNTREATEDSTABLE=False,
             CONSENTTOSTUDY=True,
-            is_confirmed=True  # ✅ Must be confirmed
+            is_confirmed=True  #  Must be confirmed
         ).count()
         
         logger.debug(f"Patients - Screening: {screening_patients}, Enrolled: {enrolled_patients}")
@@ -437,10 +437,14 @@ def get_enrollment_chart_api(request):
         
         target_cumulative = []
         cumulative_target = 0.0
-        
+
         for month_date in month_dates:
-            # Only accumulate if site has started
-            if month_date >= site_start_date:
+            # ✅ CRITICAL FIX: If month is before site start, use None (not 0)
+            if month_date < site_start_date:
+                target_cumulative.append(None)
+            else:
+                # Site has started - calculate cumulative target
+                
                 # Determine step based on phase
                 if month_date <= phase_1_end:
                     if filter_type == 'all' or site_filter == 'all':
@@ -451,12 +455,12 @@ def get_enrollment_chart_api(request):
                     monthly_step = phase_2_monthly
                 
                 cumulative_target += monthly_step
-            
-            target_cumulative.append(round(cumulative_target, 1))
-        
-        # Ensure last value is exactly the target
-        if target_cumulative and cumulative_target > 0:
-            target_cumulative[-1] = site_target
+                target_cumulative.append(round(cumulative_target, 1))
+
+        # Ensure last non-null value is exactly the target
+        non_null_indices = [i for i, v in enumerate(target_cumulative) if v is not None]
+        if non_null_indices:
+            target_cumulative[non_null_indices[-1]] = site_target
         
         # ===== GET ACTUAL ENROLLMENT DATA =====
         enrolled_qs = get_filtered_queryset(
@@ -1184,44 +1188,3 @@ def get_kpneumoniae_isolation_stats_api(request):
         }, status=500)
 
 
-# ============================================================================
-# CHECKLIST VERIFICATION (As per GUIDE.txt)
-# ============================================================================
-
-"""
-✅ CHECKLIST BEFORE COMMIT:
-
-1. Works correctly
-   - Dashboard loads and shows correct counts
-   - Site filtering works for all, single, multiple sites
-   - Error handling works
-   
-2. Backend validation (not JS only)
-   - All logic in backend Django views
-   - No JavaScript business logic
-   
-3. Permissions checked
-   - @login_required decorator on all views
-   - Site filtering enforced via middleware
-   
-4. Queries optimized
-   - Using .count() instead of len(queryset)
-   - Site filtering via optimized manager methods
-   
-5. Audit logs work
-   - Read-only operations, no audit logs needed
-   
-6. No inline JS/CSS
-   - All static assets in separate files
-   
-7. Follows structure
-   - Models → Views → Templates
-   - Clean separation of concerns
-
-✅ BACKEND-FIRST DECISION TREE:
-- Need to count records? → Django .count()
-- Need to filter by site? → Site utils
-- Need to display data? → Template context
-- Need validation? → Django Forms/Models
-- Need business logic? → Models/Views
-"""

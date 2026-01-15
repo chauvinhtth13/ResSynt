@@ -70,9 +70,14 @@ class PersonalDataForm(forms.ModelForm):
             ),
             
             # NEW ADDRESS FIELDS
+            'HOUSE_NUMBER_NEW': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ví dụ: 123/45, Căn hộ A1, Tòa nhà XYZ',
+                'autocomplete': 'off',
+            }),
             'STREET_NEW': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ví dụ: 123 Đường Nguyễn Văn Linh',
+                'placeholder': 'Ví dụ: Đường Nguyễn Văn Linh',
                 'autocomplete': 'off',
             }),
             'WARD_NEW': forms.TextInput(attrs={
@@ -87,9 +92,14 @@ class PersonalDataForm(forms.ModelForm):
             }),
             
             # OLD ADDRESS FIELDS
+            'HOUSE_NUMBER': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ví dụ: 123/45, Tòa A, Căn hộ 6B',
+                'autocomplete': 'off',
+            }),
             'STREET': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ví dụ: 123 Đường Trần Hưng Đạo',
+                'placeholder': 'Ví dụ: Đường Trần Hưng Đạo',
                 'autocomplete': 'off',
             }),
             'WARD': forms.TextInput(attrs={

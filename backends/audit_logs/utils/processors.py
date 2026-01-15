@@ -230,7 +230,7 @@ class AuditProcessor(BaseAuditProcessor):
             
             #  FIX: Re-initialize form from current POST data
             # This ensures form reflects the LATEST submission, not the original one
-            logger.debug(f"📝 Re-initializing form from POST data")
+            logger.debug(f" Re-initializing form from POST data")
             logger.debug(f"   POST keys: {list(request.POST.keys())[:10]}")
             
             form = form_class(request.POST, instance=instance, **form_kwargs)
@@ -514,7 +514,10 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
                 change['field'] = f"{name}_{change['field']}"
             
             all_changes.extend(changes)
-        
+            
+            # Log changes for this specific formset
+            if changes:
+                logger.info(" Formset '%s': %d changes detected", name, len(changes))
         return all_changes
     
     def _build_context(self, forms_dict, extra_context):
@@ -651,7 +654,7 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                     logger.info(" Change reason required: Real update detected")
                     
             except Exception as e:
-                logger.error(f"❌ Error in skip_change_reason callable: {e}", exc_info=True)
+                logger.error(f" Error in skip_change_reason callable: {e}", exc_info=True)
                 # On error, DON'T skip (safer approach)
                 should_skip_reason = False
         
@@ -741,7 +744,7 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                     )
             
             all_old_data['formsets'][name] = formset_old_data
-            logger.debug("Captured %d old %s", len(formset_old_data), name)
+            logger.info(" Captured %d old %s records", len(formset_old_data), name)
         
         return all_old_data
     
@@ -809,6 +812,18 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
             if not formset_valid:
                 logger.error("Formset '%s' errors: %s", name, formset.errors)
                 logger.error("Formset '%s' non_form_errors: %s", name, formset.non_form_errors())
+                
+                #  DEBUG: Log which forms have id errors
+                for i, form_errors in enumerate(formset.errors):
+                    if form_errors and 'id' in form_errors:
+                        test_name = getattr(formset.forms[i].instance, 'TESTTYPE', 'UNKNOWN')
+                        test_pk = getattr(formset.forms[i].instance, 'pk', 'NO_PK')
+                        logger.error(
+                            " Form %d has missing 'id': TESTTYPE=%s, pk=%s, "
+                            "form.instance.pk=%s, id_in_POST=%s",
+                            i, test_name, test_pk, formset.forms[i].instance.pk,
+                            f"{formset.prefix}-{i}-id" in formset.data if formset.data else 'NO_DATA'
+                        )
             
             valid = formset_valid and valid
         
@@ -820,12 +835,18 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
         # Start with multi-form changes
         all_changes = self._detect_multi_form_changes(all_old_data, forms_dict)
         
-        # Add formset changes
+        # Add formset changes with optimized batch processing
         for name, formset in forms_dict.get('formsets', {}).items():
             formset_old_data = all_old_data['formsets'].get(name, {})
+            formset_changes_count = 0
             
             for form in formset.forms:
+                # Skip early if no cleaned_data or no changes detected by Django
                 if not form.cleaned_data:
+                    continue
+                
+                #  OPTIMIZATION: Skip forms that Django says haven't changed
+                if hasattr(form, 'has_changed') and not form.has_changed():
                     continue
                 
                 instance = form.instance

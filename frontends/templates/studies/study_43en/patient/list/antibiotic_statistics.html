@@ -43,10 +43,10 @@
         <div class="card-body bg-light">
           <div class="row">
             <div class="col-md-3">
-              <strong><i class="fas fa-user-tag mr-2"></i>{% trans "Patient" %}:</strong> {{ usubjid }}
+              <strong><i ></i>{% trans "Patient" %}:</strong> {{ usubjid }}
             </div>
             <div class="col-md-3">
-              <strong><i class="fas fa-hospital mr-2"></i>{% trans "Site" %}:</strong> {{ screening_case.SITEID }}
+              <strong><i ></i>{% trans "Site" %}:</strong> {{ screening_case.SITEID }}
             </div>
             <div class="col-md-3">
               <strong><i class="fas fa-calendar mr-2"></i>{% trans "Date" %}:</strong> {{ today|date:"d/m/Y" }}
@@ -252,7 +252,7 @@
         </p>
         <a href="{% url 'study_43en:microbiology_list' usubjid=usubjid %}" 
            class="btn btn-primary">
-          <i class="fas fa-microscope mr-2"></i>
+          <i ></i>
           {% trans "View Cultures" %}
         </a>
       </div>

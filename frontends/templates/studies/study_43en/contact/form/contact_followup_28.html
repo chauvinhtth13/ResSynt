@@ -44,7 +44,7 @@
 <ol class="breadcrumb float-sm-right">
     <li class="breadcrumb-item">
         <a href="{% url 'study_43en:contact_list' %}">
-            <i class="fas fa-users"></i> {% trans "Contact List" %}
+            <i ></i> {% trans "Contact List" %}
         </a>
     </li>
     <li class="breadcrumb-item">
@@ -114,7 +114,7 @@
         <div class="card card-outline card-info">
             <div class="card-header">
                 <h3 class="card-title">
-                    <i class="fas fa-clipboard-check"></i>
+                    <i ></i>
                     {% trans "1. Close contacts were assessed as of Day 28?" %}
                 </h3>
             </div>
@@ -257,7 +257,7 @@
         <div class="card card-outline card-success">
             <div class="card-header">
                 <h3 class="card-title">
-                    <i class="fas fa-pills"></i>
+                    <i ></i>
                     {% trans "3. History of medication use (corticoid, PPI, antibiotics)?" %}
                 </h3>
             </div>
@@ -340,7 +340,7 @@
                 {% else %}
                     <a href="{% url 'study_43en:contact_followup_28_update' usubjid=enrollment_contact.USUBJID %}" 
                        class="btn btn-warning btn-lg">
-                        <i class="fas fa-edit"></i> {% trans "Edit" %}
+                        <i ></i> {% trans "Edit" %}
                     </a>
                     <a href="{% url 'study_43en:contact_detail' usubjid=enrollment_contact.USUBJID %}" 
                        class="btn btn-secondary btn-lg">

@@ -74,11 +74,11 @@ def save_water_treatment(request, exposure):
     logger.info("🗑️ Deleted old water treatment records")
     
     treatment_method = request.POST.get('TREATMENT_METHOD', '').strip()
-    logger.info(f"📝 TREATMENT_METHOD from POST: '{treatment_method}'")
+    logger.info(f" TREATMENT_METHOD from POST: '{treatment_method}'")
     
     if treatment_method:
         treatment_other = request.POST.get('TREATMENT_METHOD_OTHER', '').strip()
-        logger.info(f"📝 TREATMENT_METHOD_OTHER from POST: '{treatment_other}'")
+        logger.info(f" TREATMENT_METHOD_OTHER from POST: '{treatment_other}'")
         
         wt = HH_WaterTreatment(
             HHID=exposure,
@@ -115,13 +115,13 @@ def save_animals(request, exposure):
     for animal_key, animal_type in animal_types.items():
         field_name = f'animal_{animal_key}'
         field_value = request.POST.get(field_name)
-        logger.info(f"📝 Checking {field_name}: '{field_value}'")
+        logger.info(f" Checking {field_name}: '{field_value}'")
         
         if field_value == 'on':
             other_text = None
             if animal_key == 'other':
                 other_text = request.POST.get('animal_other_text', '').strip()
-                logger.info(f"📝 animal_other_text: '{other_text}'")
+                logger.info(f" animal_other_text: '{other_text}'")
             
             animal = HH_Animal(
                 HHID=exposure,
@@ -168,7 +168,7 @@ def load_treatment_data(exposure):
     treatment = HH_WaterTreatment.objects.filter(HHID=exposure).first()
     logger.info(f"💧 Loading water treatment for {exposure.HHID}")
     if treatment:
-        logger.info(f"📝 Found treatment: {treatment.TREATMENT_TYPE}, other: {treatment.TREATMENT_TYPE_OTHER}")
+        logger.info(f" Found treatment: {treatment.TREATMENT_TYPE}, other: {treatment.TREATMENT_TYPE_OTHER}")
         return {
             'method': treatment.TREATMENT_TYPE,
             'other': treatment.TREATMENT_TYPE_OTHER or ''
@@ -183,15 +183,15 @@ def load_animal_data(exposure):
     
     animals = HH_Animal.objects.filter(HHID=exposure)
     logger.info(f"🐾 Loading animals for {exposure.HHID}")
-    logger.info(f"📝 Found {animals.count()} animal records")
+    logger.info(f" Found {animals.count()} animal records")
     
     for animal in animals:
         animal_type = animal.ANIMAL_TYPE
         animal_data[animal_type] = True
-        logger.info(f"📝 Loaded animal: {animal_type}")
+        logger.info(f" Loaded animal: {animal_type}")
         if animal_type == 'other' and animal.ANIMAL_TYPE_OTHER:
             animal_data['other_text'] = animal.ANIMAL_TYPE_OTHER
-            logger.info(f"📝 Other animal text: {animal.ANIMAL_TYPE_OTHER}")
+            logger.info(f" Other animal text: {animal.ANIMAL_TYPE_OTHER}")
     
     logger.info(f"Loaded animal data: {animal_data}")
     return animal_data

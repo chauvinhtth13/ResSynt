@@ -220,25 +220,25 @@
             
             // Patient Total Sampling
             const patientTotalCell = document.createElement('td');
-            patientTotalCell.className = 'text-center bg-primary bg-opacity-5';
+            patientTotalCell.className = 'text-center bg-primary bg-opacity-10';
             patientTotalCell.innerHTML = formatValue(row.patient_total);
             tr.appendChild(patientTotalCell);
             
             // Patient Blood Sampling
             const patientBloodCell = document.createElement('td');
-            patientBloodCell.className = 'text-center bg-primary bg-opacity-5';
+            patientBloodCell.className = 'text-center bg-primary bg-opacity-10';
             patientBloodCell.innerHTML = formatValue(row.patient_blood);
             tr.appendChild(patientBloodCell);
             
             // Contact Total Sampling
             const contactTotalCell = document.createElement('td');
-            contactTotalCell.className = 'text-center bg-success bg-opacity-5';
+            contactTotalCell.className = 'text-center bg-success bg-opacity-10';
             contactTotalCell.innerHTML = formatValue(row.contact_total);
             tr.appendChild(contactTotalCell);
             
             // Contact Blood Sampling
             const contactBloodCell = document.createElement('td');
-            contactBloodCell.className = 'text-center bg-success bg-opacity-5';
+            contactBloodCell.className = 'text-center bg-success bg-opacity-10';
             contactBloodCell.innerHTML = formatValue(row.contact_blood);
             tr.appendChild(contactBloodCell);
             

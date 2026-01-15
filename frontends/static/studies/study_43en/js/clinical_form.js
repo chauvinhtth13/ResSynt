@@ -447,7 +447,7 @@ console.log(' Clinical form module loaded v3.0');
 
     // ========== UI ENHANCEMENTS ==========
     initUIEnhancements: function() {
-      console.log('🎨 Init UI enhancements...');
+      console.log(' Init UI enhancements...');
 
       // Form dirty detection
       if (!this.state.isReadonly) {
@@ -528,7 +528,7 @@ console.log(' Clinical form module loaded v3.0');
           $(`input[name="${radioName}"][value="no"]`).prop('checked', true);
           $(`input[name="${radioName}"][value="yes"]`).prop('checked', false);
           $(formsetSelector).hide();
-          console.log(`  ❌ Set ${radioName} to NO (no forms)`);
+          console.log(`   Set ${radioName} to NO (no forms)`);
         }
       };
       

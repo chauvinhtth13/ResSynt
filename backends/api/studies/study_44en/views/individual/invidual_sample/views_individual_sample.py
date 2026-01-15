@@ -98,7 +98,7 @@ def individual_sample_create(request, subjectid):
         if food_frequency_form.is_valid():
             try:
                 with transaction.atomic(using='db_study_44en'):
-                    logger.info("📝 Saving sample data...")
+                    logger.info(" Saving sample data...")
                     
                     # Save samples using helper (handles 4 visit times)
                     save_samples(request, individual)
@@ -118,12 +118,12 @@ def individual_sample_create(request, subjectid):
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
-                logger.error(f"❌ Error creating sample data: {e}", exc_info=True)
+                logger.error(f" Error creating sample data: {e}", exc_info=True)
                 messages.error(request, f'Error creating sample data: {str(e)}')
         else:
-            logger.error("❌ Form validation failed")
+            logger.error(" Form validation failed")
             logger.error(f"Food frequency errors: {food_frequency_form.errors}")
-            messages.error(request, '❌ Please check the form for errors')
+            messages.error(request, ' Please check the form for errors')
     
     # GET - Show blank form
     else:
@@ -177,7 +177,7 @@ def individual_sample_update(request, subjectid):
     4. Save with audit
     """
     logger.info("=" * 80)
-    logger.info("=== 📝 INDIVIDUAL SAMPLE UPDATE START ===")
+    logger.info("===  INDIVIDUAL SAMPLE UPDATE START ===")
     logger.info("=" * 80)
     logger.info(f"👤 User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     
@@ -233,7 +233,7 @@ def individual_sample_update(request, subjectid):
     # Sample flat field changes (4 visit times x 4 fields each)
     sample_changes = detect_sample_flat_field_changes(request, individual)
     all_changes.extend(sample_changes)
-    logger.info(f"📝 Sample flat field changes: {len(sample_changes)}")
+    logger.info(f" Sample flat field changes: {len(sample_changes)}")
     
     # Food frequency form changes (if food_frequency exists)
     food_frequency_form = Individual_FoodFrequencyForm(
@@ -247,10 +247,10 @@ def individual_sample_update(request, subjectid):
         new_food_data = detector.extract_new_data(food_frequency_form)
         food_changes = detector.detect_changes(old_food_data, new_food_data)
         all_changes.extend(food_changes)
-        logger.info(f"📝 Food frequency form changes: {len(food_changes)}")
+        logger.info(f" Food frequency form changes: {len(food_changes)}")
     elif food_frequency is None and food_frequency_form.is_valid():
         # Creating new food frequency - all fields are "new"
-        logger.info("📝 Creating new food frequency - no changes to detect")
+        logger.info(" Creating new food frequency - no changes to detect")
     
     # Filter out changes where values are actually the same after normalization
     def normalize_for_compare(val):
@@ -276,7 +276,7 @@ def individual_sample_update(request, subjectid):
             logger.info(f"   ⏭️ Skipping {c['field']}: '{old_norm}' == '{new_norm}' (same after normalize)")
     
     all_changes = filtered_changes
-    logger.info(f"📝 TOTAL changes (after normalize filter): {len(all_changes)}")
+    logger.info(f" TOTAL changes (after normalize filter): {len(all_changes)}")
     
     # ===================================
     # STEP 2: No changes → save directly
@@ -285,7 +285,7 @@ def individual_sample_update(request, subjectid):
         if food_frequency_form.is_valid():
             try:
                 with transaction.atomic(using='db_study_44en'):
-                    logger.info("📝 No changes detected - saving directly without audit...")
+                    logger.info(" No changes detected - saving directly without audit...")
                     
                     # Update samples using helper (handles 4 visit times)
                     save_samples(request, individual)
@@ -299,12 +299,12 @@ def individual_sample_update(request, subjectid):
                     messages.success(request, 'Lưu thành công!')
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
             except Exception as e:
-                logger.error(f"❌ Save failed: {e}", exc_info=True)
+                logger.error(f" Save failed: {e}", exc_info=True)
                 messages.error(request, f'Error: {str(e)}')
         else:
-            logger.error("❌ Form validation failed")
+            logger.error(" Form validation failed")
             logger.error(f"Food frequency errors: {food_frequency_form.errors}")
-            messages.error(request, '❌ Please check the form for errors')
+            messages.error(request, ' Please check the form for errors')
     
     # ===================================
     # STEP 3: Has changes → collect reasons
@@ -356,9 +356,9 @@ def individual_sample_update(request, subjectid):
     # STEP 5: Save with audit
     # ===================================
     if not food_frequency_form.is_valid():
-        logger.error("❌ Form validation failed")
+        logger.error(" Form validation failed")
         logger.error(f"Food frequency errors: {food_frequency_form.errors}")
-        messages.error(request, '❌ Please check the form for errors')
+        messages.error(request, ' Please check the form for errors')
         
         sample_data = load_samples(individual)
         context = {
@@ -390,7 +390,7 @@ def individual_sample_update(request, subjectid):
     
     try:
         with transaction.atomic(using='db_study_44en'):
-            logger.info("📝 Saving with audit...")
+            logger.info(" Saving with audit...")
             
             # Update samples using helper (handles 4 visit times)
             save_samples(request, individual)
@@ -410,7 +410,7 @@ def individual_sample_update(request, subjectid):
             return redirect('study_44en:individual:detail', subjectid=subjectid)
             
     except Exception as e:
-        logger.error(f"❌ Error updating sample data: {e}", exc_info=True)
+        logger.error(f" Error updating sample data: {e}", exc_info=True)
         messages.error(request, f'Error updating sample data: {str(e)}')
     
     # Re-render with errors
@@ -427,7 +427,7 @@ def individual_sample_update(request, subjectid):
     }
     
     logger.info("=" * 80)
-    logger.info("=== 📝 SAMPLE UPDATE END - Rendering template ===")
+    logger.info("===  SAMPLE UPDATE END - Rendering template ===")
     logger.info("=" * 80)
     
     return render(request, 'studies/study_44en/CRF/individual/sample_form.html', context)

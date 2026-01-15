@@ -63,7 +63,7 @@ def patient_list(request):
     """
     Danh sách các bệnh nhân - OPTIMIZED VERSION
     
-    ✅ Improvements:
+     Improvements:
     - Redis caching for queries
     - Batch queries thay vì N+1
     - Giảm từ ~100 queries xuống ~10 queries
@@ -368,7 +368,7 @@ def contact_list(request):
     """
     Danh sách contacts - OPTIMIZED VERSION
     
-    ✅ Improvements:
+     Improvements:
     - Redis caching for queries
     - Batch queries thay vì N+1
     - Giảm từ ~50+ queries xuống ~10 queries
@@ -733,7 +733,7 @@ def export_data_page(request):
         'estimated_counts': json.dumps(estimated_counts),  #  Convert to JSON string
     }
     
-    return render(request, 'studies/study_43en/CRF/base/export_data.html', context)
+    return render(request, 'studies/study_43en/base/export_data.html', context)
 
 
 

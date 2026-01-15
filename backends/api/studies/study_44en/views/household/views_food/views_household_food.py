@@ -131,14 +131,14 @@ def household_food_create(request, hhid):
         prefix='source'
     )
     
-    logger.info("📝 Validating forms...")
+    logger.info(" Validating forms...")
     
     # Backend validation (Django Forms)
     freq_valid = food_frequency_form.is_valid()
     source_valid = food_source_form.is_valid()
     
-    logger.info(f"   Food frequency: {'VALID ✅' if freq_valid else 'INVALID ❌'}")
-    logger.info(f"   Food source: {'VALID ✅' if source_valid else 'INVALID ❌'}")
+    logger.info(f"   Food frequency: {'VALID ' if freq_valid else 'INVALID '}")
+    logger.info(f"   Food source: {'VALID ' if source_valid else 'INVALID '}")
     
     if freq_valid and source_valid:
         logger.info("💾 All forms valid - Calling save helper...")
@@ -170,7 +170,7 @@ def household_food_create(request, hhid):
             )
             return redirect('study_44en:household:detail', hhid=hhid)
         else:
-            logger.error("❌ Save helper returned None")
+            logger.error(" Save helper returned None")
             messages.error(request, 'Lỗi khi lưu dữ liệu. Vui lòng thử lại.')
     else:
         # Use helper to log errors
@@ -180,7 +180,7 @@ def household_food_create(request, hhid):
         })
         
         if forms_with_errors:
-            error_msg = f'❌ Vui lòng kiểm tra lại: {", ".join(forms_with_errors)}'
+            error_msg = f' Vui lòng kiểm tra lại: {", ".join(forms_with_errors)}'
             messages.error(request, error_msg)
     
     # Re-render with errors
@@ -227,7 +227,7 @@ def household_food_update(request, hhid):
     - Helpers handle save logic
     """
     logger.info("="*80)
-    logger.info(f"=== 📝 HOUSEHOLD FOOD UPDATE START ===")
+    logger.info(f"===  HOUSEHOLD FOOD UPDATE START ===")
     logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
     logger.info("="*80)
     
@@ -276,7 +276,7 @@ def household_food_update(request, hhid):
         }
         
         logger.info("="*80)
-        logger.info(f"=== 📝 FOOD UPDATE END (GET) - Rendering template ===")
+        logger.info(f"===  FOOD UPDATE END (GET) - Rendering template ===")
         logger.info("="*80)
         
         return render(

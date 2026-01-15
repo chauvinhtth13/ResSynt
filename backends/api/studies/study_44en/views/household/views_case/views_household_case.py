@@ -162,9 +162,9 @@ def household_create(request):
         personal_valid = personal_data_form.is_valid()
         formset_valid = member_formset.is_valid()
         
-        logger.info(f"   Household form: {'VALID ✅' if household_valid else 'INVALID ❌'}")
-        logger.info(f"   Personal data form: {'VALID ✅' if personal_valid else 'INVALID ❌'}")
-        logger.info(f"   Member formset: {'VALID ✅' if formset_valid else 'INVALID ❌'}")
+        logger.info(f"   Household form: {'VALID ' if household_valid else 'INVALID '}")
+        logger.info(f"   Personal data form: {'VALID ' if personal_valid else 'INVALID '}")
+        logger.info(f"   Member formset: {'VALID ' if formset_valid else 'INVALID '}")
         
         if household_valid and personal_valid and formset_valid:
             logger.info("💾 All forms valid - Saving...")
@@ -190,7 +190,7 @@ def household_create(request):
                 'Member Formset': member_formset,
             })
             if forms_with_errors:
-                messages.error(request, f'❌ Vui lòng kiểm tra lại: {", ".join(forms_with_errors)}')
+                messages.error(request, f' Vui lòng kiểm tra lại: {", ".join(forms_with_errors)}')
     else:
         logger.info("📄 GET REQUEST - Showing blank form...")
         household_form = HH_CASEForm()
@@ -219,7 +219,7 @@ def household_create(request):
 def household_update(request, hhid):
     """Update household with change detection"""
     logger.info("="*80)
-    logger.info(f"=== 📝 HOUSEHOLD UPDATE START ===")
+    logger.info(f"===  HOUSEHOLD UPDATE START ===")
     logger.info(f"User: {request.user.username}, HHID: {hhid}, Method: {request.method}")
     logger.info("="*80)
     
@@ -269,9 +269,9 @@ def household_update(request, hhid):
     personal_valid = personal_data_form.is_valid()
     formset_valid = member_formset.is_valid()
     
-    logger.info(f"   Household form: {'VALID ✅' if form_valid else 'INVALID ❌'}")
-    logger.info(f"   Personal data form: {'VALID ✅' if personal_valid else 'INVALID ❌'}")
-    logger.info(f"   Member formset: {'VALID ✅' if formset_valid else 'INVALID ❌'}")
+    logger.info(f"   Household form: {'VALID ' if form_valid else 'INVALID '}")
+    logger.info(f"   Personal data form: {'VALID ' if personal_valid else 'INVALID '}")
+    logger.info(f"   Member formset: {'VALID ' if formset_valid else 'INVALID '}")
     
     if form_valid and personal_valid and formset_valid:
         validator = ReasonValidator()

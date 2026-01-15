@@ -288,7 +288,7 @@ def audit_log_detail(request, log_id):
         }
         changes.append(change)
     
-    logger.info(f"📝 Found {len(changes)} field changes")
+    logger.info(f" Found {len(changes)} field changes")
     
     # ==========================================
     # 4. GET USER INFORMATION
@@ -324,6 +324,7 @@ def audit_log_detail(request, log_id):
         'is_verified': is_verified,
         'site_filter': site_filter,
         'filter_type': filter_type,
+        'study_code': getattr(request, 'study_code', '43en'),  # Dynamic study code from middleware
     }
     
     return render(request, 'audit_log/audit_log_detail.html', context)

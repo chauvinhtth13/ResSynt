@@ -356,7 +356,7 @@
                           <a href="{% url 'study_43en:antibiotic_list' usubjid=usubjid culture_id=culture.id %}"
                              class="btn btn-antibiotic btn-sm"
                              title="{% trans 'Antibiotic Sensitivity Tests' %}">
-                            <i class="fas fa-pills"></i> {% trans 'Tests' %}
+                            <i ></i> {% trans 'Tests' %}
                             {% if culture.get_sensitivity_count > 0 %}
                               <span class="badge bg-light text-dark ms-1">{{ culture.get_sensitivity_count }}</span>
                             {% endif %}
@@ -366,7 +366,7 @@
                                   class="btn btn-secondary btn-sm"
                                   disabled
                                   title="{% trans 'Antibiotic testing only available for KPN+ cultures' %}">
-                            <i class="fas fa-pills"></i> {% trans 'Tests' %}
+                            <i ></i> {% trans 'Tests' %}
                           </button>
                         {% endif %}
                       </div>

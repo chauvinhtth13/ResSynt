@@ -161,7 +161,30 @@
         }
         enrollmentChart = echarts.init(container);
         
-        // Chart options
+        // ✅ FIX: Find first month with ANY data (target or actual)
+        let startIndex = 0;
+        
+        for (let i = 0; i < data.months.length; i++) {
+            if (data.target[i] !== null || data.actual[i] !== null) {
+                startIndex = i;  // ✅ EXACT - no buffer
+                break;
+            }
+        }
+        
+        // Trim arrays to start from first data point
+        const trimmedMonths = data.months.slice(startIndex);
+        const trimmedTarget = data.target.slice(startIndex);
+        const trimmedActual = data.actual.slice(startIndex);
+        
+        console.log('[Chart] Exact trim:', {
+            original: data.months.length + ' months',
+            trimmed: trimmedMonths.length + ' months',
+            startFrom: trimmedMonths[0],
+            firstTarget: trimmedTarget.find(v => v !== null),
+            firstActual: trimmedActual.find(v => v !== null)
+        });
+        
+        // Chart options (rest stays the same)
         const option = {
             title: {
                 text: `Target: ${data.site_target} patients`,
@@ -192,7 +215,6 @@
                     params.forEach(item => {
                         const value = item.value;
                         
-                        // Skip if value is null
                         if (value === null || value === undefined) {
                             return;
                         }
@@ -205,7 +227,6 @@
                         `;
                     });
                     
-                    // Calculate progress (only if actual has value)
                     const targetValue = params[0] ? params[0].value : null;
                     const actualValue = params[1] && params[1].value !== null ? params[1].value : null;
                     
@@ -243,11 +264,11 @@
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
-                data: data.months,
+                data: trimmedMonths,
                 axisLabel: {
                     rotate: 45,
                     fontSize: 10,
-                    interval: 2, // Show every 3rd label
+                    interval: 'auto',
                 },
                 axisTick: {
                     alignWithLabel: true,
@@ -270,10 +291,8 @@
                     },
                 },
                 min: 0,
-                // Set interval based on target size
                 interval: data.site_target <= 200 ? 50 : 100,
                 max: function(value) {
-                    // Round up to nearest interval
                     const interval = data.site_target <= 200 ? 50 : 100;
                     return Math.ceil(value.max / interval) * interval;
                 },
@@ -283,7 +302,7 @@
                 {
                     name: 'Target Enrollment',
                     type: 'line',
-                    data: data.target,
+                    data: trimmedTarget,
                     smooth: false,
                     lineStyle: {
                         color: CONFIG.CHART_COLORS.target,
@@ -306,7 +325,7 @@
                 {
                     name: 'Actual Enrollment',
                     type: 'line',
-                    data: data.actual,
+                    data: trimmedActual,
                     smooth: true,
                     lineStyle: {
                         color: CONFIG.CHART_COLORS.actual,
@@ -317,7 +336,6 @@
                     },
                     symbol: 'circle',
                     symbolSize: 8,
-                    // Do NOT connect null data points (creates gaps)
                     connectNulls: false,
                     emphasis: {
                         focus: 'series',
@@ -328,7 +346,6 @@
                             shadowColor: 'rgba(78, 205, 196, 0.5)',
                         },
                     },
-                    // Area fill
                     areaStyle: {
                         color: {
                             type: 'linear',
@@ -349,10 +366,8 @@
             ],
         };
         
-        // Set option and render
         enrollmentChart.setOption(option);
         
-        // Responsive resize
         window.addEventListener('resize', function() {
             if (enrollmentChart) {
                 enrollmentChart.resize();

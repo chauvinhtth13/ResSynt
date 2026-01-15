@@ -45,34 +45,15 @@ def get_filtered_individuals(user):
     return Individual.objects.all().select_related()
 
 
-@login_required
-@require_crf_view('dashboard')
-def dashboard(request):
-    """
-    Dashboard view for Study 44EN
-    """
-    # Get summary statistics
-    total_households = HH_CASE.objects.count()
-    total_members = HH_Member.objects.count()
-    total_individuals = Individual.objects.count()
-    total_followups = Individual_FollowUp.objects.count()
-    total_samples = Individual_Sample.objects.count()
-    
-    # Get recent data
-    recent_households = HH_CASE.objects.order_by('-last_modified_at')[:5]
-    recent_individuals = Individual.objects.select_related('MEMBERID').order_by('-last_modified_at')[:5]
-    
-    context = {
-        'total_households': total_households,
-        'total_members': total_members,
-        'total_individuals': total_individuals,
-        'total_followups': total_followups,
-        'total_samples': total_samples,
-        'recent_households': recent_households,
-        'recent_individuals': recent_individuals,
-    }
-    
-    return render(request, 'studies/study_44en/dashboard.html', context)
+# NOTE: Dashboard view has been moved to services/dashboard.py → home_dashboard()
+# This old function is no longer used
+# @login_required
+# @require_crf_view('dashboard')
+# def dashboard(request):
+#     """
+#     Dashboard view for Study 44EN (DEPRECATED - use services/dashboard.home_dashboard)
+#     """
+#     ...
 
 
 @login_required
@@ -210,7 +191,6 @@ def get_individual_with_related(individual_id):
 
 
 __all__ = [
-    'dashboard',
     'get_filtered_households',
     'get_filtered_individuals',
     'household_list',

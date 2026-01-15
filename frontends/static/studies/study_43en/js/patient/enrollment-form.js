@@ -24,7 +24,7 @@
       const show = ['True', 'true', '1', 1].includes(val);
       
       $('#hospital-transfer-details').toggle(show);
-      console.log('🏥 Hospital transfer:', show ? 'show' : 'hide');
+      console.log(' Hospital transfer:', show ? 'show' : 'hide');
     }).trigger('change');
     
     // Medication history
@@ -40,7 +40,7 @@
       const show = $('input[name="UNDERLYINGCONDS"]:checked').val() === 'True';
       
       $('#underlying-conditions-section').toggle(show);
-      console.log('🩺 Underlying conditions:', show ? 'show' : 'hide');
+      console.log(' Underlying conditions:', show ? 'show' : 'hide');
       
       // If hiding, uncheck all underlying checkboxes
       if (!show) {
@@ -52,7 +52,7 @@
     // Other disease specification
     $('#id_OTHERDISEASE').on('change', function() {
       $('#other-disease-detail').toggle(this.checked);
-      console.log('📝 Other disease:', this.checked ? 'show' : 'hide');
+      console.log(' Other disease:', this.checked ? 'show' : 'hide');
     }).trigger('change');
     
     console.log(' Conditional sections ready');
@@ -62,7 +62,7 @@
   // AGE CALCULATION - Display only
   // ==========================================
   function initAgeCalculation() {
-    console.log('🎂 Init age calculation...');
+    console.log(' Init age calculation...');
     
     const $day = $('#id_DAYOFBIRTH');
     const $month = $('#id_MONTHOFBIRTH');
@@ -204,7 +204,7 @@
   // ADDRESS SYSTEM TOGGLE
   // ==========================================
   function initAddressSystemToggle() {
-    console.log('🗺️ Initializing address system toggle...');
+    console.log(' Initializing address system toggle...');
     
     const $newAddressFields = $('#new-address-fields');
     const $oldAddressFields = $('#old-address-fields');
@@ -225,7 +225,7 @@
     // Toggle address fields based on selection
     $('.address-system-radio').on('change', function() {
       const selectedValue = $(this).val();
-      console.log('📍 Address system selected:', selectedValue);
+      console.log(' Address system selected:', selectedValue);
       
       // Hide all first with animation
       $newAddressFields.slideUp(200);
@@ -349,7 +349,7 @@
   // UI ENHANCEMENTS
   // ==========================================
   function initUIEnhancements() {
-    console.log('🎨 Init UI...');
+    console.log(' Init UI...');
     
     // Ethnicity autocomplete
     const $ethnicity = $('#id_ETHNICITY');

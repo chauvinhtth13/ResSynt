@@ -86,7 +86,7 @@ def individual_list(request):
         'total_individuals': individuals.count(),
     }
     
-    logger.info(f"📊 Showing page {page_obj.number} of {paginator.num_pages}")
+    logger.info(f" Showing page {page_obj.number} of {paginator.num_pages}")
     
     return render(request, 'studies/study_44en/CRF/individual/list.html', context)
 
@@ -176,12 +176,12 @@ def individual_create(request):
                 )
                 return redirect('study_44en:individual:detail', subjectid=subjectid)
             else:
-                logger.error("❌ Save helper returned None")
+                logger.error(" Save helper returned None")
                 messages.error(request, 'Lỗi khi lưu dữ liệu. Vui lòng thử lại.')
         else:
             # Use helper to log errors
             log_form_errors(individual_form, 'Individual Form')
-            messages.error(request, '❌ Vui lòng kiểm tra lại các trường bị lỗi')
+            messages.error(request, ' Vui lòng kiểm tra lại các trường bị lỗi')
     
     # GET - Show blank form
     else:
@@ -231,7 +231,7 @@ def individual_update(request, subjectid):
     4. Save with audit
     """
     logger.info("="*80)
-    logger.info(f"=== 📝 INDIVIDUAL UPDATE START ===")
+    logger.info(f"===  INDIVIDUAL UPDATE START ===")
     logger.info(f"User: {request.user.username}, SUBJECTID: {subjectid}, Method: {request.method}")
     logger.info("="*80)
     
@@ -259,7 +259,7 @@ def individual_update(request, subjectid):
         }
         
         logger.info("="*80)
-        logger.info("=== 📝 INDIVIDUAL UPDATE END (GET) - Rendering template ===")
+        logger.info("===  INDIVIDUAL UPDATE END (GET) - Rendering template ===")
         logger.info("="*80)
         
         return render(request, 'studies/study_44en/CRF/individual/form.html', context)
@@ -359,7 +359,7 @@ def individual_update(request, subjectid):
             }
             
             logger.info("="*80)
-            logger.info("=== 📝 RENDERING TEMPLATE WITH REASON MODAL ===")
+            logger.info("===  RENDERING TEMPLATE WITH REASON MODAL ===")
             logger.info(f"   show_reason_form: True")
             logger.info(f"   detected_changes: {len(all_changes)} changes")
             logger.info("="*80)
@@ -412,11 +412,11 @@ def individual_update(request, subjectid):
             messages.success(request, f'Cập nhật individual {individual.SUBJECTID} thành công!')
             return redirect('study_44en:individual:detail', subjectid=individual.SUBJECTID)
         else:
-            logger.error("❌ Save failed")
+            logger.error(" Save failed")
             messages.error(request, 'Lỗi khi lưu dữ liệu')
     else:
         # Log validation errors
-        logger.error("❌ Form validation failed")
+        logger.error(" Form validation failed")
         log_form_errors(individual_form, 'Individual Form')
         messages.error(request, 'Vui lòng kiểm tra lại các trường bị lỗi.')
     
@@ -431,7 +431,7 @@ def individual_update(request, subjectid):
     }
     
     logger.info("="*80)
-    logger.info("=== 📝 INDIVIDUAL UPDATE END (POST) - Rendering with errors ===")
+    logger.info("===  INDIVIDUAL UPDATE END (POST) - Rendering with errors ===")
     logger.info("="*80)
     
     return render(request, 'studies/study_44en/CRF/individual/form.html', context)
