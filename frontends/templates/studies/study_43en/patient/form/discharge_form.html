@@ -537,6 +537,24 @@ $(document).ready(function() {
 
     $(document).on('change', 'input[name="DEATHATDISCH"]', function() {
         toggleSection('DEATHATDISCH', '#death-section');
+        
+        // Auto-handle DISCHSTATUS based on DEATHATDISCH
+        const deathValue = $('input[name="DEATHATDISCH"]:checked').val();
+        const $dischStatus = $('#id_DISCHSTATUS');
+        
+        if (deathValue === 'Yes') {
+            // Auto-select "Died" status
+            $dischStatus.val('Died').trigger('change');
+            console.log('🔄 Auto-set DISCHSTATUS to "Died"');
+        } else if (deathValue === 'No') {
+            // Clear "Died" status if currently selected
+            if ($dischStatus.val() === 'Died') {
+                $dischStatus.val('').trigger('change');
+                console.log('🔄 Auto-cleared DISCHSTATUS (was "Died")');
+            }
+            // Clear death cause field
+            $('#id_DEATHCAUSE').val('');
+        }
     });
 
     // ==========================================
