@@ -882,13 +882,13 @@ def mark_followup_missed(request, pk):
         })
         
     except FollowUpStatus.DoesNotExist:
-        logger.error(f"❌ FollowUpStatus {pk} not found")
+        logger.error(f" FollowUpStatus {pk} not found")
         return JsonResponse({
             'success': False,
             'message': 'Không tìm thấy lịch hẹn'
         }, status=404)
     except Exception as e:
-        logger.error(f"❌ Error marking followup {pk} as missed: {e}", exc_info=True)
+        logger.error(f" Error marking followup {pk} as missed: {e}", exc_info=True)
         return JsonResponse({
             'success': False,
             'message': f'Lỗi: {str(e)}'

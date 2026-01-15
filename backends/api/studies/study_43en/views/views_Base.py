@@ -63,7 +63,7 @@ def patient_list(request):
     """
     Danh sách các bệnh nhân - OPTIMIZED VERSION
     
-    ✅ Improvements:
+     Improvements:
     - Redis caching for queries
     - Batch queries thay vì N+1
     - Giảm từ ~100 queries xuống ~10 queries
@@ -368,7 +368,7 @@ def contact_list(request):
     """
     Danh sách contacts - OPTIMIZED VERSION
     
-    ✅ Improvements:
+     Improvements:
     - Redis caching for queries
     - Batch queries thay vì N+1
     - Giảm từ ~50+ queries xuống ~10 queries

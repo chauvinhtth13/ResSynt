@@ -172,7 +172,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
             return household
             
     except Exception as e:
-        logger.error(f"❌ SAVE FAILED: {e}", exc_info=True)
+        logger.error(f" SAVE FAILED: {e}", exc_info=True)
         messages.error(request, f'Lỗi khi lưu: {str(e)}')
         return None
 
@@ -180,7 +180,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
 def log_form_errors(form, form_name):
     """Log form validation errors"""
     if form.errors:
-        logger.warning(f"❌ {form_name} errors: {form.errors}")
+        logger.warning(f" {form_name} errors: {form.errors}")
         return True
     return False
 

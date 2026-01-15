@@ -91,7 +91,7 @@
     <div class="card-header bg-purple text-white py-3">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-          <i class="fas fa-vial"></i>
+          <i ></i>
           {% if is_new %}
             {% trans "Sample Collection" %}
           {% else %}
@@ -169,7 +169,7 @@
         <div class="card mb-4">
           <div class="card-header bg-light">
             <h5 class="mb-0 text-purple">
-              <i class="fas fa-user-friends mr-2"></i>{% trans "Contact Information" %}
+              <i ></i>{% trans "Contact Information" %}
             </h5>
           </div>
           <div class="card-body">
@@ -271,14 +271,14 @@
                 <input type="radio" name="SAMPLE" id="SAMPLE_yes" value="True" class="form-check-input"
                        {% if sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                 <label for="SAMPLE_yes" class="form-check-label">
-                  <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+                  <i ></i>{% trans "Yes" %}
                 </label>
               </div>
               <div class="form-check form-check-inline">
                 <input type="radio" name="SAMPLE" id="SAMPLE_no" value="False" class="form-check-input"
                        {% if not sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                 <label for="SAMPLE_no" class="form-check-label">
-                  <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+                  <i ></i>{% trans "No" %}
                 </label>
               </div>
             </div>
@@ -299,12 +299,12 @@
               <div class="row mb-4">
                 <div class="col-lg-12 col-md-12">
                   <div class="card h-100 border-left-purple">
-                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                    <div >
                       <div class="form-check mb-0">
                         <input type="checkbox" name="STOOL" id="id_STOOL" class="form-check-input sample-type-checkbox"
                                {% if sample.STOOL %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_STOOL" class="form-check-label font-weight-bold h5 mb-0">
-                          <i class="fas fa-flask text-brown mr-2"></i>{% trans "Stool Sample" %}
+                          <i ></i>{% trans "Stool Sample" %}
                         </label>
                       </div>
                     </div>
@@ -312,7 +312,7 @@
                       <div class="stool-date-container" {% if not sample.STOOL %}style="display: none;"{% endif %}>
                         <div class="mb-3">
                           <label for="id_STOOLDATE">
-                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Collection Date" %}:
+                            <i ></i>{% trans "Collection Date" %}:
                           </label>
                           <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker"
                                  value="{{ sample.STOOLDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
@@ -324,7 +324,7 @@
                         </div>
                         <div class="sample-culture-container mt-4">
                           <h6 class="text-purple font-weight-bold mb-3">
-                            <i class="fas fa-microscope mr-2"></i>{% trans "Stool Culture Result" %}
+                            <i ></i>{% trans "Stool Culture Result" %}
                           </h6>
                           <div class="mb-3">
                             <label class="font-weight-bold mb-2">{% trans "Result" %}:</label>
@@ -400,12 +400,12 @@
               <div class="row mb-4">
                 <div class="col-lg-12 col-md-12">
                   <div class="card h-100 border-left-success">
-                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                    <div >
                       <div class="form-check mb-0">
                         <input type="checkbox" name="RECTSWAB" id="id_RECTSWAB" class="form-check-input sample-type-checkbox"
                                {% if sample.RECTSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_RECTSWAB" class="form-check-label font-weight-bold h5 mb-0">
-                          <i class="fas fa-swatchbook text-danger mr-2"></i>{% trans "Rectal Swab" %}
+                          <i ></i>{% trans "Rectal Swab" %}
                         </label>
                       </div>
                     </div>
@@ -413,7 +413,7 @@
                       <div class="rect-swab-date-container" {% if not sample.RECTSWAB %}style="display: none;"{% endif %}>
                         <div class="mb-3">
                           <label for="id_RECTSWABDATE">
-                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Collection Date" %}:
+                            <i ></i>{% trans "Collection Date" %}:
                           </label>
                           <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker"
                                  value="{{ sample.RECTSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
@@ -425,7 +425,7 @@
                         </div>
                         <div class="sample-culture-container mt-4">
                           <h6 class="text-success font-weight-bold mb-3">
-                            <i class="fas fa-microscope mr-2"></i>{% trans "Rectal Swab Culture Result" %}
+                            <i ></i>{% trans "Rectal Swab Culture Result" %}
                           </h6>
                           <div class="mb-3">
                             <label class="font-weight-bold mb-2">{% trans "Result" %}:</label>
@@ -501,12 +501,12 @@
               <div class="row mb-4">
                 <div class="col-lg-12 col-md-12">
                   <div class="card h-100 border-left-info">
-                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                    <div >
                       <div class="form-check mb-0">
                         <input type="checkbox" name="THROATSWAB" id="id_THROATSWAB" class="form-check-input sample-type-checkbox"
                                {% if sample.THROATSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_THROATSWAB" class="form-check-label font-weight-bold h5 mb-0">
-                          <i class="fas fa-head-side-cough text-info mr-2"></i>{% trans "Throat Swab" %}
+                          <i ></i>{% trans "Throat Swab" %}
                         </label>
                       </div>
                     </div>
@@ -514,7 +514,7 @@
                       <div class="throat-swab-date-container" {% if not sample.THROATSWAB %}style="display: none;"{% endif %}>
                         <div class="mb-3">
                           <label for="id_THROATSWABDATE">
-                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Collection Date" %}:
+                            <i ></i>{% trans "Collection Date" %}:
                           </label>
                           <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker"
                                  value="{{ sample.THROATSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
@@ -526,7 +526,7 @@
                         </div>
                         <div class="sample-culture-container mt-4">
                           <h6 class="text-info font-weight-bold mb-3">
-                            <i class="fas fa-microscope mr-2"></i>{% trans "Throat Swab Culture Result" %}
+                            <i ></i>{% trans "Throat Swab Culture Result" %}
                           </h6>
                           <div class="mb-3">
                             <label class="font-weight-bold mb-2">{% trans "Result" %}:</label>
@@ -603,12 +603,12 @@
               <div class="row mb-4">
                 <div class="col-lg-12 col-md-12">
                   <div class="card h-100 border-left-warning">
-                    <div class="card-header bg-white py-2 d-flex align-items-center">
+                    <div >
                       <div class="form-check mb-0">
                         <input type="checkbox" name="BLOOD" id="id_BLOOD" class="form-check-input sample-type-checkbox"
                                {% if sample.BLOOD %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_BLOOD" class="form-check-label font-weight-bold h5 mb-0">
-                          <i class="fas fa-tint text-danger mr-2"></i>{% trans "Blood Sample" %}
+                          <i ></i>{% trans "Blood Sample" %}
                         </label>
                       </div>
                     </div>
@@ -616,7 +616,7 @@
                       <div class="blood-date-container" {% if not sample.BLOOD %}style="display: none;"{% endif %}>
                         <div class="mb-3">
                           <label for="id_BLOODDATE">
-                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Collection Date" %}:
+                            <i ></i>{% trans "Collection Date" %}:
                           </label>
                           <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker"
                                  value="{{ sample.BLOODDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
@@ -640,7 +640,7 @@
         <div id="section-reason-ifno" class="card shadow mb-4">
           <div class="card-header bg-light">
             <h5 class="mb-0 text-purple">
-              <i class="fas fa-comment-alt mr-2"></i>{% trans "Notes" %}
+              <i ></i>{% trans "Notes" %}
             </h5>
           </div>
           <div class="card-body">

@@ -44,6 +44,10 @@ class LaboratoryTestForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
+        #  CRITICAL: Make id field not required to prevent validation errors
+        if 'id' in self.fields:
+            self.fields['id'].required = False
+        
         # Make fields not required initially
         self.fields['PERFORMEDDATE'].required = False
         self.fields['PERFORMEDDATE'].input_formats = ['%d/%m/%Y', '%d-%m-%Y']
@@ -89,7 +93,67 @@ class BaseLaboratoryTestFormSet(BaseModelFormSet):
     """Base formset for laboratory tests"""
     
     def __init__(self, *args, **kwargs):
+        """
+         CRITICAL FIX: Inject missing id fields BEFORE forms are created
+        
+        Problem: Template may not render all form.id fields due to conditional logic
+        Solution: Inject missing ids into POST data before BaseModelFormSet.__init__ creates forms
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Get data from either args[0] or kwargs['data']
+        data = None
+        if len(args) > 0 and args[0] is not None:
+            data = args[0]
+        elif 'data' in kwargs and kwargs['data'] is not None:
+            data = kwargs['data']
+        
+        # Handle missing id fields BEFORE calling super().__init__
+        if data:
+            queryset = kwargs.get('queryset')
+            
+            # Only inject if we have bound data and a queryset
+            if queryset is not None:
+                prefix = kwargs.get('prefix', self.get_default_prefix())
+                
+                # Make data mutable
+                if hasattr(data, '_mutable'):
+                    mutable_backup = data._mutable
+                    data._mutable = True
+                else:
+                    mutable_backup = None
+                
+                injected_count = 0
+                
+                # Get all instances from queryset
+                instances = list(queryset)
+                
+                for i, instance in enumerate(instances):
+                    id_field_name = f"{prefix}-{i}-id"
+                    
+                    # If instance has pk but id field missing in POST
+                    if instance.pk and id_field_name not in data:
+                        data[id_field_name] = str(instance.pk)
+                        injected_count += 1
+                        logger.warning(
+                            "⚠️ Injecting missing id for form %d: %s=%s (TESTTYPE=%s)",
+                            i, id_field_name, instance.pk, 
+                            getattr(instance, 'TESTTYPE', 'UNKNOWN')
+                        )
+                
+                # Restore mutability
+                if mutable_backup is not None:
+                    data._mutable = mutable_backup
+                
+                if injected_count > 0:
+                    logger.info(f" Injected {injected_count} missing 'id' fields BEFORE form initialization")
+                else:
+                    logger.debug("✓ All form id fields present in POST data")
+        
+        # Now call parent __init__ which will create forms with injected data
         super().__init__(*args, **kwargs)
+        
         if self.queryset is not None:
             self.queryset = self.queryset.order_by('CATEGORY', 'TESTTYPE')
     

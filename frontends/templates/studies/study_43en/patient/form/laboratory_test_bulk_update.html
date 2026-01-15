@@ -246,6 +246,7 @@
  {% if form.instance.TESTTYPE in category_test_map|get_item:category_code %}
  <div class="lab-test-row" data-test-code="{{ form.instance.TESTTYPE }}">
  <div class="lab-test-card {% if form.instance.PERFORMED %}performed{% endif %}">
+ {#  CRITICAL: Render id field - ModelForm auto-generates hidden input #}
  {{ form.id }}
 
  <div class="test-header">

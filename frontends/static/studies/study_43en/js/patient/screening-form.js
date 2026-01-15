@@ -137,7 +137,7 @@
     
     initEventHandlers();
     
-    console.log('✅ Screening form initialized');
+    console.log(' Screening form initialized');
   }
   
   // ========================================

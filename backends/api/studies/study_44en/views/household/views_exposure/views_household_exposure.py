@@ -129,10 +129,10 @@ def household_exposure_create(request, hhid):
                 return redirect('study_44en:household:detail', hhid=hhid)
                 
         except Exception as e:
-            logger.error(f"❌ Create failed: {e}", exc_info=True)
+            logger.error(f" Create failed: {e}", exc_info=True)
             messages.error(request, f'Error: {str(e)}')
     else:
-        logger.error("❌ Form validation failed")
+        logger.error(" Form validation failed")
         messages.error(request, 'Please check form errors')
     
     context = {
@@ -288,7 +288,7 @@ def household_exposure_update(request, hhid):
                 messages.success(request, 'Updated successfully!')
                 return redirect('study_44en:household:detail', hhid=hhid)
         except Exception as e:
-            logger.error(f"❌ Save failed: {e}", exc_info=True)
+            logger.error(f" Save failed: {e}", exc_info=True)
             messages.error(request, f'Error: {str(e)}')
     
     # STEP 3: Has changes → collect reasons
@@ -428,7 +428,7 @@ def household_exposure_update(request, hhid):
             messages.success(request, f'Cập nhật thành công exposure cho hộ {hhid}!')
             return redirect('study_44en:household:detail', hhid=hhid)
     except Exception as e:
-        logger.error(f"❌ Save failed: {e}", exc_info=True)
+        logger.error(f" Save failed: {e}", exc_info=True)
         messages.error(request, f'Error: {str(e)}')
     
     # Re-render with errors

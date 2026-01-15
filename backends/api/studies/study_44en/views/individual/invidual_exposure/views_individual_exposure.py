@@ -159,11 +159,11 @@ def individual_exposure_create(request, subjectid):
                 return redirect('study_44en:individual:detail', subjectid=subjectid)
                 
         except Exception as e:
-            logger.error(f"❌ Error creating exposure: {e}", exc_info=True)
+            logger.error(f" Error creating exposure: {e}", exc_info=True)
             messages.error(request, f'Error creating exposure: {str(e)}')
     else:
         logger.error(f"Form validation failed: {exposure_form.errors}")
-        messages.error(request, '❌ Please check the form for errors')
+        messages.error(request, ' Please check the form for errors')
     
     # Re-render with errors - preserve POST data
     water_data = {}
@@ -374,7 +374,7 @@ def individual_exposure_update(request, subjectid):
                 messages.success(request, 'Lưu thành công!')
                 return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
         except Exception as e:
-            logger.error(f"❌ Save failed: {e}", exc_info=True)
+            logger.error(f" Save failed: {e}", exc_info=True)
             messages.error(request, f'Error: {str(e)}')
     
     # ===================================
@@ -495,7 +495,7 @@ def individual_exposure_update(request, subjectid):
             messages.success(request, f'Cập nhật thành công exposure cho {subjectid}!')
             return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
     except Exception as e:
-        logger.error(f"❌ Save failed: {e}", exc_info=True)
+        logger.error(f" Save failed: {e}", exc_info=True)
         messages.error(request, f'Error: {str(e)}')
     
     # Re-render with errors
@@ -630,11 +630,11 @@ def individual_exposure_2_create(request, subjectid):
                 return redirect('study_44en:individual:detail', subjectid=subjectid)
                 
         except Exception as e:
-            logger.error(f"❌ Error creating exposure 2: {e}", exc_info=True)
+            logger.error(f" Error creating exposure 2: {e}", exc_info=True)
             messages.error(request, f'Error creating exposure 2: {str(e)}')
     else:
         logger.error(f"Form validation failed: {exposure_form.errors}")
-        messages.error(request, '❌ Please check the form for errors')
+        messages.error(request, ' Please check the form for errors')
     
     # Re-render with errors
     context = {
@@ -790,7 +790,7 @@ def individual_exposure_2_update(request, subjectid):
                 messages.success(request, 'Lưu thành công!')
                 return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
         except Exception as e:
-            logger.error(f"❌ Save failed: {e}", exc_info=True)
+            logger.error(f" Save failed: {e}", exc_info=True)
             messages.error(request, f'Error: {str(e)}')
     
     # ===================================
@@ -895,7 +895,7 @@ def individual_exposure_2_update(request, subjectid):
             messages.success(request, f'Cập nhật thành công exposure 2 cho {subjectid}!')
             return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
     except Exception as e:
-        logger.error(f"❌ Save failed: {e}", exc_info=True)
+        logger.error(f" Save failed: {e}", exc_info=True)
         messages.error(request, f'Error: {str(e)}')
     
     # Re-render with errors
@@ -1008,7 +1008,7 @@ def individual_exposure_3_create(request, subjectid):
             return redirect('study_44en:individual:detail', subjectid=subjectid)
             
     except Exception as e:
-        logger.error(f"❌ Error creating exposure 3: {e}", exc_info=True)
+        logger.error(f" Error creating exposure 3: {e}", exc_info=True)
         messages.error(request, f'Error creating exposure 3: {str(e)}')
     
     # Re-render with errors
@@ -1113,7 +1113,7 @@ def individual_exposure_3_update(request, subjectid):
                 messages.success(request, 'Lưu thành công!')
                 return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
         except Exception as e:
-            logger.error(f"❌ Save failed: {e}", exc_info=True)
+            logger.error(f" Save failed: {e}", exc_info=True)
             messages.error(request, f'Error: {str(e)}')
     
     # ===================================
@@ -1201,7 +1201,7 @@ def individual_exposure_3_update(request, subjectid):
             return redirect('study_44en:individual:exposure_list', subjectid=subjectid)
             
     except Exception as e:
-        logger.error(f"❌ Error updating exposure 3: {e}", exc_info=True)
+        logger.error(f" Error updating exposure 3: {e}", exc_info=True)
         messages.error(request, f'Error updating exposure 3: {str(e)}')
     
     # Re-render with errors

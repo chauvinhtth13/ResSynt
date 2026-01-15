@@ -192,7 +192,7 @@ def individual_followup_create(request, subjectid):
                 return redirect('study_44en:individual:followup_list', subjectid=subjectid)
                 
         except Exception as e:
-            logger.error(f"❌ Error creating follow-up: {e}", exc_info=True)
+            logger.error(f" Error creating follow-up: {e}", exc_info=True)
             messages.error(request, f'Error saving follow-up: {str(e)}')
     
     # GET - Show blank form
@@ -382,7 +382,7 @@ def individual_followup_update(request, subjectid, followup_id):
                 messages.success(request, 'Lưu thành công!')
                 return redirect('study_44en:individual:followup_list', subjectid=subjectid)
         except Exception as e:
-            logger.error(f"❌ Save failed: {e}", exc_info=True)
+            logger.error(f" Save failed: {e}", exc_info=True)
             messages.error(request, f'Error: {str(e)}')
     
     # ===================================
@@ -509,7 +509,7 @@ def individual_followup_update(request, subjectid, followup_id):
             return redirect('study_44en:individual:followup_list', subjectid=subjectid)
             
     except Exception as e:
-        logger.error(f"❌ Error updating follow-up: {e}", exc_info=True)
+        logger.error(f" Error updating follow-up: {e}", exc_info=True)
         messages.error(request, f'Error updating follow-up: {str(e)}')
     
     # Re-render with errors

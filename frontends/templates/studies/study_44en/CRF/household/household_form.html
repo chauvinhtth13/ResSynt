@@ -74,27 +74,20 @@
             <!-- ========================================= -->
             <!-- SMART ADDRESS SELECTION (CDN-based)        -->
             <!-- ========================================= -->
-            <div class="mb-3">
-                <p class="fw-bold mb-2">2. Household Address:</p>
+            <div class="mb-3" data-address-mode="new">
+                <p class="fw-bold mb-2">2. Household Address (Địa chỉ mới - Sau sáp nhập):</p>
                 <div class="ms-md-3">
                     
-                    <!-- District -->
-                    <div class="mb-3">
-                        <label class="form-label">Quận/Huyện: <span class="text-danger">*</span></label>
-                        <select class="form-select" id="district-select" required>
-                            <option value="">-- Loading... --</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Ward -->
+                    <!-- Ward - Direct Selection (NO District) -->
                     <div class="mb-3">
                         <label class="form-label">Phường/Xã: <span class="text-danger">*</span></label>
-                        <select class="form-select" id="ward-select" disabled required>
-                            <option value="">-- Chọn Quận/Huyện trước --</option>
+                        <select class="form-select" id="ward-select" required>
+                            <option value="">-- Đang tải... --</option>
                         </select>
+                        <small class="text-muted">Chọn phường/xã (168 phường sau sáp nhập)</small>
                     </div>
                     
-                    <!-- Street Autocomplete -->
+                    <!-- Street Autocomplete (if available) -->
                     <div class="mb-3 position-relative">
                         <label class="form-label">Tên đường:</label>
                         <input type="text" 
@@ -102,39 +95,69 @@
                             id="street-autocomplete"
                             placeholder="Gõ tên đường..."
                             autocomplete="off">
-                        <div id="street-suggestions" class="list-group position-absolute w-100" 
-                            style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;"></div>
+                        <div id="street-suggestions" 
+                            class="list-group position-absolute w-100" 
+                            style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+                        </div>
+                        <small class="text-muted">Nhập tên đường (nếu có)</small>
                     </div>
                     
-                    <!-- Full Address -->
-                    <div class="mb-3">
-                        <label class="form-label">Số nhà, Chi tiết:</label>
+                    <!-- Street Name (Optional) -->
+                    <div class="mb-3 position-relative">
+                        <label class="form-label">Tên đường:</label>
                         <input type="text" 
-                            name="STREET" 
+                            name="STREET"
+                            class="form-control" 
+                            id="street-autocomplete"
+                            placeholder="Gõ tên đường..."
+                            autocomplete="off"
+                            value="{% firstof personal_data_form.STREET.value household.STREET '' %}">
+                        <div id="street-suggestions" 
+                            class="list-group position-absolute w-100" 
+                            style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+                        </div>
+                        <small class="text-muted">Nhập tên đường (tùy chọn)</small>
+                    </div>
+                    
+                    {% if personal_data_form.STREET.errors %}
+                    <div class="text-danger small mt-1">{{ personal_data_form.STREET.errors.0 }}</div>
+                    {% endif %}
+                    
+                    <!-- House Number & Details -->
+                    <div class="mb-3">
+                        <label class="form-label">Số nhà, Tòa nhà, Chi tiết:</label>
+                        <input type="text" 
+                            name="HOUSE_NUMBER" 
                             id="full-address-input"
                             class="form-control" 
-                            placeholder="123/45, Căn hộ A1..."
-                            value="{% firstof personal_data_form.STREET.value household.STREET '' %}">
+                            placeholder="123/45, Căn hộ A1, Tòa nhà XYZ..."
+                            value="{% firstof personal_data_form.HOUSE_NUMBER.value household.HOUSE_NUMBER '' %}">
+                        <small class="text-muted">Nhập chi tiết địa chỉ (số nhà, tòa nhà, căn hộ, v.v.)</small>
                     </div>
                     
-                    <!-- Hidden WARD field -->
+                    {% if personal_data_form.HOUSE_NUMBER.errors %}
+                    <div class="text-danger small mt-1">{{ personal_data_form.HOUSE_NUMBER.errors.0 }}</div>
+                    {% endif %}
+                    
+                    <!-- Hidden field for WARD -->
                     <input type="hidden" name="WARD" id="ward-hidden-input" 
                         value="{% firstof personal_data_form.WARD.value household.WARD '' %}">
                     
+                    {% if personal_data_form.WARD.errors %}
+                    <div class="text-danger small mt-1">{{ personal_data_form.WARD.errors.0 }}</div>
+                    {% endif %}
+                    
                     <!-- Address Preview -->
                     <div class="alert alert-info" id="address-preview" style="display: none;">
-                        <strong> Địa chỉ đầy đủ:</strong>
+                        <strong>📍 Xem trước địa chỉ đầy đủ:</strong>
                         <div id="address-preview-text" class="mt-2"></div>
                     </div>
                     
-                    <div class="mt-3"><strong>TP. Hồ Chí Minh</strong></div>
+                    <!-- City (Fixed) -->
+                    <div class="mt-3">
+                        <strong>TP. Hồ Chí Minh</strong>
+                    </div>
                 </div>
-            </div>
-
-
-            <div class="mb-3 d-flex align-items-center">
-                <p class="fw-bold mb-0 me-3">3. Total number of household members:</p>
-                <input type="number" class="form-control text-center d-inline-block" name="TOTAL_MEMBERS" value="{% if household_form.TOTAL_MEMBERS.value %}{{ household_form.TOTAL_MEMBERS.value }}{% elif household.TOTAL_MEMBERS %}{{ household.TOTAL_MEMBERS }}{% endif %}" min="1" max="10" style="width: 100px;">
             </div>
 
             <!-- Rest of form remains the same... -->

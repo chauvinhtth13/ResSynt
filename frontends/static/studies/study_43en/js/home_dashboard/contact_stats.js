@@ -43,13 +43,6 @@
     // ========================================================================
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Only load if on dashboard page with contact chart
-        const chartCanvas = document.getElementById('contactChart');
-        if (!chartCanvas) {
-            console.log('[Contact Stats] Chart canvas not found - skipping load');
-            return;
-        }
-        
         console.log('[Contact Stats] Initializing...');
         
         // Initialize

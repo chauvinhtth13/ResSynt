@@ -294,7 +294,7 @@
                         {# Show message if no permission #}
                         {% if not perms.study_43en.view_laboratorytest and not perms.study_43en.change_laboratorytest %}
                           <span class="no-permission-msg">
-                            <i class="fas fa-lock mr-1"></i>{% trans "Không có quyền truy cập" %}
+                            <i ></i>{% trans "Không có quyền truy cập" %}
                           </span>
                         {% endif %}
                       {% else %}
@@ -306,7 +306,7 @@
                           </a>
                         {% else %}
                           <span class="no-permission-msg">
-                            <i class="fas fa-lock mr-1"></i>{% trans "Không có quyền tạo" %}
+                            <i ></i>{% trans "Không có quyền tạo" %}
                           </span>
                         {% endif %}
                       {% endif %}

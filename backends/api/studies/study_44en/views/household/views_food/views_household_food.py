@@ -137,8 +137,8 @@ def household_food_create(request, hhid):
     freq_valid = food_frequency_form.is_valid()
     source_valid = food_source_form.is_valid()
     
-    logger.info(f"   Food frequency: {'VALID ✅' if freq_valid else 'INVALID ❌'}")
-    logger.info(f"   Food source: {'VALID ✅' if source_valid else 'INVALID ❌'}")
+    logger.info(f"   Food frequency: {'VALID ' if freq_valid else 'INVALID '}")
+    logger.info(f"   Food source: {'VALID ' if source_valid else 'INVALID '}")
     
     if freq_valid and source_valid:
         logger.info("💾 All forms valid - Calling save helper...")
@@ -170,7 +170,7 @@ def household_food_create(request, hhid):
             )
             return redirect('study_44en:household:detail', hhid=hhid)
         else:
-            logger.error("❌ Save helper returned None")
+            logger.error(" Save helper returned None")
             messages.error(request, 'Lỗi khi lưu dữ liệu. Vui lòng thử lại.')
     else:
         # Use helper to log errors
@@ -180,7 +180,7 @@ def household_food_create(request, hhid):
         })
         
         if forms_with_errors:
-            error_msg = f'❌ Vui lòng kiểm tra lại: {", ".join(forms_with_errors)}'
+            error_msg = f' Vui lòng kiểm tra lại: {", ".join(forms_with_errors)}'
             messages.error(request, error_msg)
     
     # Re-render with errors

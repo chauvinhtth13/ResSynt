@@ -405,7 +405,7 @@ def sample_collection_view(request, usubjid, sample_type):
     
     # Validate sample type
     if not validate_sample_type(sample_type):
-        messages.error(request, f'❌ Sample type không hợp lệ: {sample_type}')
+        messages.error(request, f' Sample type không hợp lệ: {sample_type}')
         return redirect('study_43en:sample_collection_list', usubjid=usubjid)
     
     # Get data
@@ -413,7 +413,7 @@ def sample_collection_view(request, usubjid, sample_type):
     sample = get_single_sample(enrollment_case, sample_type)
     
     if not sample:
-        messages.error(request, f'❌ Không tìm thấy mẫu {sample_type}')
+        messages.error(request, f' Không tìm thấy mẫu {sample_type}')
         return redirect('study_43en:sample_collection_list', usubjid=usubjid)
     
     # Check site access

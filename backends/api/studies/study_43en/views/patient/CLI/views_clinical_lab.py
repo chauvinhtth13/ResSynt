@@ -35,6 +35,42 @@ logger = logging.getLogger(__name__)
 
 
 # ==========================================
+# CACHED DATA - Build once at module load
+# ==========================================
+
+# Cache category test map to avoid rebuilding on every request
+_CATEGORY_TEST_MAP_CACHE = None
+
+
+def get_category_test_map():
+    """
+    Get category → test codes mapping (cached)
+    
+     OPTIMIZATION: Build once at module load, reuse for all requests
+    Reduces overhead from O(n) to O(1) for 81 tests
+    """
+    global _CATEGORY_TEST_MAP_CACHE
+    
+    if _CATEGORY_TEST_MAP_CACHE is None:
+        category_test_map = {}
+        all_test_types = LaboratoryTest.TestTypeChoices.choices
+        
+        for test_code, test_label in all_test_types:
+            temp_test = LaboratoryTest(TESTTYPE=test_code)
+            category = temp_test._get_category_from_test_type()
+            
+            if category not in category_test_map:
+                category_test_map[category] = []
+            category_test_map[category].append(test_code)
+        
+        _CATEGORY_TEST_MAP_CACHE = category_test_map
+        logger.info(" Built and cached category_test_map with %d categories", 
+                   len(category_test_map))
+    
+    return _CATEGORY_TEST_MAP_CACHE
+
+
+# ==========================================
 # HELPER FUNCTIONS
 # ==========================================
 
@@ -137,23 +173,6 @@ def get_tests_by_lab_type(enrollment_case):
         tests_by_type[lab_type] = list(tests)
     
     return tests_by_type
-
-
-def build_category_test_map():
-    """Build mapping of category → test codes"""
-    all_test_types = LaboratoryTest.TestTypeChoices.choices
-    category_test_map = {}
-    
-    for test_code, test_label in all_test_types:
-        temp_test = LaboratoryTest(TESTTYPE=test_code)
-        category = temp_test._get_category_from_test_type()
-        
-        if category not in category_test_map:
-            category_test_map[category] = []
-        category_test_map[category].append(test_code)
-    
-    return category_test_map
-
 
 # ==========================================
 # LABORATORY LIST VIEW
@@ -345,19 +364,19 @@ def laboratory_test_bulk_update(request, usubjid, lab_type):
             queryset=LaboratoryTest.objects.filter(
                 USUBJID=enrollment_case,
                 LAB_TYPE=lab_type
-            ).order_by('CATEGORY', 'TESTTYPE'),
+            ).select_related('USUBJID').order_by('CATEGORY', 'TESTTYPE'),  #  Optimize queries
             prefix='labtest'
         )
         
         all_categories = LaboratoryTest.CategoryChoices.choices
         all_test_types = LaboratoryTest.TestTypeChoices.choices
-        category_test_map = build_category_test_map()
+        category_test_map = get_category_test_map()  #  Use cached version
         lab_type_display = dict(LaboratoryTest.LabTypeChoices.choices).get(
             lab_type, f"Test {lab_type}"
         )
         
-        logger.info(f"📋 Formset has {len(formset.forms)} forms")
-        logger.info(f"📊 Category map: {category_test_map}")
+        #  OPTIMIZATION: Concise summary log instead of dumping entire dict
+        logger.info(f"📋 Rendering: {len(formset.forms)} forms, {len(category_test_map)} categories")
         
         context = {
             'usubjid': usubjid,
@@ -410,7 +429,7 @@ def laboratory_test_bulk_update(request, usubjid, lab_type):
                 'queryset': LaboratoryTest.objects.filter(
                     USUBJID=enrollment_case,
                     LAB_TYPE=lab_type
-                ).order_by('CATEGORY', 'TESTTYPE'),
+                ).select_related('USUBJID').order_by('CATEGORY', 'TESTTYPE'),  #  Optimize queries
                 'prefix': 'labtest',
                 'related_name': 'laboratorytest_set',
             }
@@ -488,7 +507,7 @@ def laboratory_test_bulk_update(request, usubjid, lab_type):
             return True
             
         except Exception as e:
-            logger.error(f"❌ Error saving laboratory tests: {e}", exc_info=True)
+            logger.error(f" Error saving laboratory tests: {e}", exc_info=True)
             messages.error(request, f'Lỗi khi lưu: {str(e)}')
             return False
     
@@ -509,7 +528,7 @@ def laboratory_test_bulk_update(request, usubjid, lab_type):
             'lab_type_display': dict(LaboratoryTest.LabTypeChoices.choices).get(lab_type, lab_type),
             'all_categories': LaboratoryTest.CategoryChoices.choices,
             'all_test_types': LaboratoryTest.TestTypeChoices.choices,
-            'category_test_map': build_category_test_map(),
+            'category_test_map': get_category_test_map(),  #  Use cached version
             'selected_site_id': screening_case.SITEID,
         }
     )
@@ -560,13 +579,13 @@ def laboratory_test_view(request, usubjid, lab_type):
         queryset=LaboratoryTest.objects.filter(
             USUBJID=enrollment_case,
             LAB_TYPE=lab_type
-        ).order_by('CATEGORY', 'TESTTYPE'),
+        ).select_related('USUBJID').order_by('CATEGORY', 'TESTTYPE'),  #  Optimize queries
         prefix='labtest'
     )
     
     all_categories = LaboratoryTest.CategoryChoices.choices
     all_test_types = LaboratoryTest.TestTypeChoices.choices
-    category_test_map = build_category_test_map()
+    category_test_map = get_category_test_map()  #  Use cached version
     lab_type_display = dict(LaboratoryTest.LabTypeChoices.choices).get(
         lab_type, f"Test {lab_type}"
     )

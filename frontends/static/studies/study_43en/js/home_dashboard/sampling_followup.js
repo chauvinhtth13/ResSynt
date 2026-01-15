@@ -30,13 +30,6 @@
     // ========================================================================
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Only load if on dashboard page with sampling table
-        const tableBody = document.getElementById('samplingTableBody');
-        if (!tableBody) {
-            console.log('[Sampling Followup] Table not found - skipping load');
-            return;
-        }
-        
         console.log('[Sampling Followup] Initializing...');
         
         // Initialize

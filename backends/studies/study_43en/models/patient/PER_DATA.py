@@ -77,11 +77,19 @@ class PERSONAL_DATA(AuditFieldsMixin):
     # ==========================================
     # ADDRESS INFORMATION (NEW SYSTEM)
     # ==========================================
+    HOUSE_NUMBER_NEW = EncryptedCharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_('House Number/Building Details (New Administrative Division)'),
+        help_text=_('House number, building, apartment details (new system, encrypted)')
+    )
+    
     STREET_NEW = EncryptedCharField(
         max_length=255,
         null=True,
         blank=True,
-        verbose_name=_('Street/Road (New Administrative Division)'),
+        verbose_name=_('Street/Road Name (New Administrative Division)'),
         help_text=_('Street name under new administrative structure')
     )
     
@@ -104,11 +112,19 @@ class PERSONAL_DATA(AuditFieldsMixin):
     # ==========================================
     # ADDRESS INFORMATION (OLD SYSTEM)
     # ==========================================
+    HOUSE_NUMBER = EncryptedCharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_('House Number/Building Details (Old Administrative Division)'),
+        help_text=_('House number, building, apartment details (old system, encrypted)')
+    )
+    
     STREET = EncryptedCharField(
         max_length=255,
         null=True,
         blank=True,
-        verbose_name=_('Street/Road (Old Administrative Division)'),
+        verbose_name=_('Street/Road Name (Old Administrative Division)'),
         help_text=_('Street name under old administrative structure')
     )
     
@@ -174,14 +190,14 @@ class PERSONAL_DATA(AuditFieldsMixin):
     @property
     def full_address_new(self):
         """Get new full address (decrypted)"""
-        parts = [self.STREET_NEW, self.WARD_NEW, self.CITY_NEW]
+        parts = [self.HOUSE_NUMBER_NEW, self.STREET_NEW, self.WARD_NEW, self.CITY_NEW]
         result = ', '.join(filter(None, parts))
         return result if result else None
     
     @property
     def full_address_old(self):
         """Get old full address (decrypted)"""
-        parts = [self.STREET, self.WARD, self.DISTRICT, self.PROVINCECITY]
+        parts = [self.HOUSE_NUMBER, self.STREET, self.WARD, self.DISTRICT, self.PROVINCECITY]
         result = ', '.join(filter(None, parts))
         return result if result else None
     

@@ -133,7 +133,7 @@
                     throw new Error(data.message || 'Failed to mark as read');
                 }
             } catch (error) {
-                console.error('❌ Error marking as read:', error);
+                console.error(' Error marking as read:', error);
                 Utils.showToast('error', 'Không thể đánh dấu đã đọc');
             }
         },
@@ -184,7 +184,7 @@
                     throw new Error(data.message || 'Failed to mark all as read');
                 }
             } catch (error) {
-                console.error('❌ Error marking all as read:', error);
+                console.error(' Error marking all as read:', error);
                 Utils.showToast('error', 'Không thể đánh dấu tất cả');
                 
                 // Restore button

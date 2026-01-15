@@ -175,7 +175,7 @@ def save_individual(request, individual_form, is_create=False, change_reasons=No
             
     except Exception as e:
         logger.error("="*80)
-        logger.error(f"❌ SAVE FAILED: {e}")
+        logger.error(f" SAVE FAILED: {e}")
         logger.error("="*80)
         logger.error(f"Full error:", exc_info=True)
         messages.error(request, f'Lỗi khi lưu: {str(e)}')
@@ -189,7 +189,7 @@ def save_individual(request, individual_form, is_create=False, change_reasons=No
 def log_form_errors(form, form_name):
     """Log form validation errors"""
     if form.errors:
-        logger.warning(f"❌ {form_name} errors: {form.errors}")
+        logger.warning(f" {form_name} errors: {form.errors}")
         return True
     return False
 

@@ -192,7 +192,7 @@ def check_instance_site_access(request, instance, redirect_to: str = None):
     """
     SECURITY FIX: Check if user ACTUALLY has permission to access this site
     
-    ❌ OLD LOGIC: Only checked session['selected_site_id'] → BYPASS-able!
+     OLD LOGIC: Only checked session['selected_site_id'] → BYPASS-able!
      NEW LOGIC: Check against user's actual site permissions from middleware
     
     Args:
@@ -216,7 +216,7 @@ def check_instance_site_access(request, instance, redirect_to: str = None):
         )
         return True
     
-    # ❌ ACCESS DENIED
+    #  ACCESS DENIED
     user_sites = getattr(request, 'user_sites', set())
     can_access_all = getattr(request, 'can_access_all_sites', False)
     

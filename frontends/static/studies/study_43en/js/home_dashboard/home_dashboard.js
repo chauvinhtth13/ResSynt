@@ -38,13 +38,6 @@
     // ========================================================================
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Only load if on dashboard page with chart canvas
-        const chartCanvas = document.getElementById('enrollmentChart');
-        if (!chartCanvas) {
-            console.log('[Dashboard] Chart canvas not found - skipping enrollment chart');
-            return;
-        }
-        
         console.log('[Dashboard] Initializing...');
         initEnrollmentChart();
         initSiteFilterButtons();

@@ -118,12 +118,12 @@ def individual_sample_create(request, subjectid):
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
                     
             except Exception as e:
-                logger.error(f"❌ Error creating sample data: {e}", exc_info=True)
+                logger.error(f" Error creating sample data: {e}", exc_info=True)
                 messages.error(request, f'Error creating sample data: {str(e)}')
         else:
-            logger.error("❌ Form validation failed")
+            logger.error(" Form validation failed")
             logger.error(f"Food frequency errors: {food_frequency_form.errors}")
-            messages.error(request, '❌ Please check the form for errors')
+            messages.error(request, ' Please check the form for errors')
     
     # GET - Show blank form
     else:
@@ -299,12 +299,12 @@ def individual_sample_update(request, subjectid):
                     messages.success(request, 'Lưu thành công!')
                     return redirect('study_44en:individual:detail', subjectid=subjectid)
             except Exception as e:
-                logger.error(f"❌ Save failed: {e}", exc_info=True)
+                logger.error(f" Save failed: {e}", exc_info=True)
                 messages.error(request, f'Error: {str(e)}')
         else:
-            logger.error("❌ Form validation failed")
+            logger.error(" Form validation failed")
             logger.error(f"Food frequency errors: {food_frequency_form.errors}")
-            messages.error(request, '❌ Please check the form for errors')
+            messages.error(request, ' Please check the form for errors')
     
     # ===================================
     # STEP 3: Has changes → collect reasons
@@ -356,9 +356,9 @@ def individual_sample_update(request, subjectid):
     # STEP 5: Save with audit
     # ===================================
     if not food_frequency_form.is_valid():
-        logger.error("❌ Form validation failed")
+        logger.error(" Form validation failed")
         logger.error(f"Food frequency errors: {food_frequency_form.errors}")
-        messages.error(request, '❌ Please check the form for errors')
+        messages.error(request, ' Please check the form for errors')
         
         sample_data = load_samples(individual)
         context = {
@@ -410,7 +410,7 @@ def individual_sample_update(request, subjectid):
             return redirect('study_44en:individual:detail', subjectid=subjectid)
             
     except Exception as e:
-        logger.error(f"❌ Error updating sample data: {e}", exc_info=True)
+        logger.error(f" Error updating sample data: {e}", exc_info=True)
         messages.error(request, f'Error updating sample data: {str(e)}')
     
     # Re-render with errors

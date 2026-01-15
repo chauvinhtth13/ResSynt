@@ -824,10 +824,10 @@
         });
         
         // ==========================================
-        // ❌ CANCEL BUTTON - CLOSE MODAL
+        //  CANCEL BUTTON - CLOSE MODAL
         // ==========================================
         $('#cancelCompleteFollowup').click(function() {
-            console.log('❌ Cancel button clicked');
+            console.log(' Cancel button clicked');
             
             // Reset form
             $('#completeFollowupForm')[0].reset();
@@ -903,7 +903,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('❌ Complete error:', xhr, status, error);
+                    console.error(' Complete error:', xhr, status, error);
                     console.error('Response:', xhr.responseText);
                     
                     let errorMsg = 'Đã xảy ra lỗi!';

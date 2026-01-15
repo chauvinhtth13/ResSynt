@@ -132,7 +132,7 @@ def save_enrollment_and_related(request, forms_dict, screening_case, is_create=F
             personal_data.save()
             
             # DEBUG: Log after save
-            logger.info(f"✅ Saved personal data - PK: {personal_data.pk}, FULLNAME: {personal_data.FULLNAME}")
+            logger.info(f" Saved personal data - PK: {personal_data.pk}, FULLNAME: {personal_data.FULLNAME}")
             
             logger.info(f"Saved personal data for {enrollment.USUBJID.USUBJID}")
             
@@ -249,7 +249,7 @@ def enrollment_case_create(request, usubjid):
             if enrollment:
                 messages.success(
                     request,
-                    f'✅ Đã tạo thông tin đăng ký cho bệnh nhân {usubjid} thành công.'
+                    f' Đã tạo thông tin đăng ký cho bệnh nhân {usubjid} thành công.'
                 )
                 return redirect('study_43en:patient_detail', usubjid=usubjid)
         else:

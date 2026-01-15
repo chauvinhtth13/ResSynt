@@ -125,18 +125,25 @@ class ChangeDetector:
                 }
                 changes.append(change)
                 
-                logger.debug(
-                    "Change detected: %s '%s' → '%s'",
-                    field, change['old_display'], change['new_display']
-                )
+                # Reduced logging - only log individual changes at TRACE level
+                if logger.isEnabledFor(5):  # TRACE level
+                    logger.log(
+                        5,
+                        "Change detected: %s '%s' → '%s'",
+                        field, change['old_display'], change['new_display']
+                    )
         
-        logger.debug("Total changes detected: %d", len(changes))
+        # Only log summary at TRACE level to reduce overhead
+        if logger.isEnabledFor(5) and len(changes) > 0:
+            logger.log(5, "Total changes detected: %d", len(changes))
         return changes
     
     def extract_old_data(self, instance) -> Dict:
         """Extract old data from model instance"""
         data = model_to_dict(instance, exclude=list(self.excluded_fields))
-        logger.debug("Extracted old data: %d fields", len(data))
+        # Reduced logging - only log at TRACE level or when explicitly debugging
+        if logger.isEnabledFor(5):  # TRACE level (below DEBUG)
+            logger.log(5, "Extracted old data: %d fields", len(data))
         return data
     
     def extract_new_data(self, form) -> Dict:
@@ -159,5 +166,7 @@ class ChangeDetector:
             if field_name in form.cleaned_data and field_name not in self.excluded_fields
         }
         
-        logger.debug("Extracted new data: %d fields", len(new_data))
+        # Reduced logging - only log at TRACE level to avoid 81+ log entries per request
+        if logger.isEnabledFor(5):  # TRACE level (below DEBUG)
+            logger.log(5, "Extracted new data: %d fields", len(new_data))
         return new_data
