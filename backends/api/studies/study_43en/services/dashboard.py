@@ -437,10 +437,14 @@ def get_enrollment_chart_api(request):
         
         target_cumulative = []
         cumulative_target = 0.0
-        
+
         for month_date in month_dates:
-            # Only accumulate if site has started
-            if month_date >= site_start_date:
+            # ✅ CRITICAL FIX: If month is before site start, use None (not 0)
+            if month_date < site_start_date:
+                target_cumulative.append(None)
+            else:
+                # Site has started - calculate cumulative target
+                
                 # Determine step based on phase
                 if month_date <= phase_1_end:
                     if filter_type == 'all' or site_filter == 'all':
@@ -451,12 +455,12 @@ def get_enrollment_chart_api(request):
                     monthly_step = phase_2_monthly
                 
                 cumulative_target += monthly_step
-            
-            target_cumulative.append(round(cumulative_target, 1))
-        
-        # Ensure last value is exactly the target
-        if target_cumulative and cumulative_target > 0:
-            target_cumulative[-1] = site_target
+                target_cumulative.append(round(cumulative_target, 1))
+
+        # Ensure last non-null value is exactly the target
+        non_null_indices = [i for i, v in enumerate(target_cumulative) if v is not None]
+        if non_null_indices:
+            target_cumulative[non_null_indices[-1]] = site_target
         
         # ===== GET ACTUAL ENROLLMENT DATA =====
         enrolled_qs = get_filtered_queryset(

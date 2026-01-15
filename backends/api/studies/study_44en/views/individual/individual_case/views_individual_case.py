@@ -86,7 +86,7 @@ def individual_list(request):
         'total_individuals': individuals.count(),
     }
     
-    logger.info(f"📊 Showing page {page_obj.number} of {paginator.num_pages}")
+    logger.info(f" Showing page {page_obj.number} of {paginator.num_pages}")
     
     return render(request, 'studies/study_44en/CRF/individual/list.html', context)
 

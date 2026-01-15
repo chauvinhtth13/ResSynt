@@ -514,11 +514,10 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
                 change['field'] = f"{name}_{change['field']}"
             
             all_changes.extend(changes)
-            formset_changes_count += len(changes)
             
-            # Summary log instead of 81+ individual logs
-            if formset_changes_count > 0:
-                logger.info("📊 Formset '%s': %d changes detected", name, formset_changes_count)
+            # Log changes for this specific formset
+            if changes:
+                logger.info(" Formset '%s': %d changes detected", name, len(changes))
         return all_changes
     
     def _build_context(self, forms_dict, extra_context):

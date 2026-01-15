@@ -408,7 +408,7 @@ def antibiotic_list(request, usubjid, culture_id):
 
         # FINAL SUMMARY LOG
         logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        logger.info(f"📊 PROCESSING SUMMARY:")
+        logger.info(f" PROCESSING SUMMARY:")
         logger.info(f"   Total POST sensitivity keys: {len(post_keys)}")
         logger.info(f"   Tests processed: {len(changes_by_test)}")
         logger.info(f"   Total changes detected: {len(all_changes)}")

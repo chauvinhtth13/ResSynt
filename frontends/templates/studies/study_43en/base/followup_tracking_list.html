@@ -32,12 +32,12 @@
                             <div class="input-group">
 
                                 <input type="text" class="form-control datepicker" name="date_from" id="date_from" 
-                                    value="{{ date_from|date:'d/m/Y' }}" placeholder="DD/MM/YYYY">
+                                    value="{{ date_from|date:'Y-m-d' }}" placeholder="DD/MM/YYYY" data-provide="datepicker">
                                 <div class="input-group-prepend input-group-append">
                                     <span class="input-group-text">đến</span>
                                 </div>
                                 <input type="text" class="form-control datepicker" name="date_to" id="date_to" 
-                                    value="{{ date_to|date:'d/m/Y' }}" placeholder="DD/MM/YYYY">
+                                    value="{{ date_to|date:'Y-m-d' }}" placeholder="DD/MM/YYYY" data-provide="datepicker">
                             </div>
                         </div>
                     </div>
@@ -783,9 +783,18 @@
                 console.log('📅 All records:', formatDate(from), 'to', formatDate(to));
             }
             
-            // Set giá trị vào input
-            $('#date_from').val(formatDate(from));
-            $('#date_to').val(formatDate(to));
+            // Set giá trị vào input (format Y-m-d)
+            const fromFormatted = formatDate(from);
+            const toFormatted = formatDate(to);
+            
+            console.log('📅 Setting dates:', fromFormatted, 'to', toFormatted);
+            
+            $('#date_from').val(fromFormatted);
+            $('#date_to').val(toFormatted);
+            
+            // Force update datepicker display
+            $('#date_from').datepicker('update');
+            $('#date_to').datepicker('update');
             
             // Submit form
             $('#filterForm').submit();
@@ -1016,7 +1025,7 @@
         console.log(' Follow-up tracking ready');
         
         // ==========================================
-        // 📊 EXPORT EXCEL
+        //  EXPORT EXCEL
         // ==========================================
         $('#exportExcel').click(function() {
             const queryString = window.location.search;
