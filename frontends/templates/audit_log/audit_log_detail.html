@@ -4,9 +4,6 @@
 
 {% block title %}{% translate "Log Detail" %} - {{ log.patient_id }}{% endblock %}
 
-{% block dashboard_css %}
-<link rel="stylesheet" href="{% static 'studies/study_43en/css/audit_log.css' %}">
-{% endblock %}
 
 {% block dashboard_content %}
 <section class="content-header">
@@ -298,7 +295,7 @@
 {% endblock %}
 
 
-{% block extra_scripts %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}">
     $(function() {
         // Collapse technical info by default

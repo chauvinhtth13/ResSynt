@@ -5,10 +5,7 @@
 {% block title %}{% translate "System Audit Log" %}{% endblock %}
 
 
-{% block dashboard_css %}
-<!--  Use external CSS -->
-<link rel="stylesheet" href="{% static 'css/studies/study_43en/audit_log.css' %}">
-{% endblock %}
+
 
 {% block dashboard_content %}
 <section class="content-header">
@@ -317,7 +314,7 @@
 </section>
 {% endblock %}
 
-{% block extra_scripts %}
+{% block dashboard_js %}
 <script nonce="{{ request.csp_nonce }}">
 (function() {
     'use strict';
