@@ -3,161 +3,141 @@
 
 <div class="dropdown notification-dropdown" id="notificationDropdown">
   <!-- Notification Button -->
-  <button class="btn btn-nav-action dropdown-toggle" 
-          type="button" 
-          data-bs-toggle="dropdown" 
-          data-bs-auto-close="outside"
-          aria-expanded="false"
-          aria-label="{% trans 'Notifications' %}"
-          aria-haspopup="true">
+  <button class="btn btn-nav-action dropdown-toggle" type="button" data-bs-toggle="dropdown"
+    data-bs-auto-close="outside" aria-expanded="false" aria-label="{% trans 'Notifications' %}" aria-haspopup="true">
     <i class="bi bi-bell fs-5"></i>
     {% if notification_count %}
-      <span class="notification-badge {% if notification_count > 9 %}badge-large{% endif %}" 
-            data-count="{{ notification_count }}"
-            aria-live="polite">
-        {{ notification_count|default:"" }}
-        <span class="visually-hidden">{% trans 'unread notifications' %}</span>
-      </span>
+    <span class="notification-badge {% if notification_count > 9 %}badge-large{% endif %}"
+      data-count="{{ notification_count }}" aria-live="polite">
+      {{ notification_count|default:"" }}
+      <span class="visually-hidden">{% trans 'unread notifications' %}</span>
+    </span>
     {% endif %}
   </button>
-  
+
   <!-- Dropdown Menu -->
-  <div class="dropdown-menu dropdown-menu-base dropdown-menu-notification dropdown-menu-end"
-       role="menu"
-       aria-labelledby="notificationDropdown">
-    
+  <div class="dropdown-menu dropdown-menu-base dropdown-menu-notification dropdown-menu-end" role="menu"
+    aria-labelledby="notificationDropdown">
+
     <!-- Header -->
     <div class="notification-header">
       <div class="notification-header-title">
         <i class="bi bi-bell"></i>
         <span>{% trans 'Notifications' %}</span>
         {% if notification_count %}
-          <span class="notification-header-count">{{ notification_count }}</span>
+        <span class="notification-header-count">{{ notification_count }}</span>
         {% endif %}
       </div>
       {% if notification_count %}
-        <button type="button" 
-                class="notification-mark-read"
-                data-action="mark-all-read"
-                aria-label="{% trans 'Mark all as read' %}">
-          <i class="bi bi-check2-all me-1"></i>
-          {% trans 'Mark all read' %}
-        </button>
+      <button type="button" id="markAllReadBtn" class="notification-mark-read" data-action="mark-all-read"
+        aria-label="{% trans 'Mark all as read' %}">
+        <i class="bi bi-check2-all me-1"></i>
+        {% trans 'Mark all read' %}
+      </button>
       {% endif %}
     </div>
-    
+
     <!-- Notification List -->
-    <div class="notification-list" 
-         role="list"
-         aria-label="{% trans 'Notification list' %}">
-      
+    <div class="notification-list" role="list" aria-label="{% trans 'Notification list' %}">
+
       {% if notifications %}
-        <!-- Today's Notifications -->
-        {% regroup notifications by created_at.date as notifications_by_date %}
-        {% for date_group in notifications_by_date %}
-          <div class="notification-group">
-            <div class="notification-group-header">
-              <i class="bi bi-calendar3"></i>
-              {% if date_group.grouper == today %}
-                {% trans 'Today' %}
-              {% elif date_group.grouper == yesterday %}
-                {% trans 'Yesterday' %}
-              {% else %}
-                {{ date_group.grouper|date:"M d, Y" }}
-              {% endif %}
-            </div>
-            
-            {% for notification in date_group.list %}
-              <div class="notification-item-wrapper">
-                <a href="{{ notification.url }}" 
-                   class="notification-item {% if not notification.is_read %}unread{% endif %}"
-                   role="listitem"
-                   data-notification-id="{{ notification.id }}"
-                   aria-label="{{ notification.message }}">
-                  
-                  <!-- Icon -->
-                  <div class="notification-icon icon-{{ notification.type|default:'info' }}">
-                    <i class="bi {{ notification.icon|default:'bi-info-circle' }}"></i>
-                  </div>
-                  
-                  <!-- Content -->
-                  <div class="notification-content">
-                    <p class="notification-message">{{ notification.message }}</p>
-                    <div class="notification-meta">
-                      <span class="notification-time">
-                        <i class="bi bi-clock"></i>
-                        {{ notification.created_at|timesince }} {% trans 'ago' %}
-                      </span>
-                      {% if notification.category %}
-                        <span class="notification-category">{{ notification.category }}</span>
-                      {% endif %}
-                    </div>
-                  </div>
-                </a>
-                
-                <!-- Swipe Actions (for touch devices) -->
-                <div class="notification-actions">
-                  <button type="button" 
-                          class="notification-action-btn action-read"
-                          data-action="mark-read"
-                          data-notification-id="{{ notification.id }}"
-                          aria-label="{% trans 'Mark as read' %}">
-                    <i class="bi bi-check2"></i>
-                  </button>
-                  <button type="button" 
-                          class="notification-action-btn action-delete"
-                          data-action="delete"
-                          data-notification-id="{{ notification.id }}"
-                          aria-label="{% trans 'Delete notification' %}">
-                    <i class="bi bi-trash3"></i>
-                  </button>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% endfor %}
-        
-      {% else %}
-        <!-- Empty State -->
-        <div class="notification-empty" role="status">
-          <div class="notification-empty-icon">
-            <i class="bi bi-bell-slash"></i>
-          </div>
-          <h4 class="notification-empty-title">{% trans 'No notifications' %}</h4>
-          <p class="notification-empty-text">
-            {% trans "You're all caught up! We'll notify you when something new arrives." %}
-          </p>
+      <!-- Today's Notifications -->
+      {% regroup notifications by created_at as notifications_by_date %}
+      {% for date_group in notifications_by_date %}
+      <div class="notification-group">
+        <div class="notification-group-header">
+          <i class="bi bi-calendar3"></i>
+          {% if date_group.grouper == today %}
+          {% trans 'Today' %}
+          {% elif date_group.grouper == yesterday %}
+          {% trans 'Yesterday' %}
+          {% else %}
+          {{ date_group.grouper|date:"M d, Y" }}
+          {% endif %}
         </div>
+
+        {% for notification in date_group.list %}
+        <div class="notification-item-wrapper">
+          <a href="{{ notification.url }}" class="notification-item {% if not notification.is_read %}unread{% endif %}"
+            role="listitem" data-notification-id="{{ notification.id }}" aria-label="{{ notification.message }}">
+
+            <!-- Icon -->
+            <div class="notification-icon icon-{{ notification.type|default:'info' }}">
+              <i class="bi {{ notification.icon|default:'bi-info-circle' }}"></i>
+            </div>
+
+            <!-- Content -->
+            <div class="notification-content">
+              <p class="notification-message">{{ notification.message }}</p>
+              <div class="notification-meta">
+                <span class="notification-time">
+                  <i class="bi bi-clock"></i>
+                  {{ notification.created_at|timesince }} {% trans 'ago' %}
+                </span>
+                {% if notification.category %}
+                <span class="notification-category">{{ notification.category }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </a>
+
+          <!-- Swipe Actions (for touch devices) -->
+          <div class="notification-actions">
+            <button type="button" class="notification-action-btn action-read" data-action="mark-read"
+              data-notification-id="{{ notification.id }}" aria-label="{% trans 'Mark as read' %}">
+              <i class="bi bi-check2"></i>
+            </button>
+            <button type="button" class="notification-action-btn action-delete" data-action="delete"
+              data-notification-id="{{ notification.id }}" aria-label="{% trans 'Delete notification' %}">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+
+      {% else %}
+      <!-- Empty State -->
+      <div class="notification-empty" role="status">
+        <div class="notification-empty-icon">
+          <i class="bi bi-bell-slash"></i>
+        </div>
+        <h4 class="notification-empty-title">{% trans 'No notifications' %}</h4>
+        <p class="notification-empty-text">
+          {% trans "You're all caught up! We'll notify you when something new arrives." %}
+        </p>
+      </div>
       {% endif %}
-      
+
       <!-- Loading State (hidden by default) -->
       <div class="notification-loading d-none" id="notificationLoading">
         <div class="notification-spinner"></div>
         <span class="notification-loading-text">{% trans 'Loading...' %}</span>
       </div>
-      
+
       <!-- Skeleton Loading (for initial load) -->
       <div class="notification-skeletons d-none" id="notificationSkeletons">
         {% for i in "123" %}
-          <div class="notification-skeleton">
-            <div class="skeleton-icon"></div>
-            <div class="skeleton-content">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line"></div>
-            </div>
+        <div class="notification-skeleton">
+          <div class="skeleton-icon"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
           </div>
+        </div>
         {% endfor %}
       </div>
     </div>
-    
+
     <!-- Footer -->
     {% if notifications %}
-      <div class="notification-footer">
-        <a href="{% url 'notifications:list' %}" class="notification-footer-link">
-          {% trans 'View all notifications' %}
-          <i class="bi bi-arrow-right"></i>
-        </a>
-      </div>
+    <div class="notification-footer">
+      <a href="{% url 'study_43en:followup_tracking_list' %}" class="notification-footer-link">
+        {% trans 'View all notifications' %}
+        <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
     {% endif %}
   </div>
 </div>

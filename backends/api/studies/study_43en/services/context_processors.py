@@ -35,9 +35,11 @@ def site_filter_context(request):
 # EMPTY CONTEXT (for early returns)
 # ==========================================
 _EMPTY_NOTIFICATIONS = {
-    'upcoming_count': 0,
+    'notification_count': 0,
     'unread_count': 0,
-    'upcoming_patients': []
+    'notifications': [],
+    'today': None,
+    'yesterday': None,
 }
 
 # Paths that don't need notifications (performance optimization)
@@ -102,61 +104,111 @@ def upcoming_appointments(request):
     # SLOW PATH: Database operations (only for study pages)
     # 🚀 OPTIMIZED: Use direct query instead of get_filtered_queryset
     # ==========================================
-    from django.conf import settings
-    from django.db import connections
-    from django.core.cache import cache
     
-    # Check if study database is configured
-    if 'db_study_43en' not in settings.DATABASES:
-        return _EMPTY_NOTIFICATIONS
-    
-    try:
-        # Test connection - only when we actually need it
-        connections['db_study_43en'].ensure_connection()
-    except Exception:
-        return _EMPTY_NOTIFICATIONS
-    
-    from backends.studies.study_43en.models.schedule import FollowUpStatus
-    
-    # ==========================================
-    # QUERY PARAMETERS
-    # ==========================================
-    today = date.today()
-    upcoming_date = today + timedelta(days=3)
-    
-    #  Get read notifications from session
-    read_notifications = request.session.get('read_notifications', [])
-    
-    # 🚀 Cache key for notifications (per user, per day)
-    user_id = request.user.id
-    cache_key = f"notifications_43en_{user_id}_{today.isoformat()}"
-    
-    # ==========================================
-    # QUERY FollowUpStatus - DIRECT QUERY (skip cache overhead)
-    # ==========================================
-    try:
-        # 🚀 Direct query - no get_filtered_queryset to avoid cache load
-        # ⚠️ NOTE: FollowUpStatus has NO SITEID field - it's a denormalized table
-        followups = FollowUpStatus.objects.using('db_study_43en').filter(
-            EXPECTED_DATE__gte=today,
-            EXPECTED_DATE__lte=upcoming_date,
-            STATUS__in=['UPCOMING', 'LATE']
-        ).only(
-            'USUBJID', 'VISIT', 'EXPECTED_DATE', 'STATUS', 'SUBJECT_TYPE', 'PHONE', 'INITIAL'
-        ).order_by('EXPECTED_DATE', 'USUBJID')[:50]  # Limit to 50 notifications
+    # Wrap everything in try-except to ensure we always return valid data
+        from django.conf import settings
+        from django.db import connections
+        from django.core.cache import cache
         
-    except Exception as e:
-        # Fallback if query fails
-        import logging
-        logging.getLogger(__name__).warning(f"Error querying FollowUpStatus: {e}")
-        return _EMPTY_NOTIFICATIONS
-    
-    # ==========================================
-    # BUILD NOTIFICATION LIST
-    # ==========================================
-    upcoming = []
-    unread_count = 0
-    
+        # Check if study database is configured
+        if 'db_study_43en' not in settings.DATABASES:
+            return _EMPTY_NOTIFICATIONS
+        
+        try:
+            # Test connection - only when we actually need it
+            connections['db_study_43en'].ensure_connection()
+        except Exception:
+            return _EMPTY_NOTIFICATIONS
+        
+        from backends.studies.study_43en.models.schedule import FollowUpStatus
+        
+        # ==========================================
+        # QUERY PARAMETERS
+        # ==========================================
+        today = date.today()
+        upcoming_date = today + timedelta(days=3)
+        
+        #  Get read notifications from session
+        read_notifications = request.session.get('read_notifications', [])
+        
+        # 🚀 Cache key for notifications (per user, per day)
+        user_id = request.user.id
+        cache_key = f"notifications_43en_{user_id}_{today.isoformat()}"
+        
+        # ==========================================
+        # QUERY FollowUpStatus - DIRECT QUERY (skip cache overhead)
+        # ==========================================
+        try:
+            # 🚀 Direct query - no get_filtered_queryset to avoid cache load
+            # ⚠️ NOTE: FollowUpStatus has NO SITEID field - it's a denormalized table
+            followups = FollowUpStatus.objects.using('db_study_43en').filter(
+                EXPECTED_DATE__gte=today,
+                EXPECTED_DATE__lte=upcoming_date,
+                STATUS__in=['UPCOMING', 'LATE']
+            ).only(
+                'USUBJID', 'VISIT', 'EXPECTED_DATE', 'STATUS', 'SUBJECT_TYPE', 'PHONE', 'INITIAL'
+            ).order_by('EXPECTED_DATE', 'USUBJID')[:50]  # Limit to 50 notifications
+            
+        except Exception as e:
+            # Fallback if query fails
+            import logging
+            logging.getLogger(__name__).warning(f"Error querying FollowUpStatus: {e}")
+            return _EMPTY_NOTIFICATIONS
+        
+        # ==========================================
+        # BUILD NOTIFICATION LIST
+        # ==========================================
+        upcoming = []
+        unread_count = 0
+        
+        # 🧪 FAKE DATA FOR TESTING (remove in production)
+        # If no real data, add fake notifications for testing
+        if len(followups) == 0:
+            fake_notifications = [
+                {
+                    'USUBJID': '003-A-001',
+                    'VISIT': 'V2',
+                    'EXPECTED_DATE': today - timedelta(days=1),  # Yesterday - LATE
+                    'STATUS': 'LATE',
+                    'SUBJECT_TYPE': 'PATIENT',
+                    'PHONE': '0901234567',
+                    'INITIAL': 'NVA',
+                    'EXPECTED_FROM': None,
+                    'EXPECTED_TO': None,
+                },
+                {
+                    'USUBJID': '003-A-002',
+                    'VISIT': 'V3',
+                    'EXPECTED_DATE': today,  # Today - UPCOMING
+                    'STATUS': 'UPCOMING',
+                    'SUBJECT_TYPE': 'PATIENT',
+                    'PHONE': '0912345678',
+                    'INITIAL': 'LTB',
+                    'EXPECTED_FROM': None,
+                    'EXPECTED_TO': None,
+                },
+                {
+                    'USUBJID': '003-C-001',
+                    'VISIT': 'V2',
+                    'EXPECTED_DATE': today + timedelta(days=1),  # Tomorrow - UPCOMING
+                    'STATUS': 'UPCOMING',
+                    'SUBJECT_TYPE': 'CONTACT',
+                    'PHONE': '0923456789',
+                    'INITIAL': 'PTH',
+                    'EXPECTED_FROM': None,
+                    'EXPECTED_TO': None,
+                },
+            ]
+            
+            # Convert to objects with attributes
+            class FakeFollowup:
+                def __init__(self, data):
+                    for key, value in data.items():
+                        setattr(self, key, value)
+            
+            followups = [FakeFollowup(data) for data in fake_notifications]
+        # 🧪 END FAKE DATA
+        
     for followup in followups:
         #  Create unique notification ID
         notif_id = f"{followup.USUBJID}_{followup.VISIT}_{followup.EXPECTED_DATE.strftime('%Y%m%d')}"
@@ -198,9 +250,28 @@ def upcoming_appointments(request):
                 icon = 'calendar-event'
                 icon_color = 'success'
         
+        # Build URL for notification click
+        if followup.SUBJECT_TYPE == 'PATIENT':
+            notification_url = f"/studies/43en/patient/{followup.USUBJID}/"
+        else:
+            notification_url = f"/studies/43en/contact/{followup.USUBJID}/"
+        
+        # Build message for notification
+        notification_message = f"{subject_label} {followup.USUBJID} - {visit_description}"
+        
         #  Build notification object
         upcoming.append({
-            # Identification
+            # Required by template
+            'id': notif_id,
+            'message': notification_message,
+            'url': notification_url,
+            'type': 'warning' if followup.STATUS == 'LATE' else 'info',
+            'icon': f'bi-{icon}',
+            'created_at': followup.EXPECTED_DATE,  # Use expected_date for grouping
+            'category': subject_label,
+            'is_read': is_read,
+            
+            # Additional identification
             'notif_id': notif_id,
             'usubjid': followup.USUBJID,
             'patient_name': followup.INITIAL or 'N/A',
@@ -230,9 +301,7 @@ def upcoming_appointments(request):
             'has_phone': bool(followup.PHONE),
             
             # UI
-            'icon': icon,
             'icon_color': icon_color,
-            'is_read': is_read,
             
             # Legacy compatibility
             'notification_type': f"{followup.VISIT}_VISIT_{followup.SUBJECT_TYPE}"
@@ -241,11 +310,17 @@ def upcoming_appointments(request):
     #  Sort: unread first, then by date
     upcoming.sort(key=lambda x: (x['is_read'], x['expected_date']))
     
+    # Calculate yesterday for template comparison
+    yesterday = today - timedelta(days=1)
+    
     return {
-        'upcoming_count': len(upcoming),
+        'notification_count': len(upcoming),
         'unread_count': unread_count,
-        'upcoming_patients': upcoming,
+        'notifications': upcoming,
+        'today': today,
+        'yesterday': yesterday,
     }
+    
 
 
 
