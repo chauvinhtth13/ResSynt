@@ -417,77 +417,94 @@ def get_enrollment_chart_api(request):
         
         # ===== STUDY PERIOD =====
         chart_start_date = date(2024, 7, 1)   # Chart always starts from 07/2024
-        end_date = date(2027, 4, 30)          # 30/04/2027
+        end_date = date(2027, 4, 30)          # 30/04/2027 (display date)
+        chart_end_date = date(2027, 5, 1)     # 01/05/2027 (for 35 months of data)
         
         # Per research protocol: 35 months total
         # Note: This is the official study duration from protocol document
         total_months = 35
         
         # ===== GENERATE MONTH LABELS =====
+        # Generate 35 months: 07/2024 to 05/2027 (inclusive)
         months = []
         month_dates = []  # Keep date objects for calculations
         current_date = chart_start_date
         
-        while current_date <= end_date:
+        while current_date <= chart_end_date:
             months.append(current_date.strftime('%m/%Y'))
             month_dates.append(current_date)
             current_date += relativedelta(months=1)
         
         logger.info(f"Total months: {len(months)} data points, protocol says {total_months} months")
         
-        # ===== CALCULATE TARGET LINE (STEPPED TO REACH EXACT 750) =====
-        # Phase 1 (07/2024-06/2025): 15/month for all sites
-        # Phase 2 (07/2025-04/2027): Adjust to reach exactly 750 by 04/2027
-        
-        phase_1_end = date(2025, 6, 30)  # End of 15/month phase
-        phase_1_months = 12  # Jul 2024 - Jun 2025
-        phase_2_months = total_months - phase_1_months  # Remaining months
+        # ===== CALCULATE TARGET LINE =====
         
         if filter_type == 'all' or site_filter == 'all':
-            # All sites
-            phase_1_total = phase_1_months * 15  # 12 * 15 = 180
-            phase_2_needed = site_target - phase_1_total  # 750 - 180 = 570
-            phase_2_monthly = phase_2_needed / phase_2_months  # 570 / 22 = 25.9
-        else:
-            # Individual sites: proportional
-            proportion = site_target / 750.0
-            phase_1_total = phase_1_months * 15 * proportion
-            phase_2_needed = site_target - phase_1_total
-            phase_2_monthly = phase_2_needed / phase_2_months
-        
-        logger.info(f"Phase 1: {phase_1_months} months, Phase 2: {phase_2_months} months")
-        logger.info(f"Phase 2 monthly: {phase_2_monthly:.2f} to reach {site_target}")
-        
-        target_cumulative = []
-        cumulative_target = 0.0
-        
-        # FIX: Compare by month (first day of month), not exact date
-        # This ensures site 011 (start 05/11/2025) shows target from 11/2025, not 12/2025
-        site_start_month = site_start_date.replace(day=1)
-
-        for month_date in month_dates:
-            # FIXED: Compare month_date (already 1st of month) with site_start_month
-            if month_date < site_start_month:
-                target_cumulative.append(None)
-            else:
-                # Site has started - calculate cumulative target
-                
-                # Determine step based on phase
+            # ALL SITES: Use specific step pattern
+            # Phase 1 (07/2024-06/2025): 15 patients/month
+            # Phase 2 (07/2025-04/2027): 25 patients/month
+            
+            phase_1_end = date(2025, 6, 30)
+            
+            target_cumulative = []
+            cumulative_target = 0.0
+            
+            for month_date in month_dates:
                 if month_date <= phase_1_end:
-                    if filter_type == 'all' or site_filter == 'all':
-                        monthly_step = 15
-                    else:
-                        monthly_step = 15 * proportion
+                    # Phase 1: 15/month
+                    cumulative_target += 15
                 else:
-                    monthly_step = phase_2_monthly
+                    # Phase 2: 25/month
+                    cumulative_target += 25
                 
-                cumulative_target += monthly_step
-                target_cumulative.append(round(cumulative_target, 1))
+                target_cumulative.append(round(cumulative_target))
+            
+            # Ensure last value is exactly 750
+            if target_cumulative:
+                target_cumulative[-1] = 750
+            
+            logger.info(f"All sites: Phase 1 (15/month) until 06/2025, Phase 2 (25/month) until 05/2027")
+        
+        else:
+            # INDIVIDUAL SITES: Distribute evenly across available months
+            
+            # Calculate number of months from site start to study end
+            site_available_months = 0
+            temp_date = site_start_date.replace(day=1)
+            while temp_date <= chart_end_date:
+                site_available_months += 1
+                temp_date += relativedelta(months=1)
+            
+            logger.info(f"Site {site_filter} has {site_available_months} months available from {site_start_date} to {chart_end_date}")
+            
+            # Calculate monthly target to reach site_target evenly
+            if site_available_months > 0:
+                monthly_target_step = site_target / site_available_months
+            else:
+                monthly_target_step = 0
+            
+            logger.info(f"Monthly target step: {monthly_target_step:.2f} to reach {site_target} in {site_available_months} months")
+            
+            target_cumulative = []
+            cumulative_target = 0.0
+            
+            # FIX: Compare by month (first day of month), not exact date
+            # This ensures site 011 (start 05/11/2025) shows target from 11/2025, not 12/2025
+            site_start_month = site_start_date.replace(day=1)
 
-        # Ensure last non-null value is exactly the target
-        non_null_indices = [i for i, v in enumerate(target_cumulative) if v is not None]
-        if non_null_indices:
-            target_cumulative[non_null_indices[-1]] = site_target
+            for month_date in month_dates:
+                # FIXED: Compare month_date (already 1st of month) with site_start_month
+                if month_date < site_start_month:
+                    target_cumulative.append(None)
+                else:
+                    # Site has started - add monthly step
+                    cumulative_target += monthly_target_step
+                    target_cumulative.append(round(cumulative_target))
+
+            # Ensure last non-null value is exactly the target
+            non_null_indices = [i for i, v in enumerate(target_cumulative) if v is not None]
+            if non_null_indices:
+                target_cumulative[non_null_indices[-1]] = int(site_target)
         
         # ===== GET ACTUAL ENROLLMENT DATA =====
         enrolled_qs = get_filtered_queryset(
