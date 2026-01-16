@@ -320,6 +320,7 @@ def get_enrollment_chart_api(request):
         - target: Target enrollment per month (cumulative) with stepped increase
         - actual: Actual enrollment per month (cumulative, null after last enrollment)
         - site_target: Total target for current site filter
+        - allowed_sites: List of sites user can access
     
     Target Logic:
         - All Sites: 15 patients/month (07/2024-06/2025), then adjust to reach 750 by 04/2027
@@ -333,11 +334,38 @@ def get_enrollment_chart_api(request):
     """
     from datetime import date
     from dateutil.relativedelta import relativedelta
+    from backends.studies.study_43en.utils.permission_decorators import check_site_permission
+    
+    # Get user's allowed sites from middleware
+    user_sites = getattr(request, 'user_sites', set())
+    can_access_all = getattr(request, 'can_access_all_sites', False)
+    
+    # Build allowed_sites list
+    # Multi-site users also get 'all' option (but 'all' means only their authorized sites)
+    if can_access_all:
+        allowed_sites = ['all', '003', '020', '011']
+    elif user_sites and len(user_sites) > 1:
+        # Multi-site user: add 'all' option + their sites
+        allowed_sites = ['all'] + sorted(list(user_sites))
+    elif user_sites:
+        # Single-site user: only their site (no 'all' option)
+        allowed_sites = sorted(list(user_sites))
+    else:
+        allowed_sites = []
     
     # Check if site parameter is provided
     site_param = request.GET.get('site', None)
     
     if site_param and site_param != 'all':
+        # SECURITY: Validate user has permission to access this site
+        if not can_access_all and site_param not in user_sites:
+            logger.warning(f"Chart API: User {request.user.username} denied access to site {site_param}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Bạn không có quyền truy cập site {site_param}',
+                'allowed_sites': allowed_sites,
+            }, status=403)
+        
         # Override with provided site
         site_filter = site_param
         filter_type = 'single'
@@ -391,14 +419,9 @@ def get_enrollment_chart_api(request):
         chart_start_date = date(2024, 7, 1)   # Chart always starts from 07/2024
         end_date = date(2027, 4, 30)          # 30/04/2027
         
-        # Calculate total months (07/2024 to 04/2027 = 34 months)
-        # 2024: 6 months (Jul-Dec)
-        # 2025: 12 months
-        # 2026: 12 months  
-        # 2027: 4 months (Jan-Apr)
-        # Total: 34 months
-        total_months = ((end_date.year - chart_start_date.year) * 12 + 
-                       (end_date.month - chart_start_date.month) + 1)
+        # Per research protocol: 35 months total
+        # Note: This is the official study duration from protocol document
+        total_months = 35
         
         # ===== GENERATE MONTH LABELS =====
         months = []
@@ -410,7 +433,7 @@ def get_enrollment_chart_api(request):
             month_dates.append(current_date)
             current_date += relativedelta(months=1)
         
-        logger.info(f"Total months calculated: {len(months)} (should be 34)")
+        logger.info(f"Total months: {len(months)} data points, protocol says {total_months} months")
         
         # ===== CALCULATE TARGET LINE (STEPPED TO REACH EXACT 750) =====
         # Phase 1 (07/2024-06/2025): 15/month for all sites
@@ -437,10 +460,14 @@ def get_enrollment_chart_api(request):
         
         target_cumulative = []
         cumulative_target = 0.0
+        
+        # FIX: Compare by month (first day of month), not exact date
+        # This ensures site 011 (start 05/11/2025) shows target from 11/2025, not 12/2025
+        site_start_month = site_start_date.replace(day=1)
 
         for month_date in month_dates:
-            # ✅ CRITICAL FIX: If month is before site start, use None (not 0)
-            if month_date < site_start_date:
+            # FIXED: Compare month_date (already 1st of month) with site_start_month
+            if month_date < site_start_month:
                 target_cumulative.append(None)
             else:
                 # Site has started - calculate cumulative target
@@ -519,8 +546,12 @@ def get_enrollment_chart_api(request):
                 'site_target': site_target,
                 'total_months': total_months,
                 'site_start_date': site_start_date.strftime('%d/%m/%Y'),
+                'site_start_month': site_start_date.strftime('%m/%Y'),  # For display
+                'chart_start_date': chart_start_date.strftime('%d/%m/%Y'),
+                'chart_end_date': end_date.strftime('%d/%m/%Y'),
                 'last_enrollment_date': last_enrollment_date.strftime('%d/%m/%Y') if last_enrollment_date else None,
             },
+            'allowed_sites': allowed_sites,
             'site_name': _get_site_display_name(site_filter, filter_type),
             'timestamp': datetime.now().isoformat(),
         })
@@ -558,13 +589,25 @@ def get_monthly_screening_enrollment_api(request):
     from dateutil.relativedelta import relativedelta
     
     try:
+        # Get user's allowed sites from middleware
+        user_sites = getattr(request, 'user_sites', set())
+        can_access_all = getattr(request, 'can_access_all_sites', False)
+        
         # Get query parameters
         site_param = request.GET.get('site', None)
         start_date_str = request.GET.get('start_date', None)
         end_date_str = request.GET.get('end_date', None)
         
-        # Determine site filter
+        # Determine site filter with permission validation
         if site_param and site_param != 'all':
+            # SECURITY: Validate user has permission to access this site
+            if not can_access_all and site_param not in user_sites:
+                logger.warning(f"Monthly stats API: User {request.user.username} denied access to site {site_param}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Bạn không có quyền truy cập site {site_param}',
+                }, status=403)
+            
             site_filter = site_param
             filter_type = 'single'
             logger.info(f"Monthly stats API: Using site from parameter: {site_param}")
@@ -685,13 +728,25 @@ def get_monthly_contact_stats_api(request):
     from dateutil.relativedelta import relativedelta
     
     try:
+        # Get user's allowed sites from middleware
+        user_sites = getattr(request, 'user_sites', set())
+        can_access_all = getattr(request, 'can_access_all_sites', False)
+        
         # Get query parameters
         site_param = request.GET.get('site', None)
         start_date_str = request.GET.get('start_date', None)
         end_date_str = request.GET.get('end_date', None)
         
-        # Determine site filter
+        # Determine site filter with permission validation
         if site_param and site_param != 'all':
+            # SECURITY: Validate user has permission to access this site
+            if not can_access_all and site_param not in user_sites:
+                logger.warning(f"Contact monthly stats API: User {request.user.username} denied access to site {site_param}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Bạn không có quyền truy cập site {site_param}',
+                }, status=403)
+            
             site_filter = site_param
             filter_type = 'single'
             logger.info(f"Contact monthly stats API: Using site from parameter: {site_param}")
@@ -814,11 +869,23 @@ def get_sampling_followup_stats_api(request):
     from django.db.models import Count, Q, F
     
     try:
+        # Get user's allowed sites from middleware
+        user_sites = getattr(request, 'user_sites', set())
+        can_access_all = getattr(request, 'can_access_all_sites', False)
+        
         # Get query parameters
         site_param = request.GET.get('site', None)
         
-        # Determine site filter
+        # Determine site filter with permission validation
         if site_param and site_param != 'all':
+            # SECURITY: Validate user has permission to access this site
+            if not can_access_all and site_param not in user_sites:
+                logger.warning(f"Sampling followup API: User {request.user.username} denied access to site {site_param}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Bạn không có quyền truy cập site {site_param}',
+                }, status=403)
+            
             site_filter = site_param
             filter_type = 'single'
             logger.info(f"Sampling followup API: Using site from parameter: {site_param}")
@@ -954,6 +1021,9 @@ def get_kpneumoniae_isolation_stats_api(request):
     
     Similar to Table 7: No. of K. pneumoniae isolated from samples
     
+    Query Parameters:
+        site: Optional site code ('003', '020', '011', 'all')
+    
     Returns:
         JSON with isolation stats by site, subject type, and sample type
     
@@ -969,11 +1039,55 @@ def get_kpneumoniae_isolation_stats_api(request):
     
     Usage:
         GET /api/kpneumoniae-isolation/
+        GET /api/kpneumoniae-isolation/?site=003
     """
     from django.db.models import Q
     from django.apps import apps
     
     try:
+        # Get user's allowed sites from middleware
+        user_sites = getattr(request, 'user_sites', set())
+        can_access_all = getattr(request, 'can_access_all_sites', False)
+        
+        # Build allowed_sites list
+        # Multi-site users also get 'all' option (but 'all' means only their authorized sites)
+        if can_access_all:
+            allowed_sites = ['all', '003', '020', '011']
+        elif user_sites and len(user_sites) > 1:
+            # Multi-site user: add 'all' option + their sites
+            allowed_sites = ['all'] + sorted(list(user_sites))
+        elif user_sites:
+            # Single-site user: only their site (no 'all' option)
+            allowed_sites = sorted(list(user_sites))
+        else:
+            allowed_sites = []
+        
+        # Get query parameter
+        site_param = request.GET.get('site', None)
+        
+        # Determine which sites to include in results
+        if site_param and site_param != 'all':
+            # SECURITY: Validate user has permission to access this site
+            if not can_access_all and site_param not in user_sites:
+                logger.warning(f"K. pneumoniae API: User {request.user.username} denied access to site {site_param}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Bạn không có quyền truy cập site {site_param}',
+                    'allowed_sites': allowed_sites,
+                }, status=403)
+            
+            sites_to_query = [site_param]
+            logger.info(f"K. pneumoniae API: Using site from parameter: {site_param}")
+        else:
+            # Use all sites or user's allowed sites
+            if can_access_all:
+                sites_to_query = ['003', '020', '011']
+            elif user_sites:
+                sites_to_query = [s for s in ['003', '020', '011'] if s in user_sites]
+            else:
+                sites_to_query = []
+            logger.info(f"K. pneumoniae API: Using sites: {sites_to_query}")
+        
         # Import SAM models (with multiple fallback strategies)
         sam_case_model = SAM_CASE
         sam_contact_model = SAM_CONTACT
@@ -997,12 +1111,9 @@ def get_kpneumoniae_isolation_stats_api(request):
             '011': 'Cho Ray',
         }
         
-        # Get all sites
-        all_sites = ['003', '020', '011']
-        
         result_data = {}
         
-        for site_code in all_sites:
+        for site_code in sites_to_query:
             site_name = SITE_NAMES[site_code]
             
             # ===== PATIENT DATA =====
@@ -1177,6 +1288,7 @@ def get_kpneumoniae_isolation_stats_api(request):
         return JsonResponse({
             'success': True,
             'data': result_data,
+            'allowed_sites': allowed_sites,
             'timestamp': datetime.now().isoformat(),
         })
         
