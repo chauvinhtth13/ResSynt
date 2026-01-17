@@ -97,6 +97,11 @@
           data-is-create="{{ is_create|yesno:'true,false' }}"
           {% if is_readonly %}class="readonly-form"{% endif %}>
         {% csrf_token %}
+        
+        {# POST error marker for validation modal #}
+        {% if followup_form.errors or rehospitalization_formset.errors or antibiotic_formset.errors %}
+        <input type="hidden" id="django-form-has-errors" value="true">
+        {% endif %}
 
         <!--  Section 1: Assessment at Day 90 -->
         <div class="card card-outline card-info">
@@ -604,6 +609,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Mobility.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -616,6 +622,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Mobility.errors %}
                                         <div class="invalid-feedback d-block">
@@ -635,6 +642,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Personal_Hygiene.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -647,6 +655,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Personal_Hygiene.errors %}
                                         <div class="invalid-feedback d-block">
@@ -666,6 +675,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Daily_Activities.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -678,6 +688,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Daily_Activities.errors %}
                                         <div class="invalid-feedback d-block">
@@ -697,6 +708,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Pain_Discomfort.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -709,6 +721,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Pain_Discomfort.errors %}
                                         <div class="invalid-feedback d-block">
@@ -728,6 +741,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Anxiety.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -740,6 +754,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Anxiety.errors %}
                                         <div class="invalid-feedback d-block">

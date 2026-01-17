@@ -100,10 +100,14 @@
     </div>
 
     <!-- Main Form -->
-    <form id="dischargeForm" method="post" novalidate 
-          data-is-create="{{ is_create|yesno:'true,false' }}"
-          {% if is_readonly %}class="readonly-form"{% endif %}>
+    <form id="dischargeForm" method="post" novalidate data-is-create="{{ is_create|yesno:'true,false' }}" {% if is_readonly %}class="readonly-form"{% endif %}>
         {% csrf_token %}
+
+        {# POST error marker for validation modal #}
+        {% if discharge_form.errors or icd_formset.errors %}
+        <input type="hidden" id="django-form-has-errors" value="true">
+        {% endif %}
+
 
         <!-- Section 1: Discharge Date -->
         <div class="card card-outline card-info">

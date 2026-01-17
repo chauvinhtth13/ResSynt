@@ -87,6 +87,11 @@
               {% if is_readonly %}data-read-only="true"{% endif %}>
           {% csrf_token %}
           
+          {# POST error marker for validation modal #}
+          {% if clinical_form.errors %}
+          <input type="hidden" id="django-form-has-errors" value="true">
+          {% endif %}
+          
           {# Hidden Fields #}
           <input type="hidden" name="EVENT" value="CASE">
           

@@ -55,20 +55,11 @@
       </div>
       
       <div class="card-body">
-        {#  DISPLAY ERRORS #}
         {% if form.errors and not is_readonly %}
           <div class="alert alert-danger">
-            <h5><i class="icon fas fa-ban"></i> {% trans "Error!" %}</h5>
-            <ul>
-              {% for field in form %}
-                {% for error in field.errors %}
-                  <li><strong>{{ field.label }}</strong>: {{ error }}</li>
-                {% endfor %}
-              {% endfor %}
               {% for error in form.non_field_errors %}
                 <li>{{ error }}</li>
               {% endfor %}
-            </ul>
           </div>
         {% endif %}
         
@@ -77,6 +68,11 @@
               id="endcaseForm" 
               {% if is_readonly %}class="view-only-form"{% endif %}>
           {% csrf_token %}
+          
+          {# POST error marker for validation modal #}
+          {% if form.errors %}
+          <input type="hidden" id="django-form-has-errors" value="true">
+          {% endif %}
           
           {#  Patient Info Summary #}
           <div class="alert alert-info">

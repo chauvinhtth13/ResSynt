@@ -164,12 +164,13 @@
 
 {# Monthly Screening & Enrollment Chart + Table #}
 <div class="row g-4 mb-4">
-    <div class="col-12">
+    {# Chart Card - 70% #}
+    <div class="col-12 col-lg-8">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <h6 class="mb-0 fw-bold">
-                        <i></i>
+                        <i class="bi bi-bar-chart-line text-primary me-2"></i>
                         {% trans "Monthly Screening & Enrollment Statistics" %}
                     </h6>
 
@@ -258,41 +259,46 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    {# Chart Section - 70% #}
-                    <div class="col-12 col-lg-8">
-                        <div id="monthlyChart" style="width: 100%; height: 400px;"></div>
+                <div id="monthlyChart" style="width: 100%; height: 400px;"></div>
 
-                        {# Loading indicator #}
-                        <div id="monthlyChartLoading" class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">{% trans "Loading..." %}</span>
-                            </div>
-                            <p class="text-muted mt-2">{% trans "Loading chart data..." %}</p>
-                        </div>
+                {# Loading indicator #}
+                <div id="monthlyChartLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">{% trans "Loading..." %}</span>
                     </div>
+                    <p class="text-muted mt-2">{% trans "Loading chart data..." %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    {# Table Section - 30% #}
-                    <div class="col-12 col-lg-4">
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <table class="table table-sm table-hover" id="monthlyStatsTable">
-                                <thead class="table-light sticky-top">
-                                    <tr>
-                                        <th>{% trans "Month" %}</th>
-                                        <th class="text-end">{% trans "Screening" %}</th>
-                                        <th class="text-end">{% trans "Enrollment" %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted">
-                                            {% trans "Loading..." %}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+    {# Table Card - 30% #}
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-table text-primary me-2"></i>
+                    {% trans "Statistics Table" %}
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 470px; overflow-y: auto;">
+                    <table class="table table-sm table-hover mb-0" id="monthlyStatsTable">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>{% trans "Month" %}</th>
+                                <th class="text-end">{% trans "Screening" %}</th>
+                                <th class="text-end">{% trans "Enrollment" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    {% trans "Loading..." %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -301,12 +307,13 @@
 
 {# Contact Monthly Screening & Enrollment Chart + Table #}
 <div class="row g-4 mb-4">
-    <div class="col-12">
+    {# Chart Card - 70% #}
+    <div class="col-12 col-lg-8">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <h6 class="mb-0 fw-bold">
-                        <i></i>
+                        <i class="bi bi-bar-chart-line text-success me-2"></i>
                         {% trans "Contact Monthly Screening & Enrollment Statistics" %}
                     </h6>
 
@@ -396,133 +403,61 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    {# Chart Section - 70% #}
-                    <div class="col-12 col-lg-8">
-                        <div id="contactMonthlyChart" style="width: 100%; height: 400px;"></div>
+                <div id="contactMonthlyChart" style="width: 100%; height: 400px;"></div>
 
-                        {# Loading indicator #}
-                        <div id="contactChartLoading" class="text-center py-5">
-                            <div class="spinner-border text-success" role="status">
-                                <span class="visually-hidden">{% trans "Loading..." %}</span>
-                            </div>
-                            <p class="text-muted mt-2">{% trans "Loading contact data..." %}</p>
-                        </div>
-                    </div>
-
-                    {# Table Section - 30% #}
-                    <div class="col-12 col-lg-4">
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <table class="table table-sm table-hover" id="contactStatsTable">
-                                <thead class="table-light sticky-top">
-                                    <tr>
-                                        <th>{% trans "Month" %}</th>
-                                        <th class="text-end">{% trans "Screening" %}</th>
-                                        <th class="text-end">{% trans "Enrollment" %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted">
-                                            {% trans "Loading..." %}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# Sampling Follow-up Table (Patient & Contact) #}
-<div class="row g-4 mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <h6 class="mb-0 fw-bold">
-                        <i></i>
-                        {% trans "Sample Management: Patient & Contact Sampling Follow-up" %}
-                    </h6>
-
-                    {# Site Filter #}
-                    <div class="btn-group" role="group" aria-label="Sampling site filter">
-                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn active"
-                            data-site="all">
-                            {% trans "All Sites" %}
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="003">
-                            003
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="020">
-                            020
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="011">
-                            011
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
                 {# Loading indicator #}
-                <div id="samplingLoading" class="text-center py-5">
-                    <div class="spinner-border text-info" role="status">
+                <div id="contactChartLoading" class="text-center py-5">
+                    <div class="spinner-border text-success" role="status">
                         <span class="visually-hidden">{% trans "Loading..." %}</span>
                     </div>
-                    <p class="text-muted mt-2">{% trans "Loading sampling data..." %}</p>
+                    <p class="text-muted mt-2">{% trans "Loading contact data..." %}</p>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                {# Sampling Table #}
-                <div id="samplingTableContainer" style="display: none;">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th rowspan="2" class="align-middle">{% trans "Schedule" %}</th>
-                                    <th colspan="2" class="text-center bg-primary bg-opacity-10">{% trans "PATIENT" %}
-                                    </th>
-                                    <th colspan="2" class="text-center bg-success bg-opacity-10">{% trans "CONTACT" %}
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <th class="text-center bg-primary bg-opacity-10">{% trans "Total Sampling" %}</th>
-                                    <th class="text-center bg-primary bg-opacity-10">{% trans "Blood Sampling" %}</th>
-                                    <th class="text-center bg-success bg-opacity-10">{% trans "Total Sampling" %}</th>
-                                    <th class="text-center bg-success bg-opacity-10">{% trans "Blood Sampling" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody id="samplingTableBody">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted">{% trans "Loading..." %}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="alert alert-info mt-3">
-                        <small>
-                            <i class="bi bi-info-circle me-1"></i>
-                            <strong>{% trans "Note:" %}</strong>
-                            {% trans "Total Sampling includes Stool, Rectal Swab, and Throat Swab samples (excludes
-                            blood). Blood Sampling is counted separately." %}
-                        </small>
-                    </div>
+    {# Table Card - 30% #}
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-table text-success me-2"></i>
+                    {% trans "Statistics Table" %}
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 470px; overflow-y: auto;">
+                    <table class="table table-sm table-hover mb-0" id="contactStatsTable">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>{% trans "Month" %}</th>
+                                <th class="text-end">{% trans "Screening" %}</th>
+                                <th class="text-end">{% trans "Enrollment" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    {% trans "Loading..." %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-{# K. pneumoniae Isolation Statistics Table #}
+{# Sample Management & K. pneumoniae Tables - Combined Row #}
 <div class="row g-4 mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
+    {# K. pneumoniae Isolation Statistics Table - 60% #}
+    <div class="col-12 col-xl-7">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-bottom">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-virus text-danger me-2"></i>
                         {% trans "K. pneumoniae isolated from throat swab & stool/rectal swab samples" %}
                     </h6>
 
@@ -595,6 +530,83 @@
                             <i class="bi bi-asterisk me-1"></i>
                             <strong>*</strong>
                             {% trans "K. pneumoniae positive sample / Total collected samples" %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Sampling Follow-up Table (Patient & Contact) - 40% #}
+    <div class="col-12 col-xl-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-clipboard-data text-info me-2"></i>
+                        {% trans "Sample Management: Patient & Contact Sampling Follow-up" %}
+                    </h6>
+
+                    {# Site Filter #}
+                    <div class="btn-group" role="group" aria-label="Sampling site filter">
+                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn active"
+                            data-site="all">
+                            {% trans "All Sites" %}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="003">
+                            003
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="020">
+                            020
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="011">
+                            011
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {# Loading indicator #}
+                <div id="samplingLoading" class="text-center py-5">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                    </div>
+                    <p class="text-muted mt-2">{% trans "Loading sampling data..." %}</p>
+                </div>
+
+                {# Sampling Table #}
+                <div id="samplingTableContainer" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th rowspan="2" class="align-middle">{% trans "Schedule" %}</th>
+                                    <th colspan="2" class="text-center bg-primary bg-opacity-10">{% trans "PATIENT" %}
+                                    </th>
+                                    <th colspan="2" class="text-center bg-success bg-opacity-10">{% trans "CONTACT" %}
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th class="text-center bg-primary bg-opacity-10">{% trans "Total Sampling" %}</th>
+                                    <th class="text-center bg-primary bg-opacity-10">{% trans "Blood Sampling" %}</th>
+                                    <th class="text-center bg-success bg-opacity-10">{% trans "Total Sampling" %}</th>
+                                    <th class="text-center bg-success bg-opacity-10">{% trans "Blood Sampling" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="samplingTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">{% trans "Loading..." %}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>{% trans "Note:" %}</strong>
+                            {% trans "Total Sampling includes Stool, Rectal Swab, and Throat Swab samples (excludes
+                            blood). Blood Sampling is counted separately." %}
                         </small>
                     </div>
                 </div>

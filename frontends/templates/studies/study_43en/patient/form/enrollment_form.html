@@ -74,13 +74,20 @@
         </div>
         {% endif %}
         
-        {% if medhisdrug_formset.errors %}
+        {% if medhisdrug_formset.total_error_count %}
         <div class="alert alert-warning">
-          <h5><i ></i> {% trans "Medication Errors" %}</h5>
+          <h5><i class="fas fa-pills"></i> {% trans "Medication Errors" %}</h5>
           <ul class="mb-0">
-            {% for error in medhisdrug_formset.errors %}
-              <li>{{ error }}</li>
+            {% for form_errors in medhisdrug_formset.errors %}
+              {% for field, errors in form_errors.items %}
+                <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+              {% endfor %}
             {% endfor %}
+            {% if medhisdrug_formset.non_form_errors %}
+              {% for error in medhisdrug_formset.non_form_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            {% endif %}
           </ul>
         </div>
         {% endif %}
@@ -103,6 +110,11 @@
               {% if is_readonly %}class="view-only-form"{% endif %}>
           {% csrf_token %}
           {{ form.version }}
+          
+          {# POST error marker for validation modal #}
+          {% if form.errors or personal_form.errors or medhisdrug_formset.total_error_count %}
+          <input type="hidden" id="django-form-has-errors" value="true">
+          {% endif %}
           
           {# ========== ENROLLMENT CASE CONTAINER ========== #}
           <div class="enr-case-container">

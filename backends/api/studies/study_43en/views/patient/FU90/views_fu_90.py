@@ -86,7 +86,7 @@ def followup_90_create(request, usubjid):
     # POST - Process creation
     if request.method == 'POST':
         # Initialize all forms
-        followup_form = FollowUpCase90Form(request.POST)
+        followup_form = FollowUpCase90Form(request.POST, enrollment_case=enrollment_case)
         
         #  UPDATED: Use instance=None for create
         rehospitalization_formset = Rehospitalization90FormSet(
@@ -132,7 +132,7 @@ def followup_90_create(request, usubjid):
     
     # GET - Show blank form
     else:
-        followup_form = FollowUpCase90Form()
+        followup_form = FollowUpCase90Form(enrollment_case=enrollment_case)
         rehospitalization_formset = Rehospitalization90FormSet(
             prefix='rehospitalization90',
             instance=None  #  For create, always None

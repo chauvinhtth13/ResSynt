@@ -43,6 +43,11 @@
         <form method="post" id="screeningForm">
           {% csrf_token %}
           
+          {# POST error marker for validation modal #}
+          {% if form.errors %}
+          <input type="hidden" id="django-form-has-errors" value="true">
+          {% endif %}
+          
           <!--  Hidden field for optimistic locking -->
           {{ form.version }}
           

@@ -64,6 +64,11 @@
       <form method="post" id="contactSampleCollectionForm" class="form" novalidate {% if not is_view_only %}data-ajax="true"{% endif %} data-is-new="{% if is_new %}true{% else %}false{% endif %}">
         {% csrf_token %}
         
+        {# POST error marker for validation modal #}
+        {% if form.errors %}
+        <input type="hidden" id="django-form-has-errors" value="true">
+        {% endif %}
+        
         {# Hidden fields #}
         <input type="hidden" name="form_submitted" value="True">
         <input type="hidden" name="sample_type" value="{{ sample_type }}">
@@ -234,9 +239,12 @@
                           <label for="id_STOOLDATE">
                             <i ></i>{% trans "Collection Date" %}:
                           </label>
-                          <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker"
-                                 value="{{ sample.STOOLDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                          <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker {% if form.STOOLDATE.errors %}is-invalid{% endif %}"
+                                 value="{% if form.STOOLDATE.value %}{{ form.STOOLDATE.value }}{% elif sample.STOOLDATE %}{{ sample.STOOLDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
+                          {% if form.STOOLDATE.errors %}
+                          {{ form.STOOLDATE.errors }}
+                          {% endif %}
                           <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i>
                             {% trans "Date validation is flexible for contacts" %}
@@ -335,9 +343,12 @@
                           <label for="id_RECTSWABDATE">
                             <i ></i>{% trans "Collection Date" %}:
                           </label>
-                          <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker"
-                                 value="{{ sample.RECTSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                          <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker {% if form.RECTSWABDATE.errors %}is-invalid{% endif %}"
+                                 value="{% if form.RECTSWABDATE.value %}{{ form.RECTSWABDATE.value }}{% elif sample.RECTSWABDATE %}{{ sample.RECTSWABDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
+                          {% if form.RECTSWABDATE.errors %}
+                          {{ form.RECTSWABDATE.errors }}
+                          {% endif %}
                           <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i>
                             {% trans "Date validation is flexible for contacts" %}
@@ -436,9 +447,12 @@
                           <label for="id_THROATSWABDATE">
                             <i ></i>{% trans "Collection Date" %}:
                           </label>
-                          <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker"
-                                 value="{{ sample.THROATSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                          <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker {% if form.THROATSWABDATE.errors %}is-invalid{% endif %}"
+                                 value="{% if form.THROATSWABDATE.value %}{{ form.THROATSWABDATE.value }}{% elif sample.THROATSWABDATE %}{{ sample.THROATSWABDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
+                          {% if form.THROATSWABDATE.errors %}
+                          {{ form.THROATSWABDATE.errors }}
+                          {% endif %}
                           <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i>
                             {% trans "Date validation is flexible for contacts" %}
@@ -538,9 +552,12 @@
                           <label for="id_BLOODDATE">
                             <i ></i>{% trans "Collection Date" %}:
                           </label>
-                          <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker"
-                                 value="{{ sample.BLOODDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                          <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker {% if form.BLOODDATE.errors %}is-invalid{% endif %}"
+                                 value="{% if form.BLOODDATE.value %}{{ form.BLOODDATE.value }}{% elif sample.BLOODDATE %}{{ sample.BLOODDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
+                          {% if form.BLOODDATE.errors %}
+                          {{ form.BLOODDATE.errors }}
+                          {% endif %}
                           <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i>
                             {% trans "Date validation is flexible for contacts" %}
@@ -667,6 +684,9 @@
 
 {% block dashboard_js %}
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+{# Form Validation Modal Script #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/utils/form_validation.js' %}"></script>
 
 {# Change reason handler #}
 {% if not is_view_only %}

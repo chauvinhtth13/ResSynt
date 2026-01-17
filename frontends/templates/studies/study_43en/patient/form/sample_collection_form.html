@@ -40,7 +40,7 @@
     </div>
     
     <div class="card-body {% if is_view_only %}readonly-form{% endif %}">
-      <div id="saveIndicator" class="alert alert-success" role="alert">
+      <div id="saveIndicator" role="alert">
         <span class="message"></span>
       </div>
       
@@ -76,6 +76,11 @@
       
       <form method="post" id="sampleCollectionForm" class="form" novalidate>
         {% csrf_token %}
+        
+        {# POST error marker for validation modal #}
+        {% if form.errors %}
+        <input type="hidden" id="django-form-has-errors" value="true">
+        {% endif %}
         
         <!-- Hidden fields -->
         <input type="hidden" name="SAMPLE_TYPE" value="{{ sample_type }}">
@@ -137,12 +142,12 @@
             <div class="form-group">
               <div class="form-check form-check-inline">
                 <input type="radio" name="SAMPLE" id="SAMPLE_yes" value="True" class="form-check-input"
-                       {% if sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                       {% if form.SAMPLE.value == 'True' or sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                 <label for="SAMPLE_yes" class="form-check-label">{% trans "Yes" %}</label>
               </div>
               <div class="form-check form-check-inline">
                 <input type="radio" name="SAMPLE" id="SAMPLE_no" value="False" class="form-check-input"
-                       {% if not sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                       {% if form.SAMPLE.value == 'False' %}checked{% elif not form.SAMPLE.value and not sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                 <label for="SAMPLE_no" class="form-check-label">{% trans "No" %}</label>
               </div>
             </div>
@@ -152,7 +157,7 @@
         <!-- ============================================ -->
         <!-- SAMPLE TYPES COLLECTED -->
         <!-- ============================================ -->
-        <div id="section-has-sample" class="mb-4" {% if not sample.SAMPLE %}style="display: none;"{% endif %}>
+        <div id="section-has-sample" class="mb-4" {% if form.SAMPLE.value != 'True' and not sample.SAMPLE %}style="display: none;"{% endif %}>
           <div class="card mb-4">
             <div class="card-header bg-light">
               <h5 class="mb-0 text-primary">{% trans "Sample Types Collected" %}</h5>
@@ -168,20 +173,23 @@
                     <div class="card-header bg-white py-2 d-flex align-items-center">
                       <div class="form-check mb-0">
                         <input type="checkbox" name="STOOL" id="id_STOOL" class="form-check-input sample-type-checkbox"
-                               {% if sample.STOOL %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                               {% if form.STOOL.value or sample.STOOL %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_STOOL" class="form-check-label font-weight-bold h5 mb-0">
                           {{ form.STOOL.label }}
                         </label>
                       </div>
                     </div>
                     <div class="card-body py-3">
-                      <div class="stool-date-container" {% if not sample.STOOL %}style="display: none;"{% endif %}>
+                      <div class="stool-date-container" {% if not form.STOOL.value and not sample.STOOL %}style="display: none;"{% endif %}>
                         <!-- Collection Date -->
                         <div class="mb-3">
                           <label for="id_STOOLDATE">{{ form.STOOLDATE.label }}:</label>
-                          <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker"
-                                 value="{{ sample.STOOLDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                          <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker {% if form.STOOLDATE.errors %}is-invalid{% endif %}"
+                                 value="{% if form.STOOLDATE.value %}{{ form.STOOLDATE.value }}{% elif sample.STOOLDATE %}{{ sample.STOOLDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
+                          {% if form.STOOLDATE.errors %}
+                          {{ form.STOOLDATE.errors }}
+                          {% endif %}
                           {% if form.STOOLDATE.help_text %}
                           <small class="text-muted">{{ form.STOOLDATE.help_text }}</small>
                           {% endif %}
@@ -283,20 +291,23 @@
                     <div class="card-header bg-white py-2 d-flex align-items-center">
                       <div class="form-check mb-0">
                         <input type="checkbox" name="RECTSWAB" id="id_RECTSWAB" class="form-check-input sample-type-checkbox"
-                              {% if sample.RECTSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                              {% if form.RECTSWAB.value or sample.RECTSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_RECTSWAB" class="form-check-label font-weight-bold h5 mb-0">
                           {{ form.RECTSWAB.label }}
                         </label>
                       </div>
                     </div>
                     <div class="card-body py-3">
-                      <div class="rect-swab-date-container" {% if not sample.RECTSWAB %}style="display: none;"{% endif %}>
+                      <div class="rect-swab-date-container" {% if not form.RECTSWAB.value and not sample.RECTSWAB %}style="display: none;"{% endif %}>
                         <!-- Collection Date -->
                         <div class="mb-3">
                           <label for="id_RECTSWABDATE">{{ form.RECTSWABDATE.label }}:</label>
-                          <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker"
-                                value="{{ sample.RECTSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                          <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker {% if form.RECTSWABDATE.errors %}is-invalid{% endif %}"
+                                value="{% if form.RECTSWABDATE.value %}{{ form.RECTSWABDATE.value }}{% elif sample.RECTSWABDATE %}{{ sample.RECTSWABDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
                                 {% if is_view_only %}disabled{% endif %}>
+                          {% if form.RECTSWABDATE.errors %}
+                          {{ form.RECTSWABDATE.errors }}
+                          {% endif %}
                           {% if form.RECTSWABDATE.help_text %}
                           <small class="text-muted">{{ form.RECTSWABDATE.help_text }}</small>
                           {% endif %}
@@ -398,20 +409,23 @@
                     <div class="card-header bg-white py-2 d-flex align-items-center">
                       <div class="form-check mb-0">
                         <input type="checkbox" name="THROATSWAB" id="id_THROATSWAB" class="form-check-input sample-type-checkbox"
-                              {% if sample.THROATSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                              {% if form.THROATSWAB.value or sample.THROATSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_THROATSWAB" class="form-check-label font-weight-bold h5 mb-0">
                           {{ form.THROATSWAB.label }}
                         </label>
                       </div>
                     </div>
                     <div class="card-body py-3">
-                      <div class="throat-swab-date-container" {% if not sample.THROATSWAB %}style="display: none;"{% endif %}>
+                      <div class="throat-swab-date-container" {% if not form.THROATSWAB.value and not sample.THROATSWAB %}style="display: none;"{% endif %}>
                         <!-- Collection Date -->
                         <div class="mb-3">
                           <label for="id_THROATSWABDATE">{{ form.THROATSWABDATE.label }}:</label>
-                          <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker"
-                                value="{{ sample.THROATSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                          <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker {% if form.THROATSWABDATE.errors %}is-invalid{% endif %}"
+                                value="{% if form.THROATSWABDATE.value %}{{ form.THROATSWABDATE.value }}{% elif sample.THROATSWABDATE %}{{ sample.THROATSWABDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
                                 {% if is_view_only %}disabled{% endif %}>
+                          {% if form.THROATSWABDATE.errors %}
+                          {{ form.THROATSWABDATE.errors }}
+                          {% endif %}
                           {% if form.THROATSWABDATE.help_text %}
                           <small class="text-muted">{{ form.THROATSWABDATE.help_text }}</small>
                           {% endif %}
@@ -497,7 +511,6 @@
                                     <small class="text-muted">{{ form.OTHERRESSPECIFY_3.help_text }}</small>
                                     {% endif %}
                                   </div>
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -511,33 +524,35 @@
               <!-- ============================================ -->
               <!-- BLOOD SAMPLE -->
               <!-- ============================================ -->
-              {% if sample.SAMPLE_TYPE != '4' %}
               <div class="row mb-4">
                 <div class="col-lg-12 col-md-12">
                   <div class="card h-100 border-left-warning">
                     <div class="card-header bg-white py-2 d-flex align-items-center">
                       <div class="form-check mb-0">
                         <input type="checkbox" name="BLOOD" id="id_BLOOD" class="form-check-input sample-type-checkbox"
-                               {% if sample.BLOOD %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                               {% if form.BLOOD.value or sample.BLOOD %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_BLOOD" class="form-check-label font-weight-bold h5 mb-0">
                           {{ form.BLOOD.label }}
                         </label>
                       </div>
                     </div>
                     <div class="card-body py-3">
-                      <div class="blood-date-container" {% if not sample.BLOOD %}style="display: none;"{% endif %}>
+                      <div class="blood-date-container" {% if not form.BLOOD.value and not sample.BLOOD %}style="display: none;"{% endif %}>
                         <div class="mb-3">
                           <label for="id_BLOODDATE">{{ form.BLOODDATE.label }}:</label>
-                          <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker"
-                                 value="{{ sample.BLOODDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
+                          <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker {% if form.BLOODDATE.errors %}is-invalid{% endif %}"
+                                 value="{% if form.BLOODDATE.value %}{{ form.BLOODDATE.value }}{% elif sample.BLOODDATE %}{{ sample.BLOODDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
+                          {% if form.BLOODDATE.errors %}
+                          {{ form.BLOODDATE.errors }}
+                          {% endif %}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              {% endif %}
+              
               
             </div>
           </div>
@@ -641,6 +656,9 @@
 
 {% block dashboard_js %}
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+{# Form Validation Modal Script #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/utils/form_validation.js' %}"></script>
 
 {% if not is_view_only %}
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>

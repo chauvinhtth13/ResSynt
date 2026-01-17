@@ -165,13 +165,6 @@
         // Define rows based on Table 5 structure
         const rows = [
             {
-                label: 'Enrolled',
-                patient_total: data.patient.enrolled,
-                patient_blood: formatValue(null),  // Not applicable at enrollment
-                contact_total: data.contact.enrolled,
-                contact_blood: formatValue(null),  // Not applicable at enrollment
-            },
-            {
                 label: 'Sampling_Visit 1 (Day 1)',
                 patient_total: data.patient.visit1.total,
                 patient_blood: data.patient.visit1.blood,
@@ -197,13 +190,6 @@
                 patient_total: data.patient.visit4.total,
                 patient_blood: data.patient.visit4.blood,
                 contact_total: data.contact.visit4.total,
-                contact_blood: formatValue(null),
-            },
-            {
-                label: 'Discharged',
-                patient_total: data.patient.discharged,
-                patient_blood: formatValue(null),
-                contact_total: formatValue(null),
                 contact_blood: formatValue(null),
             },
         ];
