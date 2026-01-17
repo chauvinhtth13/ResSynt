@@ -185,7 +185,7 @@
                         <div class="mb-3">
                           <label for="id_STOOLDATE">{{ form.STOOLDATE.label }}:</label>
                           <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker {% if form.STOOLDATE.errors %}is-invalid{% endif %}"
-                                 value="{% if form.STOOLDATE.value %}{{ form.STOOLDATE.value }}{% elif sample.STOOLDATE %}{{ sample.STOOLDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
+                                 value="{{ sample.STOOLDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
                           {% if form.STOOLDATE.errors %}
                           {{ form.STOOLDATE.errors }}
@@ -303,7 +303,7 @@
                         <div class="mb-3">
                           <label for="id_RECTSWABDATE">{{ form.RECTSWABDATE.label }}:</label>
                           <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker {% if form.RECTSWABDATE.errors %}is-invalid{% endif %}"
-                                value="{% if form.RECTSWABDATE.value %}{{ form.RECTSWABDATE.value }}{% elif sample.RECTSWABDATE %}{{ sample.RECTSWABDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
+                                value="{{ sample.RECTSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
                                 {% if is_view_only %}disabled{% endif %}>
                           {% if form.RECTSWABDATE.errors %}
                           {{ form.RECTSWABDATE.errors }}
@@ -421,7 +421,7 @@
                         <div class="mb-3">
                           <label for="id_THROATSWABDATE">{{ form.THROATSWABDATE.label }}:</label>
                           <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker {% if form.THROATSWABDATE.errors %}is-invalid{% endif %}"
-                                value="{% if form.THROATSWABDATE.value %}{{ form.THROATSWABDATE.value }}{% elif sample.THROATSWABDATE %}{{ sample.THROATSWABDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
+                                value="{{ sample.THROATSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
                                 {% if is_view_only %}disabled{% endif %}>
                           {% if form.THROATSWABDATE.errors %}
                           {{ form.THROATSWABDATE.errors }}
@@ -541,7 +541,7 @@
                         <div class="mb-3">
                           <label for="id_BLOODDATE">{{ form.BLOODDATE.label }}:</label>
                           <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker {% if form.BLOODDATE.errors %}is-invalid{% endif %}"
-                                 value="{% if form.BLOODDATE.value %}{{ form.BLOODDATE.value }}{% elif sample.BLOODDATE %}{{ sample.BLOODDATE|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY"
+                                 value="{{ sample.BLOODDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
                           {% if form.BLOODDATE.errors %}
                           {{ form.BLOODDATE.errors }}

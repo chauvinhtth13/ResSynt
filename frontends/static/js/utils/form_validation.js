@@ -99,7 +99,7 @@
             return true;
         },
 
-        hideModal: function() {
+        hideModal: function () {
             const modalEl = document.getElementById(CONFIG.MODAL_ID);
             if (!modalEl) return;
 
@@ -111,7 +111,7 @@
             else if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined') {
                 $(modalEl).modal('hide');
             }
-            
+
             // Force remove backdrop and modal-open class after a short delay
             setTimeout(() => {
                 const backdrop = document.querySelector('.modal-backdrop');
@@ -218,13 +218,29 @@
             });
 
             // 2. Check for invalid-feedback elements
+            // 2. Check for invalid-feedback elements
             document.querySelectorAll('.invalid-feedback.d-block').forEach(el => {
-                const text = el.textContent.trim();
-                if (text && !seenMessages.has(text)) {
-                    const fieldLabel = this.findFieldLabel(el);
-                    const targetField = this.findTargetField(el);
-                    errors.push({ field: fieldLabel, message: text, element: targetField || el });
-                    seenMessages.add(text);
+                // If the invalid-feedback contains a list (ul/li), iterate the items
+                const listItems = el.querySelectorAll('li');
+                if (listItems.length > 0) {
+                    listItems.forEach(li => {
+                        const text = li.textContent.trim();
+                        if (text && !seenMessages.has(text)) {
+                            const fieldLabel = this.findFieldLabel(el);
+                            const targetField = this.findTargetField(el);
+                            errors.push({ field: fieldLabel, message: text, element: targetField || el });
+                            seenMessages.add(text);
+                        }
+                    });
+                } else {
+                    // Fallback for simple text content
+                    const text = el.textContent.trim();
+                    if (text && !seenMessages.has(text)) {
+                        const fieldLabel = this.findFieldLabel(el);
+                        const targetField = this.findTargetField(el);
+                        errors.push({ field: fieldLabel, message: text, element: targetField || el });
+                        seenMessages.add(text);
+                    }
                 }
             });
 
@@ -276,7 +292,7 @@
 
                     errors.push({
                         field: field,
-                        message: message,
+                        message: text,
                         element: fieldElement  // Now this can be the actual field!
                     });
                     seenMessages.add(text);
@@ -312,28 +328,25 @@
             const countEl = document.getElementById('errorCount');
             if (countEl) countEl.textContent = errors.length;
 
-            // Build error list
+            // Build error list (display only, no click navigation)
             const listEl = document.getElementById(CONFIG.ERROR_LIST_ID);
             if (listEl) {
-                listEl.innerHTML = errors.map((err, i) => `
-                    <li class="alert alert-white border mb-2 p-2 shadow-sm rounded error-item-hover" data-index="${i}" style="cursor: pointer;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-danger font-weight-bold">
-                                <i class="fas fa-exclamation-circle mr-1"></i> ${this.escapeHtml(err.field)}
-                            </div>
-                            ${err.element ? '<i class="fas fa-chevron-right text-muted"></i>' : ''}
+                listEl.innerHTML = errors.map((err) => `
+                    <li class="alert alert-white border mb-2 p-2 shadow-sm rounded">
+                        <div class="text-danger font-weight-bold">
+                            <i class="fas fa-exclamation-circle mr-1"></i> ${this.escapeHtml(err.field)}
                         </div>
                         <div class="small text-dark mt-1 pl-4">${this.escapeHtml(err.message)}</div>
                     </li>
                 `).join('');
-
-                // Bind click handlers
-                listEl.querySelectorAll('li').forEach((item, i) => {
-                    item.addEventListener('click', () => this.goToError(i));
-                });
             }
 
             // Show modal
+            const modalEl = document.getElementById(CONFIG.MODAL_ID);
+            if (modalEl) {
+                // Remove aria-hidden when showing to fix accessibility warning
+                modalEl.removeAttribute('aria-hidden');
+            }
             if (this.modal) this.modal.show();
 
             console.log('[FormValidation] Showing', errors.length, 'errors');

@@ -702,7 +702,7 @@
                         <!--  5d. Pain_Discomfort -->
                         <div class="col-md-6 mb-3">
                             <div class="border rounded p-3 h-100 border-left-danger">
-                                <h6 class="text-danger mb-3">
+                                <h6 class="text-danger mb-3 no-validation-detect">
                                     <i class="fas fa-heartbeat mr-2"></i>
                                     {{ followup_form.Pain_Discomfort.label }}
                                 </h6>
@@ -883,6 +883,9 @@
 {% block dashboard_js %}
 <!-- Datepicker Scripts -->
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+<!-- Form Validation Modal -->
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/utils/form_validation.js' %}"></script>
 
 <!-- Change Reason Handler -->
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
