@@ -49,9 +49,9 @@ class IntegrityChecker:
         if isinstance(value, Decimal):
             return str(value)
         
-        # Handle boolean (keep as is)
+        # Handle boolean (force to string to match DB storage)
         if isinstance(value, bool):
-            return value
+            return str(value)
         
         # Convert other types to string
         return str(value)

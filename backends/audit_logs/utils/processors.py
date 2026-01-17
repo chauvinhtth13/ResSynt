@@ -845,9 +845,11 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                 if not form.cleaned_data:
                     continue
                 
-                #  OPTIMIZATION: Skip forms that Django says haven't changed
-                if hasattr(form, 'has_changed') and not form.has_changed():
-                    continue
+                #  OPTIMIZATION REMOVED: Form.has_changed() can be unreliable for DateFields
+                # (mismatch between initial Date and submitted String).
+                # We rely on our robust ChangeDetector logic instead.
+                # if hasattr(form, 'has_changed') and not form.has_changed():
+                #    continue
                 
                 instance = form.instance
                 
