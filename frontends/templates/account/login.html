@@ -2,14 +2,100 @@
 {% extends 'account/auth_base.html' %}
 {% load i18n static allauth account %}
 
-{% block title %}Sign In - ResSync Platform{% endblock %}
+{% block title %}ResSynt Platform - Lab Meeting Report{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Presentation Card Overrides */
+    .auth-card.presentation-card {
+        max-width: 500px;
+        padding: 3rem;
+    }
+    
+    .report-title {
+        font-family: var(--font-primary);
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--color-white);
+        margin-bottom: 0.5rem;
+    }
+    
+    .report-subtitle {
+        font-family: var(--font-primary);
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.6);
+        letter-spacing: 0.1em;
+    }
+    
+    .author-section {
+        background: linear-gradient(135deg, rgba(var(--rgb-accent-cyan), 0.1), rgba(var(--rgb-accent-purple), 0.1));
+        border-radius: var(--radius-xl);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(var(--rgb-accent-cyan), 0.2);
+    }
+    
+    .author-label {
+        font-family: var(--font-primary);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 0.5rem;
+    }
+    
+    .author-name {
+        font-family: var(--font-primary);
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, var(--color-accent-cyan), var(--color-accent-purple));
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.25rem;
+    }
+    
+    .author-role {
+        font-family: var(--font-primary);
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .supervisor-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .supervisor-name {
+        font-family: var(--font-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-white);
+        margin: 0;
+    }
+    
+    .project-info {
+        font-family: var(--font-primary);
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.5);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 1rem;
+        margin-top: 1.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block auth_content %}
-<div class="auth-card">
+<div class="auth-card presentation-card">
 
     <!-- Mobile Brand Header -->
     <header class="auth-card-brand">
         <div class="d-flex gap-3 align-items-center justify-content-center mb-2">
-            <img src="{% static 'base/images/logo.png' %}" alt="" class="auth-card-logo" width="40" height="40"
+            <img src="{% static 'base/images/logo.png' %}" alt="" class="auth-card-logo" width="50" height="50"
                 aria-hidden="true">
             <span class="title auth-card-title" aria-hidden="true">RESSYNT</span>
         </div>
@@ -18,102 +104,40 @@
         </p>
     </header>
 
-    <!-- Welcome Message -->
-    <div class="auth-card-header">
-        <h2 class="auth-card-heading">{% trans "Welcome back" %}</h2>
-        <p class="auth-card-subheading">{% trans "Sign in to continue your research journey." %}</p>
+    <!-- Report Title -->
+    <div class="auth-card-header" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+        <h2 class="report-title">
+            <i class="bi bi-people-fill me-2" style="color: var(--color-accent-cyan);"></i>
+            Lab Meeting Report
+        </h2>
+        <p class="report-subtitle">RESSYNT Development Progress 2026</p>
     </div>
 
-    <!-- Error Messages -->
-    {% if is_locked_out %}
-    <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-circle-fill me-2" aria-hidden="true"></i>
-        <span class="small">{% trans "Access restricted. Please contact administrator." %}</span>
-    </div>
-    {% elif is_rate_limited %}
-    <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-circle-fill me-2" aria-hidden="true"></i>
-        <span class="small">{% trans "Too many attempts. Please wait a moment." %}</span>
-    </div>
-    {% elif prg_has_errors or form.non_field_errors %}
-    <div class="alert alert-danger d-flex align-items-center justify-content-center gap-2 py-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-circle-fill me-2" aria-hidden="true"></i>
-        <span class="small">{% trans "Invalid username or password." %}</span>
-    </div>
-    {% endif %}
+    <!-- Author Info -->
+    <div class="text-center">
+        <div class="author-section">
+            <p class="author-label mb-2">Presented by</p>
+            <h3 class="author-name">Phạm Tường Duy</h3>
+        </div>
 
-    <!-- Login Form -->
-    <form method="POST" action="{% url 'account_login' %}" id="loginForm" class="auth-form">
-        {% csrf_token %}
-        
-        <fieldset>
-            <!-- Username/Email Input -->
-            <div class="mb-4">
-                <label for="{{ form.login.id_for_label }}" class="form-label">
-                    {% trans "Username or Email" %}
-                </label>
-                <div class="input-icon-wrapper">
-                    <input type="text" id="{{ form.login.id_for_label }}" name="{{ form.login.html_name }}"
-                        value="{{ prg_username|default:form.login.value|default:'' }}" class="form-control form-control--with-icon"
-                        placeholder="{% trans 'Enter username or email' %}" autocomplete="username" autocapitalize="none"
-                        spellcheck="false" required autofocus aria-required="true">
-                    <i class="bi bi-person input-icon" aria-hidden="true"></i>
-                </div>
-            </div>
-
-            <!-- Password Input -->
-            <div class="mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label for="passwordInput" class="form-label mb-0">
-                        {% trans "Password" %}
-                    </label>
-                    <a href="{% url 'account_reset_password' %}" class="forgot-password-link" tabindex="-1">
-                        {% trans "Forgotten password?" %}
-                    </a>
-                </div>
-                <div class="input-icon-wrapper">
-                    <input type="password" id="passwordInput" name="{{ form.password.html_name }}" 
-                        class="form-control form-control--with-icon"
-                        placeholder="{% trans 'Enter password' %}" required
-                        autocomplete="current-password" aria-required="true">
-                    <i class="bi bi-lock input-icon" aria-hidden="true"></i>
-                    <button type="button"
-                            class="password-toggle-btn" 
-                            onclick="togglePassword(this)"
-                            aria-label="{% trans 'Toggle password visibility' %}"
-                            aria-pressed="false" tabindex="-1">
-                        <i class="fa-regular fa-eye-slash" aria-hidden="true"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-cyber w-100" id="submitBtn">
-                <span class="btn-text">
-                    <i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>
-                    {% trans "Sign In" %}
-                </span>
-                <span class="btn-loading d-none">
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    {% trans "Signing In..." %}
-                </span>
-            </button>
-        </fieldset>
-    </form>
-
-    <!-- Registration Notice -->
-    <div class="registration-notice mt-4">
-        <span class="registration-notice-text">{% trans "No account?" %}</span>
-        <a href="mailto:ressynt@oucru.org?subject={% trans 'Account Request' %}" class="registration-notice-link">
-            <span>{% trans "Request access" %}</span>
-            <i class="bi bi-arrow-right"></i>
-        </a>
+        <div class="supervisor-section">
+            <p class="author-label mb-2">Supervisor</p>
+            <h4 class="supervisor-name">
+                <i style="color: var(--color-accent-cyan);"></i>
+                Châu Vinh
+            </h4>
+        </div>
     </div>
 
-    <div class="auth-card-footer mt-2">
-        <p class="security-note">
-            <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
-            {% trans "Secured with 256-bit encryption" %}
+    <!-- Project Info -->
+    <div class="project-info text-center">
+        <p class="mb-1">
+            <i aria-hidden="true"></i>
+            2026 - Research Data Management System
+        </p>
+        <p class="mb-0" style="font-size: 0.8rem;">
+            <i aria-hidden="true"></i>
+            OUCRU - Oxford University Clinical Research Unit
         </p>
     </div>
 </div>
