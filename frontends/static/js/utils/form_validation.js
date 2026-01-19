@@ -137,7 +137,9 @@
             }
 
             // 2. Fallback: check for alert boxes (also reliable)
-            const hasAlerts = document.querySelector('.alert-danger, .alert-warning');
+            // But exclude alerts inside modals (they are just informational messages, not validation errors)
+            const alerts = document.querySelectorAll('.alert-danger, .alert-warning');
+            const hasAlerts = Array.from(alerts).some(alert => !alert.closest('.modal'));
             if (hasAlerts) {
                 console.log('[FormValidation] Alert boxes found - showing modal');
                 return true;
@@ -207,8 +209,8 @@
             // 1. Check for inline text-danger errors (not inside alerts and not excluded)
             document.querySelectorAll('.text-danger:not(.alert .text-danger):not(.no-validation-detect)').forEach(el => {
                 const text = el.textContent.trim();
-                // Skip if hidden or has no-validation-detect parent
-                if (el.style.display === 'none' || el.closest('.no-validation-detect')) return;
+                // Skip if hidden or has no-validation-detect parent or inside modal
+                if (el.style.display === 'none' || el.closest('.no-validation-detect') || el.closest('.modal')) return;
                 if (text && text.length > 2 && !seenMessages.has(text) && !el.closest('.alert')) {
                     const fieldLabel = this.findFieldLabel(el);
                     const targetField = this.findTargetField(el);

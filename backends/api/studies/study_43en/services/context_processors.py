@@ -106,6 +106,7 @@ def upcoming_appointments(request):
     # ==========================================
     
     # Wrap everything in try-except to ensure we always return valid data
+    try:
         from django.conf import settings
         from django.db import connections
         from django.core.cache import cache
@@ -209,117 +210,122 @@ def upcoming_appointments(request):
             followups = [FakeFollowup(data) for data in fake_notifications]
         # 🧪 END FAKE DATA
         
-    for followup in followups:
-        #  Create unique notification ID
-        notif_id = f"{followup.USUBJID}_{followup.VISIT}_{followup.EXPECTED_DATE.strftime('%Y%m%d')}"
+        for followup in followups:
+            #  Create unique notification ID
+            notif_id = f"{followup.USUBJID}_{followup.VISIT}_{followup.EXPECTED_DATE.strftime('%Y%m%d')}"
+            
+            #  Check read status
+            is_read = notif_id in read_notifications
+            
+            if not is_read:
+                unread_count += 1
+            
+            #  Determine visit label and icon
+            if followup.SUBJECT_TYPE == 'PATIENT':
+                subject_label = 'Bệnh nhân'
+                if followup.VISIT == 'V2':
+                    visit_label = 'V2 (Day 7)'
+                    visit_description = 'Lấy mẫu ngày 7'
+                    icon = 'clipboard-pulse'
+                    icon_color = 'info'
+                elif followup.VISIT == 'V3':
+                    visit_label = 'V3 (Day 28)'
+                    visit_description = 'Theo dõi 28 ngày'
+                    icon = 'calendar-check'
+                    icon_color = 'warning'
+                else:  # V4
+                    visit_label = 'V4 (Day 90)'
+                    visit_description = 'Theo dõi 90 ngày'
+                    icon = 'calendar-event'
+                    icon_color = 'success'
+            else:  # CONTACT
+                subject_label = 'Người tiếp xúc'
+                if followup.VISIT == 'V2':
+                    visit_label = 'V2 (Day 28)'
+                    visit_description = 'Theo dõi 28 ngày'
+                    icon = 'calendar-check'
+                    icon_color = 'warning'
+                else:  # V3
+                    visit_label = 'V3 (Day 90)'
+                    visit_description = 'Theo dõi 90 ngày'
+                    icon = 'calendar-event'
+                    icon_color = 'success'
+            
+            # Build URL for notification click
+            if followup.SUBJECT_TYPE == 'PATIENT':
+                notification_url = f"/studies/43en/patient/{followup.USUBJID}/"
+            else:
+                notification_url = f"/studies/43en/contact/{followup.USUBJID}/"
+            
+            # Build message for notification
+            notification_message = f"{subject_label} {followup.USUBJID} - {visit_description}"
+            
+            #  Build notification object
+            upcoming.append({
+                # Required by template
+                'id': notif_id,
+                'message': notification_message,
+                'url': notification_url,
+                'type': 'warning' if followup.STATUS == 'LATE' else 'info',
+                'icon': f'bi-{icon}',
+                'created_at': followup.EXPECTED_DATE,  # Use expected_date for grouping
+                'category': subject_label,
+                'is_read': is_read,
+                
+                # Additional identification
+                'notif_id': notif_id,
+                'usubjid': followup.USUBJID,
+                'patient_name': followup.INITIAL or 'N/A',
+                
+                # Visit info
+                'visit': followup.VISIT,
+                'visit_label': visit_label,
+                'visit_type': f"{visit_label} - {subject_label}",
+                'visit_description': visit_description,
+                
+                # Subject type
+                'subject_type': followup.SUBJECT_TYPE,
+                'subject_label': subject_label,
+                
+                # Dates
+                'expected_date': followup.EXPECTED_DATE,
+                'expected_from': followup.EXPECTED_FROM,
+                'expected_to': followup.EXPECTED_TO,
+                
+                # Status
+                'status': followup.STATUS,
+                'status_label': followup.get_STATUS_display() if hasattr(followup, 'get_STATUS_display') else followup.STATUS,
+                'is_late': followup.STATUS == 'LATE',
+                
+                # Contact
+                'phone': followup.PHONE,
+                'has_phone': bool(followup.PHONE),
+                
+                # UI
+                'icon_color': icon_color,
+                
+                # Legacy compatibility
+                'notification_type': f"{followup.VISIT}_VISIT_{followup.SUBJECT_TYPE}"
+            })
         
-        #  Check read status
-        is_read = notif_id in read_notifications
+        #  Sort: unread first, then by date
+        upcoming.sort(key=lambda x: (x['is_read'], x['expected_date']))
         
-        if not is_read:
-            unread_count += 1
+        # Calculate yesterday for template comparison
+        yesterday = today - timedelta(days=1)
         
-        #  Determine visit label and icon
-        if followup.SUBJECT_TYPE == 'PATIENT':
-            subject_label = 'Bệnh nhân'
-            if followup.VISIT == 'V2':
-                visit_label = 'V2 (Day 7)'
-                visit_description = 'Lấy mẫu ngày 7'
-                icon = 'clipboard-pulse'
-                icon_color = 'info'
-            elif followup.VISIT == 'V3':
-                visit_label = 'V3 (Day 28)'
-                visit_description = 'Theo dõi 28 ngày'
-                icon = 'calendar-check'
-                icon_color = 'warning'
-            else:  # V4
-                visit_label = 'V4 (Day 90)'
-                visit_description = 'Theo dõi 90 ngày'
-                icon = 'calendar-event'
-                icon_color = 'success'
-        else:  # CONTACT
-            subject_label = 'Người tiếp xúc'
-            if followup.VISIT == 'V2':
-                visit_label = 'V2 (Day 28)'
-                visit_description = 'Theo dõi 28 ngày'
-                icon = 'calendar-check'
-                icon_color = 'warning'
-            else:  # V3
-                visit_label = 'V3 (Day 90)'
-                visit_description = 'Theo dõi 90 ngày'
-                icon = 'calendar-event'
-                icon_color = 'success'
-        
-        # Build URL for notification click
-        if followup.SUBJECT_TYPE == 'PATIENT':
-            notification_url = f"/studies/43en/patient/{followup.USUBJID}/"
-        else:
-            notification_url = f"/studies/43en/contact/{followup.USUBJID}/"
-        
-        # Build message for notification
-        notification_message = f"{subject_label} {followup.USUBJID} - {visit_description}"
-        
-        #  Build notification object
-        upcoming.append({
-            # Required by template
-            'id': notif_id,
-            'message': notification_message,
-            'url': notification_url,
-            'type': 'warning' if followup.STATUS == 'LATE' else 'info',
-            'icon': f'bi-{icon}',
-            'created_at': followup.EXPECTED_DATE,  # Use expected_date for grouping
-            'category': subject_label,
-            'is_read': is_read,
-            
-            # Additional identification
-            'notif_id': notif_id,
-            'usubjid': followup.USUBJID,
-            'patient_name': followup.INITIAL or 'N/A',
-            
-            # Visit info
-            'visit': followup.VISIT,
-            'visit_label': visit_label,
-            'visit_type': f"{visit_label} - {subject_label}",
-            'visit_description': visit_description,
-            
-            # Subject type
-            'subject_type': followup.SUBJECT_TYPE,
-            'subject_label': subject_label,
-            
-            # Dates
-            'expected_date': followup.EXPECTED_DATE,
-            'expected_from': followup.EXPECTED_FROM,
-            'expected_to': followup.EXPECTED_TO,
-            
-            # Status
-            'status': followup.STATUS,
-            'status_label': followup.get_STATUS_display() if hasattr(followup, 'get_STATUS_display') else followup.STATUS,
-            'is_late': followup.STATUS == 'LATE',
-            
-            # Contact
-            'phone': followup.PHONE,
-            'has_phone': bool(followup.PHONE),
-            
-            # UI
-            'icon_color': icon_color,
-            
-            # Legacy compatibility
-            'notification_type': f"{followup.VISIT}_VISIT_{followup.SUBJECT_TYPE}"
-        })
+        return {
+            'notification_count': len(upcoming),
+            'unread_count': unread_count,
+            'notifications': upcoming,
+            'today': today,
+            'yesterday': yesterday,
+        }
     
-    #  Sort: unread first, then by date
-    upcoming.sort(key=lambda x: (x['is_read'], x['expected_date']))
-    
-    # Calculate yesterday for template comparison
-    yesterday = today - timedelta(days=1)
-    
-    return {
-        'notification_count': len(upcoming),
-        'unread_count': unread_count,
-        'notifications': upcoming,
-        'today': today,
-        'yesterday': yesterday,
-    }
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Error in upcoming_appointments: {e}")
+        return _EMPTY_NOTIFICATIONS
     
 
 

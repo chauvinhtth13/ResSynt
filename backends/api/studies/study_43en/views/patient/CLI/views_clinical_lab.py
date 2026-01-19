@@ -77,16 +77,22 @@ def get_category_test_map():
 
 def is_first_data_entry_for_lab_tests(forms_dict):
     """
-     CÁCH 2: Detect first data entry using data_entered field
+     ENHANCED: Detect first data entry using data_entered field
     
     Checks if ALL changed tests have data_entered=False in database.
     This is more performant and explicit than checking PERFORMED+RESULT.
+    
+     NOW RETURNS: tuple for better control
     
     Args:
         forms_dict: Dictionary from processor containing formsets
         
     Returns:
         bool: True = first data entry (skip reason), False = real update (require reason)
+        
+    Side Effect:
+        When returning False (real update), stores changed forms info in forms_dict
+        for the processor to generate proper change detection.
     """
     # Get laboratory_tests formset
     formset = forms_dict.get('formsets', {}).get('laboratory_tests')
@@ -99,6 +105,7 @@ def is_first_data_entry_for_lab_tests(forms_dict):
     
     any_changes = False
     any_real_updates = False
+    real_update_forms = []  #  Track which forms are real updates
     
     for form in formset.forms:
         # Skip if no changes
@@ -124,7 +131,11 @@ def is_first_data_entry_for_lab_tests(forms_dict):
                 logger.info(f"    Real update detected for {original.TESTTYPE}: "
                            f"data_entered=True")
                 any_real_updates = True
-                break  # Found one real update, that's enough
+                real_update_forms.append({
+                    'form': form,
+                    'instance_pk': form.instance.pk,
+                    'test_type': original.TESTTYPE,
+                })
             else:
                 # data_entered=False → first time entering data
                 logger.info(f"    First entry for {original.TESTTYPE}: "
@@ -140,7 +151,11 @@ def is_first_data_entry_for_lab_tests(forms_dict):
         return False  # No changes = no need to skip
     
     if any_real_updates:
-        logger.info("    RESULT: Real update detected → require change reason")
+        logger.info(f"    RESULT: Real update detected → require change reason for {len(real_update_forms)} forms")
+        
+        #  Store real update forms info in forms_dict for processor to use
+        forms_dict['_real_update_forms'] = real_update_forms
+        
         return False  # Real update = require reason
     else:
         logger.info("    RESULT: First data entry → skip change reason")

@@ -41,59 +41,43 @@
     <div class="notification-list" role="list" aria-label="{% trans 'Notification list' %}">
 
       {% if notifications %}
-      <!-- Today's Notifications -->
-      {% regroup notifications by created_at as notifications_by_date %}
-      {% for date_group in notifications_by_date %}
-      <div class="notification-group">
-        <div class="notification-group-header">
-          <i class="bi bi-calendar3"></i>
-          {% if date_group.grouper == today %}
-          {% trans 'Today' %}
-          {% elif date_group.grouper == yesterday %}
-          {% trans 'Yesterday' %}
-          {% else %}
-          {{ date_group.grouper|date:"M d, Y" }}
-          {% endif %}
-        </div>
+      <!-- Notification Items -->
+      {% for notification in notifications %}
+      <div class="notification-item-wrapper">
+        <a href="{{ notification.url }}" class="notification-item {% if not notification.is_read %}unread{% endif %}"
+          role="listitem" data-notification-id="{{ notification.id }}" aria-label="{{ notification.message }}">
 
-        {% for notification in date_group.list %}
-        <div class="notification-item-wrapper">
-          <a href="{{ notification.url }}" class="notification-item {% if not notification.is_read %}unread{% endif %}"
-            role="listitem" data-notification-id="{{ notification.id }}" aria-label="{{ notification.message }}">
-
-            <!-- Icon -->
-            <div class="notification-icon icon-{{ notification.type|default:'info' }}">
-              <i class="bi {{ notification.icon|default:'bi-info-circle' }}"></i>
-            </div>
-
-            <!-- Content -->
-            <div class="notification-content">
-              <p class="notification-message">{{ notification.message }}</p>
-              <div class="notification-meta">
-                <span class="notification-time">
-                  <i class="bi bi-clock"></i>
-                  {{ notification.created_at|timesince }} {% trans 'ago' %}
-                </span>
-                {% if notification.category %}
-                <span class="notification-category">{{ notification.category }}</span>
-                {% endif %}
-              </div>
-            </div>
-          </a>
-
-          <!-- Swipe Actions (for touch devices) -->
-          <div class="notification-actions">
-            <button type="button" class="notification-action-btn action-read" data-action="mark-read"
-              data-notification-id="{{ notification.id }}" aria-label="{% trans 'Mark as read' %}">
-              <i class="bi bi-check2"></i>
-            </button>
-            <button type="button" class="notification-action-btn action-delete" data-action="delete"
-              data-notification-id="{{ notification.id }}" aria-label="{% trans 'Delete notification' %}">
-              <i class="bi bi-trash3"></i>
-            </button>
+          <!-- Icon -->
+          <div class="notification-icon icon-{{ notification.type|default:'info' }}">
+            <i class="bi {{ notification.icon|default:'bi-info-circle' }}"></i>
           </div>
+
+          <!-- Content -->
+          <div class="notification-content">
+            <p class="notification-message">{{ notification.message }}</p>
+            <div class="notification-meta">
+              <span class="notification-time">
+                <i class="bi bi-clock"></i>
+                {{ notification.expected_date|date:"d/m/Y" }}
+              </span>
+              {% if notification.category %}
+              <span class="notification-category">{{ notification.category }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+
+        <!-- Swipe Actions (for touch devices) -->
+        <div class="notification-actions">
+          <button type="button" class="notification-action-btn action-read" data-action="mark-read"
+            data-notification-id="{{ notification.id }}" aria-label="{% trans 'Mark as read' %}">
+            <i class="bi bi-check2"></i>
+          </button>
+          <button type="button" class="notification-action-btn action-delete" data-action="delete"
+            data-notification-id="{{ notification.id }}" aria-label="{% trans 'Delete notification' %}">
+            <i class="bi bi-trash3"></i>
+          </button>
         </div>
-        {% endfor %}
       </div>
       {% endfor %}
 
