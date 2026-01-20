@@ -32,10 +32,9 @@
     // ========================================================================
 
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('[K. pneumoniae] Initializing...');
         initKpneumoniaeSiteButtons();
-        loadKpneumoniaeData();
-    });
+            loadKpneumoniaeData();
+        });
 
     // ========================================================================
     // SITE FILTER BUTTONS
@@ -55,7 +54,6 @@
                 CONFIG.CURRENT_SITE = site;
 
                 // Reload data
-                console.log('[K. pneumoniae] Switching to site:', site);
                 loadKpneumoniaeData();
             });
         }
@@ -94,7 +92,6 @@
             }
         }
 
-        console.log('[K. pneumoniae] Updated buttons for allowed sites:', allowedSites);
     }
 
     // ========================================================================
@@ -123,7 +120,6 @@
 
         const url = `${CONFIG.API_ENDPOINT}?${params.toString()}`;
 
-        console.log('[K. pneumoniae] Loading data for site:', CONFIG.CURRENT_SITE);
 
         // Fetch data
         fetch(url, {
@@ -144,7 +140,6 @@
                     throw new Error(result.error || 'Unknown error');
                 }
 
-                console.log('[K. pneumoniae] Data received:', result.data);
 
                 // Update allowed sites
                 if (result.allowed_sites) {
@@ -164,7 +159,6 @@
                 renderKpneumoniaeTable(result.data);
             })
             .catch(error => {
-                console.error('[K. pneumoniae] Load error:', error);
 
                 if (loadingIndicator) {
                     loadingIndicator.innerHTML = `
@@ -187,7 +181,6 @@
     function renderKpneumoniaeTable(data) {
         const tbody = document.getElementById('kpneumoniaeTableBody');
         if (!tbody) {
-            console.error('[K. pneumoniae] Table body not found');
             return;
         }
 
@@ -246,8 +239,6 @@
                 tbody.appendChild(complicatedRow);
             }
         });
-
-        console.log('[K. pneumoniae] Table rendered');
     }
 
     /**

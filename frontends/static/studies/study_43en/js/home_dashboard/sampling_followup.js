@@ -30,7 +30,6 @@
     // ========================================================================
 
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('[Sampling Followup] Initializing...');
 
         // Initialize
         initSamplingSiteButtons();
@@ -55,7 +54,6 @@
                 CONFIG.CURRENT_SITE = site;
 
                 // Reload data
-                console.log('[Sampling Followup] Switching to site:', site);
                 loadSamplingData();
             });
         }
@@ -106,7 +104,6 @@
                     throw new Error(result.error || 'Unknown error');
                 }
 
-                console.log('[Sampling Followup] Data received:', result.data);
 
                 // Hide loading
                 if (loadingIndicator) {
@@ -120,7 +117,6 @@
                 renderSamplingTable(result.data);
             })
             .catch(error => {
-                console.error('[Sampling Followup] Load error:', error);
 
                 if (loadingIndicator) {
                     loadingIndicator.innerHTML = `
@@ -143,7 +139,6 @@
     function renderSamplingTable(data) {
         const tbody = document.getElementById('samplingTableBody');
         if (!tbody) {
-            console.error('[Sampling Followup] Table body not found');
             return;
         }
 
@@ -227,7 +222,6 @@
             tbody.appendChild(tr);
         });
 
-        console.log('[Sampling Followup] Table rendered');
     }
 
     // ========================================================================

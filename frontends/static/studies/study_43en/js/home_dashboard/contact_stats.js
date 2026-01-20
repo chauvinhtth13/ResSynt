@@ -43,7 +43,6 @@
     // ========================================================================
 
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('[Contact Stats] Initializing...');
 
         // Initialize
         initContactSiteButtons();
@@ -70,7 +69,6 @@
                 CONFIG.CURRENT_SITE = site;
 
                 // Reload data
-                console.log('[Contact Stats] Switching to site:', site);
                 loadContactData();
             });
         }
@@ -110,7 +108,6 @@
                 monthSelector.style.display = 'flex';
             }
 
-            console.log('[Contact Stats] Period type changed:', periodType);
         });
 
         // Trigger initial state
@@ -134,12 +131,6 @@
             CONFIG.SELECTED_QUARTER = quarterSelect ? quarterSelect.value : 'all';
             CONFIG.SELECTED_MONTH = monthSelect ? monthSelect.value : 'all';
 
-            console.log('[Contact Stats] Filters:', {
-                periodType: CONFIG.PERIOD_TYPE,
-                year: CONFIG.SELECTED_YEAR,
-                quarter: CONFIG.SELECTED_QUARTER,
-                month: CONFIG.SELECTED_MONTH,
-            });
 
             // Reload data
             loadContactData();
@@ -229,12 +220,6 @@
 
         const url = `${CONFIG.API_ENDPOINT}?${params.toString()}`;
 
-        console.log('[Contact Stats] Loading data:', {
-            site: CONFIG.CURRENT_SITE,
-            startDate,
-            endDate,
-            periodType: CONFIG.PERIOD_TYPE,
-        });
 
         // Fetch data
         fetch(url, {
@@ -255,7 +240,6 @@
                     throw new Error(result.error || 'Unknown error');
                 }
 
-                console.log('[Contact Stats] Data received:', result.data);
 
                 // Hide loading
                 if (loadingIndicator) {
@@ -270,7 +254,6 @@
                 renderContactTable(result.data);
             })
             .catch(error => {
-                console.error('[Contact Stats] Load error:', error);
 
                 if (loadingIndicator) {
                     loadingIndicator.innerHTML = `
@@ -418,7 +401,6 @@
             }
         });
 
-        console.log('[Contact Stats] Chart rendered');
     }
 
     // ========================================================================
@@ -431,7 +413,6 @@
     function renderContactTable(data) {
         const table = document.getElementById('contactStatsTable');
         if (!table) {
-            console.error('[Contact Stats] Table not found');
             return;
         }
 
@@ -488,7 +469,6 @@
 
         tbody.appendChild(totalRow);
 
-        console.log('[Contact Stats] Table rendered');
     }
 
     // ========================================================================

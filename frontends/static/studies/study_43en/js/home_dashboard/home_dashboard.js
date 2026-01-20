@@ -39,7 +39,6 @@
     // ========================================================================
 
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('[Dashboard] Initializing...');
         initEnrollmentChart();
         initSiteFilterButtons();
     });
@@ -62,7 +61,6 @@
                 CONFIG.CURRENT_SITE = site;
 
                 // Reload chart with new site
-                console.log('[Filter] Switching to site:', site);
                 loadChartData(site);
             });
         }
@@ -107,8 +105,6 @@
                     throw new Error(result.error || 'Unknown error');
                 }
 
-                console.log('[Chart] Data received for site:', site, result.data);
-
                 // Update allowed sites from API response
                 if (result.allowed_sites) {
                     CONFIG.ALLOWED_SITES = result.allowed_sites;
@@ -127,7 +123,6 @@
                 renderEnrollmentChart(chartContainer, result.data);
             })
             .catch(error => {
-                console.error('[Chart] Load error:', error);
 
                 if (loadingIndicator) {
                     loadingIndicator.innerHTML = `
@@ -174,7 +169,6 @@
             }
         }
 
-        console.log('[Filter] Updated buttons for allowed sites:', allowedSites);
     }
 
     // ========================================================================
@@ -216,13 +210,7 @@
         const trimmedTarget = data.target.slice(startIndex);
         const trimmedActual = data.actual.slice(startIndex);
 
-        console.log('[Chart] Exact trim:', {
-            original: data.months.length + ' months',
-            trimmed: trimmedMonths.length + ' months',
-            startFrom: trimmedMonths[0],
-            firstTarget: trimmedTarget.find(v => v !== null),
-            firstActual: trimmedActual.find(v => v !== null)
-        });
+
 
         // Chart options (rest stays the same)
         const option = {
@@ -414,7 +402,6 @@
             }
         });
 
-        console.log('[Chart] Rendered successfully');
     }
 
     // ========================================================================

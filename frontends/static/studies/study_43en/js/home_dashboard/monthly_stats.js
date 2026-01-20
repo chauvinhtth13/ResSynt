@@ -43,7 +43,6 @@
     // ========================================================================
 
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('[Monthly Stats] Initializing...');
 
         // Initialize
         initMonthlySiteButtons();
@@ -70,7 +69,6 @@
                 CONFIG.CURRENT_SITE = site;
 
                 // Reload data
-                console.log('[Monthly Stats] Switching to site:', site);
                 loadMonthlyData();
             });
         }
@@ -110,7 +108,6 @@
                 monthSelector.style.display = 'flex';
             }
 
-            console.log('[Monthly Stats] Period type changed:', periodType);
         });
 
         // Trigger initial state
@@ -134,12 +131,6 @@
             CONFIG.SELECTED_QUARTER = quarterSelect ? quarterSelect.value : 'all';
             CONFIG.SELECTED_MONTH = monthSelect ? monthSelect.value : 'all';
 
-            console.log('[Monthly Stats] Filters:', {
-                periodType: CONFIG.PERIOD_TYPE,
-                year: CONFIG.SELECTED_YEAR,
-                quarter: CONFIG.SELECTED_QUARTER,
-                month: CONFIG.SELECTED_MONTH,
-            });
 
             // Reload data
             loadMonthlyData();
@@ -237,12 +228,6 @@
 
         const url = `${CONFIG.API_ENDPOINT}?${params.toString()}`;
 
-        console.log('[Monthly Stats] Loading data:', {
-            site: CONFIG.CURRENT_SITE,
-            startDate,
-            endDate,
-            periodType: CONFIG.PERIOD_TYPE,
-        });
 
         // Fetch data
         fetch(url, {
@@ -263,8 +248,6 @@
                     throw new Error(result.error || 'Unknown error');
                 }
 
-                console.log('[Monthly Stats] Data received:', result.data);
-
                 // Hide loading
                 if (loadingIndicator) {
                     loadingIndicator.style.display = 'none';
@@ -278,7 +261,6 @@
                 renderMonthlyTable(result.data);
             })
             .catch(error => {
-                console.error('[Monthly Stats] Load error:', error);
 
                 if (loadingIndicator) {
                     loadingIndicator.innerHTML = `
@@ -425,8 +407,6 @@
                 monthlyChart.resize();
             }
         });
-
-        console.log('[Monthly Stats] Chart rendered');
     }
 
     // ========================================================================
@@ -439,7 +419,6 @@
     function renderMonthlyTable(data) {
         const table = document.getElementById('monthlyStatsTable');
         if (!table) {
-            console.error('[Monthly Stats] Table not found');
             return;
         }
 
@@ -494,7 +473,6 @@
 
         tbody.appendChild(totalRow);
 
-        console.log('[Monthly Stats] Table rendered');
     }
 
     // ========================================================================

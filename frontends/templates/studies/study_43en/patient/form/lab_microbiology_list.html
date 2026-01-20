@@ -20,7 +20,7 @@
       <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
           <h3 class="card-title">
-            <i class="fas fa-microscope mr-2"></i>
+            <i ></i>
             {% trans "LAB Microbiology Cultures" %}
           </h3>
           <div>
@@ -44,19 +44,19 @@
         <div class="patient-info-box">
           <div class="row">
             <div class="col-md-3">
-              <strong><i class="fas fa-user-tag mr-2"></i>{% trans "Patient ID" %}:</strong>
+              <strong><i ></i>{% trans "Patient ID" %}:</strong>
               {{ usubjid }}
             </div>
             <div class="col-md-3">
-              <strong><i class="fas fa-hospital mr-2"></i>{% trans "Site ID" %}:</strong>
+              <strong><i ></i>{% trans "Site ID" %}:</strong>
               {{ screening_case.SITEID }}
             </div>
             <div class="col-md-3">
-              <strong><i class="fas fa-flask mr-2"></i>{% trans "Total Cultures" %}:</strong>
+              <strong><i ></i>{% trans "Total Cultures" %}:</strong>
               {{ summary.total_cultures }}
             </div>
             <div class="col-md-3">
-              <strong><i class="fas fa-bacteria mr-2"></i>{% trans "KPN Positive" %}:</strong>
+              <strong><i ></i>{% trans "KPN Positive" %}:</strong>
               <span class="badge bg-danger">{{ summary.kpn_positive_count }}</span>
               {% if summary.total_cultures > 0 %}
                 <small class="text-muted">({{ summary.kpn_rate }}%)</small>
@@ -100,9 +100,6 @@
                     <option value="{{ code }}">{{ label }}</option>
                   {% endfor %}
                 </select>
-                <small class="text-muted">
-                  <i class="fas fa-info-circle"></i> {% trans "Select the anatomical location where the specimen was collected" %}
-                </small>
               </div>
               
               <!--  Other (was: Other Specimen Type) -->
@@ -120,9 +117,6 @@
                 <label class="form-label">{% trans "Sample ID (SID)" %}</label>
                 <input type="text" name="SPECIMENID" class="form-control" 
                        placeholder="{% trans 'Lab specimen ID' %}">
-                <small class="text-muted">
-                  <i class="fas fa-info-circle"></i> {% trans "Laboratory specimen identification number" %}
-                </small>
               </div>
               
               <!--  Date of Specimen Collection (was: Sample Collection Date) -->
@@ -143,9 +137,6 @@
                     <option value="{{ code }}">{{ label }}</option>
                   {% endfor %}
                 </select>
-                <small class="text-muted">
-                  <i class="fas fa-info-circle"></i> {% trans "Select the culture result" %}
-                </small>
               </div>
               
               <!--  Organism Type (If Positive) - No change -->
@@ -205,9 +196,6 @@
                 <label class="form-label">{% trans "Department" %}</label>
                 <input type="text" name="ORDEREDBYDEPT" class="form-control" 
                        placeholder="{% trans 'e.g., ICU, Emergency, Internal Medicine' %}">
-                <small class="text-muted">
-                  <i class="fas fa-info-circle"></i> {% trans "Department or unit that ordered the culture" %}
-                </small>
               </div>
               
               <!--  Diagnosis of the department sending the test sample (was: Clinical Indication) -->
@@ -215,9 +203,6 @@
                 <label class="form-label">{% trans "Diagnosis of the department sending the test sample" %}</label>
                 <input type="text" name="DEPTDIAGSENT" class="form-control" 
                        placeholder="{% trans 'Clinical diagnosis or reason for culture' %}">
-                <small class="text-muted">
-                  <i class="fas fa-info-circle"></i> {% trans "Clinical diagnosis or reason for ordering the culture" %}
-                </small>
               </div>
             </div>
             
@@ -351,7 +336,7 @@
                              title="{% trans 'Antibiotic Sensitivity Tests' %}">
                             <i ></i> {% trans 'Tests' %}
                             {% if culture.get_sensitivity_count > 0 %}
-                              <span class="badge bg-light text-dark ms-1">{{ culture.get_sensitivity_count }}</span>
+                              <span class="badge bg-light text-dark">{{ culture.get_sensitivity_count }}</span>
                             {% endif %}
                           </a>
                         {% else %}
@@ -512,7 +497,7 @@
           <!-- Display KPN Status -->
           <div id="editKpnStatus" class="mt-3" style="display: none;">
             <div class="alert alert-warning">
-              <i class="fas fa-bacteria mr-2"></i>
+              <i ></i>
               <strong>{% trans "Klebsiella Detection" %}:</strong>
               <span id="editKpnStatusText"></span>
             </div>
