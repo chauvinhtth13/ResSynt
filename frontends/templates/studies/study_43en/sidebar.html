@@ -1,12 +1,11 @@
 <!-- frontends/templates/studies/study_43en/sidebar.html -->
 {% load static i18n %}
 <aside class="sidebar text-white shadow-sm" id="sidebar" aria-label="Study sidebar">
-  
+
   <div class="sidebar-header justify-content-center">
     <div class="sidebar-logo px-2 py-1">
-      <img src="{% static 'studies/study_43en/images/logo.webp' %}" alt="43EN Study" 
-      style="height: 47px;"/>
-    </div> 
+      <img src="{% static 'studies/study_43en/images/logo.webp' %}" alt="43EN Study" style="height: 47px;" />
+    </div>
   </div>
 
   <nav class="sidebar-nav">
@@ -88,13 +87,14 @@
     </div>
 
     <hr class="sidebar-divider">
-    
+
     <!-- ==================== TOOLS ==================== -->
     <div>
       <p class="sidebar-title">
         {% trans "Tools" %}
       </p>
 
+      {% if can_export %}
       <a href="{% url 'study_43en:export_data' %}" class="sidebar-item mb-2">
         <i class="bi bi-arrow-down-circle"></i>{% trans "Export Data" %}
       </a>
@@ -102,6 +102,7 @@
       <a href="#" class="sidebar-item">
         <i class="bi bi-clipboard-data"></i>{% trans "Export Monthly Report" %}
       </a>
+      {% endif %}
     </div>
   </nav>
 

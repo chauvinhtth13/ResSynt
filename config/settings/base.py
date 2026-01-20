@@ -275,6 +275,7 @@ TEMPLATES = [
                 "django.template.context_processors.media",
                 "django.template.context_processors.tz",
                 "backends.studies.study_loader.dynamic_study_context",
+                "backends.studies.study_43en.utils.permission_decorators.permission_context_processor",
             ],
         },
     },
