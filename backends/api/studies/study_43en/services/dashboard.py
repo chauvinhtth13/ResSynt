@@ -127,6 +127,17 @@ def home_dashboard(request):
         # ===== SITE NAME GENERATION =====
         site_name = _get_site_display_name(site_filter, filter_type)
         
+        # ===== SITE PERMISSIONS =====
+        # Get user's accessible sites from middleware
+        user_sites = getattr(request, 'user_sites', set())
+        can_access_all = getattr(request, 'can_access_all_sites', False)
+        
+        # Build accessible sites list for dropdown
+        if can_access_all:
+            accessible_sites = ['003', '011', '020']  # All sites in order
+        else:
+            accessible_sites = sorted(list(user_sites))
+        
         # ===== BUILD CONTEXT =====
         context = {
             # Study metadata
@@ -139,6 +150,8 @@ def home_dashboard(request):
             'site_name': site_name,
             'site_filter': site_filter,
             'filter_type': filter_type,
+            'accessible_sites': accessible_sites,  # NEW: For dropdown
+            'can_access_all_sites': can_access_all,  # NEW: For UI logic
             
             # Statistics
             'screening_patients': screening_patients,

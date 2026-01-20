@@ -8,69 +8,68 @@
 <div class="card">
   <div class="card-header bg-patient-gradient">
     <div class="d-flex justify-content-between align-items-center">
-      <h3 class="card-title text-white mb-0">
-        <i ></i>
-        {% trans "Danh sách Contact sàng lọc 43EN" %}
+      <h3 >
+        <i></i>
+        {% trans "Contact Screening List 43EN" %}
       </h3>
       <div class="card-tools">
         {% if perms.study_43en.add_scr_contact %}
         <button class="btn btn-light btn-sm" id="btnAddNewContact">
-          <i class="fas fa-plus-circle me-1"></i> {% trans "Thêm mới" %}
+          <i class="fas fa-plus-circle me-1"></i> {% trans "Add New" %}
         </button>
         {% endif %}
       </div>
     </div>
   </div>
-  
+
   <div class="card-body">
     {% if total_cases == 0 %}
-      <div class="alert alert-info text-center">
-        <h4><i class="fas fa-info-circle"></i> {% trans "Chưa có contact nào!" %}</h4>
-        <p>{% trans "Hiện tại chưa có contact nào được sàng lọc." %}</p>
-        {% if perms.study_43en.add_scr_contact %}
-        <button class="btn btn-primary" id="btnAddNewContactEmpty">
-          <i class="fas fa-plus-circle"></i> {% trans "Thêm mới sàng lọc contact" %}
-        </button>
-        {% endif %}
-      </div>
+    <div class="alert alert-info text-center">
+      <h4><i class="fas fa-info-circle"></i> {% trans "No contacts yet!" %}</h4>
+      <p>{% trans "There are currently no contacts screened." %}</p>
+      {% if perms.study_43en.add_scr_contact %}
+      <button class="btn btn-primary" id="btnAddNewContactEmpty">
+        <i class="fas fa-plus-circle"></i> {% trans "Add New Contact Screening" %}
+      </button>
+      {% endif %}
+    </div>
     {% else %}
-      <!-- Search & Filter -->
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <form method="get" class="d-flex">
-            <input type="text" name="q" class="form-control" 
-                   placeholder="{% trans 'Tìm kiếm SCRID, USUBJID, Initials...' %}" 
-                   value="{{ query }}">
-            <button type="submit" class="btn btn-primary ms-2">
-              <i class="fas fa-search"></i> {% trans "Tìm" %}
-            </button>
-          </form>
-        </div>
-        <div class="col-md-6 text-end">
-          <span class="badge bg-info">
-            <i ></i> {% trans "Tổng số contact:" %} {{ total_cases }}
-          </span>
-          <span class="badge bg-success">
-            <i class="fas fa-check-circle"></i> {% trans "Đủ điều kiện:" %} {{ eligible_cases }}
-          </span>
-        </div>
+    <!-- Search & Filter -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <form method="get" class="d-flex">
+          <input type="text" name="q" class="form-control"
+            placeholder="{% trans 'Search SCRID, USUBJID, Initials...' %}" value="{{ query }}">
+          <button type="submit" class="btn btn-primary ms-2">
+            <i class="fas fa-search"></i> {% trans "Search" %}
+          </button>
+        </form>
       </div>
+      <div class="col-md-6 text-end">
+        <span class="badge bg-info">
+          <i></i> {% trans "Total contacts:" %} {{ total_cases }}
+        </span>
+        <span class="badge bg-success">
+          <i class="fas fa-check-circle"></i> {% trans "Eligible:" %} {{ eligible_cases }}
+        </span>
+      </div>
+    </div>
 
-      <div class="table-outline-wrapper">
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover table-contact">
-            <thead>
-                <tr>
-                    <th class="text-center">{% trans "Mã sàng lọc" %}</th>
-                    <th class="text-center">{% trans "Mã contact" %}</th>
-                    <th class="text-center">{% trans "Chữ cái đầu" %}</th>
-                    <th class="text-center">{% trans "Bệnh nhân liên quan" %}</th>
-                    <th class="text-center">{% trans "Ngày sàng lọc" %}</th>
-                    <th class="text-center">{% trans "Trạng thái" %}</th>
-                    <th class="text-center" width="150">{% trans "Thao tác" %}</th>
-                </tr>
-            </thead>
-            <tbody>
+    <div class="table-outline-wrapper">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover table-contact">
+          <thead>
+            <tr>
+              <th class="text-center">{% trans "Screening ID" %}</th>
+              <th class="text-center">{% trans "Contact ID" %}</th>
+              <th class="text-center">{% trans "Initial" %}</th>
+              <th class="text-center">{% trans "Related Patient" %}</th>
+              <th class="text-center">{% trans "Screening Date" %}</th>
+              <th class="text-center">{% trans "Status" %}</th>
+              <th class="text-center" width="150">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody>
             {% for case in page_obj %}
             <tr>
               <td class="text-center">
@@ -78,9 +77,9 @@
               </td>
               <td class="text-center">
                 {% if case.USUBJID %}
-                  <span class="badge badge-info text-dark">{{ case.USUBJID }}</span>
+                <strong  class="text">{{ case.USUBJID }}</strong>
                 {% else %}
-                  <span class="text-muted">-</span>
+                <span class="text-muted">-</span>
                 {% endif %}
               </td>
               <td class="text-center">
@@ -88,14 +87,14 @@
               </td>
               <td class="text-center">
                 {% if case.SUBJIDENROLLSTUDY %}
-                  <div class="patient-ref">
-                    <i ></i>
-                    <strong>{{ case.SUBJIDENROLLSTUDY.INITIAL }}</strong>
-                    <br>
-                    <class="text-muted">{{ case.SUBJIDENROLLSTUDY.USUBJID }}
-                  </div>
+                <div class="patient-ref">
+                  <i></i>
+                  <strong>{{ case.SUBJIDENROLLSTUDY.INITIAL }}</strong>
+                  <br>
+                  <class="text-muted">{{ case.SUBJIDENROLLSTUDY.USUBJID }}
+                </div>
                 {% else %}
-                  <span class="text-muted">-</span>
+                <span class="text-muted">-</span>
                 {% endif %}
               </td>
               <td class="text-center">
@@ -103,30 +102,27 @@
               </td>
               <td class="text-center">
                 {% if case.is_confirmed %}
-                  <span class="badge bg-success">
-                    <i class="fas fa-check-circle"></i> {% trans "Đủ điều kiện" %}
-                  </span>
+                <span class="badge bg-success">
+                  <i class="fas fa-check-circle"></i> {% trans "Eligible" %}
+                </span>
                 {% else %}
-                  <span class="badge bg-danger">
-                    <i class="fas fa-times-circle"></i> {% trans "Không đủ điều kiện" %}
-                  </span>
+                <span class="badge bg-danger">
+                  <i class="fas fa-times-circle"></i> {% trans "Not Eligible" %}
+                </span>
                 {% endif %}
               </td>
               <td class="text-center">
                 <div class="btn-group btn-group-sm" role="group">
-                  <a href="{% url 'study_43en:screening_contact_view' case.SCRID %}" 
-                     class="btn btn-info btn-view-contact" 
-                     data-scrid="{{ case.SCRID }}"
-                     title="{% trans 'Xem chi tiết' %}">
-                    <i ></i> {% trans "View" %}
+                  <a href="{% url 'study_43en:screening_contact_view' case.SCRID %}"
+                    class="btn btn-info btn-view-contact" data-scrid="{{ case.SCRID }}"
+                    title="{% trans 'View Details' %}">
+                    <i></i> {% trans "View" %}
                   </a>
-                  
+
                   {% if perms.study_43en.change_scr_contact %}
-                  <a href="{% url 'study_43en:screening_contact_update' case.SCRID %}" 
-                     class="btn btn-warning btn-edit-contact" 
-                     data-scrid="{{ case.SCRID }}"
-                     title="{% trans 'Chỉnh sửa' %}">
-                    <i ></i> {% trans "Edit" %}
+                  <a href="{% url 'study_43en:screening_contact_update' case.SCRID %}"
+                    class="btn btn-warning btn-edit-contact" data-scrid="{{ case.SCRID }}" title="{% trans 'Edit' %}">
+                    <i></i> {% trans "Edit" %}
                   </a>
                   {% endif %}
                 </div>
@@ -136,129 +132,130 @@
           </tbody>
         </table>
       </div>
-      
+
       <!-- Pagination -->
       {% if page_obj.has_other_pages %}
-        <nav aria-label="Page navigation" class="mt-4">
-          <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-              <li class="page-item">
-                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">
-                  {% trans "Đầu" %}
-                </a>
-              </li>
-              <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
-                  <i class="bi bi-chevron-left"></i>
-                </a>
-              </li>
-            {% endif %}
+      <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">
+              {% trans "First" %}
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link"
+              href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %}
 
-            {% for num in page_obj.paginator.page_range %}
-              {% if page_obj.number == num %}
-                <li class="page-item active">
-                  <span class="page-link">{{ num }}</span>
-                </li>
-              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">
-                    {{ num }}
-                  </a>
-                </li>
-              {% endif %}
+          {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+            <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">
+              {{ num }}
+            </a>
+            </li>
+            {% endif %}
             {% endfor %}
 
             {% if page_obj.has_next %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
-                  <i class="bi bi-chevron-right"></i>
-                </a>
-              </li>
-              <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
-                  {% trans "Cuối" %}
-                </a>
-              </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link"
+                href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
+                {% trans "Last" %}
+              </a>
+            </li>
             {% endif %}
-          </ul>
-        </nav>
+        </ul>
+      </nav>
       {% endif %}
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
-</div>
-{% endblock %}
+  {% endblock %}
 
-{% block dashboard_js %}
-<!-- 🎯 Include Contact Site Selection Modal -->
-{% include 'studies/study_43en/includes/contact_site_selection_modal.html' %}
+  {% block dashboard_js %}
+  <!-- 🎯 Include Contact Site Selection Modal -->
+  {% include 'studies/study_43en/includes/contact_site_selection_modal.html' %}
 
-<!-- JavaScript for Contact Screening List -->
-<script nonce="{{ request.csp_nonce }}">
-(function() {
-  'use strict';
-  
-  if (window.contactScreeningListInitialized) {
-    console.warn('[ContactScreeningList] Already initialized, skipping...');
-    return;
-  }
-  window.contactScreeningListInitialized = true;
-  
-  $(document).ready(function() {
-    
-    console.log(' [ContactScreeningList] Initializing...');
-    console.log(' [ContactModal] Checking elements...');
-    console.log('  - Add button:', $('#btnAddNewContact').length);
-    console.log('  - Add button (empty):', $('#btnAddNewContactEmpty').length);
-    console.log('  - Modal:', $('#contactSiteSelectionModal').length);
-    
-    // FORCE NAVIGATION - Bypass all handlers
-    $(document).on('click', '.btn-edit-contact, .btn-view-contact', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      
-      var href = $(this).attr('href');
-      var scrid = $(this).data('scrid');
-      var action = $(this).hasClass('btn-edit-contact') ? 'Edit' : 'View';
-      
-      console.log(`[ContactScreeningList] ${action} clicked:`, {
-        scrid: scrid,
-        href: href
+  <!-- JavaScript for Contact Screening List -->
+  <script nonce="{{ request.csp_nonce }}">
+    (function () {
+      'use strict';
+
+      if (window.contactScreeningListInitialized) {
+        console.warn('[ContactScreeningList] Already initialized, skipping...');
+        return;
+      }
+      window.contactScreeningListInitialized = true;
+
+      $(document).ready(function () {
+
+        console.log(' [ContactScreeningList] Initializing...');
+        console.log(' [ContactModal] Checking elements...');
+        console.log('  - Add button:', $('#btnAddNewContact').length);
+        console.log('  - Add button (empty):', $('#btnAddNewContactEmpty').length);
+        console.log('  - Modal:', $('#contactSiteSelectionModal').length);
+
+        // FORCE NAVIGATION - Bypass all handlers
+        $(document).on('click', '.btn-edit-contact, .btn-view-contact', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+
+          var href = $(this).attr('href');
+          var scrid = $(this).data('scrid');
+          var action = $(this).hasClass('btn-edit-contact') ? 'Edit' : 'View';
+
+          console.log(`[ContactScreeningList] ${action} clicked:`, {
+            scrid: scrid,
+            href: href
+          });
+
+          // FORCE navigation
+          console.log(`[ContactScreeningList] Force navigating to: ${href}`);
+          window.location.href = href;
+
+          return false;
+        });
+
+        // Row hover effect
+        $('tbody tr').hover(
+          function () {
+            $(this).addClass('table-active');
+            $(this).css('cursor', 'pointer');
+          },
+          function () {
+            $(this).removeClass('table-active');
+            $(this).css('cursor', 'default');
+          }
+        );
+
+        // Optional: Click entire row to view details
+        $('tbody tr').on('click', function (e) {
+          // Only if not clicking on action buttons
+          if (!$(e.target).closest('.btn-group').length) {
+            var viewBtn = $(this).find('.btn-view-contact');
+            if (viewBtn.length) {
+              window.location.href = viewBtn.attr('href');
+            }
+          }
+        });
+
+        console.log(' [ContactScreeningList] Initialized successfully');
       });
-      
-      // FORCE navigation
-      console.log(`[ContactScreeningList] Force navigating to: ${href}`);
-      window.location.href = href;
-      
-      return false;
-    });
-    
-    // Row hover effect
-    $('tbody tr').hover(
-      function() { 
-        $(this).addClass('table-active');
-        $(this).css('cursor', 'pointer');
-      },
-      function() { 
-        $(this).removeClass('table-active');
-        $(this).css('cursor', 'default');
-      }
-    );
-    
-    // Optional: Click entire row to view details
-    $('tbody tr').on('click', function(e) {
-      // Only if not clicking on action buttons
-      if (!$(e.target).closest('.btn-group').length) {
-        var viewBtn = $(this).find('.btn-view-contact');
-        if (viewBtn.length) {
-          window.location.href = viewBtn.attr('href');
-        }
-      }
-    });
-    
-    console.log(' [ContactScreeningList] Initialized successfully');
-  });
-  
-})();
-</script>
-{% endblock %}
+
+    })();
+  </script>
+  {% endblock %}

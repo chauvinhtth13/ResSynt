@@ -137,16 +137,39 @@ def upcoming_appointments(request):
         cache_key = f"notifications_43en_{user_id}_{today.isoformat()}"
         
         # ==========================================
-        # QUERY FollowUpStatus - DIRECT QUERY (skip cache overhead)
+        # GET USER'S ACCESSIBLE SITES
+        # ==========================================
+        user_sites = getattr(request, 'user_sites', set())
+        can_access_all = getattr(request, 'can_access_all_sites', False)
+        
+        # ==========================================
+        # QUERY FollowUpStatus - WITH SITE FILTERING
         # ==========================================
         try:
-            # 🚀 Direct query - no get_filtered_queryset to avoid cache load
-            # ⚠️ NOTE: FollowUpStatus has NO SITEID field - it's a denormalized table
+            # 🚀 Direct query with site filtering
+            # ⚠️ NOTE: FollowUpStatus has NO SITEID field - filter by USUBJID prefix
+            # USUBJID format: {SITEID}-{TYPE}-{NUMBER} (e.g., '003-A-001')
+            
+            # Build site filter using Q objects
+            if can_access_all:
+                # Admin - see all notifications
+                site_q = Q()  # No filter
+            else:
+                # Regular user - filter by accessible sites
+                if user_sites:
+                    # Build Q object: USUBJID__startswith='003-' OR USUBJID__startswith='020-'...
+                    site_q = Q()
+                    for site in user_sites:
+                        site_q |= Q(USUBJID__startswith=f'{site}-')
+                else:
+                    # No sites - no notifications
+                    site_q = Q(USUBJID__isnull=True)  # Match nothing
+            
             followups = FollowUpStatus.objects.using('db_study_43en').filter(
                 EXPECTED_DATE__gte=today,
                 EXPECTED_DATE__lte=upcoming_date,
                 STATUS__in=['UPCOMING', 'LATE']
-            ).only(
+            ).filter(site_q).only(  # Apply site filter
                 'USUBJID', 'VISIT', 'EXPECTED_DATE', 'STATUS', 'SUBJECT_TYPE', 'PHONE', 'INITIAL'
             ).order_by('EXPECTED_DATE', 'USUBJID')[:50]  # Limit to 50 notifications
             
@@ -162,53 +185,6 @@ def upcoming_appointments(request):
         upcoming = []
         unread_count = 0
         
-        # 🧪 FAKE DATA FOR TESTING (remove in production)
-        # If no real data, add fake notifications for testing
-        if len(followups) == 0:
-            fake_notifications = [
-                {
-                    'USUBJID': '003-A-001',
-                    'VISIT': 'V2',
-                    'EXPECTED_DATE': today - timedelta(days=1),  # Yesterday - LATE
-                    'STATUS': 'LATE',
-                    'SUBJECT_TYPE': 'PATIENT',
-                    'PHONE': '0901234567',
-                    'INITIAL': 'NVA',
-                    'EXPECTED_FROM': None,
-                    'EXPECTED_TO': None,
-                },
-                {
-                    'USUBJID': '003-A-002',
-                    'VISIT': 'V3',
-                    'EXPECTED_DATE': today,  # Today - UPCOMING
-                    'STATUS': 'UPCOMING',
-                    'SUBJECT_TYPE': 'PATIENT',
-                    'PHONE': '0912345678',
-                    'INITIAL': 'LTB',
-                    'EXPECTED_FROM': None,
-                    'EXPECTED_TO': None,
-                },
-                {
-                    'USUBJID': '003-C-001',
-                    'VISIT': 'V2',
-                    'EXPECTED_DATE': today + timedelta(days=1),  # Tomorrow - UPCOMING
-                    'STATUS': 'UPCOMING',
-                    'SUBJECT_TYPE': 'CONTACT',
-                    'PHONE': '0923456789',
-                    'INITIAL': 'PTH',
-                    'EXPECTED_FROM': None,
-                    'EXPECTED_TO': None,
-                },
-            ]
-            
-            # Convert to objects with attributes
-            class FakeFollowup:
-                def __init__(self, data):
-                    for key, value in data.items():
-                        setattr(self, key, value)
-            
-            followups = [FakeFollowup(data) for data in fake_notifications]
-        # 🧪 END FAKE DATA
         
         for followup in followups:
             #  Create unique notification ID

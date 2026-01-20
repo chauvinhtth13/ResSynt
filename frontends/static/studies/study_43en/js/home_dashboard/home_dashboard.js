@@ -49,18 +49,14 @@
     // ========================================================================
 
     /**
-     * Initialize site filter buttons
+     * Initialize site filter dropdown
      */
     function initSiteFilterButtons() {
-        const filterButtons = document.querySelectorAll('.site-filter-btn');
+        const filterSelect = document.querySelector('.site-filter-select');
 
-        filterButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                const site = this.getAttribute('data-site');
-
-                // Update active state
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
+        if (filterSelect) {
+            filterSelect.addEventListener('change', function () {
+                const site = this.value;
 
                 // Update current site
                 CONFIG.CURRENT_SITE = site;
@@ -69,7 +65,7 @@
                 console.log('[Filter] Switching to site:', site);
                 loadChartData(site);
             });
-        });
+        }
     }
 
     /**

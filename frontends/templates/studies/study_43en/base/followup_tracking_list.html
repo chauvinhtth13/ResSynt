@@ -11,13 +11,13 @@
 <!-- Alert container for notifications -->
 <div id="alertContainer" style="position: fixed; top: 80px; right: 20px; z-index: 9999; min-width: 300px;"></div>
 
-<!-- Bộ lọc -->
+<!-- Filters -->
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Bộ lọc tìm kiếm</h6>
+        <h6 class="m-0 font-weight-bold text-primary">Search Filters</h6>
         <div>
             <button class="btn btn-sm btn-primary" type="button" data-toggle="collapse" data-target="#filterCollapse">
-                <i class="fas fa-filter mr-1"></i> Hiển thị/Ẩn bộ lọc
+                <i class="fas fa-filter mr-1"></i> Show/Hide Filters
             </button>
         </div>
     </div>
@@ -25,16 +25,16 @@
         <div class="card-body">
             <form method="get" id="filterForm">
                 <div class="row">
-                    <!-- Khoảng thời gian -->
+                    <!-- Date Range -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label>Khoảng thời gian</label>
+                            <label>Date Range</label>
                             <div class="input-group">
 
                                 <input type="text" class="form-control datepicker" name="date_from" id="date_from" 
                                     value="{% if date_from %}{{ date_from|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY" data-provide="datepicker">
                                 <div class="input-group-prepend input-group-append">
-                                    <span class="input-group-text">đến</span>
+                                    <span class="input-group-text">to</span>
                                 </div>
                                 <input type="text" class="form-control datepicker" name="date_to" id="date_to" 
                                     value="{% if date_to %}{{ date_to|date:'d/m/Y' }}{% endif %}" placeholder="DD/MM/YYYY" data-provide="datepicker">
@@ -42,15 +42,15 @@
                         </div>
                     </div>
 
-                    <!-- Bộ lọc nhanh -->
+                    <!-- Quick Filters -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label>Bộ lọc nhanh</label>
+                            <label>Quick Filters</label>
                             <div class="btn-group btn-block">
-                                <button type="button" class="btn btn-outline-primary" id="thisWeek">Tuần này</button>
-                                <button type="button" class="btn btn-outline-primary" id="nextWeek">Tuần sau</button>
-                                <button type="button" class="btn btn-outline-primary" id="thisMonth">Tháng này</button>
-                                <button type="button" class="btn btn-outline-primary" id="all">Tất cả</button>
+                                <button type="button" class="btn btn-outline-primary" id="thisWeek">This Week</button>
+                                <button type="button" class="btn btn-outline-primary" id="nextWeek">Next Week</button>
+                                <button type="button" class="btn btn-outline-primary" id="thisMonth">This Month</button>
+                                <button type="button" class="btn btn-outline-primary" id="all">All</button>
                             </div>
                         </div>
                     </div>
@@ -59,9 +59,9 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="subject_type">Loại đối tượng</label>
+                            <label for="subject_type">Subject Type</label>
                             <select name="subject_type" id="subject_type" class="form-control">
-                                <option value="">-- Tất cả đối tượng --</option>
+                                <option value="">-- All Subjects --</option>
                                 {% for value, text in subject_type_choices %}
                                     <option value="{{ value }}" {% if current_subject_type == value %}selected{% endif %}>
                                         {{ text }}
@@ -72,9 +72,9 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="visit">Lần thăm</label>
+                            <label for="visit">Visit</label>
                             <select name="visit" id="visit" class="form-control">
-                                <option value="">-- Tất cả lần thăm --</option>
+                                <option value="">-- All Visits --</option>
                                 {% for value, text in visit_choices %}
                                     <option value="{{ value }}" {% if current_visit == value %}selected{% endif %}>
                                         {{ text }}
@@ -85,9 +85,9 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="status">Trạng thái</label>
+                            <label for="status">Status</label>
                             <select name="status" id="status" class="form-control">
-                                <option value="">-- Tất cả trạng thái --</option>
+                                <option value="">-- All Statuses --</option>
                                 {% for value, text in status_choices %}
                                     <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
                                         {{ text }}
@@ -98,9 +98,9 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="search">Tìm kiếm</label>
+                            <label for="search">Search</label>
                             <input type="text" class="form-control" id="search" name="search" 
-                                placeholder="Mã bệnh nhân, tên viết tắt..." value="{{ search_query|default:'' }}">
+                                placeholder="Patient ID, Initials..." value="{{ search_query|default:'' }}">
                         </div>
                     </div>
                 </div>
@@ -108,10 +108,10 @@
                 <div class="row">
                     <div class="col-md-12 text-right">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search mr-1"></i> Tìm kiếm
+                            <i class="fas fa-search mr-1"></i> Search
                         </button>
                         <a href="{% url 'study_43en:followup_tracking_list' %}" class="btn btn-secondary">
-                            <i class="fas fa-sync-alt mr-1"></i> Đặt lại
+                            <i class="fas fa-sync-alt mr-1"></i> Reset
                         </a>
                     </div>
                 </div>
@@ -124,8 +124,8 @@
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-warning">
-            <i class="fas fa-clock mr-2"></i>Danh sách cần theo dõi
-            <span class="badge badge-warning ml-2">{{ pending_followups.paginator.count }}</span>
+            <i class="fas fa-clock mr-2"></i>Pending Follow-ups List
+            <span >{{ pending_followups.paginator.count }}</span>
         </h6>
     </div>
     <div class="card-body">
@@ -135,15 +135,15 @@
                 <table class="table table-bordered" width="100%" cellspacing="0">
                 <thead>
                     <tr>
-                        <th width="5%">STT</th>
-                        <th width="10%">Mã BN</th>
-                        <th width="10%">Tên viết tắt</th>
-                        <th width="10%">Loại</th>
-                        <th width="10%">Lần khám</th>
-                        <th width="12%">Ngày dự kiến</th>
-                        <th width="10%">Trạng thái</th>
-                        <th width="10%">Liên hệ</th>
-                        <th width="13%">Thao tác</th>
+                        <th width="5%">No</th>
+                        <th width="10%">Patient ID</th>
+                        <th width="8%">Initials</th>
+                        <th width="10%">Type</th>
+                        <th width="8%">Visit</th>
+                        <th width="12%">Expected Date</th>
+                        <th width="8%">Status</th>
+                        <th width="10%">Phone</th>
+                        <th width="12%">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -157,15 +157,15 @@
                         <td>{{ followup.INITIAL }}</td>
                         <td>
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
-                            <span >Bệnh nhân</span>
+                            <span >Patient</span>
                             {% else %}
-                            <span class="badge badge-info ">Người tiếp xúc</span>
+                            <span class="badge badge-info ">Contact</span>
                             {% endif %}
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>
                         <td>
                             <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
-                            <small class="d-block text-muted" title="Khoảng thời gian dự kiến">
+                            <small class="d-block text-muted" title="Expected Date Range">
                                 {% if followup.EXPECTED_FROM and followup.EXPECTED_TO %}
                                     {{ followup.EXPECTED_FROM|date:"d/m" }} - {{ followup.EXPECTED_TO|date:"d/m/Y" }}
                                 {% endif %}
@@ -173,11 +173,11 @@
                         </td>
                         <td>
                             {% if followup.STATUS == 'LATE' %}
-                                <span class="badge badge-warning text-dark "><i class="fas fa-exclamation-circle mr-1"></i>Trễ hẹn</span>
+                                <span class="badge badge-warning text-dark "><i class="fas fa-exclamation-circle mr-1"></i>Late</span>
                             {% elif followup.STATUS == 'MISSED' %}
-                                <span class="badge badge-danger  "><i class="fas fa-times-circle mr-1"></i>Bỏ lỡ</span>
+                                <span class="badge badge-danger  "><i class="fas fa-times-circle mr-1"></i>Missed</span>
                             {% elif followup.STATUS == 'UPCOMING' %}
-                                <span ><i ></i>Sắp tới</span>
+                                <span ><i ></i>Upcoming</span>
                             {% endif %}
                         </td>
                         <td>
@@ -196,8 +196,8 @@
                                 data-usubjid="{{ followup.USUBJID }}"
                                 data-visit="{{ followup.get_VISIT_display }}"
                                 data-expected="{{ followup.EXPECTED_DATE|date:'Y-m-d' }}"
-                                title="Đánh dấu hoàn thành">
-                                <i class="fas fa-check-circle mr-1"></i> Hoàn thành
+                                title="Mark as Completed">
+                                <i class="fas fa-check-circle mr-1"></i> Completed
                             </button>
                             <!--  MISSED BUTTON -->
                             <button class="btn btn-sm btn-danger missed-followup-btn" 
@@ -205,7 +205,7 @@
                                 data-usubjid="{{ followup.USUBJID }}"
                                 data-visit="{{ followup.get_VISIT_display }}"
                                 data-expected="{{ followup.EXPECTED_DATE|date:'Y-m-d' }}"
-                                title="Đánh dấu Missed">
+                                title="Mark as Missed">
                                 <i class="fas fa-times-circle mr-1"></i> Missed
                             </button>
                         </td>
@@ -214,7 +214,7 @@
                     <tr>
                         <td colspan="9" class="text-center">
                             <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
-                            <p class="text-muted">Không có lịch hẹn cần theo dõi</p>
+                            <p class="text-muted">No follow-up appointments to track</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -293,8 +293,8 @@
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-success">
-            <i class="fas fa-check-circle mr-2"></i>Danh sách đã hoàn thành
-            <span class="badge badge-success ml-2">{{ completed_followups.paginator.count }}</span>
+            <i class="fas fa-check-circle mr-2"></i>Completed List
+            <span >{{ completed_followups.paginator.count }}</span>
         </h6>
     </div>
     <div class="card-body">
@@ -304,15 +304,15 @@
                 <table class="table table-bordered table-hover" width="100%" cellspacing="0">
                 <thead class="thead-light">
                     <tr>
-                        <th width="5%">STT</th>
-                        <th width="12%">Mã BN</th>
-                        <th width="12%">Tên viết tắt</th>
-                        <th width="10%">Loại</th>
-                        <th width="10%">Lần khám</th>
-                        <th width="13%">Ngày dự kiến</th>
-                        <th width="13%">Ngày hoàn thành</th>
-                        <th width="10%">Trạng thái</th>
-                        <th width="15%">Liên hệ</th>
+                        <th width="6%">No</th>
+                        <th width="12%">Patient ID</th>
+                        <th width="10%">Initials</th>
+                        <th width="10%">Type</th>
+                        <th width="10%">Visit</th>
+                        <th width="13%">Expected Date</th>
+                        <th width="13%">Completed Date</th>
+                        <th width="10%">Status</th>
+                        <th width="15%">Phone</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -323,9 +323,9 @@
                         <td>{{ followup.INITIAL }}</td>
                         <td>
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
-                            <span >Bệnh nhân</span>
+                            <span >Patient</span>
                             {% else %}
-                            <span class="badge badge-info text-dark">Người tiếp xúc</span>
+                            <span class="badge badge-info text-dark">Contact</span>
                             {% endif %}
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>
@@ -337,7 +337,7 @@
                         </td>
                         <td>
                             <span class="btn btn-sm btn-success complete-followup-btn ">
-                                <i class="fas fa-check-circle mr-1"></i>Hoàn thành
+                                <i class="fas fa-check-circle mr-1"></i> Completed
                             </span>
                         </td>
                         <td>
@@ -353,7 +353,7 @@
                     {% empty %}
                     <tr>
                         <td colspan="9" class="text-center text-muted">
-                            Chưa có lịch hẹn nào được hoàn thành
+                            No completed follow-up appointments yet
                         </td>
                     </tr>
                     {% endfor %}
@@ -433,8 +433,8 @@
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-danger">
-            <i class="fas fa-times-circle mr-2"></i>Danh sách Missed (Mất liên lạc)
-            <span class="badge badge-danger ml-2">{{ missed_followups.paginator.count }}</span>
+            <i class="fas fa-times-circle mr-2"></i>Missed List (Lost Contact)
+            <span >{{ missed_followups.paginator.count }}</span>
         </h6>
     </div>
     <div class="card-body">
@@ -444,16 +444,16 @@
                 <table class="table table-bordered table-hover" width="100%" cellspacing="0">
                 <thead class="thead-light">
                     <tr>
-                        <th width="5%">STT</th>
-                        <th width="10%">Mã BN</th>
-                        <th width="10%">Tên viết tắt</th>
-                        <th width="8%">Loại</th>
-                        <th width="8%">Lần khám</th>
-                        <th width="12%">Ngày dự kiến</th>
-                        <th width="12%">Ngày Missed</th>
-                        <th width="20%">Lý do</th>
-                        <th width="8%">Trạng thái</th>
-                        <th width="7%">Liên hệ</th>
+                        <th width="6%">No</th>
+                        <th width="12%">Patient ID</th>
+                        <th width="10%">Initials</th>
+                        <th width="8%">Type</th>
+                        <th width="8%">Visit</th>
+                        <th width="12%">Expected Date</th>
+                        <th width="12%">Missed Date</th>
+                        <th width="20%">Reason</th>
+                        <th width="8%">Status</th>
+                        <th width="7%">Contact</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -464,9 +464,9 @@
                         <td>{{ followup.INITIAL }}</td>
                         <td>
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
-                            <span >Bệnh nhân</span>
+                            <span >Patient</span>
                             {% else %}
-                            <span class="badge badge-info text-dark">Người tiếp xúc</span>
+                            <span class="badge badge-info text-dark">Contact</span>
                             {% endif %}
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>
@@ -480,7 +480,7 @@
                             <small>{{ followup.MISSED_REASON|truncatewords:10 }}</small>
                         </td>
                         <td>
-                            <span class="badge badge-danger ">
+                            <span >
                                 <i class="fas fa-times-circle mr-1"></i>Missed
                             </span>
                         </td>

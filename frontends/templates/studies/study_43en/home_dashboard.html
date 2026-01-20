@@ -128,22 +128,14 @@
                         {% trans "Patient Enrollment Progress" %}
                     </h6>
 
-                    {# Site Filter Buttons #}
-                    <div class="btn-group" role="group" aria-label="Site filter">
-                        <button type="button" class="btn btn-sm btn-outline-primary site-filter-btn active"
-                            data-site="all">
-                            {% trans "All Sites" %}
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary site-filter-btn" data-site="003">
-                            003
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary site-filter-btn" data-site="020">
-                            020
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary site-filter-btn" data-site="011">
-                            011
-                        </button>
-                    </div>
+                    {# Site Filter Dropdown #}
+                    <select class="form-select form-select-sm site-filter-select" data-chart="enrollment"
+                        style="width: auto; min-width: 120px;">
+                        <option value="all">{% trans "All Sites" %}</option>
+                        {% for site in accessible_sites %}
+                        <option value="{{ site }}">{{ site }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="card-body">
@@ -176,25 +168,14 @@
 
                     {# Filters #}
                     <div class="d-flex gap-2 flex-wrap">
-                        {# Site Filter #}
-                        <div class="btn-group" role="group" aria-label="Site filter">
-                            <button type="button" class="btn btn-sm btn-outline-secondary monthly-site-btn active"
-                                data-site="all">
-                                {% trans "All Sites" %}
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary monthly-site-btn"
-                                data-site="003">
-                                003
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary monthly-site-btn"
-                                data-site="020">
-                                020
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary monthly-site-btn"
-                                data-site="011">
-                                011
-                            </button>
-                        </div>
+                        {# Site Filter Dropdown #}
+                        <select class="form-select form-select-sm monthly-site-select" data-chart="monthly"
+                            style="width: auto; min-width: 120px;">
+                            <option value="all">{% trans "All Sites" %}</option>
+                            {% for site in accessible_sites %}
+                            <option value="{{ site }}">{{ site }}</option>
+                            {% endfor %}
+                        </select>
 
                         {# Period Type Filter #}
                         <div class="input-group input-group-sm" style="width: auto;">
@@ -319,25 +300,14 @@
 
                     {# Filters #}
                     <div class="d-flex gap-2 flex-wrap">
-                        {# Site Filter #}
-                        <div class="btn-group" role="group" aria-label="Contact site filter">
-                            <button type="button" class="btn btn-sm btn-outline-success contact-site-btn active"
-                                data-site="all">
-                                {% trans "All Sites" %}
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-success contact-site-btn"
-                                data-site="003">
-                                003
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-success contact-site-btn"
-                                data-site="020">
-                                020
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-success contact-site-btn"
-                                data-site="011">
-                                011
-                            </button>
-                        </div>
+                        {# Site Filter Dropdown #}
+                        <select class="form-select form-select-sm contact-site-select" data-chart="contact"
+                            style="width: auto; min-width: 120px;">
+                            <option value="all">{% trans "All Sites" %}</option>
+                            {% for site in accessible_sites %}
+                            <option value="{{ site }}">{{ site }}</option>
+                            {% endfor %}
+                        </select>
 
                         {# Period Type Filter #}
                         <div class="input-group input-group-sm" style="width: auto;">
@@ -461,25 +431,14 @@
                         {% trans "K. pneumoniae isolated from throat swab & stool/rectal swab samples" %}
                     </h6>
 
-                    {# Site Filter Buttons #}
-                    <div class="btn-group" role="group" aria-label="K. pneumoniae site filter">
-                        <button type="button" class="btn btn-sm btn-outline-danger kpneumoniae-site-btn active"
-                            data-site="all">
-                            {% trans "All Sites" %}
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger kpneumoniae-site-btn"
-                            data-site="003">
-                            003
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger kpneumoniae-site-btn"
-                            data-site="020">
-                            020
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger kpneumoniae-site-btn"
-                            data-site="011">
-                            011
-                        </button>
-                    </div>
+                    {# Site Filter Dropdown #}
+                    <select class="form-select form-select-sm kpneumoniae-site-select" data-chart="kpneumoniae"
+                        style="width: auto; min-width: 120px;">
+                        <option value="all">{% trans "All Sites" %}</option>
+                        {% for site in accessible_sites %}
+                        <option value="{{ site }}">{{ site }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="card-body">
@@ -504,7 +463,8 @@
                                     <th rowspan="2" class="align-middle text-center">{% trans "Clinical Kp." %}</th>
                                     <th colspan="4" class="text-center bg-info bg-opacity-10">{% trans "Throat swab" %}
                                     </th>
-                                    <th colspan="4" class="text-center bg-warning bg-opacity-10">{% trans "Stool/Rectal swab" %}</th>
+                                    <th colspan="4" class="text-center bg-warning bg-opacity-10">{% trans "Stool/Rectal
+                                        swab" %}</th>
                                 </tr>
                                 <tr>
                                     <th class="text-center bg-info bg-opacity-10">{% trans "Day 1" %}</th>
@@ -547,22 +507,14 @@
                         {% trans "Sample Management: Patient & Contact Sampling Follow-up" %}
                     </h6>
 
-                    {# Site Filter #}
-                    <div class="btn-group" role="group" aria-label="Sampling site filter">
-                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn active"
-                            data-site="all">
-                            {% trans "All Sites" %}
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="003">
-                            003
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="020">
-                            020
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info sampling-site-btn" data-site="011">
-                            011
-                        </button>
-                    </div>
+                    {# Site Filter Dropdown #}
+                    <select class="form-select form-select-sm sampling-site-select" data-chart="sampling"
+                        style="width: auto; min-width: 120px;">
+                        <option value="all">{% trans "All Sites" %}</option>
+                        {% for site in accessible_sites %}
+                        <option value="{{ site }}">{{ site }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="card-body">

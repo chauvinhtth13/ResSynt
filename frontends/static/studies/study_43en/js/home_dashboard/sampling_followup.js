@@ -13,69 +13,65 @@
  * Version: 1.0
  */
 
-(function() {
+(function () {
     'use strict';
-    
+
     // ========================================================================
     // CONFIGURATION
     // ========================================================================
-    
+
     const CONFIG = {
         API_ENDPOINT: '/studies/43en/api/sampling-followup/',
         CURRENT_SITE: 'all',
     };
-    
+
     // ========================================================================
     // DOM READY
     // ========================================================================
-    
-    document.addEventListener('DOMContentLoaded', function() {
+
+    document.addEventListener('DOMContentLoaded', function () {
         console.log('[Sampling Followup] Initializing...');
-        
+
         // Initialize
         initSamplingSiteButtons();
         loadSamplingData();
     });
-    
+
     // ========================================================================
     // SITE FILTER BUTTONS
     // ========================================================================
-    
+
     /**
-     * Initialize sampling site filter buttons
+     * Initialize sampling site filter dropdown
      */
     function initSamplingSiteButtons() {
-        const filterButtons = document.querySelectorAll('.sampling-site-btn');
-        
-        filterButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const site = this.getAttribute('data-site');
-                
-                // Update active state
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
+        const filterSelect = document.querySelector('.sampling-site-select');
+
+        if (filterSelect) {
+            filterSelect.addEventListener('change', function () {
+                const site = this.value;
+
                 // Update current site
                 CONFIG.CURRENT_SITE = site;
-                
+
                 // Reload data
                 console.log('[Sampling Followup] Switching to site:', site);
                 loadSamplingData();
             });
-        });
+        }
     }
-    
+
     // ========================================================================
     // DATA LOADING
     // ========================================================================
-    
+
     /**
      * Load sampling follow-up statistics data
      */
     function loadSamplingData() {
         const tableContainer = document.getElementById('samplingTableContainer');
         const loadingIndicator = document.getElementById('samplingLoading');
-        
+
         // Show loading
         if (loadingIndicator) {
             loadingIndicator.style.display = 'block';
@@ -83,14 +79,14 @@
         if (tableContainer) {
             tableContainer.style.display = 'none';
         }
-        
+
         // Build API URL
         const params = new URLSearchParams({
             site: CONFIG.CURRENT_SITE,
         });
-        
+
         const url = `${CONFIG.API_ENDPOINT}?${params.toString()}`;
-        
+
         // Fetch data
         fetch(url, {
             method: 'GET',
@@ -99,48 +95,48 @@
             },
             credentials: 'same-origin',
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(result => {
-            if (!result.success) {
-                throw new Error(result.error || 'Unknown error');
-            }
-            
-            console.log('[Sampling Followup] Data received:', result.data);
-            
-            // Hide loading
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-            if (tableContainer) {
-                tableContainer.style.display = 'block';
-            }
-            
-            // Render table
-            renderSamplingTable(result.data);
-        })
-        .catch(error => {
-            console.error('[Sampling Followup] Load error:', error);
-            
-            if (loadingIndicator) {
-                loadingIndicator.innerHTML = `
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error');
+                }
+
+                console.log('[Sampling Followup] Data received:', result.data);
+
+                // Hide loading
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+                if (tableContainer) {
+                    tableContainer.style.display = 'block';
+                }
+
+                // Render table
+                renderSamplingTable(result.data);
+            })
+            .catch(error => {
+                console.error('[Sampling Followup] Load error:', error);
+
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>
                         Failed to load sampling data: ${escapeHtml(error.message)}
                     </div>
                 `;
-            }
-        });
+                }
+            });
     }
-    
+
     // ========================================================================
     // TABLE RENDERING
     // ========================================================================
-    
+
     /**
      * Render sampling follow-up table
      */
@@ -150,10 +146,10 @@
             console.error('[Sampling Followup] Table body not found');
             return;
         }
-        
+
         // Clear existing rows
         tbody.innerHTML = '';
-        
+
         // Helper function to format value (handle null)
         const formatValue = (val) => {
             if (val === null || val === undefined) {
@@ -161,7 +157,7 @@
             }
             return `<strong>${val}</strong>`;
         };
-        
+
         // Define rows based on Table 5 structure
         const rows = [
             {
@@ -193,51 +189,51 @@
                 contact_blood: formatValue(null),
             },
         ];
-        
+
         // Render each row
         rows.forEach(row => {
             const tr = document.createElement('tr');
-            
+
             // Schedule column
             const scheduleCell = document.createElement('td');
             scheduleCell.className = 'fw-semibold';
             scheduleCell.textContent = row.label;
             tr.appendChild(scheduleCell);
-            
+
             // Patient Total Sampling
             const patientTotalCell = document.createElement('td');
             patientTotalCell.className = 'text-center bg-primary bg-opacity-10';
             patientTotalCell.innerHTML = formatValue(row.patient_total);
             tr.appendChild(patientTotalCell);
-            
+
             // Patient Blood Sampling
             const patientBloodCell = document.createElement('td');
             patientBloodCell.className = 'text-center bg-primary bg-opacity-10';
             patientBloodCell.innerHTML = formatValue(row.patient_blood);
             tr.appendChild(patientBloodCell);
-            
+
             // Contact Total Sampling
             const contactTotalCell = document.createElement('td');
             contactTotalCell.className = 'text-center bg-success bg-opacity-10';
             contactTotalCell.innerHTML = formatValue(row.contact_total);
             tr.appendChild(contactTotalCell);
-            
+
             // Contact Blood Sampling
             const contactBloodCell = document.createElement('td');
             contactBloodCell.className = 'text-center bg-success bg-opacity-10';
             contactBloodCell.innerHTML = formatValue(row.contact_blood);
             tr.appendChild(contactBloodCell);
-            
+
             tbody.appendChild(tr);
         });
-        
+
         console.log('[Sampling Followup] Table rendered');
     }
-    
+
     // ========================================================================
     // UTILITY FUNCTIONS
     // ========================================================================
-    
+
     /**
      * Escape HTML to prevent XSS
      */
@@ -251,5 +247,5 @@
         };
         return String(text).replace(/[&<>"']/g, m => map[m]);
     }
-    
+
 })();

@@ -4,17 +4,19 @@
 {% load study_43en_tags %}
 
 {% block title %}
-  {% if is_update %}
-    {% trans "Cập Nhật Xét Nghiệm" %}
-  {% else %}
-    {% trans "Nhập Kết Quả Xét Nghiệm" %}
-  {% endif %}
+{% if is_update %}
+{% trans "Update Laboratory Test" %}
+{% else %}
+{% trans "Enter Laboratory Test Results" %}
+{% endif %}
 {% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-<li class="breadcrumb-item"><a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}">{% trans "Bệnh nhân" %} {{ usubjid }}</a></li>
-<li class="breadcrumb-item"><a href="{% url 'study_43en:laboratory_test_list' usubjid=usubjid %}">{% trans "Xét nghiệm" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}">{% trans "Patient" %} {{
+    usubjid }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'study_43en:laboratory_test_list' usubjid=usubjid %}">{% trans "Laboratory
+    Tests" %}</a></li>
 <li class="breadcrumb-item active">{{ lab_type_display }}</li>
 {% endblock %}
 
@@ -28,30 +30,30 @@
         <h3 class="card-title">
           <i class="fas fa-flask mr-2"></i>
           {% if is_readonly %}
-            {% trans "Xem Kết Quả Xét Nghiệm" %}
-            <span class="readonly-badge">
-              <i class="fas fa-eye mr-1"></i>{% trans "Chỉ xem" %}
-            </span>
+          {% trans "View Laboratory Test Results" %}
+          <span class="readonly-badge">
+            <i class="fas fa-eye mr-1"></i>{% trans "Read Only" %}
+          </span>
           {% else %}
-            {% trans "Cập Nhật Xét Nghiệm" %}
+          {% trans "Update Laboratory Test" %}
           {% endif %}
           - {{ lab_type_display }}
         </h3>
       </div>
-      
+
       <div class="card-body {% if is_readonly %}readonly-mode{% endif %}">
         <!-- Patient Information Box -->
         <div class="patient-info-box">
           <div class="row">
             <div class="col-md-4">
               <div class="info-label">
-                <i class="fas fa-user-tag mr-2"></i>{% trans "Mã bệnh nhân" %}
+                <i class="fas fa-user-tag mr-2"></i>{% trans "Patient ID" %}
               </div>
               <div class="info-value">{{ usubjid }}</div>
             </div>
             <div class="col-md-4">
               <div class="info-label">
-                <i class="fas fa-vial mr-2"></i>{% trans "Lần xét nghiệm" %}
+                <i class="fas fa-vial mr-2"></i>{% trans "Test Number" %}
               </div>
               <div class="info-value">{{ lab_type_display }}</div>
             </div>
@@ -63,155 +65,144 @@
             </div>
           </div>
         </div>
-        
+
         <!--  CONDITIONAL: Only show form if NOT readonly -->
         {% if not is_readonly %}
         <!-- Main Form -->
         <form method="post" id="lab-form">
-        {% endif %}
-        
+          {% endif %}
+
           {% csrf_token %}
           {{ formset.management_form }}
-          
+
           <!-- Categories with tests -->
           {% for category_code, category_name in all_categories %}
-            <div class="lab-category" id="category-{{ category_code }}" data-category="{{ category_code }}">
-              <h5 class="category-title">
-                <i class="fas fa-folder-open mr-2"></i>{{ category_name }}
-              </h5>
-              
-              <!--  HIDE date picker in readonly mode -->
-              {% if not is_readonly %}
-              <div class="category-date-picker">
-                <label for="category-date-{{ category_code }}">
-                  <i class="far fa-calendar-alt mr-2"></i>{% trans "Ngày chung cho danh mục này:" %}
-                </label>
-                <input 
-                  type="text" 
-                  id="category-date-{{ category_code }}" 
-                  class="form-control datepicker category-date-input"
-                  data-category="{{ category_code }}"
-                  placeholder="DD/MM/YYYY">
-                <button 
-                  type="button" 
-                  class="apply-category-date"
-                  data-category="{{ category_code }}">
-                  <i class="fas fa-check mr-2"></i>{% trans "Áp dụng cho tất cả" %}
-                </button>
-              </div>
-              {% endif %}
-              
-              <div class="lab-tests-list">
-                {% for form in formset %}
-                  {% if form.instance.TESTTYPE in category_test_map|get_item:category_code %}
-                    <div class="lab-test-row" data-test-code="{{ form.instance.TESTTYPE }}">
-                      <div class="lab-test-card {% if form.instance.PERFORMED %}performed{% endif %}">
-                        {{ form.id }}
-                        
-                        <div class="test-header">
-                          <div class="form-check">
-                            <!--  DISABLE checkbox in readonly mode -->
-                            {% if is_readonly %}
-                              <input type="checkbox" 
-                                     class="form-check-input" 
-                                     {% if form.instance.PERFORMED %}checked{% endif %}
-                                     disabled>
-                            {% else %}
-                              {{ form.PERFORMED }}
-                            {% endif %}
-                            <label class="form-check-label" for="{{ form.PERFORMED.auto_id }}">
-                              <strong>{{ form.instance.get_TESTTYPE_display }}</strong>
-                              <span class="test-code">({{ form.instance.TESTTYPE }})</span>
-                              {% with unit=form.instance.TESTTYPE|get_test_unit %}
-                                {% if unit %}
-                                  <span class="test-unit">{{ unit }}</span>
-                                {% endif %}
-                              {% endwith %}
-                            </label>
-                          </div>
+          <div class="lab-category" id="category-{{ category_code }}" data-category="{{ category_code }}">
+            <h5 class="category-title">
+              <i class="fas fa-folder-open mr-2"></i>{{ category_name }}
+            </h5>
+
+            <!--  HIDE date picker in readonly mode -->
+            {% if not is_readonly %}
+            <div class="category-date-picker">
+              <label for="category-date-{{ category_code }}">
+                <i class="far fa-calendar-alt mr-2"></i>{% trans "Common date for this category:" %}
+              </label>
+              <input type="text" id="category-date-{{ category_code }}"
+                class="form-control datepicker category-date-input" data-category="{{ category_code }}"
+                placeholder="DD/MM/YYYY">
+              <button type="button" class="apply-category-date" data-category="{{ category_code }}">
+                <i class="fas fa-check mr-2"></i>{% trans "Apply to All" %}
+              </button>
+            </div>
+            {% endif %}
+
+            <div class="lab-tests-list">
+              {% for form in formset %}
+              {% if form.instance.TESTTYPE in category_test_map|get_item:category_code %}
+              <div class="lab-test-row" data-test-code="{{ form.instance.TESTTYPE }}">
+                <div class="lab-test-card {% if form.instance.PERFORMED %}performed{% endif %}">
+                  {{ form.id }}
+
+                  <div class="test-header">
+                    <div class="form-check">
+                      <!--  DISABLE checkbox in readonly mode -->
+                      {% if is_readonly %}
+                      <input type="checkbox" class="form-check-input" {% if form.instance.PERFORMED %}checked{% endif %}
+                        disabled>
+                      {% else %}
+                      {{ form.PERFORMED }}
+                      {% endif %}
+                      <label class="form-check-label" for="{{ form.PERFORMED.auto_id }}">
+                        <strong>{{ form.instance.get_TESTTYPE_display }}</strong>
+                        <span class="test-code">({{ form.instance.TESTTYPE }})</span>
+                        {% with unit=form.instance.TESTTYPE|get_test_unit %}
+                        {% if unit %}
+                        <span class="test-unit">{{ unit }}</span>
+                        {% endif %}
+                        {% endwith %}
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="test-details" style="{% if not form.instance.PERFORMED %}display:none;{% endif %}">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <label for="{{ form.PERFORMEDDATE.auto_id }}">
+                          <i class="far fa-calendar-alt mr-1"></i>{% trans "Performed Date" %}
+                        </label>
+                        <!--  DISABLE in readonly mode -->
+                        {% if is_readonly %}
+                        <input type="text" class="form-control" value="{{ form.instance.PERFORMEDDATE|date:'d/m/Y' }}"
+                          disabled>
+                        {% else %}
+                        {{ form.PERFORMEDDATE }}
+                        {% endif %}
+                        {% if form.PERFORMEDDATE.errors %}
+                        <div class="invalid-feedback d-block">
+                          {{ form.PERFORMEDDATE.errors.0 }}
                         </div>
-                        
-                        <div class="test-details" style="{% if not form.instance.PERFORMED %}display:none;{% endif %}">
-                          <div class="row">
-                            <div class="col-md-4">
-                              <label for="{{ form.PERFORMEDDATE.auto_id }}">
-                                <i class="far fa-calendar-alt mr-1"></i>{% trans "Ngày thực hiện" %}
-                              </label>
-                              <!--  DISABLE in readonly mode -->
-                              {% if is_readonly %}
-                                <input type="text" 
-                                       class="form-control" 
-                                       value="{{ form.instance.PERFORMEDDATE|date:'d/m/Y' }}"
-                                       disabled>
-                              {% else %}
-                                {{ form.PERFORMEDDATE }}
-                              {% endif %}
-                              {% if form.PERFORMEDDATE.errors %}
-                                <div class="invalid-feedback d-block">
-                                  {{ form.PERFORMEDDATE.errors.0 }}
-                                </div>
-                              {% endif %}
-                            </div>
-                            
-                            <div class="col-md-8">
-                              <label for="{{ form.RESULT.auto_id }}">
-                                <i class="fas fa-notes-medical mr-1"></i>{% trans "Kết quả" %}
-                                {% with unit=form.instance.TESTTYPE|get_test_unit %}
-                                  {% if unit %}
-                                    <span class="test-unit">{{ unit }}</span>
-                                  {% endif %}
-                                {% endwith %}
-                              </label>
-                              <!--  DISABLE in readonly mode -->
-                              {% if is_readonly %}
-                                <textarea class="form-control" rows="2" disabled>{{ form.instance.RESULT }}</textarea>
-                              {% else %}
-                                {{ form.RESULT }}
-                              {% endif %}
-                              {% if form.RESULT.errors %}
-                                <div class="invalid-feedback d-block">
-                                  {{ form.RESULT.errors.0 }}
-                                </div>
-                              {% endif %}
-                            </div>
-                          </div>
+                        {% endif %}
+                      </div>
+
+                      <div class="col-md-8">
+                        <label for="{{ form.RESULT.auto_id }}">
+                          <i class="fas fa-notes-medical mr-1"></i>{% trans "Result" %}
+                          {% with unit=form.instance.TESTTYPE|get_test_unit %}
+                          {% if unit %}
+                          <span class="test-unit">{{ unit }}</span>
+                          {% endif %}
+                          {% endwith %}
+                        </label>
+                        <!--  DISABLE in readonly mode -->
+                        {% if is_readonly %}
+                        <textarea class="form-control" rows="2" disabled>{{ form.instance.RESULT }}</textarea>
+                        {% else %}
+                        {{ form.RESULT }}
+                        {% endif %}
+                        {% if form.RESULT.errors %}
+                        <div class="invalid-feedback d-block">
+                          {{ form.RESULT.errors.0 }}
                         </div>
+                        {% endif %}
                       </div>
                     </div>
-                  {% endif %}
-                {% endfor %}
+                  </div>
+                </div>
               </div>
+              {% endif %}
+              {% endfor %}
             </div>
+          </div>
           {% endfor %}
-          
+
           <!-- Action Buttons -->
           <div class="d-flex justify-content-between mt-4">
             <div>
-              <a href="{% url 'study_43en:laboratory_test_list' usubjid=usubjid %}" 
-                 class="btn btn-secondary">
-                <i class="fas fa-arrow-left mr-1"></i>{% trans "Quay Lại" %}
+              <a href="{% url 'study_43en:laboratory_test_list' usubjid=usubjid %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-1"></i>{% trans "Back" %}
               </a>
             </div>
             {% if not is_readonly %}
             <div>
               <button type="submit" class="btn btn-primary btn-lg">
-                <i class="fas fa-save mr-1"></i>{% trans "Lưu Tất Cả Thay Đổi" %}
+                <i class="fas fa-save mr-1"></i>{% trans "Save All Changes" %}
               </button>
             </div>
             {% else %}
             <!--  Show Edit button if has change permission -->
             {% if perms.study_43en.change_laboratorytest %}
             <div>
-              <a href="{% url 'study_43en:laboratory_test_bulk_update' usubjid=usubjid lab_type=lab_type %}" 
-                 class="btn btn-warning btn-lg">
-                <i class="fas fa-edit mr-1"></i>{% trans "Chỉnh Sửa" %}
+              <a href="{% url 'study_43en:laboratory_test_bulk_update' usubjid=usubjid lab_type=lab_type %}"
+                class="btn btn-warning btn-lg">
+                <i class="fas fa-edit mr-1"></i>{% trans "Edit" %}
               </a>
             </div>
             {% endif %}
             {% endif %}
           </div>
-        
-        {% if not is_readonly %}
+
+          {% if not is_readonly %}
         </form>
         {% endif %}
       </div>
@@ -221,7 +212,7 @@
 
 <!-- Change Reason Modal -->
 {% if show_reason_form and detected_changes %}
-  {% include 'default/change_reason_modal.html' %}
+{% include 'default/change_reason_modal.html' %}
 {% endif %}
 {% endblock %}
 
@@ -230,183 +221,183 @@
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
 
 <script nonce="{{ request.csp_nonce }}">
-$(document).ready(function() {
-  console.log('=== LABORATORY TEST FORM ===');
-  console.log('jQuery version:', $.fn.jquery);
-  console.log('Patient ID:', "{{ usubjid }}");
-  console.log('Lab type:', "{{ lab_type }}");
-  
-  // ========================================
-  //  NEW: Category Date Auto-fill
-  // ========================================
-  $('.apply-category-date').on('click', function() {
-    var $btn = $(this);
-    var categoryCode = $btn.data('category');
-    var $categoryDiv = $('#category-' + categoryCode);
-    var categoryDate = $('#category-date-' + categoryCode).val();
-    
-    if (!categoryDate) {
-      alert(' Vui lòng chọn ngày trước!');
-      return;
-    }
-    
-    console.log('📅 Applying date to category:', categoryCode, 'Date:', categoryDate);
-    
-    // Find all date inputs in this category
-    var $dateInputs = $categoryDiv.find('.datepicker').not('.category-date-input');
-    var count = 0;
-    
-    $dateInputs.each(function() {
-      var $input = $(this);
-      var $card = $input.closest('.lab-test-card');
-      var $checkbox = $card.find('.lab-performed-checkbox');
-      
-      // Only apply to performed tests
-      if ($checkbox.is(':checked')) {
-        $input.val(categoryDate);
-        count++;
-      }
-    });
-    
-    console.log(` Applied date to ${count} tests in category ${categoryCode}`);
-    
-    // Visual feedback
-    $btn.html('<i class="fas fa-check-double mr-2"></i>Đã áp dụng!');
-    $btn.css('background', 'linear-gradient(135deg, #10b981 0%, #059669 100%)');
-    
-    setTimeout(function() {
-      $btn.html('<i class="fas fa-check mr-2"></i>{% trans "Áp dụng cho tất cả" %}');
-      $btn.css('background', '');
-    }, 2000);
-  });
-  
-  // ========================================
-  //  IMPROVED: Checkbox handler with category date sync
-  // ========================================
-  $(document).on('change', '.lab-performed-checkbox', function() {
-    var $checkbox = $(this);
-    var checkboxId = $checkbox.attr('id') || 'NO_ID';
-    var checkboxName = $checkbox.attr('name') || 'NO_NAME';
-    var isChecked = $checkbox.is(':checked');
-    
-    console.log(' Checkbox changed:', {
-      id: checkboxId,
-      name: checkboxName,
-      checked: isChecked
-    });
-    
-    var $card = $checkbox.closest('.lab-test-card');
-    var $detailsDiv = $card.find('.test-details');
-    var $category = $checkbox.closest('.lab-category');
-    var categoryCode = $category.data('category');
-    
-    if (isChecked) {
-      $detailsDiv.slideDown(300);
-      $card.addClass('performed');
-      
-      //  Auto-fill date from category if available
+  $(document).ready(function () {
+    console.log('=== LABORATORY TEST FORM ===');
+    console.log('jQuery version:', $.fn.jquery);
+    console.log('Patient ID:', "{{ usubjid }}");
+    console.log('Lab type:', "{{ lab_type }}");
+
+    // ========================================
+    //  NEW: Category Date Auto-fill
+    // ========================================
+    $('.apply-category-date').on('click', function () {
+      var $btn = $(this);
+      var categoryCode = $btn.data('category');
+      var $categoryDiv = $('#category-' + categoryCode);
       var categoryDate = $('#category-date-' + categoryCode).val();
-      if (categoryDate) {
-        var $dateInput = $detailsDiv.find('.datepicker').first();
-        if ($dateInput.length && !$dateInput.val()) {
-          $dateInput.val(categoryDate);
-          console.log('📅 Auto-filled date from category:', categoryDate);
-        }
+
+      if (!categoryDate) {
+        alert('⚠ Please select a date first!');
+        return;
       }
-      
-      setTimeout(function() {
-        var $dateInput = $detailsDiv.find('.datepicker').first();
-        if ($dateInput.length && !$dateInput.val()) {
-          $dateInput.focus();
-          console.log('📅 Focused on date input');
-        } else {
-          var $resultInput = $detailsDiv.find('textarea').first();
-          if ($resultInput.length) {
-            $resultInput.focus();
-            console.log('📝 Focused on result textarea');
+
+      console.log('📅 Applying date to category:', categoryCode, 'Date:', categoryDate);
+
+      // Find all date inputs in this category
+      var $dateInputs = $categoryDiv.find('.datepicker').not('.category-date-input');
+      var count = 0;
+
+      $dateInputs.each(function () {
+        var $input = $(this);
+        var $card = $input.closest('.lab-test-card');
+        var $checkbox = $card.find('.lab-performed-checkbox');
+
+        // Only apply to performed tests
+        if ($checkbox.is(':checked')) {
+          $input.val(categoryDate);
+          count++;
+        }
+      });
+
+      console.log(` Applied date to ${count} tests in category ${categoryCode}`);
+
+      // Visual feedback
+      $btn.html('<i class="fas fa-check-double mr-2"></i>Applied!');
+      $btn.css('background', 'linear-gradient(135deg, #10b981 0%, #059669 100%)');
+
+      setTimeout(function () {
+        $btn.html('<i class="fas fa-check mr-2"></i>{% trans "Apply to All" %}');
+        $btn.css('background', '');
+      }, 2000);
+    });
+
+    // ========================================
+    //  IMPROVED: Checkbox handler with category date sync
+    // ========================================
+    $(document).on('change', '.lab-performed-checkbox', function () {
+      var $checkbox = $(this);
+      var checkboxId = $checkbox.attr('id') || 'NO_ID';
+      var checkboxName = $checkbox.attr('name') || 'NO_NAME';
+      var isChecked = $checkbox.is(':checked');
+
+      console.log(' Checkbox changed:', {
+        id: checkboxId,
+        name: checkboxName,
+        checked: isChecked
+      });
+
+      var $card = $checkbox.closest('.lab-test-card');
+      var $detailsDiv = $card.find('.test-details');
+      var $category = $checkbox.closest('.lab-category');
+      var categoryCode = $category.data('category');
+
+      if (isChecked) {
+        $detailsDiv.slideDown(300);
+        $card.addClass('performed');
+
+        //  Auto-fill date from category if available
+        var categoryDate = $('#category-date-' + categoryCode).val();
+        if (categoryDate) {
+          var $dateInput = $detailsDiv.find('.datepicker').first();
+          if ($dateInput.length && !$dateInput.val()) {
+            $dateInput.val(categoryDate);
+            console.log('📅 Auto-filled date from category:', categoryDate);
           }
         }
-      }, 350);
-    } else {
-      $detailsDiv.slideUp(300);
-      $card.removeClass('performed');
-    }
-  });
-  
-  // ========================================
-  //  NEW: Sync category date when individual date changes
-  // ========================================
-  $(document).on('change', '.datepicker', function() {
-    if ($(this).hasClass('category-date-input')) {
-      return; // Skip category date input itself
-    }
-    
-    var $input = $(this);
-    var $category = $input.closest('.lab-category');
-    var categoryCode = $category.data('category');
-    var newDate = $input.val();
-    
-    // Check if this is the first date in the category
-    var $categoryDateInput = $('#category-date-' + categoryCode);
-    if (!$categoryDateInput.val() && newDate) {
-      $categoryDateInput.val(newDate);
-      console.log('📅 Auto-set category date:', newDate);
-    }
-  });
-  
-  // ========================================
-  // Form submit handler
-  // ========================================
-  $('#lab-form').on('submit', function(e) {
-    console.log('='.repeat(60));
-    console.log(' FORM SUBMITTING');
-    console.log('='.repeat(60));
-    
-    var formData = new FormData(this);
-    var performedCount = 0;
-    var incompleteCount = 0;
-    
-    // Check for incomplete tests
-    $('.lab-performed-checkbox:checked').each(function() {
-      performedCount++;
-      var $card = $(this).closest('.lab-test-card');
-      var $dateInput = $card.find('.datepicker');
-      var $resultInput = $card.find('textarea');
-      
-      if (!$dateInput.val() || !$resultInput.val().trim()) {
-        incompleteCount++;
+
+        setTimeout(function () {
+          var $dateInput = $detailsDiv.find('.datepicker').first();
+          if ($dateInput.length && !$dateInput.val()) {
+            $dateInput.focus();
+            console.log('📅 Focused on date input');
+          } else {
+            var $resultInput = $detailsDiv.find('textarea').first();
+            if ($resultInput.length) {
+              $resultInput.focus();
+              console.log('📝 Focused on result textarea');
+            }
+          }
+        }, 350);
+      } else {
+        $detailsDiv.slideUp(300);
+        $card.removeClass('performed');
       }
     });
-    
-    console.log(`Total tests to save: ${performedCount}`);
-    console.log(`Incomplete tests: ${incompleteCount}`);
-    
-    if (incompleteCount > 0) {
-      var message = ` Có ${incompleteCount} xét nghiệm đã đánh dấu "Đã thực hiện" nhưng thiếu thông tin.\n\nBạn có chắc muốn lưu?`;
-      if (!confirm(message)) {
-        e.preventDefault();
-        console.log(' User cancelled submission');
-        return false;
+
+    // ========================================
+    //  NEW: Sync category date when individual date changes
+    // ========================================
+    $(document).on('change', '.datepicker', function () {
+      if ($(this).hasClass('category-date-input')) {
+        return; // Skip category date input itself
       }
-    }
-    
-    console.log('='.repeat(60));
-  });
-  
-  // Debug initial state
-  var checkboxCount = $('.lab-performed-checkbox').length;
-  console.log(`Found ${checkboxCount} checkboxes`);
-  
-  $('.lab-performed-checkbox').slice(0, 5).each(function(i) {
-    console.log(`Checkbox ${i+1}:`, {
-      id: $(this).attr('id'),
-      name: $(this).attr('name'),
-      checked: $(this).is(':checked')
+
+      var $input = $(this);
+      var $category = $input.closest('.lab-category');
+      var categoryCode = $category.data('category');
+      var newDate = $input.val();
+
+      // Check if this is the first date in the category
+      var $categoryDateInput = $('#category-date-' + categoryCode);
+      if (!$categoryDateInput.val() && newDate) {
+        $categoryDateInput.val(newDate);
+        console.log('📅 Auto-set category date:', newDate);
+      }
     });
+
+    // ========================================
+    // Form submit handler
+    // ========================================
+    $('#lab-form').on('submit', function (e) {
+      console.log('='.repeat(60));
+      console.log(' FORM SUBMITTING');
+      console.log('='.repeat(60));
+
+      var formData = new FormData(this);
+      var performedCount = 0;
+      var incompleteCount = 0;
+
+      // Check for incomplete tests
+      $('.lab-performed-checkbox:checked').each(function () {
+        performedCount++;
+        var $card = $(this).closest('.lab-test-card');
+        var $dateInput = $card.find('.datepicker');
+        var $resultInput = $card.find('textarea');
+
+        if (!$dateInput.val() || !$resultInput.val().trim()) {
+          incompleteCount++;
+        }
+      });
+
+      console.log(`Total tests to save: ${performedCount}`);
+      console.log(`Incomplete tests: ${incompleteCount}`);
+
+      if (incompleteCount > 0) {
+        var message = `⚠ There are ${incompleteCount} tests marked as "Performed" but missing information.\n\nAre you sure you want to save?`;
+        if (!confirm(message)) {
+          e.preventDefault();
+          console.log(' User cancelled submission');
+          return false;
+        }
+      }
+
+      console.log('='.repeat(60));
+    });
+
+    // Debug initial state
+    var checkboxCount = $('.lab-performed-checkbox').length;
+    console.log(`Found ${checkboxCount} checkboxes`);
+
+    $('.lab-performed-checkbox').slice(0, 5).each(function (i) {
+      console.log(`Checkbox ${i + 1}:`, {
+        id: $(this).attr('id'),
+        name: $(this).attr('name'),
+        checked: $(this).is(':checked')
+      });
+    });
+
+    console.log('Laboratory test form initialized');
   });
-  
-  console.log('Laboratory test form initialized');
-});
 </script>
 
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
