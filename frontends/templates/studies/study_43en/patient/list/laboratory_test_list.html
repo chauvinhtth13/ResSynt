@@ -84,12 +84,12 @@
                       <span class="test-count-fraction">{{ tests|count_performed }}</span> / {{ tests|length }}
                     </span>
                     {% if tests|count_performed > 0 %}
-                    <span class="badge badge-success">
+                    <span >
                       <i class="fas fa-check-circle mr-1"></i>{% trans "Completed" %}
                     </span>
                     {% elif tests|count_performed == 0 and tests|length > 0 %}
-                    <span class="badge badge-secondary">
-                      <i class="fas fa-clock mr-1"></i>{% trans "Pending" %}
+                    <span >
+                      <i ></i>{% trans "Pending" %}
                     </span>
                     {% endif %}
                     {% else %}

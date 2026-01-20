@@ -12,7 +12,7 @@
     <div class="card-header py-3" style="background: var(--crf-gradient-primary); color: white;">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-          <i class="fas fa-vials"></i>
+          <i ></i>
           {% trans "Patient Sample Information" %}
           {% if is_view_only %}
           <span class="badge badge-light text-primary ml-2">
@@ -62,14 +62,14 @@
             {% for sample_type, sample_type_name in sample_types %}
               <tr class="sample-table-row">
                 <td class="text-center sample-type-cell">
-                  <i class="fas fa-flask"></i> {{ sample_type_name }}
+                  <i ></i> {{ sample_type_name }}
                 </td>
                 {% with sample=samples_by_type|get_item:sample_type %}
                   {% if sample %}
                     <td class="text-center">
                       {% if sample.SAMPLE %}
                         <span class="sample-status-collected">
-                          <i class="fas fa-check-circle"></i> {% trans "Collected" %}
+                          <i ></i> {% trans "Collected" %}
                         </span>
                       {% else %}
                         <span class="sample-status-not-collected">
@@ -82,22 +82,22 @@
                         <div class="sample-dates">
                           {% if sample.STOOL and sample.STOOLDATE %}
                             <span class="sample-date-badge">
-                              <i class="fas fa-calendar-alt"></i> {% trans "Stool" %}: {{ sample.STOOLDATE|date:"d/m/Y" }}
+                              <i ></i> {% trans "Stool" %}: {{ sample.STOOLDATE|date:"d/m/Y" }}
                             </span>
                           {% endif %}
                           {% if sample.RECTSWAB and sample.RECTSWABDATE %}
                             <span class="sample-date-badge">
-                              <i class="fas fa-calendar-alt"></i> {% trans "Rectal" %}: {{ sample.RECTSWABDATE|date:"d/m/Y" }}
+                              <i ></i> {% trans "Rectal" %}: {{ sample.RECTSWABDATE|date:"d/m/Y" }}
                             </span>
                           {% endif %}
                           {% if sample.THROATSWAB and sample.THROATSWABDATE %}
                             <span class="sample-date-badge">
-                              <i class="fas fa-calendar-alt"></i> {% trans "Throat" %}: {{ sample.THROATSWABDATE|date:"d/m/Y" }}
+                              <i ></i> {% trans "Throat" %}: {{ sample.THROATSWABDATE|date:"d/m/Y" }}
                             </span>
                           {% endif %}
                           {% if sample.BLOOD and sample.BLOODDATE %}
                             <span class="sample-date-badge">
-                              <i class="fas fa-calendar-alt"></i> {% trans "Blood" %}: {{ sample.BLOODDATE|date:"d/m/Y" }}
+                              <i ></i> {% trans "Blood" %}: {{ sample.BLOODDATE|date:"d/m/Y" }}
                             </span>
                           {% endif %}
                           {% if not sample.STOOLDATE and not sample.RECTSWABDATE and not sample.THROATSWABDATE and not sample.BLOODDATE %}
@@ -122,7 +122,7 @@
                                 <i class="fas fa-check"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_1 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "N/A" %}</span>
+                              <span >{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_1 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}
@@ -140,7 +140,7 @@
                                 <i class="fas fa-check"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_2 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "N/A" %}</span>
+                              <span >{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_2 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}
@@ -158,7 +158,7 @@
                                 <i class="fas fa-check"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_3 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "N/A" %}</span>
+                              <span >{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_3 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}

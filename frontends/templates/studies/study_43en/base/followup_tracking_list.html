@@ -175,7 +175,7 @@
                             {% if followup.STATUS == 'LATE' %}
                                 <span class="badge badge-warning text-dark "><i class="fas fa-exclamation-circle mr-1"></i>Late</span>
                             {% elif followup.STATUS == 'MISSED' %}
-                                <span class="badge badge-danger  "><i class="fas fa-times-circle mr-1"></i>Missed</span>
+                                <span class="badge badge-danger  "><i ></i>Missed</span>
                             {% elif followup.STATUS == 'UPCOMING' %}
                                 <span ><i ></i>Upcoming</span>
                             {% endif %}
@@ -206,7 +206,7 @@
                                 data-visit="{{ followup.get_VISIT_display }}"
                                 data-expected="{{ followup.EXPECTED_DATE|date:'Y-m-d' }}"
                                 title="Mark as Missed">
-                                <i class="fas fa-times-circle mr-1"></i> Missed
+                                <i ></i> Missed
                             </button>
                         </td>
                     </tr>
@@ -481,7 +481,7 @@
                         </td>
                         <td>
                             <span >
-                                <i class="fas fa-times-circle mr-1"></i>Missed
+                                <i ></i>Missed
                             </span>
                         </td>
                         <td>
@@ -648,7 +648,7 @@
                 <i class="fas fa-times mr-1"></i>Hủy
             </button>
             <button type="button" class="btn btn-danger" id="saveMissedFollowup">
-                <i class="fas fa-times-circle mr-1"></i>Xác nhận Missed
+                <i ></i>Xác nhận Missed
             </button>
         </div>
     </div>
@@ -1000,13 +1000,13 @@
                         setTimeout(() => window.location.reload(), 1500);
                     } else {
                         toastr.error(response.message);
-                        $btn.prop('disabled', false).html('<i class="fas fa-times-circle mr-1"></i>Xác nhận Missed');
+                        $btn.prop('disabled', false).html('<i ></i>Xác nhận Missed');
                     }
                 },
                 error: function(xhr) {
                     let msg = xhr.responseJSON?.message || 'Đã xảy ra lỗi!';
                     toastr.error(msg);
-                    $btn.prop('disabled', false).html('<i class="fas fa-times-circle mr-1"></i>Xác nhận Missed');
+                    $btn.prop('disabled', false).html('<i ></i>Xác nhận Missed');
                 }
             });
         });

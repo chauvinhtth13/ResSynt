@@ -153,7 +153,7 @@
                 <label class="form-label">
                   {% trans "Organism Type (If Positive)" %} *
                   <span class="badge bg-warning text-dark">
-                    <i class="fas fa-bacteria"></i> {% trans "Positive Only" %}
+                    <i ></i> {% trans "Positive Only" %}
                   </span>
                 </label>
                 <select name="IFPOSITIVE" id="addIfPositive" class="form-select ifpositive-select">
@@ -295,7 +295,7 @@
                         </span>
                         {% if culture.IS_KLEBSIELLA %}
                           <span class="badge-kpn">
-                            <i class="fas fa-bacteria"></i> KPN+
+                            <i ></i> KPN+
                           </span>
                         {% endif %}
                       {% elif culture.RESULT == 'Negative' %}
@@ -304,7 +304,7 @@
                         </span>
                       {% elif culture.RESULT == 'NoGrowth' %}
                         <span class="badge bg-info">
-                          <i class="fas fa-flask"></i> {% trans "No Growth" %}
+                          <i ></i> {% trans "No Growth" %}
                         </span>
                       {% elif culture.RESULT == 'Contaminated' %}
                         <span class="badge bg-warning text-dark">
@@ -329,7 +329,7 @@
                         <small>{{ culture.RESULTDETAILS|truncatewords:8 }}</small>
                       {% elif culture.IFPOSITIVE %}
                         <small class="text-muted">
-                          <i class="fas fa-bacteria"></i>
+                          <i ></i>
                           {{ culture.get_IFPOSITIVE_display }}
                         </small>
                       {% else %}
@@ -449,7 +449,7 @@
               <label class="form-label">
                 {% trans "Organism Type (If Positive)" %} *
                 <span class="badge bg-warning text-dark">
-                  <i class="fas fa-bacteria"></i> {% trans "Positive Only" %}
+                  <i ></i> {% trans "Positive Only" %}
                 </span>
               </label>
               <select name="IFPOSITIVE" id="editIfPositive" class="form-select ifpositive-select">

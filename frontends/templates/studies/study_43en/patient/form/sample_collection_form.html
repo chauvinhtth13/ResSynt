@@ -12,7 +12,7 @@
     <div class="card-header py-3" style="background: var(--crf-gradient-primary); color: white;">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-          <i class="fas fa-vial"></i>
+          <i ></i>
           {% if is_create %}
             {% trans "Create Sample Collection" %}
           {% elif is_readonly %}
@@ -50,14 +50,14 @@
         <div class="row">
           <div class="col-md-4">
             <small class="text-muted">
-              <i class="fas fa-code-branch"></i> {% trans "Version:" %} 
+              <i ></i> {% trans "Version:" %} 
               <strong>v{{ current_version }}</strong>
             </small>
           </div>
           {% if sample.last_modified_by_username %}
           <div class="col-md-4">
             <small class="text-muted">
-              <i class="fas fa-user-edit"></i> {% trans "Modified by:" %} 
+              <i ></i> {% trans "Modified by:" %} 
               <strong>{{ sample.last_modified_by_username }}</strong>
             </small>
           </div>
@@ -65,7 +65,7 @@
           {% if sample.last_modified_at %}
           <div class="col-md-4">
             <small class="text-muted">
-              <i class="fas fa-clock"></i> {% trans "At:" %} 
+              <i ></i> {% trans "At:" %} 
               <strong>{{ sample.last_modified_at|date:"d/m/Y H:i" }}</strong>
             </small>
           </div>
@@ -243,7 +243,7 @@
                                            {% if sample.KLEBPNEU_1 %}checked{% endif %} 
                                            {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_KLEBPNEU_1" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-bacteria text-danger mr-1"></i>{{ form.KLEBPNEU_1.label }}
+                                      <i ></i>{{ form.KLEBPNEU_1.label }}
                                     </label>
                                   </div>
                                 </div>
@@ -259,7 +259,7 @@
                                            {% if sample.OTHERRES_1 %}checked{% endif %} 
                                            {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_OTHERRES_1" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                      <i ></i>{% trans "Other Organism" %}
                                     </label>
                                   </div>
                                 </div>
@@ -361,7 +361,7 @@
                                           {% if sample.KLEBPNEU_2 %}checked{% endif %} 
                                           {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_KLEBPNEU_2" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-bacteria text-danger mr-1"></i>{{ form.KLEBPNEU_2.label }}
+                                      <i ></i>{{ form.KLEBPNEU_2.label }}
                                     </label>
                                   </div>
                                 </div>
@@ -377,7 +377,7 @@
                                            {% if sample.OTHERRES_2 %}checked{% endif %} 
                                            {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_OTHERRES_2" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                      <i ></i>{% trans "Other Organism" %}
                                     </label>
                                   </div>
                                 </div>
@@ -479,7 +479,7 @@
                                           {% if sample.KLEBPNEU_3 %}checked{% endif %} 
                                           {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_KLEBPNEU_3" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-bacteria text-danger mr-1"></i>{{ form.KLEBPNEU_3.label }}
+                                      <i ></i>{{ form.KLEBPNEU_3.label }}
                                     </label>
                                   </div>
                                 </div>
@@ -495,7 +495,7 @@
                                            {% if sample.OTHERRES_3 %}checked{% endif %} 
                                            {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_OTHERRES_3" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                      <i ></i>{% trans "Other Organism" %}
                                     </label>
                                   </div>
                                 </div>

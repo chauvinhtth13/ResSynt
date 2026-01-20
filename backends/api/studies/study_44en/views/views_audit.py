@@ -217,9 +217,9 @@ def _format_value_display(value):
         return '<em class="text-muted">Trống</em>'
     
     if str(value).lower() == 'true':
-        return '<span class="badge badge-success">Có</span>'
+        return '<span >Có</span>'
     if str(value).lower() == 'false':
-        return '<span class="badge badge-secondary">Không</span>'
+        return '<span >Không</span>'
     
     # Handle dates
     if isinstance(value, str) and len(value) == 10:
