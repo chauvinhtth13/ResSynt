@@ -406,45 +406,7 @@
               </div>
             </div>
           </div>
-          
-          {# ========== AUDIT INFORMATION ========== #}
-          {% if endcase and not is_create %}
-          <div class="form-section">
-            <h5 class="section-title">
-              {% trans "Modification Information" %}
-            </h5>
-            
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>{% trans "Last Modified By" %}</label>
-                  <input type="text" 
-                         class="form-control" 
-                         value="{{ endcase.last_modified_by_username|default:'N/A' }}" 
-                         readonly>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>{% trans "Modified At" %}</label>
-                  <input type="text" 
-                         class="form-control"
-                         value="{{ endcase.last_modified_at|date:'d/m/Y H:i'|default:'N/A' }}" 
-                         readonly>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>{% trans "Version" %}</label>
-                  <input type="text" 
-                         class="form-control" 
-                         value="v{{ endcase.version|default:'0' }}" 
-                         readonly>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endif %}
+        
           
           {# ========== ACTION BUTTONS ========== #}
           <div class="mt-4 d-flex justify-content-between">

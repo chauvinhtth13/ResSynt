@@ -517,7 +517,7 @@ def laboratory_test_bulk_update(request, usubjid, lab_type):
             if messages_list:
                 messages.success(request, ' | '.join(messages_list))
             
-            logger.info(f"💾 Saved: {first_entry_count} first entries, {update_count} updates")
+            logger.info(f" Saved: {first_entry_count} first entries, {update_count} updates")
             
             return True
             

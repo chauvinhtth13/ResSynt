@@ -83,11 +83,11 @@ def save_samples(request, individual):
         request: HTTP request with POST data
         individual: Individual instance
     """
-    logger.info("💾 Saving sample collection data...")
+    logger.info(" Saving sample collection data...")
     
     # Delete existing samples for this individual
     deleted_count = Individual_Sample.objects.filter(MEMBERID=individual).delete()[0]
-    logger.info(f"🗑️ Deleted {deleted_count} existing sample records")
+    logger.info(f"Deleted {deleted_count} existing sample records")
     
     samples_created = 0
     

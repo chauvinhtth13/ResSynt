@@ -167,7 +167,7 @@ def household_create(request):
         logger.info(f"   Member formset: {'VALID ' if formset_valid else 'INVALID '}")
         
         if household_valid and personal_valid and formset_valid:
-            logger.info("💾 All forms valid - Saving...")
+            logger.info(" All forms valid - Saving...")
             
             household = save_household_and_related(
                 request=request,
@@ -252,7 +252,7 @@ def household_update(request, hhid):
         return render(request, 'studies/study_44en/CRF/household/household_form.html', context)
     
     # POST - Process update
-    logger.info("💾 POST REQUEST - Processing form submission...")
+    logger.info(" POST REQUEST - Processing form submission...")
     
     # Extract old data BEFORE binding forms
     detector = ChangeDetector()
@@ -332,7 +332,7 @@ def household_update(request, hhid):
         
         # No changes → save directly
         if not all_changes:
-            logger.info("💾 No changes detected - Saving directly...")
+            logger.info(" No changes detected - Saving directly...")
             
             household = save_household_and_related(
                 request=request,

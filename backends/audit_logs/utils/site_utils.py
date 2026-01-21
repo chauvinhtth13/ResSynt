@@ -128,7 +128,7 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True, db_al
         try:
             pks = list(queryset.values_list('pk', flat=True))
             cache.set(cache_key, pks, CACHE_TIMEOUT_SHORT)
-            logger.debug(f"💾 Cached: [{model.__name__}] {len(pks)} objects")
+            logger.debug(f" Cached: [{model.__name__}] {len(pks)} objects")
         except Exception as e:
             logger.warning(f"Failed to cache queryset: {e}")
     
@@ -243,7 +243,7 @@ def batch_check_exists(instances, check_models, fk_field, site_filter, filter_ty
 
 def invalidate_cache(model_name=None, site_filter=None):
     """
-    🗑️ Invalidate cache khi có data changes
+    Invalidate cache khi có data changes
     
     Args:
         model_name: Specific model to invalidate (None = all)
@@ -253,11 +253,11 @@ def invalidate_cache(model_name=None, site_filter=None):
         # Invalidate specific cache
         pattern = f"site_query_*{model_name}*{site_filter}*"
         cache.delete_pattern(pattern)
-        logger.info(f"🗑️ Invalidated cache: {model_name} @ {site_filter}")
+        logger.info(f"Invalidated cache: {model_name} @ {site_filter}")
     else:
         # Invalidate all site query cache
         cache.delete_pattern("site_query_*")
-        logger.info(f"🗑️ Invalidated all site query cache")
+        logger.info(f"Invalidated all site query cache")
 
 
 def get_site_filtered_object_or_404(model, site_filter, filter_type, **kwargs):

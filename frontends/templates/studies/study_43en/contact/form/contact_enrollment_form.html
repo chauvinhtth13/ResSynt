@@ -229,7 +229,7 @@
               {# 2.  CONTACT-SPECIFIC: Relationship to Patient #}
               <div class="numbered-item" data-number="2">
                 <label for="{{ form.RELATIONSHIP.id_for_label }}">
-                  <i class="fas fa-link mr-2"></i>{% trans "Relationship to Patient" %}
+                  <i ></i>{% trans "Relationship to Patient" %}
                 </label>
                 <div class="input-group">
                   <div >
@@ -556,45 +556,7 @@
                 </div>
               </div>{# End of underlying-conditions-section #}
               </div>{# End of numbered-item 9 #}
-              
-              {# ========== AUDIT TRAIL ========== #}
-              {% if enrollment_contact %}
-              <div class="form-section-header">
-                <i ></i>{% trans "Audit Information" %}
-              </div>
-              
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>{% trans "Last Modified By" %}</label>
-                    <input type="text" 
-                           class="form-control" 
-                           value="{{ enrollment_contact.last_modified_by_username|default:'N/A' }}" 
-                           readonly>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>{% trans "Last Modified At" %}</label>
-                    <input type="text" 
-                           class="form-control"
-                           value="{{ enrollment_contact.last_modified_at|date:'d/m/Y H:i'|default:'N/A' }}" 
-                           readonly>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>{% trans "Version" %}</label>
-                    <input type="text" 
-                           class="form-control" 
-                           value="{{ enrollment_contact.version|default:'0' }}" 
-                           readonly>
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-            </div>
-          </div>
+            
           
           {# ========== FORM ACTIONS ========== #}
           <div class="d-flex justify-content-between mt-4">

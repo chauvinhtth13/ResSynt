@@ -172,7 +172,7 @@
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>
                         <td>
-                            <span class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</span>
+                            <strong class="text-nowrap">{{ followup.EXPECTED_DATE|date:"d/m/Y" }}</strong>
                             <small class="d-block text-muted" title="Expected Date Range">
                                 {% if followup.EXPECTED_FROM and followup.EXPECTED_TO %}
                                     {{ followup.EXPECTED_FROM|date:"d/m" }} - {{ followup.EXPECTED_TO|date:"d/m/Y" }}
@@ -181,7 +181,7 @@
                         </td>
                         <td>
                             {% if followup.STATUS == 'LATE' %}
-                                <span class="badge badge-warning text-dark "><i class="fas fa-exclamation-circle mr-1"></i>Late</span>
+                                <span class="text-dark "><i ></i>Late</span>
                             {% elif followup.STATUS == 'MISSED' %}
                                 <span class="badge badge-danger  "><i ></i>Missed</span>
                             {% elif followup.STATUS == 'UPCOMING' %}

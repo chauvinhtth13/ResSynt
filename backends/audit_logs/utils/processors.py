@@ -268,7 +268,7 @@ class AuditProcessor(BaseAuditProcessor):
         try:
             with transaction.atomic():
                 #  DEBUG: Log form data before save
-                logger.debug(f"💾 Saving instance with changes:")
+                logger.debug(f" Saving instance with changes:")
                 for change in changes:
                     logger.debug(f"   {change['field']}: {change['old_display']} → {change['new_display']}")
                 

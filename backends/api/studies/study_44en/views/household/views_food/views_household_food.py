@@ -141,7 +141,7 @@ def household_food_create(request, hhid):
     logger.info(f"   Food source: {'VALID ' if source_valid else 'INVALID '}")
     
     if freq_valid and source_valid:
-        logger.info("💾 All forms valid - Calling save helper...")
+        logger.info(" All forms valid - Calling save helper...")
         
         # Prepare forms_dict for save helper
         forms_dict = {

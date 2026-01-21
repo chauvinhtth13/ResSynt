@@ -71,7 +71,7 @@ def save_water_treatment(request, exposure):
     logger.info(f"💧 Saving water treatment for {exposure.HHID.HHID}")
     
     HH_WaterTreatment.objects.filter(HHID=exposure).delete()
-    logger.info("🗑️ Deleted old water treatment records")
+    logger.info("Deleted old water treatment records")
     
     treatment_method = request.POST.get('TREATMENT_METHOD', '').strip()
     logger.info(f" TREATMENT_METHOD from POST: '{treatment_method}'")
@@ -100,7 +100,7 @@ def save_animals(request, exposure):
     logger.info(f"🐾 Saving animals for {exposure.HHID.HHID}")
     
     HH_Animal.objects.filter(HHID=exposure).delete()
-    logger.info("🗑️ Deleted old animal records")
+    logger.info("Deleted old animal records")
     
     animal_types = {
         'dog': HH_Animal.AnimalTypeChoices.DOG,

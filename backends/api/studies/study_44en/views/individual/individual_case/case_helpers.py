@@ -85,7 +85,7 @@ def save_individual(request, individual_form, is_create=False, change_reasons=No
         Individual instance or None on error
     """
     logger.info("="*80)
-    logger.info(f"💾 SAVING INDIVIDUAL (is_create={is_create})")
+    logger.info(f" SAVING INDIVIDUAL (is_create={is_create})")
     logger.info("="*80)
     
     try:

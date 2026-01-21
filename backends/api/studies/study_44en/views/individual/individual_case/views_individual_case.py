@@ -155,7 +155,7 @@ def individual_create(request):
         
         # Validate form (Backend validation)
         if individual_form.is_valid():
-            logger.info("💾 Form valid - Calling save helper...")
+            logger.info(" Form valid - Calling save helper...")
             
             # Use helper to save in transaction
             individual = save_individual(
@@ -266,7 +266,7 @@ def individual_update(request, subjectid):
     
     # POST - Process update with change detection
     logger.info("="*80)
-    logger.info("💾 POST REQUEST - Processing form submission...")
+    logger.info(" POST REQUEST - Processing form submission...")
     logger.info("="*80)
     
     # ===================================
@@ -310,7 +310,7 @@ def individual_update(request, subjectid):
         # STEP 2: NO CHANGES → SAVE DIRECTLY
         # ===================================
         if not all_changes:
-            logger.info("💾 No changes detected - Saving directly...")
+            logger.info(" No changes detected - Saving directly...")
             
             individual = save_individual(
                 request=request,

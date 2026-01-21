@@ -132,7 +132,7 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):
             cache.set(cache_key, pks, CACHE_TIMEOUT_SHORT)
             # 🔥 Register the cache key for later invalidation
             _register_cache_key(cache_key)
-            logger.debug(f"💾 Cached: [{model.__name__}] {len(pks)} objects")
+            logger.debug(f" Cached: [{model.__name__}] {len(pks)} objects")
         except Exception as e:
             logger.warning(f"Failed to cache queryset: {e}")
     
@@ -252,7 +252,7 @@ def batch_check_exists(instances, check_models, fk_field, site_filter, filter_ty
 
 def invalidate_cache(model_name=None, site_filter=None):
     """
-    🗑️ Invalidate cache khi có data changes
+    Invalidate cache khi có data changes
     
     Args:
         model_name: Specific model to invalidate (None = all)
@@ -273,13 +273,13 @@ def invalidate_cache(model_name=None, site_filter=None):
             for key in keys_to_delete:
                 cache.delete(key)
                 registered_keys.discard(key)
-            logger.info(f"🗑️ Invalidated {len(keys_to_delete)} cache keys for {model_name}")
+            logger.info(f"Invalidated {len(keys_to_delete)} cache keys for {model_name}")
         else:
             # Invalidate all registered keys
             for key in list(registered_keys):
                 cache.delete(key)
             registered_keys.clear()
-            logger.info(f"🗑️ Invalidated all site query cache")
+            logger.info(f"Invalidated all site query cache")
         
         # Update registry
         cache.set(registry_key, registered_keys, CACHE_TIMEOUT_LONG)

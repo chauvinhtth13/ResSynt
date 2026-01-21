@@ -308,7 +308,7 @@ def antibiotic_list(request, usubjid, culture_id):
                         # Detect changes for this test
                         test_changes = detector.detect_changes(old_data, new_data)
                         
-                        logger.info(f"     🔍 Changes detected: {len(test_changes)}")
+                        logger.info(f"    Changes detected: {len(test_changes)}")
                         
                         if test_changes:
                             # Log each change

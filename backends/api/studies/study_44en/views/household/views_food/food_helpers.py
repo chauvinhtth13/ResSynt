@@ -119,7 +119,7 @@ def save_food_data(request, forms_dict, household, is_create=False):
         HH_FoodFrequency instance or None on error
     """
     logger.info("="*80)
-    logger.info(f"💾 SAVING FOOD DATA (is_create={is_create})")
+    logger.info(f" SAVING FOOD DATA (is_create={is_create})")
     logger.info("="*80)
     
     try:

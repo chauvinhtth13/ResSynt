@@ -63,7 +63,7 @@ def save_household_and_related(request, household_form, personal_data_form, memb
         HH_CASE instance or None on error
     """
     logger.info("="*80)
-    logger.info(f"💾 SAVING HOUSEHOLD (is_create={is_create})")
+    logger.info(f" SAVING HOUSEHOLD (is_create={is_create})")
     logger.info("="*80)
     
     try:

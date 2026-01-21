@@ -137,7 +137,7 @@ def individual_followup_create(request, subjectid):
     # POST - Create new follow-up
     if request.method == 'POST':
         logger.info("=" * 80)
-        logger.info("💾 POST REQUEST - Processing creation...")
+        logger.info(" POST REQUEST - Processing creation...")
         logger.info("=" * 80)
         
         try:

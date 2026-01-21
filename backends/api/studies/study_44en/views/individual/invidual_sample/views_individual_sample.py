@@ -87,7 +87,7 @@ def individual_sample_create(request, subjectid):
     # POST - Create new sample data
     if request.method == 'POST':
         logger.info("=" * 80)
-        logger.info("💾 POST REQUEST - Processing creation...")
+        logger.info(" POST REQUEST - Processing creation...")
         logger.info("=" * 80)
         
         food_frequency_form = Individual_FoodFrequencyForm(

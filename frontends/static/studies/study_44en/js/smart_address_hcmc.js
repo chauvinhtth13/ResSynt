@@ -134,22 +134,34 @@
     }
     
     function cacheElements() {
-        // Try OLD mode elements
+        // Find which mode container is visible to determine which elements to use
+        const containers = document.querySelectorAll('[data-address-mode]');
+        let visibleMode = null;
+        
+        for (const container of containers) {
+            if (isElementVisible(container)) {
+                visibleMode = container.dataset.addressMode;
+                break;
+            }
+        }
+        
+        log('Caching elements for visible mode:', visibleMode || 'unknown');
+        
+        // Always cache OLD mode elements first (they may be used)
         elements.districtSelect = document.getElementById(CONFIG.DISTRICT_SELECT_ID);
-        elements.wardSelect = document.getElementById(CONFIG.WARD_SELECT_ID);
         elements.streetInput = document.getElementById(CONFIG.STREET_INPUT_ID);
         elements.streetSuggestions = document.getElementById(CONFIG.STREET_SUGGESTIONS_ID);
-        elements.wardHiddenInput = document.getElementById(CONFIG.WARD_HIDDEN_INPUT_ID);
         elements.districtHiddenInput = document.getElementById(CONFIG.DISTRICT_HIDDEN_INPUT_ID);
         
-        // Try NEW mode elements
-        const wardSelectNew = document.getElementById(CONFIG.WARD_SELECT_NEW_ID);
-        const wardHiddenNew = document.getElementById(CONFIG.WARD_HIDDEN_INPUT_NEW_ID);
-        
-        // Use NEW if OLD not visible
-        if (wardSelectNew && isElementVisible(wardSelectNew)) {
-            elements.wardSelect = wardSelectNew;
-            elements.wardHiddenInput = wardHiddenNew;
+        // Cache ward elements based on which mode is visible
+        if (visibleMode === 'new') {
+            // NEW mode: use new ward select
+            elements.wardSelect = document.getElementById(CONFIG.WARD_SELECT_NEW_ID);
+            elements.wardHiddenInput = document.getElementById(CONFIG.WARD_HIDDEN_INPUT_NEW_ID);
+        } else {
+            // OLD mode (default): use old ward select
+            elements.wardSelect = document.getElementById(CONFIG.WARD_SELECT_ID);
+            elements.wardHiddenInput = document.getElementById(CONFIG.WARD_HIDDEN_INPUT_ID);
         }
         
         // Common elements
@@ -852,8 +864,22 @@
         state.availableStreets = [];
         state.initialized = false;
         
-        // Re-run init
-        init();
+        // CRITICAL: Also reset the global flag so init() doesn't get blocked
+        if (window.SmartAddress) {
+            window.SmartAddress._initialized = false;
+        }
+        
+        // Re-run init (skip the setTimeout delay for immediate mode switch)
+        cacheElements();
+        detectMode();
+        
+        if (!state.mode) {
+            logError('Could not detect mode');
+            return;
+        }
+        
+        log('Mode detected:', state.mode.toUpperCase());
+        loadData();
     }
     
     // ========================================================================

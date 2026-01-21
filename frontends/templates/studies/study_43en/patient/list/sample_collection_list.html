@@ -11,206 +11,224 @@
   <div class="card shadow-lg mb-4">
     <div class="card-header py-3" style="background: var(--crf-gradient-primary); color: white;">
       <div class="d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-          <i ></i>
+        <h5 class="mb-0 font-weight-bold">
           {% trans "Patient Sample Information" %}
           {% if is_view_only %}
-          <span class="badge badge-light text-primary ml-2">
-            <i ></i> {% trans "View Only Mode" %}
+          <span class="badge badge-light text-primary ml-2" style="font-size: 0.75rem;">
+            {% trans "View Only Mode" %}
           </span>
           {% endif %}
         </h5>
-        <a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}" class="btn btn-light">
-          <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+        <a href="{% url 'study_43en:patient_detail' usubjid=usubjid %}" class="btn btn-light btn-sm shadow-sm">
+          {% trans "Back" %}
         </a>
       </div>
     </div>
     
     <div class="card-body">
-      <div class="card mb-4">
-        <div class="card-body bg-light">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label class="font-weight-bold mb-1">{% trans "Patient ID" %}:</label>
-                <p class="mb-0">{{ enrollment_case.USUBJID_id }}</p>
-              </div>
+      <!-- Patient Info Card -->
+      <div class="patient-info-box gradient mb-4">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="info-label">
+              {% trans "Patient ID" %}
             </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <label class="font-weight-bold mb-1">{% trans "Patient Name" %}:</label>
-                <p class="mb-0">{{ screening_case.INITIAL }}</p>
-              </div>
+            <div class="info-value">{{ enrollment_case.USUBJID_id }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-label">
+              {% trans "Patient Name" %}
             </div>
+            <div class="info-value">{{ screening_case.INITIAL }}</div>
           </div>
         </div>
       </div>
       
-      <!-- Sample List -->
+      <!-- Sample List Table -->
       <div class="table-responsive">
         <table class="table table-bordered table-hover">
-          <thead class="thead-dark">
+          <thead style="background: var(--crf-gradient-primary); color: white;">
             <tr>
-              <th class="text-center">{% trans "Sample Type" %}</th>
-              <th class="text-center">{% trans "Status" %}</th>
-              <th class="text-center">{% trans "Collection Date" %}</th>
-              <th>{% trans "Culture Results" %}</th>
-              <th class="text-center">{% trans "Actions" %}</th>
+              <th class="text-center" style="border-color: rgba(255,255,255,0.2);">
+                {% trans "Sample Type" %}
+              </th>
+              <th class="text-center" style="border-color: rgba(255,255,255,0.2);">
+                {% trans "Status" %}
+              </th>
+              <th class="text-center" style="border-color: rgba(255,255,255,0.2);">
+                {% trans "Collection Date" %}
+              </th>
+              <th style="border-color: rgba(255,255,255,0.2);">
+                {% trans "Culture Results" %}
+              </th>
+              <th class="text-center" style="border-color: rgba(255,255,255,0.2);">
+                {% trans "Actions" %}
+              </th>
             </tr>
           </thead>
           <tbody>
             {% for sample_type, sample_type_name in sample_types %}
               <tr class="sample-table-row">
-                <td class="text-center sample-type-cell">
-                  <i ></i> {{ sample_type_name }}
+                <td class="text-center align-middle">
+                  <strong style="color: #667eea;">
+                    {{ sample_type_name }}
+                  </strong>
                 </td>
                 {% with sample=samples_by_type|get_item:sample_type %}
                   {% if sample %}
-                    <td class="text-center">
+                    <td class="text-center align-middle">
                       {% if sample.SAMPLE %}
-                        <span class="sample-status-collected">
-                          <i ></i> {% trans "Collected" %}
+                        <span class="badge px-3 py-2" style="background: var(--crf-gradient-success); color: white; font-size: 0.85rem;">
+                          {% trans "Collected" %}
                         </span>
                       {% else %}
-                        <span class="sample-status-not-collected">
-                          <i class="fas fa-times-circle"></i> {% trans "Not Collected" %}
+                        <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; font-size: 0.85rem;">
+                          {% trans "Not Collected" %}
                         </span>
                       {% endif %}
                     </td>
-                    <td>
+                    <td class="align-middle">
                       {% if sample.SAMPLE %}
                         <div class="sample-dates">
                           {% if sample.STOOL and sample.STOOLDATE %}
-                            <span class="sample-date-badge">
-                              <i ></i> {% trans "Stool" %}: {{ sample.STOOLDATE|date:"d/m/Y" }}
-                            </span>
+                            <div class="mb-1">
+                              <span class="badge px-2 py-1" style="background: var(--crf-gradient-info); color: white; font-size: 0.8rem;">
+                                <strong>{% trans "Stool" %}:</strong>
+                              </span>
+                              <span class="ml-2">{{ sample.STOOLDATE|date:"d/m/Y" }}</span>
+                            </div>
                           {% endif %}
                           {% if sample.RECTSWAB and sample.RECTSWABDATE %}
-                            <span class="sample-date-badge">
-                              <i ></i> {% trans "Rectal" %}: {{ sample.RECTSWABDATE|date:"d/m/Y" }}
-                            </span>
+                            <div class="mb-1">
+                              <span class="badge px-2 py-1" style="background: var(--crf-gradient-warning); color: white; font-size: 0.8rem;">
+                                <strong>{% trans "Rectal" %}:</strong>
+                              </span>
+                              <span class="ml-2">{{ sample.RECTSWABDATE|date:"d/m/Y" }}</span>
+                            </div>
                           {% endif %}
                           {% if sample.THROATSWAB and sample.THROATSWABDATE %}
-                            <span class="sample-date-badge">
-                              <i ></i> {% trans "Throat" %}: {{ sample.THROATSWABDATE|date:"d/m/Y" }}
-                            </span>
+                            <div class="mb-1">
+                              <span class="badge px-2 py-1" style="background: var(--crf-gradient-info); color: white; font-size: 0.8rem;">
+                                <strong>{% trans "Throat" %}:</strong>
+                              </span>
+                              <span class="ml-2">{{ sample.THROATSWABDATE|date:"d/m/Y" }}</span>
+                            </div>
                           {% endif %}
                           {% if sample.BLOOD and sample.BLOODDATE %}
-                            <span class="sample-date-badge">
-                              <i ></i> {% trans "Blood" %}: {{ sample.BLOODDATE|date:"d/m/Y" }}
-                            </span>
+                            <div class="mb-1">
+                              <span class="badge px-2 py-1" style="background: var(--crf-gradient-info); color: white; font-size: 0.8rem;">
+                                <strong>{% trans "Blood" %}:</strong>
+                              </span>
+                              <span class="ml-2">{{ sample.BLOODDATE|date:"d/m/Y" }}</span>
+                            </div>
                           {% endif %}
                           {% if not sample.STOOLDATE and not sample.RECTSWABDATE and not sample.THROATSWABDATE and not sample.BLOODDATE %}
-                            <span class="text-muted">--</span>
+                            <span class="text-muted font-italic">--</span>
                           {% endif %}
                         </div>
                       {% else %}
-                        <span class="text-muted">{% trans "Not Collected" %}</span>
+                        <span class="text-muted font-italic">{% trans "Not Collected" %}</span>
                       {% endif %}
                     </td>
-                    <td>
+                    <td class="align-middle">
                       {% if sample.SAMPLE %}
                         {% if sample.STOOL %}
                           <div class="mb-2">
-                            <strong>{% trans "Stool" %}:</strong>
+                            <span class="badge px-2 py-1" style="background: var(--crf-gradient-info); color: white; font-size: 0.8rem;">
+                              {% trans "Stool" %}
+                            </span>
                             {% if sample.CULTRES_1 == 'Pos' %}
-                              <span class="culture-result-positive">
-                                <i class="fas fa-exclamation-circle"></i> {% trans "Positive" %}
-                              </span>
+                              <span class="ml-2 font-weight-bold" style="color: #dc2626;">{% trans "Positive" %}</span>
                             {% elif sample.CULTRES_1 == 'Neg' %}
-                              <span class="culture-result-negative">
-                                <i class="fas fa-check"></i> {% trans "Negative" %}
-                              </span>
+                              <span class="ml-2 font-weight-bold" style="color: #10b981;">{% trans "Negative" %}</span>
                             {% elif sample.CULTRES_1 == 'NoApply' %}
-                              <span >{% trans "N/A" %}</span>
+                              <span class="badge badge-secondary px-2 py-1 ml-2">{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_1 == 'NotPerformed' %}
-                              <span class="badge badge-warning">{% trans "Not Performed" %}</span>
+                              <span class="badge px-2 py-1 ml-2" style="background: var(--crf-gradient-warning); color: white;">{% trans "Not Performed" %}</span>
                             {% endif %}
                           </div>
                         {% endif %}
                         {% if sample.RECTSWAB %}
                           <div class="mb-2">
-                            <strong>{% trans "Rectal" %}:</strong>
+                            <span class="badge px-2 py-1" style="background: var(--crf-gradient-warning); color: white; font-size: 0.8rem;">
+                              {% trans "Rectal" %}
+                            </span>
                             {% if sample.CULTRES_2 == 'Pos' %}
-                              <span class="culture-result-positive">
-                                <i class="fas fa-exclamation-circle"></i> {% trans "Positive" %}
-                              </span>
+                              <span class="ml-2 font-weight-bold" style="color: #dc2626;">{% trans "Positive" %}</span>
                             {% elif sample.CULTRES_2 == 'Neg' %}
-                              <span class="culture-result-negative">
-                                <i class="fas fa-check"></i> {% trans "Negative" %}
-                              </span>
+                              <span class="ml-2 font-weight-bold" style="color: #10b981;">{% trans "Negative" %}</span>
                             {% elif sample.CULTRES_2 == 'NoApply' %}
-                              <span >{% trans "N/A" %}</span>
+                              <span class="badge badge-secondary px-2 py-1 ml-2">{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_2 == 'NotPerformed' %}
-                              <span class="badge badge-warning">{% trans "Not Performed" %}</span>
+                              <span class="badge px-2 py-1 ml-2" style="background: var(--crf-gradient-warning); color: white;">{% trans "Not Performed" %}</span>
                             {% endif %}
                           </div>
                         {% endif %}
                         {% if sample.THROATSWAB %}
                           <div class="mb-2">
-                            <strong>{% trans "Throat" %}:</strong>
+                            <span class="badge px-2 py-1" style="background: var(--crf-gradient-info); color: white; font-size: 0.8rem;">
+                              {% trans "Throat" %}
+                            </span>
                             {% if sample.CULTRES_3 == 'Pos' %}
-                              <span class="culture-result-positive">
-                                <i class="fas fa-exclamation-circle"></i> {% trans "Positive" %}
-                              </span>
+                              <span class="ml-2 font-weight-bold" style="color: #dc2626;">{% trans "Positive" %}</span>
                             {% elif sample.CULTRES_3 == 'Neg' %}
-                              <span class="culture-result-negative">
-                                <i class="fas fa-check"></i> {% trans "Negative" %}
-                              </span>
+                              <span class="ml-2 font-weight-bold" style="color: #10b981;">{% trans "Negative" %}</span>
                             {% elif sample.CULTRES_3 == 'NoApply' %}
-                              <span >{% trans "N/A" %}</span>
+                              <span class="badge badge-secondary px-2 py-1 ml-2">{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_3 == 'NotPerformed' %}
-                              <span class="badge badge-warning">{% trans "Not Performed" %}</span>
+                              <span class="badge px-2 py-1 ml-2" style="background: var(--crf-gradient-warning); color: white;">{% trans "Not Performed" %}</span>
                             {% endif %}
                           </div>
                         {% endif %}
                       {% else %}
-                        <span class="text-muted">--</span>
+                        <span class="text-muted font-italic">--</span>
                       {% endif %}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center align-middle">
                       <div class="action-btn-group justify-content-center">
-                        {#  VIEW button - READ ONLY #}
+                        {#  VIEW button - Info gradient (cyan/blue) #}
                         {% if perms.study_43en.view_sam_case %}
                           <a href="{% url 'study_43en:sample_collection_view' usubjid=usubjid sample_type=sample_type %}" 
-                             class="btn btn-view btn-sm">
-                            <i ></i> {% trans "View" %}
+                             class="btn btn-sm px-3 py-2 shadow-sm" 
+                             style="background: var(--crf-gradient-info); color: white; font-weight: 600; border: none;">
+                            {% trans "View" %}
                           </a>
                         {% endif %}
                         
-                        {#  EDIT button - CAN MODIFY #}
+                        {#  EDIT button - Warning gradient (orange) #}
                         {% if perms.study_43en.change_sam_case %}
                           <a href="{% url 'study_43en:sample_collection_update' usubjid=usubjid sample_type=sample_type %}" 
-                             class="btn btn-edit btn-sm">
-                            <i ></i> {% trans "Edit" %}
+                             class="btn btn-edit btn-sm px-3 py-2 shadow-sm">
+                            {% trans "Edit" %}
                           </a>
                         {% endif %}
                         
                         {# Show message if no permission #}
                         {% if not perms.study_43en.view_sam_case and not perms.study_43en.change_sam_case %}
                           <span class="text-muted small">
-                            <i ></i>{% trans "No access" %}
+                            {% trans "No access" %}
                           </span>
                         {% endif %}
                       </div>
                     </td>
                   {% else %}
-                    <td class="text-center">
-                      <span class="badge badge-secondary text-black">
-                        <i class="fas fa-question-circle"></i> {% trans "Not Created" %}
+                    <td class="text-center align-middle">
+                      <span class="badge badge-secondary px-3 py-2" style="font-size: 0.85rem;">
+                        {% trans "Not Created" %}
                       </span>
                     </td>
-                    <td class="text-center"><span class="text-muted">--</span></td>
-                    <td class="text-center"><span class="text-muted">--</span></td>
-                    <td class="text-center">
+                    <td class="text-center align-middle"><span class="text-muted font-italic">--</span></td>
+                    <td class="text-center align-middle"><span class="text-muted font-italic">--</span></td>
+                    <td class="text-center align-middle">
                       {% if perms.study_43en.add_sam_case %}
                         <a href="{% url 'study_43en:sample_collection_create' usubjid=usubjid sample_type=sample_type %}" 
-                           class="btn btn-create btn-sm">
-                          <i class="fas fa-plus"></i> {% trans "Create" %}
+                           class="btn btn-sm px-3 py-2 shadow-sm" 
+                           style="background: var(--crf-gradient-success); color: white; font-weight: 600; border: none;">
+                          {% trans "Create" %}
                         </a>
                       {% else %}
                         <span class="text-muted small">
-                          <i class="fas fa-lock"></i> {% trans "No permission" %}
+                          {% trans "No permission" %}
                         </span>
                       {% endif %}
                     </td>
@@ -237,22 +255,6 @@
       $('.btn-edit').hide();
       $('.btn-delete').hide();
     }
-    
-    // Apply hover effect to table rows
-    $('tbody tr').hover(
-      function() {
-        $(this).addClass('bg-light');
-      },
-      function() {
-        $(this).removeClass('bg-light');
-      }
-    );
-
-    // Highlight positive results (badge-danger is for Positive)
-    $('.badge-danger').each(function() {
-      let $parent = $(this).closest('td');
-      $parent.addClass('border-left-danger');
-    });
 
     // Show tooltip for truncated content
     $('[data-toggle="tooltip"]').tooltip();

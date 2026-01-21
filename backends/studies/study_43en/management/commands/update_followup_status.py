@@ -19,7 +19,7 @@ class Command(BaseCommand):
         
         if options.get('reset', False):
             deleted = FollowUpStatus.objects.using('db_study_43en').all().delete()
-            self.stdout.write(f'🗑️  Đã xóa {deleted[0]} records cũ')
+            self.stdout.write(f' Đã xóa {deleted[0]} records cũ')
         
         self.update_patient_statuses()
         self.update_contact_statuses()

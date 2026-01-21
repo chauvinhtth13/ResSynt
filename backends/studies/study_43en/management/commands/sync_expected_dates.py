@@ -36,7 +36,7 @@ class Command(BaseCommand):
         if options.get('reset', False):
             deleted_patient = ExpectedDates.objects.using(STUDY_DATABASE).all().delete()
             deleted_contact = ContactExpectedDates.objects.using(STUDY_DATABASE).all().delete()
-            self.stdout.write(f'🗑️  Đã xóa {deleted_patient[0]} ExpectedDates và {deleted_contact[0]} ContactExpectedDates')
+            self.stdout.write(f' Đã xóa {deleted_patient[0]} ExpectedDates và {deleted_contact[0]} ContactExpectedDates')
         
         # Sync patients
         patient_count = self._sync_patient_expected_dates()
