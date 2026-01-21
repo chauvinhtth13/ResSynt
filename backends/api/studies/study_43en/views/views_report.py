@@ -2,7 +2,7 @@
 """
 TMG Report Export Views
 
-Handles report generation and download.
+Handles report generation and download in DOCX and PDF formats.
 Backend-first approach - all logic here, no JavaScript.
 """
 
@@ -17,6 +17,7 @@ import os
 
 from backends.studies.study_43en.forms.report_forms import ReportExportForm
 from backends.studies.study_43en.services.report_generator import TMGReportGenerator
+from backends.studies.study_43en.services.pdf_report_generator import PDFReportGenerator
 from backends.studies.study_43en.services.report_data_service import ReportDataService
 
 logger = logging.getLogger(__name__)
@@ -28,12 +29,7 @@ class ReportExportView(View):
     View xuất báo cáo TMG
     
     GET: Display export form
-    POST: Generate and download report
-    
-    Tuân thủ nguyên tắc:
-    - Permission check via login_required
-    - Server-side validation
-    - No JavaScript required
+    POST: Generate and download report (DOCX or PDF)
     """
     
     template_name = 'studies/study_43en/report/report_export_form.html'
@@ -63,19 +59,17 @@ class ReportExportView(View):
             return render(request, self.template_name, context)
         
         try:
-            # Get date range
+            # Get form data
             start_date, end_date = form.get_date_range()
             reporting_date = form.cleaned_data['reporting_date']
+            export_format = form.cleaned_data['export_format']
             
-            # Get site filter from session/middleware
-            site_filter = getattr(request, 'site_filter', None)
+            # Get site filter from middleware
+            site_filter = getattr(request, 'site_filter', 'all')
             
-            # Get data from database
+            # Get data from database (uses dashboard-consistent logic)
             data_service = ReportDataService(site_filter=site_filter)
-            report_data = data_service.get_report_data(
-                datetime.combine(start_date, datetime.min.time()),
-                datetime.combine(end_date, datetime.max.time())
-            )
+            report_data = data_service.get_report_data()
             
             # Add manual input data
             report_data['action_points'] = form.parse_action_points()
@@ -94,31 +88,43 @@ class ReportExportView(View):
             if not form.cleaned_data.get('include_safety'):
                 report_data['safety_reporting'] = {}
             
-            # Get logo path (if exists)
+            # Get logo path
             logo_path = self._get_logo_path()
             
-            # Generate report
-            generator = TMGReportGenerator(
-                study_code='43EN',
-                reporting_date=reporting_date
-            )
-            
-            document_buffer = generator.generate(report_data, logo_path)
-            
-            # Create filename
+            # Generate report based on format
             date_str = reporting_date.strftime('%d%b%Y').upper()
-            filename = f"43EN_Update_Report_{date_str}.docx"
+            
+            if export_format == 'pdf':
+                # Generate PDF
+                generator = PDFReportGenerator(
+                    study_code='43EN',
+                    reporting_date=reporting_date
+                )
+                document_buffer = generator.generate(report_data, logo_path)
+                
+                filename = f"43EN_Update_Report_{date_str}.pdf"
+                content_type = 'application/pdf'
+            else:
+                # Generate DOCX (default)
+                generator = TMGReportGenerator(
+                    study_code='43EN',
+                    reporting_date=reporting_date
+                )
+                document_buffer = generator.generate(report_data, logo_path)
+                
+                filename = f"43EN_Update_Report_{date_str}.docx"
+                content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             
             # Return response
             response = HttpResponse(
                 document_buffer.getvalue(),
-                content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                content_type=content_type
             )
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             
             # Log the export action
             logger.info(
-                f"TMG Report exported by {request.user.username} "
+                f"TMG Report ({export_format.upper()}) exported by {request.user.username} "
                 f"for date range {start_date} to {end_date}"
             )
             
@@ -137,7 +143,6 @@ class ReportExportView(View):
     
     def _get_logo_path(self) -> str:
         """Get path to OUCRU logo file"""
-        # Try multiple possible paths
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )))

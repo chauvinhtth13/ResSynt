@@ -198,32 +198,32 @@ def upcoming_appointments(request):
             
             #  Determine visit label and icon
             if followup.SUBJECT_TYPE == 'PATIENT':
-                subject_label = 'Bệnh nhân'
+                subject_label = 'PATIENT'
                 if followup.VISIT == 'V2':
                     visit_label = 'V2 (Day 7)'
-                    visit_description = 'Lấy mẫu ngày 7'
+                    visit_description = 'Day 7 sampling'
                     icon = 'clipboard-pulse'
                     icon_color = 'info'
                 elif followup.VISIT == 'V3':
                     visit_label = 'V3 (Day 28)'
-                    visit_description = 'Theo dõi 28 ngày'
+                    visit_description = 'Day 28 follow-up'
                     icon = 'calendar-check'
                     icon_color = 'warning'
                 else:  # V4
                     visit_label = 'V4 (Day 90)'
-                    visit_description = 'Theo dõi 90 ngày'
+                    visit_description = 'Day 90 follow-up'
                     icon = 'calendar-event'
                     icon_color = 'success'
             else:  # CONTACT
-                subject_label = 'Người tiếp xúc'
+                subject_label = 'CONTACT'
                 if followup.VISIT == 'V2':
                     visit_label = 'V2 (Day 28)'
-                    visit_description = 'Theo dõi 28 ngày'
+                    visit_description = 'Day 28 follow-up'
                     icon = 'calendar-check'
                     icon_color = 'warning'
                 else:  # V3
                     visit_label = 'V3 (Day 90)'
-                    visit_description = 'Theo dõi 90 ngày'
+                    visit_description = 'Day 90 follow-up'
                     icon = 'calendar-event'
                     icon_color = 'success'
             
@@ -233,8 +233,9 @@ def upcoming_appointments(request):
             else:
                 notification_url = f"/studies/43en/contact/{followup.USUBJID}/"
             
-            # Build message for notification
-            notification_message = f"{subject_label} {followup.USUBJID} - {visit_description}"
+            # Build message for notification - Date prominent at top
+            expected_date_str = followup.EXPECTED_DATE.strftime('%d/%m/%Y')
+            notification_message = f"{followup.USUBJID} - {visit_description}"
             
             #  Build notification object
             upcoming.append({

@@ -24,9 +24,23 @@ class ReportExportForm(forms.Form):
         ('custom', 'Custom Date Range'),
     ]
     
+    EXPORT_FORMAT_CHOICES = [
+        ('docx', 'Word Document (.docx)'),
+        ('pdf', 'PDF Document (.pdf)'),
+    ]
+    
     # ==========================================
     # REPORT SETTINGS
     # ==========================================
+    export_format = forms.ChoiceField(
+        choices=EXPORT_FORMAT_CHOICES,
+        initial='docx',
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input'
+        }),
+        label='Export Format'
+    )
+    
     report_type = forms.ChoiceField(
         choices=REPORT_TYPE_CHOICES,
         initial='monthly',

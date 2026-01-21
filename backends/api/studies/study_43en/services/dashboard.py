@@ -399,12 +399,12 @@ def get_enrollment_chart_api(request):
                 'target': 200,
                 'start_date': date(2024, 7, 1),    # 01/07/2024
             },
-            '020': {
-                'target': 150,
-                'start_date': date(2025, 10, 13),  # 13/10/2025
-            },
             '011': {
                 'target': 400,
+                'start_date': date(2025, 10, 13),  # 13/10/2025
+            },
+            '020': {
+                'target': 150,
                 'start_date': date(2025, 11, 5),   # 05/11/2025
             },
         }

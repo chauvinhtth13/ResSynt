@@ -3,11 +3,11 @@
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from datetime import datetime, timedelta
-from study_43en.models import (
+from backends.studies.study_43en.models.schedule import (
     FollowUpStatus, ExpectedDates, ContactExpectedDates,
-    FU_CASE_28, FU_CASE_90, FU_CONTACT_28, FU_CONTACT_90,
-    SAM_CASE, ENR_CASE, ENR_CONTACT, SCR_CASE
 )
+from backends.studies.study_43en.models.patient import SCR_CASE, ENR_CASE,FU_CASE_28, FU_CASE_90
+from backends.studies.study_43en.models.contact import ENR_CONTACT, FU_CONTACT_28, FU_CONTACT_90
 
 
 class Command(BaseCommand):
@@ -41,7 +41,11 @@ class Command(BaseCommand):
         """ UPDATED: Sync PHONE from ENR_CASE"""
         self.stdout.write('Đang đồng bộ dữ liệu từ bệnh nhân...')
         
-        expected_dates = ExpectedDates.objects.using('db_study_43en').all()
+        # Use select_related to prefetch ENR_CASE and SCR_CASE in one query
+        expected_dates = ExpectedDates.objects.using('db_study_43en').select_related(
+            'USUBJID',  # ENR_CASE
+            'USUBJID__USUBJID'  # SCR_CASE through ENR_CASE
+        ).all()
         count = 0
         
         for ed in expected_dates:
@@ -49,14 +53,15 @@ class Command(BaseCommand):
             phone = ''
             
             try:
-                enrollment = ed.USUBJID  # ENR_CASE
-                screening_case = enrollment.USUBJID  # SCR_CASE through ENR_CASE
-                
-                #  Get INITIAL from SCR_CASE
-                initial = screening_case.INITIAL if screening_case else ''
-                
-                #  Get PHONE from ENR_CASE (not SCR_CASE!)
-                phone = enrollment.PHONE if hasattr(enrollment, 'PHONE') and enrollment.PHONE else ''
+                enrollment = ed.USUBJID  # ENR_CASE (already prefetched)
+                if enrollment:
+                    screening_case = enrollment.USUBJID  # SCR_CASE (already prefetched)
+                    
+                    #  Get INITIAL from SCR_CASE
+                    initial = screening_case.INITIAL if screening_case else ''
+                    
+                    #  Get PHONE from ENR_CASE (not SCR_CASE!)
+                    phone = enrollment.PHONE if hasattr(enrollment, 'PHONE') and enrollment.PHONE else ''
                 
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f'Lỗi khi lấy thông tin bệnh nhân {ed.USUBJID_id}: {str(e)}'))
@@ -221,7 +226,7 @@ class Command(BaseCommand):
         
         today = datetime.now().date()
         
-        upcoming_to_late = FollowUpStatus.objects.filter(
+        upcoming_to_late = FollowUpStatus.objects.using('db_study_43en').filter(
             STATUS='UPCOMING',
             EXPECTED_DATE__lte=today
         )
@@ -229,7 +234,7 @@ class Command(BaseCommand):
         late_count = upcoming_to_late.count()
         upcoming_to_late.update(STATUS='LATE')
         
-        late_to_missed = FollowUpStatus.objects.filter(
+        late_to_missed = FollowUpStatus.objects.using('db_study_43en').filter(
             STATUS='LATE',
             EXPECTED_TO__lt=today
         )
@@ -245,15 +250,15 @@ class Command(BaseCommand):
         """Cập nhật lại INITIAL cho tất cả bản ghi FollowUpStatus"""
         self.stdout.write('Đang cập nhật lại trường INITIAL...')
         
-        patient_followups = FollowUpStatus.objects.filter(SUBJECT_TYPE='PATIENT')
+        patient_followups = FollowUpStatus.objects.using('db_study_43en').filter(SUBJECT_TYPE='PATIENT')
         count_patient = 0
         
         for followup in patient_followups:
             try:
                 usubjid = followup.USUBJID
-                screening_case = SCR_CASE.objects.get(USUBJID=usubjid)
+                screening_case = SCR_CASE.objects.using('db_study_43en').get(USUBJID=usubjid)
                 followup.INITIAL = screening_case.INITIAL
-                followup.save()
+                followup.save(using='db_study_43en')
                 count_patient += 1
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f'Lỗi khi cập nhật INITIAL cho bệnh nhân {followup.USUBJID}: {str(e)}'))

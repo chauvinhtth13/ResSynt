@@ -51,8 +51,26 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
+                                <!-- Export Format -->
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label fw-bold">{{ form.export_format.label }}</label>
+                                        {% for radio in form.export_format %}
+                                        <div class="form-check">
+                                            {{ radio.tag }}
+                                            <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                                {{ radio.choice_label }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                        {% if form.export_format.errors %}
+                                        <div class="text-danger small">{{ form.export_format.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
                                 <!-- Report Type -->
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="form-label fw-bold">{{ form.report_type.label }}</label>
                                         {% for radio in form.report_type %}
@@ -70,7 +88,7 @@
                                 </div>
 
                                 <!-- Reporting Date -->
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="form-label fw-bold" for="{{ form.reporting_date.id_for_label }}">
                                             {{ form.reporting_date.label }}
@@ -130,8 +148,8 @@
                         </div>
                         <div class="card-body">
                             <p class="text-muted mb-3">
-                                {% trans "These sections will be automatically populated with data from the database for
-                                the selected date range." %}
+                                {% trans "These sections will be automatically populated with data from the database
+                                forthe selected date range." %}
                             </p>
 
                             <div class="form-check mb-2">
@@ -244,7 +262,7 @@
                             <i class="bi bi-arrow-counterclockwise me-1"></i> {% trans "Reset" %}
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-file-earmark-word me-1"></i> {% trans "Export Report" %}
+                            <i class="bi bi-download me-1"></i> {% trans "Export Report" %}
                         </button>
                     </div>
                 </form>

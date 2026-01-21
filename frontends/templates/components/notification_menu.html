@@ -54,12 +54,12 @@
 
           <!-- Content -->
           <div class="notification-content">
-            <p class="notification-message">{{ notification.message }}</p>
+            <div class="notification-date-highlight">
+              <i ></i>
+              <span class="date-value">{{ notification.expected_date|date:"d/m/Y" }}</span>
+            </div>
+            <p class="notification-message">{{ notification.usubjid }} - <span class="notification-description">{{notification.visit_description }}</span></p>
             <div class="notification-meta">
-              <span class="notification-time">
-                <i class="bi bi-clock"></i>
-                {{ notification.expected_date|date:"d/m/Y" }}
-              </span>
               {% if notification.category %}
               <span class="notification-category">{{ notification.category }}</span>
               {% endif %}

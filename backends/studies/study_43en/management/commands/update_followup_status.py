@@ -1,15 +1,14 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import date
+from django.core.management.base import BaseCommand
+from django.db.models import Q
+from datetime import datetime, timedelta
 from backends.studies.study_43en.models.schedule import (
-    ExpectedDates, ContactExpectedDates, FollowUpStatus
+    FollowUpStatus, ExpectedDates, ContactExpectedDates,
 )
-from backends.studies.study_43en.models.patient import (
-    ENR_CASE, FU_CASE_28, FU_CASE_90, SAM_CASE
-)
-from backends.studies.study_43en.models.contact import (
-    ENR_CONTACT, FU_CONTACT_28, FU_CONTACT_90, SAM_CONTACT
-)
+from backends.studies.study_43en.models.patient import SCR_CASE, ENR_CASE,FU_CASE_28, FU_CASE_90,SAM_CASE
+from backends.studies.study_43en.models.contact import ENR_CONTACT, FU_CONTACT_28, FU_CONTACT_90
 
 
 class Command(BaseCommand):
