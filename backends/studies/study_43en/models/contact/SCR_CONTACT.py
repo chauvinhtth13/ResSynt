@@ -137,7 +137,7 @@ class SCR_CONTACT(AuditFieldsMixin):
     
     def save(self, *args, **kwargs):
         """
-        Auto-generate SCRID với format CS-SITEID-0001, SUBJID, and USUBJID based on eligibility
+        Auto-generate SCRID với format CS0001 (đếm riêng theo từng site), SUBJID, and USUBJID based on eligibility
         
         Version increment is handled by AuditFieldsMixin.save()
         
@@ -146,27 +146,28 @@ class SCR_CONTACT(AuditFieldsMixin):
         """
         create_usubjid = False
         
-        # 1. Generate SCRID if not exists - NEW FORMAT: CS-SITEID-0001
+        # 1. Generate SCRID if not exists - NEW FORMAT: CS0001 (per site)
         if not self.SCRID:
             if not self.SITEID:
                 raise ValueError("SITEID is required to generate SCRID")
             
-            # Get all existing SCRIDs for this site
+            # Get all existing SCRIDs for this site only
+            # Filter by contacts that belong to this site
             site_contacts = SCR_CONTACT.objects.filter(
-                SCRID__startswith=f'CS-{self.SITEID}-'
+                SITEID=self.SITEID
             ).values_list('SCRID', flat=True)
             
             max_num = 0
             for sid in site_contacts:
-                # Extract number from CS-SITEID-XXXX
-                m = re.match(rf'CS-{self.SITEID}-(\d+)', str(sid))
+                # Extract number from CS0001 format
+                m = re.match(r'CS(\d+)', str(sid))
                 if m:
                     num = int(m.group(1))
                     if num > max_num:
                         max_num = num
             
-            # Generate new SCRID with format CS-SITEID-0001
-            self.SCRID = f"CS-{self.SITEID}-{max_num + 1:04d}"
+            # Generate new SCRID with format CS0001 (unique per site)
+            self.SCRID = f"CS{max_num + 1:04d}"
         
         # 2. Check eligibility (3 criteria for contacts)
         is_eligible = (

@@ -1,25 +1,23 @@
 {% extends 'studies\study_43en\home_dashboard.html' %}
 {% load static i18n %}
 
-{% block dashboard_css %}
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-{% endblock %}
+
 
 {% block title %}{% trans "Screening List - Study 43EN" %}{% endblock %}
 
 
 {% block dashboard_content %}
 <div class="card">
-  <div class="card-header bg-patient-gradient">
+  <div class="screening-case-header">
     <div class="d-flex justify-content-between align-items-center">
-      <h3 class="card-title text-white mb-0">
-        <i class="fas fa-user-md"></i>
-        {% trans "Danh sách bệnh nhân sàng lọc 43EN" %}
+      <h3 >
+        <i ></i>
+        {% trans "Screening List 43EN" %}
       </h3>
       <div class="card-tools">
         {% if perms.study_43en.add_scr_case %}
         <button type="button" class="btn btn-light btn-sm" data-toggle="modal" data-target="#siteSelectionModal">
-          <i class="fas fa-plus-circle me-1"></i> {% trans "Thêm mới" %}
+          <i class="fas fa-plus-circle me-1"></i> {% trans "Add New" %}
         </button>
         {% endif %}
       </div>
@@ -29,11 +27,11 @@
   <div class="card-body">
     {% if total_cases == 0 %}
       <div class="alert alert-info text-center">
-        <h4><i class="fas fa-info-circle"></i> {% trans "Chưa có bệnh nhân nào!" %}</h4>
-        <p>{% trans "Hiện tại chưa có bệnh nhân nào được sàng lọc." %}</p>
+        <h4><i class="fas fa-info-circle"></i> {% trans "No patients yet!" %}</h4>
+        <p>{% trans "There are currently no patients screened." %}</p>
         {% if perms.study_43en.add_scr_case %}
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#siteSelectionModal">
-          <i class="fas fa-plus-circle"></i> {% trans "Thêm mới sàng lọc" %}
+          <i class="fas fa-plus-circle"></i> {% trans "Add New Screening" %}
         </button>
         {% endif %}
       </div>
@@ -43,19 +41,19 @@
         <div class="col-md-6">
           <form method="get" class="d-flex">
             <input type="text" name="q" class="form-control" 
-                   placeholder="{% trans 'Tìm kiếm SCRID, USUBJID...' %}" 
+                   placeholder="{% trans 'Search SCRID, USUBJID...' %}" 
                    value="{{ query }}">
             <button type="submit" class="btn btn-primary ms-2">
-              <i class="fas fa-search"></i> {% trans "Tìm" %}
+              <i class="fas fa-search"></i> {% trans "Search" %}
             </button>
           </form>
         </div>
         <div class="col-md-6 text-end">
           <span class="badge bg-info">
-            {% trans "Tổng số:" %} {{ total_cases }}
+            {% trans "Total:" %} {{ total_cases }}
           </span>
           <span class="badge bg-success">
-            {% trans "Đủ điều kiện:" %} {{ eligible_cases }}
+            {% trans "Eligible:" %} {{ eligible_cases }}
           </span>
         </div>
       </div>
@@ -65,12 +63,12 @@
           <table class="table table-bordered table-hover table-patient">
             <thead>
                 <tr>
-                    <th class="text-center">{% trans "Mã sàng lọc" %}</th>
-                    <th class="text-center">{% trans "Mã bệnh nhân" %}</th>
-                    <th class="text-center">{% trans "Chữ cái đầu" %}</th>
-                    <th class="text-center">{% trans "Ngày sàng lọc" %}</th>
-                    <th class="text-center">{% trans "Trạng thái" %}</th>
-                    <th class="text-center" width="150">{% trans "Thao tác" %}</th>
+                    <th class="text-center">{% trans "Screening ID" %}</th>
+                    <th class="text-center">{% trans "Patient ID" %}</th>
+                    <th class="text-center">{% trans "Initials" %}</th>
+                    <th class="text-center">{% trans "Screening Date" %}</th>
+                    <th class="text-center">{% trans "Status" %}</th>
+                    <th class="text-center" width="150">{% trans "Actions" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -91,11 +89,11 @@
               <td class="text-center">
                 {% if case.is_confirmed %}
                   <span class="badge bg-success">
-                    <i class="fas fa-check-circle"></i> {% trans "Đủ điều kiện" %}
+                    <i ></i> {% trans "Eligible" %}
                   </span>
                 {% else %}
                   <span class="badge bg-danger">
-                    <i class="fas fa-times-circle"></i> {% trans "Không đủ điều kiện" %}
+                    <i class="fas fa-times-circle"></i> {% trans "Not Eligible" %}
                   </span>
                 {% endif %}
               </td>
@@ -104,7 +102,7 @@
                   <a href="{% url 'study_43en:screening_case_view' case.SCRID %}" 
                      class="btn btn-info btn-view-screening" 
                      data-scrid="{{ case.SCRID }}"
-                     title="{% trans 'Xem chi tiết' %}">
+                     title="{% trans 'View Details' %}">
                     <i ></i> {% trans "View" %}
                   </a>
                   
@@ -112,7 +110,7 @@
                   <a href="{% url 'study_43en:screening_case_update' case.SCRID %}" 
                      class="btn btn-warning btn-edit-screening" 
                      data-scrid="{{ case.SCRID }}"
-                     title="{% trans 'Chỉnh sửa' %}">
+                     title="{% trans 'Edit' %}">
                     <i ></i> {% trans "Edit" %}
                   </a>
                   {% endif %}
@@ -131,7 +129,7 @@
             {% if page_obj.has_previous %}
               <li class="page-item">
                 <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">
-                  {% trans "Đầu" %}
+                  {% trans "First" %}
                 </a>
               </li>
             {% endif %}
@@ -153,7 +151,7 @@
             {% if page_obj.has_next %}
               <li class="page-item">
                 <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
-                  {% trans "Cuối" %}
+                  {% trans "Last" %}
                 </a>
               </li>
             {% endif %}

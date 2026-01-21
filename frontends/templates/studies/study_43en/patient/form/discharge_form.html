@@ -26,10 +26,7 @@
 {% endif %}
 {% endblock %}
 
-{% block dashboard_css %}
-<!-- Include CRF unified styles -->
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-{% endblock %}
+
 
 {% block breadcrumb %}
 <ol class="breadcrumb float-sm-right">
@@ -87,8 +84,8 @@
                         <div class="col-md-3">
                             <strong>{% trans "Status" %}:</strong><br>
                             {% if discharge_case %}
-                                <span class="badge badge-success">
-                                    <i class="fas fa-check-circle"></i> {% trans "Data Available" %}
+                                <span >
+                                    <i ></i> {% trans "Data Available" %}
                                 </span>
                             {% else %}
                                 <span class="badge badge-warning">
@@ -103,16 +100,20 @@
     </div>
 
     <!-- Main Form -->
-    <form id="dischargeForm" method="post" novalidate 
-          data-is-create="{{ is_create|yesno:'true,false' }}"
-          {% if is_readonly %}class="readonly-form"{% endif %}>
+    <form id="dischargeForm" method="post" novalidate data-is-create="{{ is_create|yesno:'true,false' }}" {% if is_readonly %}class="readonly-form"{% endif %}>
         {% csrf_token %}
+
+        {# POST error marker for validation modal #}
+        {% if discharge_form.errors or icd_formset.errors %}
+        <input type="hidden" id="django-form-has-errors" value="true">
+        {% endif %}
+
 
         <!-- Section 1: Discharge Date -->
         <div class="card card-outline card-info">
             <div class="card-header">
                 <h3 class="card-title">
-                    <i class="fas fa-calendar-alt"></i>
+                    <i ></i>
                     {{ discharge_form.DISCHDATE.label }}
                 </h3>
             </div>

@@ -87,7 +87,7 @@ def followup_28_create(request, usubjid):
     # POST - Process creation
     if request.method == 'POST':
         # Initialize all forms
-        followup_form = FollowUpCaseForm(request.POST)
+        followup_form = FollowUpCaseForm(request.POST, enrollment_case=enrollment_case)
         
         #  UPDATED: Use new related_name 'followup_28' instead of checking hasattr
         rehospitalization_formset = RehospitalizationFormSet(
@@ -134,7 +134,7 @@ def followup_28_create(request, usubjid):
     
     # GET - Show blank form
     else:
-        followup_form = FollowUpCaseForm()
+        followup_form = FollowUpCaseForm(enrollment_case=enrollment_case)
         rehospitalization_formset = RehospitalizationFormSet(
             prefix='rehospitalization',
             instance=None  #  For create, always None

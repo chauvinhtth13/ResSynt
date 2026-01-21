@@ -106,7 +106,13 @@ def get_model_display(model_name: str) -> str:
 
 
 def permission_context_processor(request):
-    """Template context processor"""
+    """
+    Template context processor for permissions.
+    
+    Provides:
+    - has_perm(action, model_name): Check study-level permission
+    - can_export: Check if user can export data (tenancy.can_export_data)
+    """
     def has_perm(action: str, model_name: str) -> bool:
         study = getattr(request, 'study', None)
         if not study:
@@ -115,9 +121,37 @@ def permission_context_processor(request):
         permission_codename = f'{action}_{model_name}'
         return TenancyUtils.user_has_permission(request.user, study, permission_codename)
     
+    user = request.user
     return {
         'has_perm': has_perm,
+        'can_export': user.is_authenticated and user.has_perm('tenancy.can_export_data'),
     }
+
+
+def require_export_permission(redirect_to: str = None):
+    """
+    Check if user has export permission.
+    
+    Permission: tenancy.can_export_data (from Study model)
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if request.user.has_perm('tenancy.can_export_data'):
+                return view_func(request, *args, **kwargs)
+            
+            logger.warning(
+                f"Export permission denied: {request.user.username} "
+                f"does not have 'can_export_data' permission"
+            )
+            messages.error(request, 'Bạn không có quyền export dữ liệu!')
+            
+            if redirect_to:
+                return redirect(redirect_to)
+            return redirect('study_43en:home_dashboard')
+        
+        return wrapper
+    return decorator
 
 
 # Keep site access functions...

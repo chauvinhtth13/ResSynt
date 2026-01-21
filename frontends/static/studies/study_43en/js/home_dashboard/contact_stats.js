@@ -11,13 +11,13 @@
  * Version: 1.0
  */
 
-(function() {
+(function () {
     'use strict';
-    
+
     // ========================================================================
     // CONFIGURATION
     // ========================================================================
-    
+
     const CONFIG = {
         API_ENDPOINT: '/studies/43en/api/contact-monthly-stats/',
         CHART_COLORS: {
@@ -31,59 +31,53 @@
         SELECTED_QUARTER: 'all',
         SELECTED_MONTH: 'all',
     };
-    
+
     // ========================================================================
     // STATE
     // ========================================================================
-    
+
     let contactChart = null;
-    
+
     // ========================================================================
     // DOM READY
     // ========================================================================
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('[Contact Stats] Initializing...');
-        
+
+    document.addEventListener('DOMContentLoaded', function () {
+
         // Initialize
         initContactSiteButtons();
         initContactPeriodTypeSelector();
         initContactApplyButton();
         loadContactData();
     });
-    
+
     // ========================================================================
     // SITE FILTER BUTTONS
     // ========================================================================
-    
+
     /**
-     * Initialize contact site filter buttons
+     * Initialize contact site filter dropdown
      */
     function initContactSiteButtons() {
-        const filterButtons = document.querySelectorAll('.contact-site-btn');
-        
-        filterButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const site = this.getAttribute('data-site');
-                
-                // Update active state
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
+        const filterSelect = document.querySelector('.contact-site-select');
+
+        if (filterSelect) {
+            filterSelect.addEventListener('change', function () {
+                const site = this.value;
+
                 // Update current site
                 CONFIG.CURRENT_SITE = site;
-                
+
                 // Reload data
-                console.log('[Contact Stats] Switching to site:', site);
                 loadContactData();
             });
-        });
+        }
     }
-    
+
     // ========================================================================
     // PERIOD TYPE SELECTOR
     // ========================================================================
-    
+
     /**
      * Initialize period type selector (Year/Quarter/Month)
      */
@@ -92,13 +86,13 @@
         const yearSelector = document.getElementById('contactYearSelector');
         const quarterSelector = document.getElementById('contactQuarterSelector');
         const monthSelector = document.getElementById('contactMonthSelector');
-        
+
         if (!periodTypeSelect) return;
-        
-        periodTypeSelect.addEventListener('change', function() {
+
+        periodTypeSelect.addEventListener('change', function () {
             const periodType = this.value;
             CONFIG.PERIOD_TYPE = periodType;
-            
+
             // Show/hide appropriate selectors
             if (periodType === 'year') {
                 yearSelector.style.display = 'flex';
@@ -113,14 +107,13 @@
                 quarterSelector.style.display = 'none';
                 monthSelector.style.display = 'flex';
             }
-            
-            console.log('[Contact Stats] Period type changed:', periodType);
+
         });
-        
+
         // Trigger initial state
         periodTypeSelect.dispatchEvent(new Event('change'));
     }
-    
+
     /**
      * Initialize apply button
      */
@@ -129,27 +122,21 @@
         const yearSelect = document.getElementById('contactSelectedYear');
         const quarterSelect = document.getElementById('contactSelectedQuarter');
         const monthSelect = document.getElementById('contactSelectedMonth');
-        
+
         if (!applyBtn) return;
-        
-        applyBtn.addEventListener('click', function() {
+
+        applyBtn.addEventListener('click', function () {
             // Update config
             CONFIG.SELECTED_YEAR = yearSelect ? yearSelect.value : 'all';
             CONFIG.SELECTED_QUARTER = quarterSelect ? quarterSelect.value : 'all';
             CONFIG.SELECTED_MONTH = monthSelect ? monthSelect.value : 'all';
-            
-            console.log('[Contact Stats] Filters:', {
-                periodType: CONFIG.PERIOD_TYPE,
-                year: CONFIG.SELECTED_YEAR,
-                quarter: CONFIG.SELECTED_QUARTER,
-                month: CONFIG.SELECTED_MONTH,
-            });
-            
+
+
             // Reload data
             loadContactData();
         });
     }
-    
+
     /**
      * Calculate date range from year/quarter/month selection
      */
@@ -158,9 +145,9 @@
         const year = CONFIG.SELECTED_YEAR;
         const quarter = CONFIG.SELECTED_QUARTER;
         const month = CONFIG.SELECTED_MONTH;
-        
+
         let startDate, endDate;
-        
+
         if (periodType === 'year') {
             if (year === 'all') {
                 startDate = '2024-07-01';
@@ -182,7 +169,7 @@
                 };
                 const months = quarterMonths[quarter];
                 startDate = `${year}-${months.start}-01`;
-                
+
                 const endMonth = parseInt(months.end);
                 const lastDay = new Date(parseInt(year), endMonth, 0).getDate();
                 endDate = `${year}-${months.end}-${lastDay}`;
@@ -193,26 +180,26 @@
                 endDate = new Date().toISOString().split('T')[0];
             } else {
                 startDate = `${year}-${month}-01`;
-                
+
                 const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
                 endDate = `${year}-${month}-${lastDay}`;
             }
         }
-        
+
         return { startDate, endDate };
     }
-    
+
     // ========================================================================
     // DATA LOADING
     // ========================================================================
-    
+
     /**
      * Load contact monthly statistics data
      */
     function loadContactData() {
         const chartContainer = document.getElementById('contactMonthlyChart');
         const loadingIndicator = document.getElementById('contactChartLoading');
-        
+
         // Show loading
         if (loadingIndicator) {
             loadingIndicator.style.display = 'block';
@@ -220,26 +207,20 @@
         if (chartContainer) {
             chartContainer.style.display = 'none';
         }
-        
+
         // Calculate date range from filters
         const { startDate, endDate } = calculateDateRange();
-        
+
         // Build API URL
         const params = new URLSearchParams({
             site: CONFIG.CURRENT_SITE,
             start_date: startDate,
             end_date: endDate,
         });
-        
+
         const url = `${CONFIG.API_ENDPOINT}?${params.toString()}`;
-        
-        console.log('[Contact Stats] Loading data:', { 
-            site: CONFIG.CURRENT_SITE, 
-            startDate, 
-            endDate,
-            periodType: CONFIG.PERIOD_TYPE,
-        });
-        
+
+
         // Fetch data
         fetch(url, {
             method: 'GET',
@@ -248,49 +229,47 @@
             },
             credentials: 'same-origin',
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(result => {
-            if (!result.success) {
-                throw new Error(result.error || 'Unknown error');
-            }
-            
-            console.log('[Contact Stats] Data received:', result.data);
-            
-            // Hide loading
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-            if (chartContainer) {
-                chartContainer.style.display = 'block';
-            }
-            
-            // Render chart and table
-            renderContactChart(chartContainer, result.data);
-            renderContactTable(result.data);
-        })
-        .catch(error => {
-            console.error('[Contact Stats] Load error:', error);
-            
-            if (loadingIndicator) {
-                loadingIndicator.innerHTML = `
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error');
+                }
+
+
+                // Hide loading
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+                if (chartContainer) {
+                    chartContainer.style.display = 'block';
+                }
+
+                // Render chart and table
+                renderContactChart(chartContainer, result.data);
+                renderContactTable(result.data);
+            })
+            .catch(error => {
+
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>
                         Failed to load contact statistics: ${escapeHtml(error.message)}
                     </div>
                 `;
-            }
-        });
+                }
+            });
     }
-    
+
     // ========================================================================
     // CHART RENDERING
     // ========================================================================
-    
+
     /**
      * Render contact monthly bar chart
      */
@@ -300,7 +279,7 @@
             contactChart.dispose();
         }
         contactChart = echarts.init(container);
-        
+
         // Chart options
         const option = {
             title: {
@@ -316,7 +295,7 @@
                     color: '#666',
                 },
             },
-            
+
             tooltip: {
                 trigger: 'axis',
                 axisPointer: {
@@ -328,10 +307,10 @@
                 textStyle: {
                     color: '#333',
                 },
-                formatter: function(params) {
+                formatter: function (params) {
                     let html = `<div style="padding: 5px;">`;
                     html += `<strong>${params[0].axisValue}</strong><br/>`;
-                    
+
                     params.forEach(item => {
                         html += `
                             <div style="margin-top: 5px;">
@@ -340,12 +319,12 @@
                             </div>
                         `;
                     });
-                    
+
                     html += `</div>`;
                     return html;
                 },
             },
-            
+
             legend: {
                 data: ['Screening', 'Enrollment'],
                 top: 35,
@@ -353,7 +332,7 @@
                     fontSize: 12,
                 },
             },
-            
+
             grid: {
                 left: '3%',
                 right: '4%',
@@ -361,7 +340,7 @@
                 top: 65,
                 containLabel: true,
             },
-            
+
             xAxis: {
                 type: 'category',
                 data: data.months,
@@ -370,7 +349,7 @@
                     fontSize: 10,
                 },
             },
-            
+
             yAxis: {
                 type: 'value',
                 name: 'Contacts',
@@ -385,7 +364,7 @@
                 },
                 minInterval: 1,
             },
-            
+
             series: [
                 {
                     name: 'Screening',
@@ -411,94 +390,91 @@
                 },
             ],
         };
-        
+
         // Set option and render
         contactChart.setOption(option);
-        
+
         // Responsive resize
-        window.addEventListener('resize', function() {
+        window.addEventListener('resize', function () {
             if (contactChart) {
                 contactChart.resize();
             }
         });
-        
-        console.log('[Contact Stats] Chart rendered');
+
     }
-    
+
     // ========================================================================
     // TABLE RENDERING
     // ========================================================================
-    
+
     /**
      * Render contact monthly statistics table
      */
     function renderContactTable(data) {
         const table = document.getElementById('contactStatsTable');
         if (!table) {
-            console.error('[Contact Stats] Table not found');
             return;
         }
-        
+
         const tbody = table.querySelector('tbody');
         if (!tbody) return;
-        
+
         // Clear existing rows
         tbody.innerHTML = '';
-        
+
         // Add data rows
         for (let i = 0; i < data.months.length; i++) {
             const row = document.createElement('tr');
-            
+
             const monthCell = document.createElement('td');
             monthCell.textContent = data.months[i];
-            
+
             const screeningCell = document.createElement('td');
             screeningCell.className = 'text-end fw-semibold';
             screeningCell.style.color = CONFIG.CHART_COLORS.screening;
             screeningCell.textContent = data.screening[i];
-            
+
             const enrollmentCell = document.createElement('td');
             enrollmentCell.className = 'text-end fw-semibold';
             enrollmentCell.style.color = CONFIG.CHART_COLORS.enrollment;
             enrollmentCell.textContent = data.enrollment[i];
-            
+
             row.appendChild(monthCell);
             row.appendChild(screeningCell);
             row.appendChild(enrollmentCell);
-            
+
             tbody.appendChild(row);
         }
-        
+
         // Add total row
         const totalRow = document.createElement('tr');
         totalRow.className = 'table-secondary fw-bold';
-        
+
         const totalLabelCell = document.createElement('td');
         totalLabelCell.textContent = 'Total';
-        
+
         const totalScreeningCell = document.createElement('td');
         totalScreeningCell.className = 'text-end';
         const totalScreening = data.screening.reduce((a, b) => a + b, 0);
         totalScreeningCell.textContent = totalScreening;
-        
+
         const totalEnrollmentCell = document.createElement('td');
         totalEnrollmentCell.className = 'text-end';
         const totalEnrollment = data.enrollment.reduce((a, b) => a + b, 0);
         totalEnrollmentCell.textContent = totalEnrollment;
-        
+
         totalRow.appendChild(totalLabelCell);
         totalRow.appendChild(totalScreeningCell);
         totalRow.appendChild(totalEnrollmentCell);
-        
+
         tbody.appendChild(totalRow);
-        
-        console.log('[Contact Stats] Table rendered');
+
     }
-    
+
     // ========================================================================
     // UTILITY FUNCTIONS
     // ========================================================================
-    
+
     /**
      * Escape HTML to prevent XSS
      */
@@ -512,5 +488,5 @@
         };
         return String(text).replace(/[&<>"']/g, m => map[m]);
     }
-    
+
 })();

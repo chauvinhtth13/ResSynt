@@ -1,10 +1,12 @@
 from django.core.management.base import BaseCommand
-from study_43en.models import (
-    FU_CASE_28, FU_CASE_90, 
-    FU_CONTACT_28, FU_CONTACT_90,
-    SAM_CASE, SAM_CONTACT,
-    FollowUpStatus
+from django.core.management.base import BaseCommand
+from django.db.models import Q
+from datetime import datetime, timedelta
+from backends.studies.study_43en.models.schedule import (
+    FollowUpStatus, ExpectedDates, ContactExpectedDates,
 )
+from backends.studies.study_43en.models.patient import SCR_CASE, ENR_CASE,FU_CASE_28, FU_CASE_90,SAM_CASE
+from backends.studies.study_43en.models.contact import ENR_CONTACT, FU_CONTACT_28, FU_CONTACT_90,SAM_CONTACT
 
 class Command(BaseCommand):
     help = 'Cập nhật trạng thái FollowUpStatus từ trường ASSESSED trong các form follow-up và SAMPLE'
@@ -31,7 +33,7 @@ class Command(BaseCommand):
     
     def update_from_followup_case(self):
         """Cập nhật trạng thái từ FU_CASE_28 (V3 của bệnh nhân)"""
-        followups = FU_CASE_28.objects.all()
+        followups = FU_CASE_28.objects.using('db_study_43en').all()
         count = 0
         
         for followup in followups:
@@ -39,14 +41,14 @@ class Command(BaseCommand):
             status = 'COMPLETED' if followup.ASSESSED == 'Yes' else 'MISSED'
             
             try:
-                followup_status = FollowUpStatus.objects.get(
+                followup_status = FollowUpStatus.objects.using('db_study_43en').get(
                     USUBJID=followup.USUBJID_id,
                     SUBJECT_TYPE='PATIENT',
                     VISIT='V3'
                 )
                 followup_status.ACTUAL_DATE = actual_date
                 followup_status.STATUS = status
-                followup_status.save(update_fields=['ACTUAL_DATE', 'STATUS'])
+                followup_status.save(using='db_study_43en', update_fields=['ACTUAL_DATE', 'STATUS'])
                 count += 1
             except FollowUpStatus.DoesNotExist:
                 self.stdout.write(f'Không tìm thấy FollowUpStatus cho {followup.USUBJID_id} - V3')
@@ -55,7 +57,7 @@ class Command(BaseCommand):
     
     def update_from_followup_case90(self):
         """Cập nhật trạng thái từ FU_CASE_90 (V4 của bệnh nhân)"""
-        followups = FU_CASE_90.objects.all()
+        followups = FU_CASE_90.objects.using('db_study_43en').all()
         count = 0
         
         for followup in followups:
@@ -63,7 +65,7 @@ class Command(BaseCommand):
             status = 'COMPLETED' if followup.ASSESSED == 'Yes' else 'MISSED'
             
             try:
-                followup_status = FollowUpStatus.objects.get(
+                followup_status = FollowUpStatus.objects.using('db_study_43en').get(
                     USUBJID=followup.USUBJID_id,
                     SUBJECT_TYPE='PATIENT',
                     VISIT='V4'
@@ -79,7 +81,7 @@ class Command(BaseCommand):
     
     def update_from_contact_followup28(self):
         """Cập nhật trạng thái từ FU_CONTACT_28 (V2 của người tiếp xúc)"""
-        followups = FU_CONTACT_28.objects.all()
+        followups = FU_CONTACT_28.objects.using('db_study_43en').all()
         count = 0
         
         for followup in followups:
@@ -103,7 +105,7 @@ class Command(BaseCommand):
     
     def update_from_contact_followup90(self):
         """Cập nhật trạng thái từ FU_CONTACT_90 (V3 của người tiếp xúc)"""
-        followups = FU_CONTACT_90.objects.all()
+        followups = FU_CONTACT_90.objects.using('db_study_43en').all()
         count = 0
         
         for followup in followups:
@@ -127,7 +129,7 @@ class Command(BaseCommand):
     
     def update_from_sample_collection(self):
         """Cập nhật trạng thái từ SAM_CASE (V2 của bệnh nhân)"""
-        samples = SAM_CASE.objects.filter(SAMPLE_TYPE='2')
+        samples = SAM_CASE.objects.using('db_study_43en').filter(SAMPLE_TYPE='2')
         count = 0
         
         for sample in samples:
@@ -135,7 +137,7 @@ class Command(BaseCommand):
             status = 'COMPLETED' if sample.SAMPLE else 'MISSED'
             
             try:
-                followup_status = FollowUpStatus.objects.get(
+                followup_status = FollowUpStatus.objects.using('db_study_43en').get(
                     USUBJID=sample.USUBJID_id,
                     SUBJECT_TYPE='PATIENT',
                     VISIT='V2'

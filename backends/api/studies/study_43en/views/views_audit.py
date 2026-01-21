@@ -436,9 +436,9 @@ def _format_value_display(value):
     
     # Handle boolean strings
     if str(value).lower() == 'true':
-        return '<span class="badge badge-success">Có</span>'
+        return '<span >Yes</span>'
     if str(value).lower() == 'false':
-        return '<span class="badge badge-secondary">Không</span>'
+        return '<span >No</span>'
     
     # Handle dates (ISO format)
     if isinstance(value, str) and len(value) == 10:

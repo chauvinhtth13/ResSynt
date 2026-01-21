@@ -37,9 +37,6 @@
 </li>
 {% endblock %}
 
-{% block dashboard_css %}
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-{% endblock %}
 
 {% block dashboard_content %}
 <div class="row">
@@ -47,7 +44,6 @@
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">
-          <i class="fas fa-clipboard-check mr-2"></i>
           {% if is_readonly %}
             {% trans "View End of Study Form (Contact)" %}
           {% elif is_create %}
@@ -101,12 +97,11 @@
               <div class="col-md-3">
                 <strong>{% trans "Status" %}:</strong><br>
                 {% if endcase %}
-                  <span class="badge badge-success">
-                    <i class="fas fa-check-circle"></i> {% trans "Data Available" %}
+                  <span >
+                    {% trans "Data Available" %}
                   </span>
                 {% else %}
-                  <span class="badge badge-warning">
-                    <i class="fas fa-exclamation-triangle"></i> {% trans "No Data" %}
+                  <span class="text-dark">{% trans "No Data" %}
                   </span>
                 {% endif %}
               </div>
@@ -116,7 +111,6 @@
           {# ========== SECTION 1: DATES ========== #}
           <div class="form-section">
             <h5 class="section-title">
-              <i class="fas fa-calendar mr-2"></i>
               {% trans "Date Information" %}
             </h5>
             
@@ -138,7 +132,7 @@
                     <small class="text-danger">{{ form.ENDDATE.errors.0 }}</small>
                   {% endif %}
                   <small class="form-text text-muted">
-                    <i class="fas fa-info-circle"></i> Date when contact ended study participation
+                    Date when contact ended study participation
                   </small>
                 </div>
               </div>
@@ -160,7 +154,7 @@
                     <small class="text-danger">{{ form.ENDFORMDATE.errors.0 }}</small>
                   {% endif %}
                   <small class="form-text text-muted">
-                    <i class="fas fa-info-circle"></i> Date when end case form was completed
+                    Date when end case form was completed
                   </small>
                 </div>
               </div>
@@ -170,7 +164,6 @@
           {# ========== SECTION 2: VISIT COMPLETION (3 visits for contacts) ========== #}
           <div class="form-section">
             <h5 class="section-title">
-              <i class="fas fa-check-double mr-2"></i>
               {% trans "3. Visits Completed" %}
               <span class="badge badge-info ml-2">3 visits</span>
             </h5>
@@ -181,7 +174,6 @@
                   <div class="form-check">
                     {{ form.VICOMPLETED }}
                     <label class="form-check-label" for="{{ form.VICOMPLETED.id_for_label }}">
-                      <i class="fas fa-user-plus mr-2"></i>
                       {{ form.VICOMPLETED.label }}
                     </label>
                   </div>
@@ -193,11 +185,10 @@
                   <div class="form-check">
                     {{ form.V2COMPLETED }}
                     <label class="form-check-label" for="{{ form.V2COMPLETED.id_for_label }}">
-                      <i class="fas fa-heartbeat mr-2"></i>
                       {{ form.V2COMPLETED.label }}
                     </label>
                     <small class="text-muted d-block mt-1">
-                      <i class="fas fa-info-circle"></i> {% trans "Contact V2 is Day 28±3" %}
+                      {% trans "Contact V2 is Day 28±3" %}
                     </small>
                   </div>
                 </div>
@@ -208,7 +199,6 @@
                   <div class="form-check">
                     {{ form.V3COMPLETED }}
                     <label class="form-check-label" for="{{ form.V3COMPLETED.id_for_label }}">
-                      <i class="fas fa-walking mr-2"></i>
                       {{ form.V3COMPLETED.label }}
                     </label>
                   </div>
@@ -219,7 +209,7 @@
             {#  Completion Summary #}
             {% if endcase %}
             <div class="alert alert-info mt-3">
-              <strong><i class="fas fa-info-circle mr-2"></i>{% trans "Completion Summary" %}:</strong>
+              <strong>{% trans "Completion Summary" %}:</strong>
               {{ endcase.total_visits_completed }}/3 visits ({{ endcase.completion_rate|floatformat:0 }}%)
             </div>
             {% endif %}
@@ -228,13 +218,11 @@
           {# ========== SECTION 3: WITHDRAWAL ========== #}
           <div class="form-section">
             <h5 class="section-title">
-              <i class="fas fa-sign-out-alt mr-2"></i>
               {% trans "4. Study Withdrawal" %}
             </h5>
             
             <div class="form-group">
               <label>
-                <span class="question-number">4.</span>
                 {{ form.WITHDRAWREASON.label }}
               </label>
               <div class="mt-2">
@@ -298,13 +286,11 @@
           {# ========== SECTION 4: INCOMPLETE ========== #}
           <div class="form-section">
             <h5 class="section-title">
-              <i class="fas fa-exclamation-circle mr-2"></i>
               {% trans "5. Unable to Complete Study" %}
             </h5>
             
             <div class="form-group">
               <label>
-                <span class="question-number">5.</span>
                 {{ form.INCOMPLETE.label }}
               </label>
               <div class="mt-2">
@@ -341,7 +327,6 @@
                   <div class="form-check mb-2">
                     {{ form.INCOMPLETEDEATH }}
                     <label class="form-check-label" for="{{ form.INCOMPLETEDEATH.id_for_label }}">
-                      <i class="fas fa-cross mr-2"></i>
                       {{ form.INCOMPLETEDEATH.label }}
                     </label>
                   </div>
@@ -349,14 +334,12 @@
                   <div class="form-check mb-2">
                     {{ form.INCOMPLETEMOVED }}
                     <label class="form-check-label" for="{{ form.INCOMPLETEMOVED.id_for_label }}">
-                      <i class="fas fa-truck-moving mr-2"></i>
                       {{ form.INCOMPLETEMOVED.label }}
                     </label>
                   </div>
                   
                   <div class="form-group mt-3">
                     <label for="{{ form.INCOMPLETEOTHER.id_for_label }}">
-                      <i class="fas fa-edit mr-2"></i>
                       {{ form.INCOMPLETEOTHER.label }}
                     </label>
                     {{ form.INCOMPLETEOTHER }}
@@ -372,13 +355,11 @@
           {# ========== SECTION 5: LOST TO FOLLOW-UP ========== #}
           <div class="form-section">
             <h5 class="section-title">
-              <i class="fas fa-user-times mr-2"></i>
               {% trans "6. Lost to Follow-up" %}
             </h5>
             
             <div class="form-group">
               <label>
-                <span class="question-number">6.</span>
                 {{ form.LOSTTOFOLLOWUP.label }}
               </label>
               <div class="mt-2">
@@ -430,7 +411,6 @@
           {% if endcase and not is_create %}
           <div class="form-section">
             <h5 class="section-title">
-              <i class="fas fa-history mr-2"></i>
               {% trans "Modification Information" %}
             </h5>
             

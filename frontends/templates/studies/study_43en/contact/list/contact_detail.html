@@ -141,7 +141,7 @@
                                 <td class="text-center">
                                 {% if screening_contact %}
                                     <span class="badge bg-success badge-status">
-                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                        <i ></i> {% trans "Completed" %}
                                     </span>
                                 {% else %}
                                     <span class="badge bg-secondary badge-status">
@@ -176,7 +176,7 @@
                             <td class="text-center">
                                 {% if enrollment_contact %}
                                     <span class="badge bg-success badge-status">
-                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                        <i ></i> {% trans "Completed" %}
                                     </span>
                                 {% else %}
                                     <span class="badge bg-secondary badge-status">
@@ -238,7 +238,7 @@
                             <td class="text-center">
                                 {% if has_sample %}
                                     <span class="badge bg-success badge-status">
-                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                        <i ></i> {% trans "Completed" %}
                                     </span>
                                 {% else %}
                                     <span class="badge bg-secondary badge-status">
@@ -265,7 +265,7 @@
                                 {% if has_enrollment %}
                                         <a href="{% url 'study_43en:contact_sample_collection_list' usubjid=screening_contact.USUBJID %}" 
                                         class="btn btn-primary btn-sm btn-action-single">
-                                            <i class="fas fa-cogs"></i> {% trans "Manage" %}
+                                            <i ></i> {% trans "Manage" %}
                                         </a>
                                 {% else %}
                                     <span class="text-muted small">
@@ -287,7 +287,7 @@
                             <td class="text-center">
                                 {% if followup_28 %}
                                     <span class="badge bg-success badge-status">
-                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                        <i ></i> {% trans "Completed" %}
                                     </span>
                                 {% else %}
                                     <span class="badge bg-secondary badge-status">
@@ -353,7 +353,7 @@
                             <td class="text-center">
                                 {% if followup_90 %}
                                     <span class="badge bg-success badge-status">
-                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                        <i ></i> {% trans "Completed" %}
                                     </span>
                                 {% else %}
                                     <span class="badge bg-secondary badge-status">
@@ -419,7 +419,7 @@
                             <td class="text-center">
                                 {% if contactendcasecrf or has_contactendcasecrf %}
                                     <span class="badge bg-success badge-status">
-                                        <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                        <i ></i> {% trans "Completed" %}
                                     </span>
                                 {% else %}
                                     <span class="badge bg-secondary badge-status">
@@ -480,4 +480,7 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block dashboard_js %}
 {% endblock %}

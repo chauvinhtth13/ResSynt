@@ -185,7 +185,7 @@ class ClinicalCaseForm(forms.ModelForm):
             'MOTOR': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 6}),
             'VERBAL': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 5}),
             'QSOFA': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 3}),
-            'NEWS2': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 20}),
+            'NEWS2': forms.Select(attrs={'class': 'form-control'}),
             'SOFABASELINE': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 24}),
             'DIAGSOFA': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 24}),
             
@@ -261,6 +261,10 @@ class ClinicalCaseForm(forms.ModelForm):
             if not isinstance(field.widget, (forms.CheckboxInput, forms.CheckboxSelectMultiple, forms.RadioSelect)):
                 if 'class' not in field.widget.attrs:
                     field.widget.attrs['class'] = 'form-control'
+        
+        # Make NEWS2 optional to bypass validation for hidden tabs
+        if 'NEWS2' in self.fields:
+            self.fields['NEWS2'].required = False
     
     def clean(self):
         """

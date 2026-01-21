@@ -164,27 +164,34 @@ class SCR_CASE(AuditFieldsMixin):
         """
         create_usubjid = False
         
-        # 1. Generate SCRID if not exists - NEW FORMAT: PS-SITEID-0001
+        # 1. Generate SCRID if not exists - FORMAT: PS0001 (per site)
+        # Each site counts independently: Site 003 -> PS0001, PS0002...
+        #                                  Site 020 -> PS0001, PS0002...
         if not self.SCRID:
             if not self.SITEID:
                 raise ValueError("SITEID is required to generate SCRID")
             
-            # Get all existing SCRIDs for this site
+            # Get max SCRID number for THIS SITE ONLY
+            # Each site counts from PS0001 independently
             site_cases = SCR_CASE.objects.filter(
-                SCRID__startswith=f'PS-{self.SITEID}-'
+                SITEID=self.SITEID
+            ).exclude(
+                SCRID__isnull=True
+            ).exclude(
+                SCRID__exact=''
             ).values_list('SCRID', flat=True)
             
             max_num = 0
             for sid in site_cases:
-                # Extract number from PS-SITEID-XXXX
-                m = re.match(rf'PS-{self.SITEID}-(\d+)', str(sid))
+                # Extract number from PSXXXX format
+                m = re.match(r'PS(\d+)', str(sid))
                 if m:
                     num = int(m.group(1))
                     if num > max_num:
                         max_num = num
             
-            # Generate new SCRID with format PS-SITEID-0001
-            self.SCRID = f"PS-{self.SITEID}-{max_num + 1:04d}"
+            # Generate new SCRID: PS0001, PS0002, etc. (per site)
+            self.SCRID = f"PS{max_num + 1:04d}"
         
         # 2. Check eligibility
         is_eligible = (

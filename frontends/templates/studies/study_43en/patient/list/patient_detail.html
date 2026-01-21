@@ -111,7 +111,7 @@
                     <tbody>
                         <tr>
                             <td class="text-center">
-                                <span class="badge badge-primary">V2</span>
+                                <span >V2</span>
                             </td>
                             <td class="text-center">D10 ± 3</td>
                             <td class="text-center">
@@ -123,7 +123,7 @@
                         </tr>
                         <tr>
                             <td class="text-center">
-                                <span class="badge badge-primary">V3</span>
+                                <span >V3</span>
                             </td>
                             <td class="text-center">D28 ± 3</td>
                             <td class="text-center">
@@ -135,7 +135,7 @@
                         </tr>
                         <tr>
                             <td class="text-center">
-                                <span class="badge badge-primary">V4</span>
+                                <span >V4</span>
                             </td>
                             <td class="text-center">D90 ± 3</td>
                             <td class="text-center">
@@ -191,7 +191,7 @@
                                         </td>
                                         <td class="text-center">
                                             <span class="badge bg-success badge-status">
-                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                                <i ></i> {% trans "Completed" %}
                                             </span>
                                         </td>
                                         <td class="text-center">{{ screeningcase.last_modified_at|date:"d/m/Y H:i"|default:"-" }}</td>
@@ -222,7 +222,7 @@
                                     <td class="text-center">
                                         {% if enrollmentcase %}
                                             <span class="badge bg-success badge-status">
-                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                                <i ></i> {% trans "Completed" %}
                                             </span>
                                         {% else %}
                                             <span class="badge bg-secondary badge-status">
@@ -279,7 +279,7 @@
                                 <td class="text-center">
                                     {% if clinicalcase %}
                                         <span class="badge bg-success badge-status">
-                                            <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                            <i ></i> {% trans "Completed" %}
                                         </span>
                                     {% else %}
                                         <span class="badge bg-secondary badge-status">
@@ -336,7 +336,7 @@
                                 <td class="text-center">
                                     {% if laboratory_count > 0 %}
                                         <span >
-                                            <i class="fas fa-vials"></i> {{ laboratory_count }} {% trans "samples" %}
+                                            <i ></i> {{ laboratory_count }} {% trans "samples" %}
                                         </span>
                                     {% else %}
                                         <span class="badge bg-secondary badge-status">
@@ -361,7 +361,7 @@
                                 <td class="text-center">
                                     <a href="{% url 'study_43en:laboratory_test_list' usubjid=screeningcase.USUBJID %}" 
                                     class="btn btn-primary btn-sm btn-action-single">
-                                        <i class="fas fa-cogs"></i> {% trans "Manage" %}
+                                        <i ></i> {% trans "Manage" %}
                                     </a>
                                 </td>
                             </tr>
@@ -376,7 +376,7 @@
                                 <td class="text-center">
                                     {% if microbiology_count > 0 %}
                                         <span >
-                                            <i class="fas fa-bacteria"></i> {{ microbiology_count }} {% trans "samples" %}
+                                            <i ></i> {{ microbiology_count }} {% trans "samples" %}
                                         </span>
                                     {% else %}
                                         <span class="badge bg-secondary badge-status">
@@ -401,7 +401,7 @@
                                 <td class="text-center">
                                     <a href="{% url 'study_43en:microbiology_list' usubjid=screeningcase.USUBJID %}" 
                                     class="btn btn-primary btn-sm btn-action-single">
-                                        <i class="fas fa-cogs"></i> {% trans "Manage" %}
+                                        <i ></i> {% trans "Manage" %}
                                     </a>
                                 </td>
                             </tr>
@@ -441,7 +441,7 @@
                                 <td class="text-center">
                                     <a href="{% url 'study_43en:sample_collection_list' usubjid=screeningcase.USUBJID %}" 
                                     class="btn btn-primary btn-sm btn-action-single">
-                                        <i class="fas fa-cogs"></i> {% trans "Manage" %}
+                                        <i ></i> {% trans "Manage" %}
                                     </a>
                                 </td>
                             </tr>
@@ -456,7 +456,7 @@
                                     <td class="text-center">
                                         {% if fu_case_28 %}
                                             <span class="badge bg-success badge-status">
-                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                                <i ></i> {% trans "Completed" %}
                                             </span>
                                         {% else %}
                                             <span class="badge bg-secondary badge-status">
@@ -513,7 +513,7 @@
                                     <td class="text-center">
                                         {% if fu_case_90 %}
                                             <span class="badge bg-success badge-status">
-                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                                <i ></i> {% trans "Completed" %}
                                             </span>
                                         {% else %}
                                             <span class="badge bg-secondary badge-status">
@@ -569,7 +569,7 @@
                                     <td class="text-center">
                                         {% if disch_case %}
                                             <span class="badge bg-success badge-status">
-                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                                <i ></i> {% trans "Completed" %}
                                             </span>
                                         {% else %}
                                             <span class="badge bg-secondary badge-status">
@@ -625,7 +625,7 @@
                                     <td class="text-center">
                                         {% if endcasecrf %}
                                             <span class="badge bg-success badge-status">
-                                                <i class="fas fa-check-circle"></i> {% trans "Completed" %}
+                                                <i ></i> {% trans "Completed" %}
                                             </span>
                                         {% else %}
                                             <span class="badge bg-secondary badge-status">
@@ -691,6 +691,10 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+
+{% block dashboard_js %}
 
 {# Initialize Bootstrap tooltips #}
 <script nonce="{{ request.csp_nonce }}">

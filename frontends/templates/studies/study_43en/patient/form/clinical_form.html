@@ -13,11 +13,7 @@
 <li class="breadcrumb-item active">{% trans "Clinical Information" %}</li>
 {% endblock %}
 
-{% block dashboard_css %}
-<!-- Include CRF unified styles -->
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-<!-- All readonly styles are now in crf-forms.css -->
-{% endblock %}
+
 
 {% block dashboard_content %}
 
@@ -26,7 +22,7 @@
     <div class="card card-primary">
       <div class="card-header">
         <h3 class="card-title">
-          <i class="fas fa-stethoscope mr-2"></i>{% trans "Clinical Information 43EN" %} {{ enrollment_case.USUBJID }}
+          {% trans "Clinical Information 43EN" %} {{ enrollment_case.USUBJID }}
         </h3>
         <div class="card-tools">
           <span class="badge badge-info">CL {% if is_create %}(New){% else %}(Update){% endif %}</span>
@@ -54,12 +50,12 @@
         {# Read-only Mode Alert #}
         {% if is_readonly %}
         <div class="alert alert-info">
-          <i class="fas fa-eye mr-2"></i> {% trans "You are in view-only mode. To edit, please click the Edit button below." %}
+          {% trans "You are in view-only mode. To edit, please click the Edit button below." %}
         </div>
 
         <div class="mb-3 text-right">
           <a href="{% url 'study_43en:clinical_case_update' usubjid=enrollment_case.USUBJID %}" class="btn btn-info">
-            <i class="fas fa-edit mr-1"></i> {% trans "Edit" %}
+            {% trans "Edit" %}
           </a>
         </div>
         {% endif %}
@@ -68,28 +64,34 @@
         <ul class="nav nav-tabs custom-tabs" id="clinicalTabs" role="tablist">
           <li class="nav-item">
             <a class="nav-link active" id="page1-tab" data-toggle="tab" href="#page1" role="tab">
-              <i class="fas fa-user-md"></i> {% trans "Page 1" %}
+              {% trans "Page 1" %}
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" id="page2-tab" data-toggle="tab" href="#page2" role="tab">
-              <i class="fas fa-heartbeat"></i> {% trans "Page 2" %}
+              {% trans "Page 2" %}
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" id="page3-tab" data-toggle="tab" href="#page3" role="tab">
-              <i class="fas fa-procedures"></i> {% trans "Page 3" %}
+              {% trans "Page 3" %}
             </a>
           </li>
         </ul>
         
-        {# Main Form #}
+        {# Main Form - novalidate to bypass browser validation for hidden tabs #}
         <form method="post" 
               id="clinicalForm" 
               class="mt-4" 
               data-enrollment-id="{{ enrollment_case.USUBJID }}" 
-              {% if is_readonly %}data-read-only="true"{% endif %}>
+              {% if is_readonly %}data-read-only="true"{% endif %}
+              novalidate>
           {% csrf_token %}
+          
+          {# POST error marker for validation modal #}
+          {% if clinical_form.errors %}
+          <input type="hidden" id="django-form-has-errors" value="true">
+          {% endif %}
           
           {# Hidden Fields #}
           <input type="hidden" name="EVENT" value="CASE">
@@ -148,7 +150,7 @@
                   
                   {# Section Header #}
                   <div class="form-section-header">
-                    <i class="fas fa-hospital-user"></i> {% trans "Clinical Information" %}
+                    {% trans "Clinical Information" %}
                   </div>
                   
                   {# ===== INCLUDE PAGE 1 CONTENT ===== #}
@@ -158,13 +160,12 @@
                   <div class="d-flex justify-content-between mt-4">
                     <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID %}" 
                        class="btn btn-secondary">
-                      <i class="fas fa-arrow-left"></i> {% trans "Back" %}
+                      {% trans "Back" %}
                     </a>
                     <button type="button" 
                             class="btn btn-primary" 
                             data-tab-action="next">
-                      {% trans "Next" %} <i class="fas fa-arrow-right"></i>
-                    </button>
+                      {% trans "Next" %} </button>
                   </div>
                 </div>
               </div>
@@ -194,6 +195,9 @@
 
 {% block dashboard_js %}
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+<!-- Form Validation Modal -->
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/utils/form_validation.js' %}"></script>
 
 <!-- Clinical Form JavaScript -->
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/clinical_form.js' %}"></script>

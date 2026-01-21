@@ -27,9 +27,7 @@
 </li>
 {% endblock %}
 
-{% block dashboard_css %}
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-{% endblock %}
+
 
 {% block dashboard_content %}
 <div class="row">
@@ -37,13 +35,18 @@
     <!-- Screening Form Container -->
     <div class="screening-case-container">
       <div class="screening-case-header">
-        <i class="fas fa-user-check"></i> {% trans "Screening Form 43EN" %}
+        <i ></i> {% trans "Screening Form 43EN" %}
       </div>
       <div class="screening-case-content">
         
         {% if not is_readonly %}
         <form method="post" id="screeningForm">
           {% csrf_token %}
+          
+          {# POST error marker for validation modal #}
+          {% if form.errors %}
+          <input type="hidden" id="django-form-has-errors" value="true">
+          {% endif %}
           
           <!--  Hidden field for optimistic locking -->
           {{ form.version }}
@@ -216,7 +219,7 @@
           <div class="card card-default mt-3">
             <div class="card-header">
               <h3 class="card-title">
-                <i class="fas fa-check-circle"></i>
+                <i ></i>
                 {% trans "Eligibility Criteria" %}
               </h3>
             </div>
@@ -392,7 +395,7 @@
           <div class="card card-default mt-3">
             <div class="card-header bg-success text-white">
               <h3 class="card-title">
-                <i class="fas fa-user-check"></i>
+                <i ></i>
                 {% trans "Study Consent" %}
               </h3>
             </div>
@@ -470,7 +473,7 @@
           <div class="card card-default mt-3">
             <div class="card-header bg-light">
               <h3 class="card-title">
-                <i class="fas fa-history"></i>
+                <i ></i>
                 {% trans "Audit Trail" %}
               </h3>
             </div>
@@ -478,15 +481,15 @@
               <div class="row">
                 <div class="col-md-6">
                   <p class="mb-2">
-                    <strong><i class="fas fa-user-edit mr-1"></i> {% trans "Last Modified By" %}:</strong>
+                    <strong><i ></i> {% trans "Last Modified By" %}:</strong>
                     {{ form.instance.last_modified_by_username|default:"Unknown" }}
                   </p>
                   <p class="mb-2">
-                    <strong><i class="fas fa-clock mr-1"></i> {% trans "Last Modified At" %}:</strong>
+                    <strong><i ></i> {% trans "Last Modified At" %}:</strong>
                     {{ form.instance.last_modified_at|date:"d/m/Y H:i" }}
                   </p>
                   <p class="mb-0">
-                    <strong><i class="fas fa-code-branch mr-1"></i> {% trans "Version" %}:</strong>
+                    <strong><i ></i> {% trans "Version" %}:</strong>
                     v{{ form.instance.version }}
                   </p>
                 </div>
@@ -498,7 +501,7 @@
           <!-- Action Buttons -->
           <div class="mt-4">
             <a href="{% url 'study_43en:screening_case_list' %}" class="btn btn-secondary">
-              <i class="fas fa-times-circle mr-1"></i> {% trans "Cancel" %}
+              <i ></i> {% trans "Cancel" %}
             </a>
             <button type="reset" class="btn btn-warning btn-reset">
               <i class="fas fa-undo mr-1"></i> {% trans "Reset" %}
@@ -583,7 +586,7 @@
           <div class="card card-default mt-3">
             <div class="card-header">
               <h3 class="card-title">
-                <i class="fas fa-check-circle"></i>
+                <i ></i>
                 {% trans "Criteria" %}
               </h3>
             </div>
@@ -596,7 +599,7 @@
                       {% if form.instance.UPPER16AGE %}
                         <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
                       {% else %}
-                        <span class="badge badge-secondary">{% trans "No" %}</span>
+                        <span >{% trans "No" %}</span>
                       {% endif %}
                     </td>
                   </tr>
@@ -606,7 +609,7 @@
                       {% if form.instance.INFPRIOR2OR48HRSADMIT %}
                         <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
                       {% else %}
-                        <span class="badge badge-secondary">{% trans "No" %}</span>
+                        <span >{% trans "No" %}</span>
                       {% endif %}
                     </td>
                   </tr>
@@ -616,7 +619,7 @@
                       {% if form.instance.ISOLATEDKPNFROMINFECTIONORBLOOD %}
                         <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
                       {% else %}
-                        <span class="badge badge-secondary">{% trans "No" %}</span>
+                        <span >{% trans "No" %}</span>
                       {% endif %}
                     </td>
                   </tr>
@@ -636,7 +639,7 @@
                       {% if form.instance.CONSENTTOSTUDY %}
                         <span class="badge badge-success text-dark">{% trans "Yes" %}</span>
                       {% else %}
-                        <span class="badge badge-secondary">{% trans "No" %}</span>
+                        <span >{% trans "No" %}</span>
                       {% endif %}
                     </td>
                   </tr>

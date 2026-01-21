@@ -303,16 +303,20 @@ def get_site_filtered_object_or_404(model, site_filter, filter_type, **kwargs):
     
     # 🚀 DIRECT QUERY - Skip cache, query exactly what we need
     try:
-        base_qs = model.objects.using(DB_ALIAS)
-        
-        # Apply site filter if needed
-        if filter_type == 'single':
-            # Single site - add SITEID filter
-            base_qs = base_qs.filter(SITEID=site_filter)
-        elif filter_type == 'multiple' and site_filter:
-            # Multiple sites - add SITEID__in filter
-            base_qs = base_qs.filter(SITEID__in=site_filter)
-        # filter_type == 'all' - no site filter needed
+        # Apply site filter using site manager (supports models with/without SITEID field)
+        if filter_type == 'all':
+            # No site filter needed
+            base_qs = model.objects.using(DB_ALIAS)
+        else:
+            # Use site manager which handles both SITEID and USUBJID-based filtering
+            if filter_type == 'single':
+                base_qs = model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
+            else:  # filter_type == 'multiple'
+                if not site_filter:
+                    # Empty site filter - return nothing
+                    base_qs = model.objects.using(DB_ALIAS).none()
+                else:
+                    base_qs = model.site_objects.using(DB_ALIAS).filter_by_site(site_filter)
         
         obj = base_qs.get(**kwargs)
         logger.debug(f"[{model.__name__}] Direct query: found {kwargs}")

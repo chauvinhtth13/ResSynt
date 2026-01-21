@@ -3,173 +3,19 @@
 {% load i18n %}
 {% load dict_filters %}
 
-{% block dashboard_css %}
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-<style>
-  /* Sample List Enhanced Styles */
-  .sample-list-header {
-    background: var(--crf-gradient-primary);
-    color: white;
-    padding: 20px;
-    border-radius: 8px 8px 0 0;
-  }
-  
-  .sample-status-collected {
-    background: var(--crf-gradient-success);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-  }
-  
-  .sample-status-collected i {
-    margin-right: 5px;
-  }
-  
-  .sample-status-not-collected {
-    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-  
-  .sample-table-row {
-    transition: background-color 0.2s ease;
-  }
-  
-  .sample-table-row:hover {
-    background-color: rgba(102, 126, 234, 0.03);
-  }
-  
-  .sample-type-cell {
-    font-weight: 600;
-    color: #374151;
-    font-size: 1rem;
-  }
-  
-  .culture-result-positive {
-    background: var(--crf-gradient-danger);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
-    margin-left: 5px;
-  }
-  
-  .culture-result-negative {
-    background: var(--crf-gradient-success);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
-    margin-left: 5px;
-  }
-  
-  .sample-date-badge {
-    background: #f0f9ff;
-    border-left: 3px solid #0891b2;
-    padding: 3px 8px;
-    border-radius: 4px;
-    display: block;
-    margin: 2px 0;
-    font-size: 0.8rem;
-    white-space: nowrap;
-  }
-  
-  .sample-dates {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  
-  /* Prevent horizontal scroll */
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .table {
-    min-width: 100%;
-    table-layout: auto;
-  }
-  
-  .action-btn-group {
-    display: flex;
-    gap: 5px;
-  }
-  
-  .btn-view {
-    background: var(--crf-gradient-info);
-    border: none;
-    color: white;
-    transition: all 0.3s ease;
-  }
-  
-  .btn-view:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 2px 6px rgba(8, 145, 178, 0.3);
-    color: white;
-  }
-  
-  .btn-edit {
-    background: var(--crf-gradient-warning);
-    border: none;
-    color: white;
-    transition: all 0.2s ease;
-  }
-  
-  .btn-edit:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 2px 6px rgba(251, 146, 60, 0.3);
-    color: white;
-  }
-  
-  .btn-create {
-    background: var(--crf-gradient-success);
-    border: none;
-    color: white;
-    transition: all 0.2s ease;
-  }
-  
-  .btn-create:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-    color: white;
-  }
-  
-  .table thead th {
-    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-    color: white;
-    font-weight: 600;
-    border: none;
-    text-transform: uppercase;
-    font-size: 0.875rem;
-    letter-spacing: 0.5px;
-  }
-</style>
-{% endblock %}
 
 {% block title %}{% trans "Sample List" %}{% endblock %}
 
 {% block dashboard_content %}
 <div class="container-fluid">
   <div class="card shadow-lg mb-4">
-    <div class="sample-list-header">
+    <div class="card-header py-3" style="background: var(--crf-gradient-primary); color: white;">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-          <i class="fas fa-vials"></i>
+          <i ></i>
           {% trans "Patient Sample Information" %}
           {% if is_view_only %}
-          <span class="badge badge-light ml-2">
+          <span class="badge badge-light text-primary ml-2">
             <i ></i> {% trans "View Only Mode" %}
           </span>
           {% endif %}
@@ -216,14 +62,14 @@
             {% for sample_type, sample_type_name in sample_types %}
               <tr class="sample-table-row">
                 <td class="text-center sample-type-cell">
-                  <i class="fas fa-flask"></i> {{ sample_type_name }}
+                  <i ></i> {{ sample_type_name }}
                 </td>
                 {% with sample=samples_by_type|get_item:sample_type %}
                   {% if sample %}
                     <td class="text-center">
                       {% if sample.SAMPLE %}
                         <span class="sample-status-collected">
-                          <i class="fas fa-check-circle"></i> {% trans "Collected" %}
+                          <i ></i> {% trans "Collected" %}
                         </span>
                       {% else %}
                         <span class="sample-status-not-collected">
@@ -236,22 +82,22 @@
                         <div class="sample-dates">
                           {% if sample.STOOL and sample.STOOLDATE %}
                             <span class="sample-date-badge">
-                              <i class="fas fa-calendar-alt"></i> {% trans "Stool" %}: {{ sample.STOOLDATE|date:"d/m/Y" }}
+                              <i ></i> {% trans "Stool" %}: {{ sample.STOOLDATE|date:"d/m/Y" }}
                             </span>
                           {% endif %}
                           {% if sample.RECTSWAB and sample.RECTSWABDATE %}
                             <span class="sample-date-badge">
-                              <i class="fas fa-calendar-alt"></i> {% trans "Rectal" %}: {{ sample.RECTSWABDATE|date:"d/m/Y" }}
+                              <i ></i> {% trans "Rectal" %}: {{ sample.RECTSWABDATE|date:"d/m/Y" }}
                             </span>
                           {% endif %}
                           {% if sample.THROATSWAB and sample.THROATSWABDATE %}
                             <span class="sample-date-badge">
-                              <i class="fas fa-calendar-alt"></i> {% trans "Throat" %}: {{ sample.THROATSWABDATE|date:"d/m/Y" }}
+                              <i ></i> {% trans "Throat" %}: {{ sample.THROATSWABDATE|date:"d/m/Y" }}
                             </span>
                           {% endif %}
                           {% if sample.BLOOD and sample.BLOODDATE %}
                             <span class="sample-date-badge">
-                              <i class="fas fa-calendar-alt"></i> {% trans "Blood" %}: {{ sample.BLOODDATE|date:"d/m/Y" }}
+                              <i ></i> {% trans "Blood" %}: {{ sample.BLOODDATE|date:"d/m/Y" }}
                             </span>
                           {% endif %}
                           {% if not sample.STOOLDATE and not sample.RECTSWABDATE and not sample.THROATSWABDATE and not sample.BLOODDATE %}
@@ -276,7 +122,7 @@
                                 <i class="fas fa-check"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_1 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "N/A" %}</span>
+                              <span >{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_1 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}
@@ -294,7 +140,7 @@
                                 <i class="fas fa-check"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_2 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "N/A" %}</span>
+                              <span >{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_2 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}
@@ -312,7 +158,7 @@
                                 <i class="fas fa-check"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_3 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "N/A" %}</span>
+                              <span >{% trans "N/A" %}</span>
                             {% elif sample.CULTRES_3 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}

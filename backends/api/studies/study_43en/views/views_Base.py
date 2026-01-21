@@ -31,6 +31,7 @@ from backends.studies.study_43en.models.schedule import ExpectedDates, ContactEx
 #  Import utils từ study app
 
 from backends.audit_logs.utils import get_site_filtered_object_or_404
+from backends.studies.study_43en.utils.permission_decorators import require_export_permission
 
 logger = logging.getLogger(__name__)
 
@@ -661,6 +662,7 @@ def export_to_excel(request):
     return response
 
 @login_required
+@require_export_permission()
 def export_data_page(request):
     """Hiển thị trang export với filters -  WITH SITE FILTERING"""
     
@@ -758,6 +760,7 @@ def export_data_page(request):
 
 
 @login_required
+@require_export_permission()
 def export_data(request):
     """Handle export with filters -  WITH SITE FILTERING SECURITY"""
     if request.method != 'POST':

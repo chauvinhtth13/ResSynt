@@ -26,10 +26,7 @@
 {% endif %}
 {% endblock %}
 
-{% block dashboard_css %}
-<!-- Include CRF unified styles -->
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-{% endblock %}
+
 
 {% block breadcrumb %}
 <ol class="breadcrumb float-sm-right">
@@ -80,8 +77,8 @@
                         <div class="col-md-3">
                             <strong>{% trans "Status" %}:</strong><br>
                             {% if followup_case %}
-                                <span class="badge badge-success">
-                                    <i class="fas fa-check-circle"></i> {% trans "Data Available" %}
+                                <span >
+                                    <i ></i> {% trans "Data Available" %}
                                 </span>
                             {% else %}
                                 <span class="badge badge-warning">
@@ -100,6 +97,11 @@
           data-is-create="{{ is_create|yesno:'true,false' }}"
           {% if is_readonly %}class="readonly-form"{% endif %}>
         {% csrf_token %}
+        
+        {# POST error marker for validation modal #}
+        {% if followup_form.errors or rehospitalization_formset.errors or antibiotic_formset.errors %}
+        <input type="hidden" id="django-form-has-errors" value="true">
+        {% endif %}
 
         <!--  Section 1: Assessment at Day 28 -->
         <div class="card card-outline card-info">
@@ -607,6 +609,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Mobility.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -619,6 +622,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Mobility.errors %}
                                         <div class="invalid-feedback d-block">
@@ -638,6 +642,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Personal_Hygiene.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -650,6 +655,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Personal_Hygiene.errors %}
                                         <div class="invalid-feedback d-block">
@@ -669,6 +675,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Daily_Activities.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -681,6 +688,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Daily_Activities.errors %}
                                         <div class="invalid-feedback d-block">
@@ -694,12 +702,13 @@
                         <!--  5d. Pain_Discomfort -->
                         <div class="col-md-6 mb-3">
                             <div class="border rounded p-3 h-100 border-left-danger">
-                                <h6 class="text-danger mb-3">
+                                <h6 class="text-danger mb-3 no-validation-detect">
                                     <i class="fas fa-heartbeat mr-2"></i>
                                     {{ followup_form.Pain_Discomfort.label }}
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Pain_Discomfort.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -712,6 +721,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Pain_Discomfort.errors %}
                                         <div class="invalid-feedback d-block">
@@ -731,6 +741,7 @@
                                 </h6>
                                 <div class="form-group">
                                     {% for choice_value, choice_label in followup_form.Anxiety.field.choices %}
+                                        {% if choice_value %}
                                         <div class="form-check">
                                             <input class="form-check-input" 
                                                 type="radio" 
@@ -743,6 +754,7 @@
                                                 {{ choice_label }}
                                             </label>
                                         </div>
+                                        {% endif %}
                                     {% endfor %}
                                     {% if followup_form.Anxiety.errors %}
                                         <div class="invalid-feedback d-block">
@@ -871,6 +883,9 @@
 {% block dashboard_js %}
 <!-- Datepicker Scripts -->
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+<!-- Form Validation Modal -->
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/utils/form_validation.js' %}"></script>
 
 <!-- Change Reason Handler -->
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>

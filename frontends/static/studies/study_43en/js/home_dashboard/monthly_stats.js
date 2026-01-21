@@ -11,13 +11,13 @@
  * Version: 1.0
  */
 
-(function() {
+(function () {
     'use strict';
-    
+
     // ========================================================================
     // CONFIGURATION
     // ========================================================================
-    
+
     const CONFIG = {
         API_ENDPOINT: '/studies/43en/api/monthly-stats/',
         CHART_COLORS: {
@@ -31,59 +31,53 @@
         SELECTED_QUARTER: 'all',
         SELECTED_MONTH: 'all',
     };
-    
+
     // ========================================================================
     // STATE
     // ========================================================================
-    
+
     let monthlyChart = null;
-    
+
     // ========================================================================
     // DOM READY
     // ========================================================================
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('[Monthly Stats] Initializing...');
-        
+
+    document.addEventListener('DOMContentLoaded', function () {
+
         // Initialize
         initMonthlySiteButtons();
         initPeriodTypeSelector();
         initApplyButton();
         loadMonthlyData();
     });
-    
+
     // ========================================================================
     // SITE FILTER BUTTONS
     // ========================================================================
-    
+
     /**
-     * Initialize monthly site filter buttons
+     * Initialize monthly site filter dropdown
      */
     function initMonthlySiteButtons() {
-        const filterButtons = document.querySelectorAll('.monthly-site-btn');
-        
-        filterButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const site = this.getAttribute('data-site');
-                
-                // Update active state
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
+        const filterSelect = document.querySelector('.monthly-site-select');
+
+        if (filterSelect) {
+            filterSelect.addEventListener('change', function () {
+                const site = this.value;
+
                 // Update current site
                 CONFIG.CURRENT_SITE = site;
-                
+
                 // Reload data
-                console.log('[Monthly Stats] Switching to site:', site);
                 loadMonthlyData();
             });
-        });
+        }
     }
-    
+
     // ========================================================================
     // PERIOD TYPE SELECTOR
     // ========================================================================
-    
+
     /**
      * Initialize period type selector (Year/Quarter/Month)
      */
@@ -92,13 +86,13 @@
         const yearSelector = document.getElementById('yearSelector');
         const quarterSelector = document.getElementById('quarterSelector');
         const monthSelector = document.getElementById('monthSelector');
-        
+
         if (!periodTypeSelect) return;
-        
-        periodTypeSelect.addEventListener('change', function() {
+
+        periodTypeSelect.addEventListener('change', function () {
             const periodType = this.value;
             CONFIG.PERIOD_TYPE = periodType;
-            
+
             // Show/hide appropriate selectors
             if (periodType === 'year') {
                 yearSelector.style.display = 'flex';
@@ -113,14 +107,13 @@
                 quarterSelector.style.display = 'none';
                 monthSelector.style.display = 'flex';
             }
-            
-            console.log('[Monthly Stats] Period type changed:', periodType);
+
         });
-        
+
         // Trigger initial state
         periodTypeSelect.dispatchEvent(new Event('change'));
     }
-    
+
     /**
      * Initialize apply button
      */
@@ -129,27 +122,21 @@
         const yearSelect = document.getElementById('selectedYear');
         const quarterSelect = document.getElementById('selectedQuarter');
         const monthSelect = document.getElementById('selectedMonth');
-        
+
         if (!applyBtn) return;
-        
-        applyBtn.addEventListener('click', function() {
+
+        applyBtn.addEventListener('click', function () {
             // Update config
             CONFIG.SELECTED_YEAR = yearSelect ? yearSelect.value : 'all';
             CONFIG.SELECTED_QUARTER = quarterSelect ? quarterSelect.value : 'all';
             CONFIG.SELECTED_MONTH = monthSelect ? monthSelect.value : 'all';
-            
-            console.log('[Monthly Stats] Filters:', {
-                periodType: CONFIG.PERIOD_TYPE,
-                year: CONFIG.SELECTED_YEAR,
-                quarter: CONFIG.SELECTED_QUARTER,
-                month: CONFIG.SELECTED_MONTH,
-            });
-            
+
+
             // Reload data
             loadMonthlyData();
         });
     }
-    
+
     /**
      * Calculate date range from year/quarter/month selection
      */
@@ -158,9 +145,9 @@
         const year = CONFIG.SELECTED_YEAR;
         const quarter = CONFIG.SELECTED_QUARTER;
         const month = CONFIG.SELECTED_MONTH;
-        
+
         let startDate, endDate;
-        
+
         if (periodType === 'year') {
             if (year === 'all') {
                 // All years: study start to today
@@ -186,7 +173,7 @@
                 };
                 const months = quarterMonths[quarter];
                 startDate = `${year}-${months.start}-01`;
-                
+
                 // Last day of end month
                 const endMonth = parseInt(months.end);
                 const lastDay = new Date(parseInt(year), endMonth, 0).getDate();
@@ -200,27 +187,27 @@
             } else {
                 // Specific month
                 startDate = `${year}-${month}-01`;
-                
+
                 // Last day of month
                 const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
                 endDate = `${year}-${month}-${lastDay}`;
             }
         }
-        
+
         return { startDate, endDate };
     }
-    
+
     // ========================================================================
     // DATA LOADING
     // ========================================================================
-    
+
     /**
      * Load monthly statistics data
      */
     function loadMonthlyData() {
         const chartContainer = document.getElementById('monthlyChart');
         const loadingIndicator = document.getElementById('monthlyChartLoading');
-        
+
         // Show loading
         if (loadingIndicator) {
             loadingIndicator.style.display = 'block';
@@ -228,26 +215,20 @@
         if (chartContainer) {
             chartContainer.style.display = 'none';
         }
-        
+
         // Calculate date range from filters
         const { startDate, endDate } = calculateDateRange();
-        
+
         // Build API URL
         const params = new URLSearchParams({
             site: CONFIG.CURRENT_SITE,
             start_date: startDate,
             end_date: endDate,
         });
-        
+
         const url = `${CONFIG.API_ENDPOINT}?${params.toString()}`;
-        
-        console.log('[Monthly Stats] Loading data:', { 
-            site: CONFIG.CURRENT_SITE, 
-            startDate, 
-            endDate,
-            periodType: CONFIG.PERIOD_TYPE,
-        });
-        
+
+
         // Fetch data
         fetch(url, {
             method: 'GET',
@@ -256,49 +237,46 @@
             },
             credentials: 'same-origin',
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(result => {
-            if (!result.success) {
-                throw new Error(result.error || 'Unknown error');
-            }
-            
-            console.log('[Monthly Stats] Data received:', result.data);
-            
-            // Hide loading
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-            if (chartContainer) {
-                chartContainer.style.display = 'block';
-            }
-            
-            // Render chart and table
-            renderMonthlyChart(chartContainer, result.data);
-            renderMonthlyTable(result.data);
-        })
-        .catch(error => {
-            console.error('[Monthly Stats] Load error:', error);
-            
-            if (loadingIndicator) {
-                loadingIndicator.innerHTML = `
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error');
+                }
+
+                // Hide loading
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+                if (chartContainer) {
+                    chartContainer.style.display = 'block';
+                }
+
+                // Render chart and table
+                renderMonthlyChart(chartContainer, result.data);
+                renderMonthlyTable(result.data);
+            })
+            .catch(error => {
+
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>
                         Failed to load monthly statistics: ${escapeHtml(error.message)}
                     </div>
                 `;
-            }
-        });
+                }
+            });
     }
-    
+
     // ========================================================================
     // CHART RENDERING
     // ========================================================================
-    
+
     /**
      * Render monthly bar chart
      */
@@ -308,7 +286,7 @@
             monthlyChart.dispose();
         }
         monthlyChart = echarts.init(container);
-        
+
         // Chart options
         const option = {
             title: {
@@ -324,7 +302,7 @@
                     color: '#666',
                 },
             },
-            
+
             tooltip: {
                 trigger: 'axis',
                 axisPointer: {
@@ -336,10 +314,10 @@
                 textStyle: {
                     color: '#333',
                 },
-                formatter: function(params) {
+                formatter: function (params) {
                     let html = `<div style="padding: 5px;">`;
                     html += `<strong>${params[0].axisValue}</strong><br/>`;
-                    
+
                     params.forEach(item => {
                         html += `
                             <div style="margin-top: 5px;">
@@ -348,12 +326,12 @@
                             </div>
                         `;
                     });
-                    
+
                     html += `</div>`;
                     return html;
                 },
             },
-            
+
             legend: {
                 data: ['Screening', 'Enrollment'],
                 top: 35,
@@ -361,7 +339,7 @@
                     fontSize: 12,
                 },
             },
-            
+
             grid: {
                 left: '3%',
                 right: '4%',
@@ -369,7 +347,7 @@
                 top: 65,
                 containLabel: true,
             },
-            
+
             xAxis: {
                 type: 'category',
                 data: data.months,
@@ -378,7 +356,7 @@
                     fontSize: 10,
                 },
             },
-            
+
             yAxis: {
                 type: 'value',
                 name: 'Patients',
@@ -393,7 +371,7 @@
                 },
                 minInterval: 1,  // Integer values only
             },
-            
+
             series: [
                 {
                     name: 'Screening',
@@ -419,92 +397,88 @@
                 },
             ],
         };
-        
+
         // Set option and render
         monthlyChart.setOption(option);
-        
+
         // Responsive resize
-        window.addEventListener('resize', function() {
+        window.addEventListener('resize', function () {
             if (monthlyChart) {
                 monthlyChart.resize();
             }
         });
-        
-        console.log('[Monthly Stats] Chart rendered');
     }
-    
+
     // ========================================================================
     // TABLE RENDERING
     // ========================================================================
-    
+
     /**
      * Render monthly statistics table
      */
     function renderMonthlyTable(data) {
         const table = document.getElementById('monthlyStatsTable');
         if (!table) {
-            console.error('[Monthly Stats] Table not found');
             return;
         }
-        
+
         const tbody = table.querySelector('tbody');
         if (!tbody) return;
-        
+
         // Clear existing rows
         tbody.innerHTML = '';
-        
+
         // Add data rows
         for (let i = 0; i < data.months.length; i++) {
             const row = document.createElement('tr');
-            
+
             const monthCell = document.createElement('td');
             monthCell.textContent = data.months[i];
-            
+
             const screeningCell = document.createElement('td');
             screeningCell.className = 'text-end fw-semibold text-primary';
             screeningCell.textContent = data.screening[i];
-            
+
             const enrollmentCell = document.createElement('td');
             enrollmentCell.className = 'text-end fw-semibold text-success';
             enrollmentCell.textContent = data.enrollment[i];
-            
+
             row.appendChild(monthCell);
             row.appendChild(screeningCell);
             row.appendChild(enrollmentCell);
-            
+
             tbody.appendChild(row);
         }
-        
+
         // Add total row
         const totalRow = document.createElement('tr');
         totalRow.className = 'table-secondary fw-bold';
-        
+
         const totalLabelCell = document.createElement('td');
         totalLabelCell.textContent = 'Total';
-        
+
         const totalScreeningCell = document.createElement('td');
         totalScreeningCell.className = 'text-end';
         const totalScreening = data.screening.reduce((a, b) => a + b, 0);
         totalScreeningCell.textContent = totalScreening;
-        
+
         const totalEnrollmentCell = document.createElement('td');
         totalEnrollmentCell.className = 'text-end';
         const totalEnrollment = data.enrollment.reduce((a, b) => a + b, 0);
         totalEnrollmentCell.textContent = totalEnrollment;
-        
+
         totalRow.appendChild(totalLabelCell);
         totalRow.appendChild(totalScreeningCell);
         totalRow.appendChild(totalEnrollmentCell);
-        
+
         tbody.appendChild(totalRow);
-        
-        console.log('[Monthly Stats] Table rendered');
+
     }
-    
+
     // ========================================================================
     // UTILITY FUNCTIONS
     // ========================================================================
-    
+
     /**
      * Escape HTML to prevent XSS
      */
@@ -518,5 +492,5 @@
         };
         return String(text).replace(/[&<>"']/g, m => map[m]);
     }
-    
+
 })();

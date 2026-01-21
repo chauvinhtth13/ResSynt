@@ -653,6 +653,37 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                 else:
                     logger.info(" Change reason required: Real update detected")
                     
+                    #  FIX: If standard change detection failed but we know there are real updates,
+                    # generate synthetic changes from _real_update_forms
+                    if not all_changes and '_real_update_forms' in forms_dict:
+                        real_update_forms = forms_dict['_real_update_forms']
+                        logger.info(f" Generating synthetic changes for {len(real_update_forms)} real update forms")
+                        
+                        for update_info in real_update_forms:
+                            form = update_info['form']
+                            instance_pk = update_info['instance_pk']
+                            test_type = update_info.get('test_type', 'Unknown')
+                            
+                            # Create a synthetic change entry for each changed form
+                            # This ensures the modal will appear
+                            for field_name in form.changed_data:
+                                if field_name == 'id':  # Skip id field
+                                    continue
+                                    
+                                old_value = form.initial.get(field_name, '')
+                                new_value = form.cleaned_data.get(field_name, '')
+                                
+                                all_changes.append({
+                                    'field': f"laboratory_tests_{instance_pk}_{field_name}",
+                                    'old_value': old_value,
+                                    'new_value': new_value,
+                                    'old_display': str(old_value) if old_value else 'N/A',
+                                    'new_display': str(new_value) if new_value else 'N/A',
+                                    'display_name': f"{test_type} - {field_name}",
+                                })
+                        
+                        logger.info(f" Generated {len(all_changes)} synthetic changes")
+                    
             except Exception as e:
                 logger.error(f" Error in skip_change_reason callable: {e}", exc_info=True)
                 # On error, DON'T skip (safer approach)
@@ -845,9 +876,11 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                 if not form.cleaned_data:
                     continue
                 
-                #  OPTIMIZATION: Skip forms that Django says haven't changed
-                if hasattr(form, 'has_changed') and not form.has_changed():
-                    continue
+                #  OPTIMIZATION REMOVED: Form.has_changed() can be unreliable for DateFields
+                # (mismatch between initial Date and submitted String).
+                # We rely on our robust ChangeDetector logic instead.
+                # if hasattr(form, 'has_changed') and not form.has_changed():
+                #    continue
                 
                 instance = form.instance
                 

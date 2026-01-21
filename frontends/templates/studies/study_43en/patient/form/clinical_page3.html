@@ -4,7 +4,7 @@
     <div class="clinical-case-header">
       <div class="row">
         <div class="col">
-          <h4 class="m-0"><i class="fas fa-procedures mr-2"></i>CLINICAL - INTERVENTIONS & TREATMENTS</h4>
+          <h4 class="m-0">CLINICAL - INTERVENTIONS & TREATMENTS</h4>
         </div>
         <div class="col text-right">
           <span class="page-indicator">CL1 (3/3)</span>
@@ -15,7 +15,7 @@
     <div class="clinical-case-content">
       {# ========== INFECTION CHARACTERISTICS ========== #}
       <div class="form-section-header">
-        <i class="fas fa-virus mr-2"></i>{% trans "Infection Characteristics" %}
+        {% trans "Infection Characteristics" %}
       </div>
       
       {# 27. Infection Focus - FIX TÊN BIẾN #}
@@ -47,7 +47,7 @@
                    id="id_BLOODINFECT_yes"
                    {% if clinical_form.BLOODINFECT.value == 'yes' %}checked{% endif %}>
             <label class="form-check-label" for="id_BLOODINFECT_yes">
-              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+              {% trans "Yes" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -58,7 +58,7 @@
                    id="id_BLOODINFECT_no"
                    {% if clinical_form.BLOODINFECT.value == 'no' %}checked{% endif %}>
             <label class="form-check-label" for="id_BLOODINFECT_no">
-              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+              {% trans "No" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -69,7 +69,7 @@
                    id="id_BLOODINFECT_unknown"
                    {% if clinical_form.BLOODINFECT.value == 'unknown' %}checked{% endif %}>
             <label class="form-check-label" for="id_BLOODINFECT_unknown">
-              <i class="fas fa-question-circle text-warning mr-1"></i>{% trans "Unknown" %}
+              {% trans "Unknown" %}
             </label>
           </div>
         </div>
@@ -81,7 +81,7 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label for="{{ clinical_form.SOFABASELINE.id_for_label }}">
-                  <i class="fas fa-chart-bar text-primary mr-1"></i>{% trans "Baseline SOFA Score" %}
+                  {% trans "Baseline SOFA Score" %}
                 </label>
                 {{ clinical_form.SOFABASELINE }}
               </div>
@@ -89,7 +89,7 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label for="{{ clinical_form.DIAGSOFA.id_for_label }}">
-                  <i class="fas fa-chart-line text-info mr-1"></i>{% trans "SOFA Score at Diagnosis" %}
+                  {% trans "SOFA Score at Diagnosis" %}
                 </label>
                 {{ clinical_form.DIAGSOFA }}
               </div>
@@ -110,7 +110,7 @@
                    id="id_SEPTICSHOCK_yes"
                    {% if clinical_form.SEPTICSHOCK.value == 'yes' %}checked{% endif %}>
             <label class="form-check-label" for="id_SEPTICSHOCK_yes">
-              <i class="fas fa-exclamation-triangle text-danger mr-1"></i>{% trans "Yes" %}
+              {% trans "Yes" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -121,7 +121,7 @@
                    id="id_SEPTICSHOCK_no"
                    {% if form.SEPTICSHOCK.value == 'no' %}checked{% endif %}>
             <label class="form-check-label" for="id_SEPTICSHOCK_no">
-              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "No" %}
+              {% trans "No" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -132,7 +132,7 @@
                    id="id_SEPTICSHOCK_unknown"
                    {% if form.SEPTICSHOCK.value == 'unknown' %}checked{% endif %}>
             <label class="form-check-label" for="id_SEPTICSHOCK_unknown">
-              <i class="fas fa-question-circle text-warning mr-1"></i>{% trans "Unknown" %}
+              {% trans "Unknown" %}
             </label>
           </div>
         </div>
@@ -150,7 +150,7 @@
                    id="id_INFECTSRC_community"
                    {% if form.INFECTSRC.value == 'Community' %}checked{% endif %}>
             <label class="form-check-label" for="id_INFECTSRC_community">
-              <i class="fas fa-home text-primary mr-1"></i>{% trans "Community" %}
+              {% trans "Community" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -161,7 +161,7 @@
                    id="id_INFECTSRC_healthcare"
                    {% if form.INFECTSRC.value == 'HealthcareAssociated' %}checked{% endif %}>
             <label class="form-check-label" for="id_INFECTSRC_healthcare">
-              <i class="fas fa-hospital text-danger mr-1"></i>{% trans "Healthcare-Associated" %}
+              {% trans "Healthcare-Associated" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -172,7 +172,7 @@
                    id="id_INFECTSRC_unknown"
                    {% if form.INFECTSRC.value == 'Unknown' %}checked{% endif %}>
             <label class="form-check-label" for="id_INFECTSRC_unknown">
-              <i class="fas fa-question-circle text-warning mr-1"></i>{% trans "Unclassified" %}
+              {% trans "Unclassified" %}
             </label>
           </div>
         </div>
@@ -180,7 +180,7 @@
       
       {# ========== INTERVENTIONS ========== #}
       <div class="form-section-header">
-        <i class="fas fa-hands-helping mr-2"></i>{% trans "Interventions During Hospitalization" %}
+        {% trans "Interventions During Hospitalization" %}
       </div>
       
       {# 31. Respiratory Support - FIX TÊN BIẾN #}
@@ -195,7 +195,7 @@
                    id="id_RESPISUPPORT_yes"
                    {% if clinical_form.RESPISUPPORT.value %}checked{% endif %}>
             <label class="form-check-label" for="id_RESPISUPPORT_yes">
-              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+              {% trans "Yes" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -206,7 +206,7 @@
                    id="id_RESPISUPPORT_no"
                    {% if clinical_form.RESPISUPPORT.value == False %}checked{% endif %}>
             <label class="form-check-label" for="id_RESPISUPPORT_no">
-              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+              {% trans "No" %}
             </label>
           </div>
         </div>
@@ -215,7 +215,7 @@
         <div id="respi-support-section" 
              class="conditional-section {% if clinical_form.RESPISUPPORT.value %}show{% endif %}">
           <h6 class="text-primary mb-3 mt-3">
-            <i class="fas fa-lungs mr-2"></i>{% trans "Support Type & Duration" %}
+            {% trans "Support Type & Duration" %}
           </h6>
           
           <div class="row">
@@ -259,7 +259,7 @@
                   id="id_RESUSFLUID_yes"
                   {% if clinical_form.RESUSFLUID.value %}checked{% endif %}>
             <label class="form-check-label" for="id_RESUSFLUID_yes">
-              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+              {% trans "Yes" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -270,7 +270,7 @@
                   id="id_RESUSFLUID_no"
                   {% if clinical_form.RESUSFLUID.value == False %}checked{% endif %}>
             <label class="form-check-label" for="id_RESUSFLUID_no">
-              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+              {% trans "No" %}
             </label>
           </div>
         </div>
@@ -279,7 +279,7 @@
         <div id="resus-fluid-section" 
             class="conditional-section {% if clinical_form.RESUSFLUID.value %}show{% endif %}">
           <h6 class="text-primary mb-3 mt-3">
-            <i class="fas fa-tint mr-2"></i>{% trans "Fluid Volume Details" %}
+            {% trans "Fluid Volume Details" %}
           </h6>
           
           <div class="row">
@@ -350,7 +350,7 @@
                    id="id_VASOINOTROPES_yes"
                    {% if clinical_form.VASOINOTROPES.value %}checked{% endif %}>
             <label class="form-check-label" for="id_VASOINOTROPES_yes">
-              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+              {% trans "Yes" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
@@ -361,7 +361,7 @@
                    id="id_VASOINOTROPES_no"
                    {% if clinical_form.VASOINOTROPES.value == False %}checked{% endif %}>
             <label class="form-check-label" for="id_VASOINOTROPES_no">
-              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+              {% trans "No" %}
             </label>
           </div>
         </div>
@@ -370,7 +370,7 @@
         <div id="vasodrug-section" 
              class="conditional-section {% if clinical_form.VASOINOTROPES.value %}show{% endif %}">
           <h6 class="text-primary mb-3 mt-3">
-            <i class="fas fa-syringe mr-2"></i>{% trans "Vasopressor Details" %}
+            {% trans "Vasopressor Details" %}
           </h6>
           
           {#  CRITICAL FIX: ADD MANAGEMENT FORM #}
@@ -410,7 +410,7 @@
           <button type="button" 
                   class="btn btn-success btn-sm mt-3" 
                   id="add-vasodrug-btn">
-            <i class="fas fa-plus mr-1"></i>{% trans "Add Vasopressor" %}
+            {% trans "Add Vasopressor" %}
           </button>
           {% endif %}
         </div>
@@ -424,14 +424,14 @@
             <input type="radio" class="form-check-input" name="dialysis_radio" value="yes" id="id_DIALYSIS_yes"
                    {% if clinical_form.DIALYSIS.value %}checked{% endif %}>
             <label class="form-check-label" for="id_DIALYSIS_yes">
-              <i class="fas fa-check-circle text-success mr-1"></i>{% trans "Yes" %}
+              {% trans "Yes" %}
             </label>
           </div>
           <div class="form-check form-check-inline">
             <input type="radio" class="form-check-input" name="dialysis_radio" value="no" id="id_DIALYSIS_no"
                    {% if not clinical_form.DIALYSIS.value %}checked{% endif %}>
             <label class="form-check-label" for="id_DIALYSIS_no">
-              <i class="fas fa-times-circle text-danger mr-1"></i>{% trans "No" %}
+              {% trans "No" %}
             </label>
           </div>
         </div>
@@ -548,7 +548,7 @@
                   class="btn btn-success btn-sm mt-3 add-formset-row" 
                   data-formset="aehospevent_set"
                   data-tbody="#aehospevent-formset-body">
-            <i class="fas fa-plus mr-1"></i>{% trans "Add Adverse Event" %}
+            {% trans "Add Adverse Event" %}
           </button>
           {% endif %}
         </div>
@@ -611,7 +611,7 @@
                   class="btn btn-success btn-sm mt-3 add-formset-row" 
                   data-formset="improvesympt_set"
                   data-tbody="#improvesympt-formset-body">
-            <i class="fas fa-plus mr-1"></i>{% trans "Add Improvement" %}
+            {% trans "Add Improvement" %}
           </button>
           {% endif %}
         </div>
@@ -668,14 +668,14 @@
                 class="btn btn-success btn-sm mt-3 add-formset-row" 
                 data-formset="hospiprocess_set"
                 data-tbody="#hospiprocess-formset-body">
-          <i class="fas fa-plus mr-1"></i>{% trans "Add Department Transfer" %}
+          {% trans "Add Department Transfer" %}
         </button>
         {% endif %}
       </div>
       
       {# ========== ANTIBIOTIC TREATMENT ========== #}
       <div class="form-section-header">
-        <i class="fas fa-pills mr-2"></i>{% trans "Antibiotic Treatment" %}
+        {% trans "Antibiotic Treatment" %}
       </div>
       
       {# 37. Main Antibiotics #}
@@ -731,7 +731,7 @@
         <button type="button" 
                 class="btn btn-success btn-sm mt-3" 
                 id="add-main-antibiotic-btn">
-          <i class="fas fa-plus mr-1"></i>{% trans "Add Antibiotic" %}
+          {% trans "Add Antibiotic" %}
         </button>
         {% endif %}
       </div>
@@ -794,7 +794,7 @@
           </div>
           {% if not is_readonly %}
           <button type="button" class="btn btn-success btn-sm mt-3" id="add-prior-antibiotic-btn">
-            <i class="fas fa-plus mr-1"></i>{% trans "Add Antibiotic" %}
+            {% trans "Add Antibiotic" %}
           </button>
           {% endif %}
         </div>
@@ -854,7 +854,7 @@
           </div>
           {% if not is_readonly %}
           <button type="button" class="btn btn-success btn-sm mt-3" id="add-initial-antibiotic-btn">
-            <i class="fas fa-plus mr-1"></i>{% trans "Add Antibiotic" %}
+            {% trans "Add Antibiotic" %}
           </button>
           {% endif %}
           
@@ -878,17 +878,17 @@
         <button type="button" 
                 class="btn btn-secondary" 
                 data-tab-action="prev">
-          <i class="fas fa-arrow-left mr-1"></i>{% trans "Previous" %}
+          {% trans "Previous" %}
         </button>
         
         {% if not is_readonly %}
         <button type="submit" class="btn btn-success btn-lg">
-          <i class="fas fa-save mr-1"></i>{% trans "Save Clinical Data" %}
+          {% trans "Save Clinical Data" %}
         </button>
         {% else %}
         <a href="{% url 'study_43en:patient_detail' usubjid=enrollment_case.USUBJID %}" 
            class="btn btn-primary">
-          <i class="fas fa-arrow-right mr-1"></i>{% trans "Back to Patient" %}
+          {% trans "Back to Patient" %}
         </a>
         {% endif %}
       </div>

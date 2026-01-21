@@ -5,6 +5,7 @@
 {% block extra_css %}
 
 <link rel="stylesheet" href="{% static 'base/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/form_validation.css' %}">
 
 {% block dashboard_css %}{% endblock %}
 
@@ -32,6 +33,7 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script nonce="{{ request.csp_nonce }}" src="{% static 'base/js/dashboard.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/utils/form_validation.js' %}"></script>
 
 {% block dashboard_js %}{% endblock %}
 {% endblock %}

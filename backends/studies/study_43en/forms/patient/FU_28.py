@@ -142,6 +142,8 @@ class FollowUpCaseForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # Extract enrollment_case from kwargs before calling super()
+        self.enrollment_case = kwargs.pop('enrollment_case', None)
         super().__init__(*args, **kwargs)
         
         # Set input_formats for date fields (DD/MM/YYYY)
@@ -149,6 +151,18 @@ class FollowUpCaseForm(forms.ModelForm):
         for field_name in date_fields:
             if field_name in self.fields:
                 self.fields[field_name].input_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
+        
+        # Ensure functional status fields have blank choice (they are optional)
+        # NOTE: Model already adds blank choice via blank=True, so we just ensure it exists
+        functional_fields = ['Mobility', 'Personal_Hygiene', 'Daily_Activities', 'Pain_Discomfort', 'Anxiety']
+        for field_name in functional_fields:
+            if field_name in self.fields:
+                current_choices = list(self.fields[field_name].choices)
+                # Only add blank choice if not already present
+                has_blank = any(choice[0] == '' for choice in current_choices)
+                if not has_blank:
+                    self.fields[field_name].choices = [('', '---------')] + current_choices
+                self.fields[field_name].required = False
         
         # Make all fields optional by default (validation will be in clean())
         radio_fields = ['EvaluatedAtDay28', 'Rehospitalized', 'Dead', 'Antb_Usage', 'Func_Status']
@@ -178,6 +192,21 @@ class FollowUpCaseForm(forms.ModelForm):
         if evaluated == 'Yes':
             if not cleaned_data.get('EvaluateDate'):
                 errors['EvaluateDate'] = _('Evaluation date is required when patient is assessed')
+        
+        # Validate assessment date against enrollment date
+        evaluate_date = cleaned_data.get('EvaluateDate')
+        if evaluate_date:
+            enrollment_date = None
+            # Try to get enrollment date from enrollment_case (passed to form)
+            if self.enrollment_case and hasattr(self.enrollment_case, 'ENRDATE'):
+                enrollment_date = self.enrollment_case.ENRDATE
+            # Fallback: try to get from instance.USUBJID (for UPDATE)
+            elif self.instance and self.instance.pk and hasattr(self.instance, 'USUBJID'):
+                if self.instance.USUBJID and hasattr(self.instance.USUBJID, 'ENRDATE'):
+                    enrollment_date = self.instance.USUBJID.ENRDATE
+            
+            if enrollment_date and evaluate_date < enrollment_date:
+                errors['EvaluateDate'] = _('Assessment date cannot be before enrollment date')
         
         # Validate Dead dependencies
         dead = cleaned_data.get('Dead')

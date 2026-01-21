@@ -48,10 +48,14 @@ DEPARTMENTS_BY_SITE = {
     ],
     
     '011': [  # Bệnh viện Chợ Rẫy – CRH/011
-        ('Nội Phổi', 'Nội Phổi'),
-        ('Nội Tiêu Hóa', 'Nội Tiêu Hóa'),
-        ('Ngoại Gan – Mật – Tụy', 'Ngoại Gan – Mật – Tụy'),
+        ('4B1: Ngoại Tiêu Hóa', '4B1: Ngoại Tiêu Hóa'),
+        ('4B3: Ngoại Gan - Mật - Tụy', '4B3: Ngoại Gan - Mật - Tụy'),
+        ('5B1: Ngoại Tiết Niệu', '5B1: Ngoại Tiết Niệu'),
+        ('6B1: Tai Mũi Họng', '6B1: Tai Mũi Họng'),
+        ('8B1: Nội Phổi', '8B1: Nội Phổi'),
+        ('8B3: Nội Tiêu Hóa', '8B3: Nội Tiêu Hóa'),
         ('Bệnh Nhiệt Đới', 'Bệnh Nhiệt Đới'),
+        ('Nội Tiết', 'Nội Tiết'),
     ],
 }
 

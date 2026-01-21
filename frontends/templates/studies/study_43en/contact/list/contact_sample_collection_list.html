@@ -4,163 +4,7 @@
 {% load dict_filters %}
 {% block title %}{% trans "Contact Sample List" %}{% endblock %}
 
-{% block dashboard_css %}
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-<style>
-  /* Sample List Enhanced Styles - Contact */
-  .sample-list-header {
-    background: var(--crf-gradient-primary);
-    color: white;
-    padding: 20px;
-    border-radius: 8px 8px 0 0;
-  }
-  
-  .badge-purple {
-    background: var(--crf-gradient-primary);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-weight: 600;
-  }
-  
-  .sample-status-collected {
-    background: var(--crf-gradient-success);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-  }
-  
-  .sample-status-collected i {
-    margin-right: 5px;
-  }
-  
-  .sample-status-not-collected {
-    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-  
-  .sample-table-row {
-    transition: background-color 0.2s ease;
-  }
-  
-  .sample-table-row:hover {
-    background-color: rgba(102, 126, 234, 0.03);
-  }
-  
-  .sample-type-cell {
-    font-weight: 600;
-    color: #374151;
-    font-size: 1rem;
-  }
-  
-  .culture-result-positive {
-    background: var(--crf-gradient-danger);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
-    margin-left: 5px;
-  }
-  
-  .culture-result-negative {
-    background: var(--crf-gradient-success);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
-    margin-left: 5px;
-  }
-  
-  .sample-date-badge {
-    background: #f0f9ff;
-    border-left: 3px solid #0891b2;
-    padding: 3px 8px;
-    border-radius: 4px;
-    display: block;
-    margin: 2px 0;
-    font-size: 0.8rem;
-    white-space: nowrap;
-  }
-  
-  .sample-dates {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .action-btn-group {
-    display: flex;
-    gap: 5px;
-    flex-wrap: nowrap;
-  }
-  
-  .btn-view {
-    background: var(--crf-gradient-info);
-    border: none;
-    color: white;
-    transition: all 0.3s ease;
-  }
-  
-  .btn-view:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 2px 6px rgba(8, 145, 178, 0.3);
-    color: white;
-  }
-  
-  .btn-edit {
-    background: var(--crf-gradient-warning);
-    border: none;
-    color: white;
-    transition: all 0.2s ease;
-  }
-  
-  .btn-edit:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 2px 6px rgba(251, 146, 60, 0.3);
-    color: white;
-  }
-  
-  .btn-create {
-    background: var(--crf-gradient-success);
-    border: none;
-    color: white;
-    transition: all 0.2s ease;
-  }
-  
-  .btn-create:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-    color: white;
-  }
-  
-  .table thead th {
-    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-    color: white;
-    font-weight: 600;
-    border: none;
-    text-transform: uppercase;
-    font-size: 0.875rem;
-    letter-spacing: 0.5px;
-  }
-</style>
-{% endblock %}
+
 
 {% block dashboard_content %}
 <div class="container-fluid">
@@ -241,14 +85,14 @@
             {% for sample_type, sample_type_name in sample_types %}
               <tr>
                 <td class="text-center font-weight-bold">
-                  <i class="fas fa-vial mr-2 text-primary"></i>
+                  <i ></i>
                   {{ sample_type_name }}
                 </td>
                 {% with sample=samples_by_type|get_item:sample_type %}
                   {% if sample %}
                     <td class="text-center">
                       {% if sample.SAMPLE %}
-                        <span class="badge badge-success">{% trans "Collected" %}</span>
+                        <span >{% trans "Collected" %}</span>
                       {% else %}
                         <span class="badge badge-warning">{% trans "Not Collected" %}</span>
                       {% endif %}
@@ -259,7 +103,7 @@
                           {% if sample.STOOL and sample.STOOLDATE %}
                             <div class="mb-1">
                               <small class="text-muted d-block">
-                                <i class="fas fa-flask fa-xs mr-1"></i>{% trans "Stool" %}:
+                                <i ></i>{% trans "Stool" %}:
                               </small>
                               <span class="font-weight-medium">{{ sample.STOOLDATE|date:"d/m/Y" }}</span>
                             </div>
@@ -267,7 +111,7 @@
                           {% if sample.RECTSWAB and sample.RECTSWABDATE %}
                             <div class="mb-1">
                               <small class="text-muted d-block">
-                                <i class="fas fa-swatchbook fa-xs mr-1"></i>{% trans "Rectal Swab" %}:
+                                <i ></i>{% trans "Rectal Swab" %}:
                               </small>
                               <span class="font-weight-medium">{{ sample.RECTSWABDATE|date:"d/m/Y" }}</span>
                             </div>
@@ -275,7 +119,7 @@
                           {% if sample.THROATSWAB and sample.THROATSWABDATE %}
                             <div class="mb-1">
                               <small class="text-muted d-block">
-                                <i class="fas fa-head-side-cough fa-xs mr-1"></i>{% trans "Throat Swab" %}:
+                                <i ></i>{% trans "Throat Swab" %}:
                               </small>
                               <span class="font-weight-medium">{{ sample.THROATSWABDATE|date:"d/m/Y" }}</span>
                             </div>
@@ -283,7 +127,7 @@
                           {% if sample.BLOOD and sample.BLOODDATE %}
                             <div class="mb-1">
                               <small class="text-muted d-block">
-                                <i class="fas fa-tint fa-xs mr-1"></i>{% trans "Blood Sample" %}:
+                                <i ></i>{% trans "Blood Sample" %}:
                               </small>
                               <span class="font-weight-medium">{{ sample.BLOODDATE|date:"d/m/Y" }}</span>
                             </div>
@@ -301,23 +145,23 @@
                         {% if sample.STOOL %}
                           <div class="mb-2">
                             <span class="font-weight-bold">
-                              <i class="fas fa-flask fa-xs mr-1"></i>{% trans "Stool" %}:
+                              <i ></i>{% trans "Stool" %}:
                             </span>
                             {% if sample.CULTRES_1 == 'Pos' %}
-                              <span class="badge badge-danger">
-                                <i class="fas fa-exclamation-circle fa-xs"></i> {% trans "Positive" %}
+                              <span >
+                                <i ></i> {% trans "Positive" %}
                               </span>
                               {% if sample.KLEBPNEU_1 %}
                                 <small class="text-danger ml-2">
-                                  <i class="fas fa-bacteria fa-xs"></i> Klebsiella
+                                  <i ></i> Klebsiella
                                 </small>
                               {% endif %}
                             {% elif sample.CULTRES_1 == 'Neg' %}
-                              <span class="badge badge-success">
+                              <span >
                                 <i class="fas fa-check-circle fa-xs"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_1 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "Not Applicable" %}</span>
+                              <span >{% trans "Not Applicable" %}</span>
                             {% elif sample.CULTRES_1 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}
@@ -326,23 +170,23 @@
                         {% if sample.RECTSWAB %}
                           <div class="mb-2">
                             <span class="font-weight-bold">
-                              <i class="fas fa-swatchbook fa-xs mr-1"></i>{% trans "Rectal Swab" %}:
+                              <i ></i>{% trans "Rectal Swab" %}:
                             </span>
                             {% if sample.CULTRES_2 == 'Pos' %}
-                              <span class="badge badge-danger">
-                                <i class="fas fa-exclamation-circle fa-xs"></i> {% trans "Positive" %}
+                              <span >
+                                <i ></i> {% trans "Positive" %}
                               </span>
                               {% if sample.KLEBPNEU_2 %}
                                 <small class="text-danger ml-2">
-                                  <i class="fas fa-bacteria fa-xs"></i> Klebsiella
+                                  <i ></i> Klebsiella
                                 </small>
                               {% endif %}
                             {% elif sample.CULTRES_2 == 'Neg' %}
-                              <span class="badge badge-success">
+                              <span >
                                 <i class="fas fa-check-circle fa-xs"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_2 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "Not Applicable" %}</span>
+                              <span >{% trans "Not Applicable" %}</span>
                             {% elif sample.CULTRES_2 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}
@@ -351,23 +195,23 @@
                         {% if sample.THROATSWAB %}
                           <div class="mb-2">
                             <span class="font-weight-bold">
-                              <i class="fas fa-head-side-cough fa-xs mr-1"></i>{% trans "Throat Swab" %}:
+                              <i ></i>{% trans "Throat Swab" %}:
                             </span>
                             {% if sample.CULTRES_3 == 'Pos' %}
-                              <span class="badge badge-danger">
-                                <i class="fas fa-exclamation-circle fa-xs"></i> {% trans "Positive" %}
+                              <span >
+                                <i ></i> {% trans "Positive" %}
                               </span>
                               {% if sample.KLEBPNEU_3 %}
                                 <small class="text-danger ml-2">
-                                  <i class="fas fa-bacteria fa-xs"></i> Klebsiella
+                                  <i ></i> Klebsiella
                                 </small>
                               {% endif %}
                             {% elif sample.CULTRES_3 == 'Neg' %}
-                              <span class="badge badge-success">
+                              <span >
                                 <i class="fas fa-check-circle fa-xs"></i> {% trans "Negative" %}
                               </span>
                             {% elif sample.CULTRES_3 == 'NoApply' %}
-                              <span class="badge badge-secondary">{% trans "Not Applicable" %}</span>
+                              <span >{% trans "Not Applicable" %}</span>
                             {% elif sample.CULTRES_3 == 'NotPerformed' %}
                               <span class="badge badge-warning">{% trans "Not Performed" %}</span>
                             {% endif %}
@@ -392,7 +236,7 @@
                     </td>
                   {% else %}
                     <td class="text-center">
-                      <span class="badge badge-secondary">{% trans "Not Created" %}</span>
+                      <span >{% trans "Not Created" %}</span>
                     </td>
                     <td class="text-center"><span class="text-muted">--</span></td>
                     <td class="text-center"><span class="text-muted">--</span></td>
@@ -413,55 +257,6 @@
           </tbody>
         </table>
       </div>
-      
-      {#  Summary Card (Optional) #}
-      {% if samples %}
-      <div class="card mt-4">
-        <div class="card-header bg-primary text-white">
-          <h6 class="m-0">
-            <i class="fas fa-chart-bar mr-2"></i>{% trans "Contact Sample Summary" %}
-          </h6>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-3">
-              <div class="text-center">
-                <h4 class="text-primary">{{ samples.count }}</h4>
-                <small class="text-muted">{% trans "Total Samples Created" %}</small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="text-center">
-                <h4 class="text-success">
-                  {{ samples|length }}
-                </h4>
-                <small class="text-muted">{% trans "Samples Collected" %}</small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="text-center">
-                <h4 class="text-danger">
-                  {% for sample in samples %}
-                    {% if sample.has_klebsiella %}1{% endif %}
-                  {% endfor %}
-                </h4>
-                <small class="text-muted">{% trans "Klebsiella Detected" %}</small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="text-center">
-                <h4 class="text-info">
-                  {% for sample in samples %}
-                    {% if sample.has_positive_culture %}1{% endif %}
-                  {% endfor %}
-                </h4>
-                <small class="text-muted">{% trans "Positive Cultures" %}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endif %}
     </div>
   </div>
 </div>

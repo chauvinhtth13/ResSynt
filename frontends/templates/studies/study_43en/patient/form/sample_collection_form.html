@@ -5,158 +5,6 @@
 
 {% block title %}{% trans "Patient Sample Information" %}{% endblock %}
 
-{% block dashboard_css %}
-{% include 'studies/study_43en/includes/crf_styles.html' %}
-<style>
-  /* Sample collection enhanced styles */
-  .sample-collection-container {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 12px;
-    padding: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-  
-  .sample-type-badge {
-    background: var(--crf-gradient-primary);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: inline-block;
-    margin-left: 10px;
-  }
-  
-  .sample-section {
-    background: white;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    transition: all 0.3s ease;
-  }
-  
-  .sample-section:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-  }
-  
-  .sample-section-header {
-    background: var(--crf-gradient-info);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-  }
-  
-  .sample-section-header i {
-    margin-right: 10px;
-    font-size: 1.2rem;
-  }
-  
-  .sample-type-checkbox {
-    transform: scale(1.2);
-    cursor: pointer;
-  }
-  
-  .sample-date-input {
-    border-left: 3px solid #667eea;
-    transition: all 0.3s ease;
-  }
-  
-  .sample-date-input:focus {
-    border-left-color: #10b981;
-    box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15);
-  }
-  
-  .culture-result-group {
-    background: #f8f9fa;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 15px;
-  }
-  
-  .culture-result-group:has(input[value="Pos"]:checked) {
-    background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);
-    border-color: #ffc107;
-  }
-  
-  .klebsiella-indicator {
-    background: var(--crf-gradient-danger);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 6px;
-    margin-top: 10px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    animation: pulse 2s infinite;
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-  }
-  
-  .other-specify-container {
-    margin-top: 15px;
-    padding: 15px;
-    background: #f0f9ff;
-    border-left: 4px solid #0891b2;
-    border-radius: 6px;
-  }
-  
-  .other-specify-container input[type="text"]:focus {
-    border-left: 3px solid #36b9cc;
-  }
-  
-  #saveIndicator {
-    position: fixed;
-    top: 70px;
-    right: 20px;
-    z-index: 1050;
-    display: none;
-    animation: slideInRight 0.3s ease;
-  }
-  
-  @keyframes slideInRight {
-    from {
-      transform: translateX(100px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-  
-  #validationErrorModal .border-left-danger {
-    border-left: 4px solid #dc3545 !important;
-  }
-  
-  #validationErrorModal .list-group-item {
-    transition: all 0.2s ease;
-  }
-  
-  #validationErrorModal .list-group-item:hover {
-    background-color: #f8d7da;
-    transform: translateX(5px);
-  }
-  
-  .reason-textarea {
-    min-height: 100px;
-    border-left: 3px solid #dc3545;
-  }
-  
-  .reason-textarea:focus {
-    border-left-color: #10b981;
-  }
-</style>
-{% endblock %}
 
 {% block dashboard_content %}
 <div class="container-fluid">
@@ -164,7 +12,7 @@
     <div class="card-header py-3" style="background: var(--crf-gradient-primary); color: white;">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-          <i class="fas fa-vial"></i>
+          <i ></i>
           {% if is_create %}
             {% trans "Create Sample Collection" %}
           {% elif is_readonly %}
@@ -192,7 +40,7 @@
     </div>
     
     <div class="card-body {% if is_view_only %}readonly-form{% endif %}">
-      <div id="saveIndicator" class="alert alert-success" role="alert">
+      <div id="saveIndicator" role="alert">
         <span class="message"></span>
       </div>
       
@@ -202,14 +50,14 @@
         <div class="row">
           <div class="col-md-4">
             <small class="text-muted">
-              <i class="fas fa-code-branch"></i> {% trans "Version:" %} 
+              <i ></i> {% trans "Version:" %} 
               <strong>v{{ current_version }}</strong>
             </small>
           </div>
           {% if sample.last_modified_by_username %}
           <div class="col-md-4">
             <small class="text-muted">
-              <i class="fas fa-user-edit"></i> {% trans "Modified by:" %} 
+              <i ></i> {% trans "Modified by:" %} 
               <strong>{{ sample.last_modified_by_username }}</strong>
             </small>
           </div>
@@ -217,7 +65,7 @@
           {% if sample.last_modified_at %}
           <div class="col-md-4">
             <small class="text-muted">
-              <i class="fas fa-clock"></i> {% trans "At:" %} 
+              <i ></i> {% trans "At:" %} 
               <strong>{{ sample.last_modified_at|date:"d/m/Y H:i" }}</strong>
             </small>
           </div>
@@ -228,6 +76,11 @@
       
       <form method="post" id="sampleCollectionForm" class="form" novalidate>
         {% csrf_token %}
+        
+        {# POST error marker for validation modal #}
+        {% if form.errors %}
+        <input type="hidden" id="django-form-has-errors" value="true">
+        {% endif %}
         
         <!-- Hidden fields -->
         <input type="hidden" name="SAMPLE_TYPE" value="{{ sample_type }}">
@@ -289,12 +142,12 @@
             <div class="form-group">
               <div class="form-check form-check-inline">
                 <input type="radio" name="SAMPLE" id="SAMPLE_yes" value="True" class="form-check-input"
-                       {% if sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                       {% if form.SAMPLE.value == 'True' or sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                 <label for="SAMPLE_yes" class="form-check-label">{% trans "Yes" %}</label>
               </div>
               <div class="form-check form-check-inline">
                 <input type="radio" name="SAMPLE" id="SAMPLE_no" value="False" class="form-check-input"
-                       {% if not sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                       {% if form.SAMPLE.value == 'False' %}checked{% elif not form.SAMPLE.value and not sample.SAMPLE %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                 <label for="SAMPLE_no" class="form-check-label">{% trans "No" %}</label>
               </div>
             </div>
@@ -304,7 +157,7 @@
         <!-- ============================================ -->
         <!-- SAMPLE TYPES COLLECTED -->
         <!-- ============================================ -->
-        <div id="section-has-sample" class="mb-4" {% if not sample.SAMPLE %}style="display: none;"{% endif %}>
+        <div id="section-has-sample" class="mb-4" {% if form.SAMPLE.value != 'True' and not sample.SAMPLE %}style="display: none;"{% endif %}>
           <div class="card mb-4">
             <div class="card-header bg-light">
               <h5 class="mb-0 text-primary">{% trans "Sample Types Collected" %}</h5>
@@ -320,20 +173,23 @@
                     <div class="card-header bg-white py-2 d-flex align-items-center">
                       <div class="form-check mb-0">
                         <input type="checkbox" name="STOOL" id="id_STOOL" class="form-check-input sample-type-checkbox"
-                               {% if sample.STOOL %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                               {% if form.STOOL.value or sample.STOOL %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_STOOL" class="form-check-label font-weight-bold h5 mb-0">
                           {{ form.STOOL.label }}
                         </label>
                       </div>
                     </div>
                     <div class="card-body py-3">
-                      <div class="stool-date-container" {% if not sample.STOOL %}style="display: none;"{% endif %}>
+                      <div class="stool-date-container" {% if not form.STOOL.value and not sample.STOOL %}style="display: none;"{% endif %}>
                         <!-- Collection Date -->
                         <div class="mb-3">
                           <label for="id_STOOLDATE">{{ form.STOOLDATE.label }}:</label>
-                          <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker"
+                          <input type="text" name="STOOLDATE" id="id_STOOLDATE" class="form-control datepicker {% if form.STOOLDATE.errors %}is-invalid{% endif %}"
                                  value="{{ sample.STOOLDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
+                          {% if form.STOOLDATE.errors %}
+                          {{ form.STOOLDATE.errors }}
+                          {% endif %}
                           {% if form.STOOLDATE.help_text %}
                           <small class="text-muted">{{ form.STOOLDATE.help_text }}</small>
                           {% endif %}
@@ -387,7 +243,7 @@
                                            {% if sample.KLEBPNEU_1 %}checked{% endif %} 
                                            {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_KLEBPNEU_1" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-bacteria text-danger mr-1"></i>{{ form.KLEBPNEU_1.label }}
+                                      <i ></i>{{ form.KLEBPNEU_1.label }}
                                     </label>
                                   </div>
                                 </div>
@@ -403,7 +259,7 @@
                                            {% if sample.OTHERRES_1 %}checked{% endif %} 
                                            {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_OTHERRES_1" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                      <i ></i>{% trans "Other Organism" %}
                                     </label>
                                   </div>
                                 </div>
@@ -435,20 +291,23 @@
                     <div class="card-header bg-white py-2 d-flex align-items-center">
                       <div class="form-check mb-0">
                         <input type="checkbox" name="RECTSWAB" id="id_RECTSWAB" class="form-check-input sample-type-checkbox"
-                              {% if sample.RECTSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                              {% if form.RECTSWAB.value or sample.RECTSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_RECTSWAB" class="form-check-label font-weight-bold h5 mb-0">
                           {{ form.RECTSWAB.label }}
                         </label>
                       </div>
                     </div>
                     <div class="card-body py-3">
-                      <div class="rect-swab-date-container" {% if not sample.RECTSWAB %}style="display: none;"{% endif %}>
+                      <div class="rect-swab-date-container" {% if not form.RECTSWAB.value and not sample.RECTSWAB %}style="display: none;"{% endif %}>
                         <!-- Collection Date -->
                         <div class="mb-3">
                           <label for="id_RECTSWABDATE">{{ form.RECTSWABDATE.label }}:</label>
-                          <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker"
+                          <input type="text" name="RECTSWABDATE" id="id_RECTSWABDATE" class="form-control datepicker {% if form.RECTSWABDATE.errors %}is-invalid{% endif %}"
                                 value="{{ sample.RECTSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
                                 {% if is_view_only %}disabled{% endif %}>
+                          {% if form.RECTSWABDATE.errors %}
+                          {{ form.RECTSWABDATE.errors }}
+                          {% endif %}
                           {% if form.RECTSWABDATE.help_text %}
                           <small class="text-muted">{{ form.RECTSWABDATE.help_text }}</small>
                           {% endif %}
@@ -502,7 +361,7 @@
                                           {% if sample.KLEBPNEU_2 %}checked{% endif %} 
                                           {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_KLEBPNEU_2" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-bacteria text-danger mr-1"></i>{{ form.KLEBPNEU_2.label }}
+                                      <i ></i>{{ form.KLEBPNEU_2.label }}
                                     </label>
                                   </div>
                                 </div>
@@ -518,7 +377,7 @@
                                            {% if sample.OTHERRES_2 %}checked{% endif %} 
                                            {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_OTHERRES_2" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                      <i ></i>{% trans "Other Organism" %}
                                     </label>
                                   </div>
                                 </div>
@@ -550,20 +409,23 @@
                     <div class="card-header bg-white py-2 d-flex align-items-center">
                       <div class="form-check mb-0">
                         <input type="checkbox" name="THROATSWAB" id="id_THROATSWAB" class="form-check-input sample-type-checkbox"
-                              {% if sample.THROATSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                              {% if form.THROATSWAB.value or sample.THROATSWAB %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_THROATSWAB" class="form-check-label font-weight-bold h5 mb-0">
                           {{ form.THROATSWAB.label }}
                         </label>
                       </div>
                     </div>
                     <div class="card-body py-3">
-                      <div class="throat-swab-date-container" {% if not sample.THROATSWAB %}style="display: none;"{% endif %}>
+                      <div class="throat-swab-date-container" {% if not form.THROATSWAB.value and not sample.THROATSWAB %}style="display: none;"{% endif %}>
                         <!-- Collection Date -->
                         <div class="mb-3">
                           <label for="id_THROATSWABDATE">{{ form.THROATSWABDATE.label }}:</label>
-                          <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker"
+                          <input type="text" name="THROATSWABDATE" id="id_THROATSWABDATE" class="form-control datepicker {% if form.THROATSWABDATE.errors %}is-invalid{% endif %}"
                                 value="{{ sample.THROATSWABDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
                                 {% if is_view_only %}disabled{% endif %}>
+                          {% if form.THROATSWABDATE.errors %}
+                          {{ form.THROATSWABDATE.errors }}
+                          {% endif %}
                           {% if form.THROATSWABDATE.help_text %}
                           <small class="text-muted">{{ form.THROATSWABDATE.help_text }}</small>
                           {% endif %}
@@ -617,7 +479,7 @@
                                           {% if sample.KLEBPNEU_3 %}checked{% endif %} 
                                           {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_KLEBPNEU_3" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-bacteria text-danger mr-1"></i>{{ form.KLEBPNEU_3.label }}
+                                      <i ></i>{{ form.KLEBPNEU_3.label }}
                                     </label>
                                   </div>
                                 </div>
@@ -633,7 +495,7 @@
                                            {% if sample.OTHERRES_3 %}checked{% endif %} 
                                            {% if is_view_only %}disabled{% endif %}>
                                     <label for="id_OTHERRES_3" class="form-check-label font-weight-bold">
-                                      <i class="fas fa-flask text-info mr-1"></i>{% trans "Other Organism" %}
+                                      <i ></i>{% trans "Other Organism" %}
                                     </label>
                                   </div>
                                 </div>
@@ -649,7 +511,6 @@
                                     <small class="text-muted">{{ form.OTHERRESSPECIFY_3.help_text }}</small>
                                     {% endif %}
                                   </div>
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -663,33 +524,35 @@
               <!-- ============================================ -->
               <!-- BLOOD SAMPLE -->
               <!-- ============================================ -->
-              {% if sample.SAMPLE_TYPE != '4' %}
               <div class="row mb-4">
                 <div class="col-lg-12 col-md-12">
                   <div class="card h-100 border-left-warning">
                     <div class="card-header bg-white py-2 d-flex align-items-center">
                       <div class="form-check mb-0">
                         <input type="checkbox" name="BLOOD" id="id_BLOOD" class="form-check-input sample-type-checkbox"
-                               {% if sample.BLOOD %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
+                               {% if form.BLOOD.value or sample.BLOOD %}checked{% endif %} {% if is_view_only %}disabled{% endif %}>
                         <label for="id_BLOOD" class="form-check-label font-weight-bold h5 mb-0">
                           {{ form.BLOOD.label }}
                         </label>
                       </div>
                     </div>
                     <div class="card-body py-3">
-                      <div class="blood-date-container" {% if not sample.BLOOD %}style="display: none;"{% endif %}>
+                      <div class="blood-date-container" {% if not form.BLOOD.value and not sample.BLOOD %}style="display: none;"{% endif %}>
                         <div class="mb-3">
                           <label for="id_BLOODDATE">{{ form.BLOODDATE.label }}:</label>
-                          <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker"
+                          <input type="text" name="BLOODDATE" id="id_BLOODDATE" class="form-control datepicker {% if form.BLOODDATE.errors %}is-invalid{% endif %}"
                                  value="{{ sample.BLOODDATE|date:'d/m/Y'|default:'' }}" placeholder="DD/MM/YYYY"
                                  {% if is_view_only %}disabled{% endif %}>
+                          {% if form.BLOODDATE.errors %}
+                          {{ form.BLOODDATE.errors }}
+                          {% endif %}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              {% endif %}
+              
               
             </div>
           </div>
@@ -793,6 +656,9 @@
 
 {% block dashboard_js %}
 {% include 'studies/study_43en/includes/datepicker_scripts.html' %}
+
+{# Form Validation Modal Script #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/utils/form_validation.js' %}"></script>
 
 {% if not is_view_only %}
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>

@@ -70,6 +70,9 @@ class Study(models.Model):
         verbose_name = "Studies Information"
         verbose_name_plural = "Studies Information"
         ordering = ['code']  # Simple consistent ordering
+        permissions = [
+            ("can_export_data", "Can export study data"),
+        ]
 
     def clean(self):
         """Validate and generate db_name"""

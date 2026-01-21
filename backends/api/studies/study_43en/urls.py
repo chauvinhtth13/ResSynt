@@ -7,6 +7,7 @@ from django.conf import settings
 # Import views từ folder views/
 from .views import views_Base
 from .views import views_Schedule, views_audit
+from .views import views_report
 
 from backends.api.studies.study_43en.views.patient.SCR import views_scr_case, views_scr_case_list, api_views as scr_api
 from backends.api.studies.study_43en.views.patient.ENR import views_enr_case
@@ -240,5 +241,8 @@ urlpatterns = [
     path('api/notification/read/', views_Schedule.mark_notification_read, name='notification_mark_read'),
     path('api/notification/read-all/', views_Schedule.mark_all_notifications_read, name='notification_mark_all_read'),
     path('api/notification/count/', views_Schedule.get_notification_count, name='notification_count'),
+
+    # ===== TMG REPORT EXPORT =====
+    path('report/export/', views_report.report_export_view, name='report_export'),
 
 ]
