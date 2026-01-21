@@ -395,7 +395,7 @@ def detect_followup_flat_field_changes(request, followup):
     - Hospitalizations (hospitalized_since radio + checkboxes + duration)
     - Medications (medication_since radio + checkboxes + text)
     
-    ⚠️ CRITICAL: The followup object passed in may have been modified by Django form binding.
+    CRITICAL: The followup object passed in may have been modified by Django form binding.
     We MUST refresh from DB to get the actual stored values.
     
     Returns:

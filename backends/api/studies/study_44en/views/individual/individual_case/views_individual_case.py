@@ -342,7 +342,7 @@ def individual_update(request, subjectid):
             # Show reason modal
             messages.warning(request, 'Vui lòng cung cấp lý do cho tất cả các thay đổi')
             
-            logger.warning("⚠️ Changes detected but no/invalid reasons - showing modal")
+            logger.warning("Changes detected but no/invalid reasons - showing modal")
             logger.info(f"📋 Will show modal for {len(all_changes)} changes")
             
             context = {
@@ -487,7 +487,7 @@ def individual_edit(request, subjectid):
     DEPRECATED: Alias for individual_update
     Kept for backward compatibility
     """
-    logger.warning(f"⚠️ Using deprecated 'individual_edit' - redirecting to 'individual_update'")
+    logger.warning(f"Using deprecated 'individual_edit' - redirecting to 'individual_update'")
     return individual_update(request, subjectid)
 
 

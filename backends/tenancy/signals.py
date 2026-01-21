@@ -2,8 +2,7 @@
 
 from django.apps import AppConfig
 from django.conf import settings
-from config.settings import env
-from django.contrib.auth.signals import user_logged_in, user_login_failed
+from django.contrib.auth.signals import user_login_failed
 from django.core.cache import cache
 from django.db import connections
 from django.db.models.signals import post_migrate, post_save, pre_delete
@@ -247,29 +246,9 @@ class DatabaseConnectionManager:
 # ==========================================
 # CACHE MANAGEMENT
 # ==========================================
-
-def clear_user_cache(user):
-    """Clear all cached data for a user"""
-    try:
-        from backends.tenancy.utils import TenancyUtils
-        cleared = TenancyUtils.clear_user_cache(user)
-        logger.debug(f"Cleared {cleared} cache key(s) for user {user.pk}")
-        return cleared
-    except Exception as e:
-        logger.error(f"Error clearing user cache: {e}")
-        return 0
-
-
-def clear_study_cache(study):
-    """Clear all cached data for a study"""
-    try:
-        from backends.tenancy.utils import TenancyUtils
-        cleared = TenancyUtils.clear_study_cache(study)
-        logger.debug(f"Cleared {cleared} cache key(s) for study {study.pk}")
-        return cleared
-    except Exception as e:
-        logger.error(f"Error clearing study cache: {e}")
-        return 0
+# Note: clear_user_cache and clear_study_cache are in TenancyUtils
+# Use: from backends.tenancy.utils import TenancyUtils
+# TenancyUtils.clear_user_cache(user) / TenancyUtils.clear_study_cache(study)
 
 
 # ==========================================
@@ -377,7 +356,7 @@ def _register_database_dynamically(study):
     
     try:
         from django.db import connections
-        from config.settings import DatabaseConfig
+        from config.settings import DatabaseConfig, env
         
         # Check if already registered
         if db_name in connections.databases:
@@ -433,33 +412,8 @@ def _auto_initialize_roles(study):
 # STUDY ROLE MANAGEMENT SIGNALS
 # ==========================================
 
-@receiver(post_save, sender='tenancy.Study')
-def auto_create_study_roles(sender: Any, instance: Any, created: bool, **kwargs: Any) -> None:
-    """
-    Automatically create groups and assign permissions when a new study is created
-    """
-    if not created:
-        return
-    
-    from backends.tenancy.utils.role_manager import StudyRoleManager
-    
-    study_code = instance.code
-    
-    try:
-        result = StudyRoleManager.initialize_study(study_code, force=False)
-        
-        if 'error' not in result:
-            logger.info(
-                f"Auto-initialized study {study_code}: "
-                f"Created {result.get('groups_created', 0)} groups, "
-                f"assigned {result.get('permissions_assigned', 0)} permissions"
-            )
-        
-    except Exception as e:
-        logger.error(
-            f"Failed to auto-create roles for study {study_code}: {e}",
-            exc_info=True
-        )
+# Note: auto_create_study_roles functionality is handled by _auto_initialize_roles
+# called from auto_create_study_database signal - no need for duplicate signal
 
 
 @receiver(post_migrate)
@@ -504,51 +458,10 @@ def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> No
         )
 
 # ==========================================
-# MEMBERSHIP SYNC SIGNALS
+# NOTE: Membership sync signals are in models/permission.py
+# sync_groups_on_save (post_save) and sync_groups_on_delete (post_delete)
+# to keep signals close to model definition
 # ==========================================
-
-@receiver(post_save, sender='tenancy.StudyMembership')
-def sync_groups_on_membership_change(sender, instance, created, **kwargs):
-    """Sync user groups when membership changes"""
-    try:
-        from backends.tenancy.utils import TenancyUtils
-        
-        if instance.user:
-            result = TenancyUtils.sync_user_groups(instance.user)
-            
-            if created:
-                logger.info(
-                    f"Created membership for {instance.user.username} "
-                    f"in study {instance.study.code}"
-                )
-            
-            if result['added'] > 0 or result['removed'] > 0:
-                logger.debug(
-                    f"Synced groups for {instance.user.username}: "
-                    f"+{result['added']}, -{result['removed']}"
-                )
-                
-    except Exception as e:
-        logger.error(f"Error syncing groups on membership change: {e}")
-
-
-@receiver(pre_delete, sender='tenancy.StudyMembership')
-def sync_groups_on_membership_delete(sender, instance, **kwargs):
-    """Sync user groups when membership is deleted"""
-    try:
-        from backends.tenancy.utils import TenancyUtils
-        
-        if instance.user:
-            # Clear cache before deletion
-            TenancyUtils.clear_user_cache(instance.user)
-            
-            logger.info(
-                f"Removing membership for {instance.user.username} "
-                f"from study {instance.study.code}"
-            )
-            
-    except Exception as e:
-        logger.error(f"Error handling membership deletion: {e}")
 
 # ==========================================
 # HELPER FUNCTIONS
@@ -586,28 +499,9 @@ def _extract_study_code_from_app(app_config: AppConfig) -> Optional[str]:
 # PERIODIC CLEANUP TASKS
 # ==========================================
 
-def cleanup_expired_sessions():
-    """
-    Clean up expired sessions and their related data
-    Should be called periodically (e.g., via Celery)
-    """
-    try:
-        from django.contrib.sessions.models import Session
-        from django.utils import timezone
-        
-        # Delete expired sessions
-        expired_count = Session.objects.filter(
-            expire_date__lt=timezone.now()
-        ).delete()[0]
-        
-        if expired_count > 0:
-            logger.info(f"Cleaned up {expired_count} expired sessions")
-        
-        # Clean up idle connections
-        DatabaseConnectionManager.cleanup_idle_connections()
-        
-    except Exception as e:
-        logger.error(f"Error in cleanup task: {e}")
+# Note: cleanup_expired_sessions is available as Celery task
+# Use: from backends.tenancy.tasks import cleanup_expired_sessions_task
+# cleanup_expired_sessions_task.delay()
 
 
 def cleanup_old_access_logs():

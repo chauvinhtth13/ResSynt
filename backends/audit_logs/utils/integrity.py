@@ -141,7 +141,7 @@ class IntegrityChecker:
         stored_checksum = audit_log.checksum
         
         if not stored_checksum:
-            logger.warning("⚠️ No checksum stored")
+            logger.warning("No checksum stored")
             return False
         
         # Rebuild old_data and new_data from details
@@ -176,7 +176,7 @@ class IntegrityChecker:
         
         if not is_valid:
             logger.error(
-                f"🚨 INTEGRITY VIOLATION: AuditLog {audit_log.id}\n"
+                f"INTEGRITY VIOLATION: AuditLog {audit_log.id}\n"
                 f"   Expected: {calculated_checksum[:16]}...\n"
                 f"   Stored:   {stored_checksum[:16]}..."
             )

@@ -43,7 +43,7 @@ def rate_limit(key_prefix: str, max_requests: int = 10, window: int = 60):
             
             if count >= max_requests:
                 logger.warning(
-                    f"🚨 RATE LIMIT EXCEEDED: {ip} {user_id} "
+                    f"RATE LIMIT EXCEEDED: {ip} {user_id} "
                     f"({count} requests in {window}s)"
                 )
                 

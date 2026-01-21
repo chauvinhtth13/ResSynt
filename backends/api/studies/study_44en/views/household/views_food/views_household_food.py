@@ -85,7 +85,7 @@ def household_food_create(request, hhid):
     
     # Check if food data already exists
     if food_frequency or food_source:
-        logger.warning(f"⚠️ Food data already exists for {hhid}")
+        logger.warning(f"Food data already exists for {hhid}")
         messages.warning(
             request,
             f'Food data already exists for {hhid}. Redirecting to update.'
@@ -236,7 +236,7 @@ def household_food_update(request, hhid):
     
     # If neither exists, redirect to create
     if food_frequency is None and food_source is None:
-        logger.warning(f"⚠️ No food data found for {hhid}")
+        logger.warning(f"No food data found for {hhid}")
         messages.error(
             request,
             f'No food data found for {hhid}. Please create first.'

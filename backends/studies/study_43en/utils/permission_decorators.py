@@ -238,7 +238,7 @@ def check_instance_site_access(request, instance, redirect_to: str = None):
     can_access_all = getattr(request, 'can_access_all_sites', False)
     
     logger.warning(
-        f"🚨 SECURITY: Site access DENIED! "
+        f"SECURITY: Site access DENIED! "
         f"User={request.user.username} "
         f"(accessible_sites={user_sites}, can_access_all={can_access_all}) "
         f"attempted to access SITEID={instance_site}"

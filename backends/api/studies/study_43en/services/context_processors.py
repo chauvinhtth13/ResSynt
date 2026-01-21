@@ -147,7 +147,7 @@ def upcoming_appointments(request):
         # ==========================================
         try:
             # 🚀 Direct query with site filtering
-            # ⚠️ NOTE: FollowUpStatus has NO SITEID field - filter by USUBJID prefix
+            # NOTE: FollowUpStatus has NO SITEID field - filter by USUBJID prefix
             # USUBJID format: {SITEID}-{TYPE}-{NUMBER} (e.g., '003-A-001')
             
             # Build site filter using Q objects
@@ -380,7 +380,7 @@ def dashboard_stats(request):
             **site_filter
         ).count()
         
-        # ⚠️ NOTE: FollowUpStatus does NOT have SITEID field
+        # NOTE: FollowUpStatus does NOT have SITEID field
         # It's a denormalized table - no site filtering needed here
         pending_followups = FollowUpStatus.objects.using('db_study_43en').filter(
             STATUS__in=['UPCOMING', 'LATE']

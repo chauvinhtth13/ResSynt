@@ -77,7 +77,7 @@ def individual_sample_create(request, subjectid):
     food_exists = Individual_FoodFrequency.objects.filter(MEMBERID=individual).exists()
     
     if sample_exists or food_exists:
-        logger.warning(f"⚠️ Sample data already exists for {subjectid} - redirecting to update")
+        logger.warning(f"Sample data already exists for {subjectid} - redirecting to update")
         messages.warning(
             request,
             f'Sample data already exists for individual {subjectid}. Redirecting to update.'
@@ -190,7 +190,7 @@ def individual_sample_update(request, subjectid):
         food_frequency = Individual_FoodFrequency.objects.get(MEMBERID=individual)
         logger.info(f"Found food frequency for {subjectid}")
     except Individual_FoodFrequency.DoesNotExist:
-        logger.warning(f"⚠️ No food frequency found for {subjectid}")
+        logger.warning(f"No food frequency found for {subjectid}")
         food_frequency = None
     
     # GET - Show form with existing data

@@ -35,11 +35,11 @@ def generate_contact_scrid(request):
             'error': 'Invalid SITEID'
         }, status=400)
     
-    # 🔒 SECURITY FIX: Check user's ACTUAL site permissions
+    # SECURITY FIX: Check user's ACTUAL site permissions
     if not check_site_permission(request, siteid):
         user_sites = getattr(request, 'user_sites', set())
         logger.warning(
-            f"🚨 API SECURITY: User {request.user.username} "
+            f"API SECURITY: User {request.user.username} "
             f"(accessible_sites={user_sites}) "
             f"attempted to generate contact SCRID for unauthorized site {siteid}"
         )

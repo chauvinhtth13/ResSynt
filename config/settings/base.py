@@ -1,16 +1,22 @@
 """
 Base Django settings - shared between all environments.
+
+This file contains settings that are common to both development and production.
+Environment-specific settings are in dev.py and prod.py.
 """
-import os
 from pathlib import Path
-from datetime import timedelta
 
 import environ
 from django.utils.translation import gettext_lazy as _
 
-from config.utils import load_study_apps, DatabaseConfig
-from .security import *
-from .logging import LOGGING
+from config.utils import (
+    load_study_apps,
+    DatabaseConfig,
+    build_fernet_keys,
+    validate_salt_key,
+)
+from .security import *  # noqa: F401, F403
+from .logging import LOGGING  # noqa: F401
 
 # =============================================================================
 # ENVIRONMENT & PATHS
@@ -200,7 +206,6 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = "[ResSynt - Research Data Management Platform]"
 ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True
 ACCOUNT_LOGOUT_ON_GET = False  # Require POST for logout (CSRF protection)
-PASSWORD_RESET_TIMEOUT = 900  # 15 minutes
 # Allauth rate limits (first layer of protection)
 # login_failed: 5 attempts per minute per IP - shows allauth rate limit message
 ACCOUNT_RATE_LIMITS = {
@@ -213,12 +218,11 @@ ACCOUNT_RATE_LIMITS = {
 
 USERSESSIONS_TRACK_ACTIVITY = True
 
-# URLs
+# Auth URLs
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/select-study/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/accounts/login/"
-ANONYMOUS_USER_NAME = None
 
 # =============================================================================
 # AXES (Brute-force protection)
@@ -255,6 +259,13 @@ AXES_IPWARE_META_PRECEDENCE_ORDER = [
 AXES_VERBOSE = False
 AXES_ENABLE_ACCESS_FAILURE_LOG = True
 
+# IP Whitelist - these IPs are never locked out (useful for admin access)
+# Format: comma-separated IPs in env, e.g., "192.168.1.1,10.0.0.1"
+AXES_NEVER_LOCKOUT_WHITELIST = env.list("AXES_IP_WHITELIST", default=[])
+
+# Whitelist GET requests (only lock out on failed POSTs)
+AXES_NEVER_LOCKOUT_GET = True
+
 # =============================================================================
 # TEMPLATES
 # =============================================================================
@@ -275,7 +286,6 @@ TEMPLATES = [
                 "django.template.context_processors.media",
                 "django.template.context_processors.tz",
                 "backends.studies.study_loader.dynamic_study_context",
-                "backends.studies.study_43en.utils.permission_decorators.permission_context_processor",
             ],
         },
     },
@@ -366,10 +376,12 @@ SERVER_EMAIL = env("SERVER_EMAIL", default="server@resync.local")
 # =============================================================================
 # CELERY
 # =============================================================================
+# Dev: CELERY_TASK_ALWAYS_EAGER=True (synchronous, no broker needed)
+# Prod: CELERY_TASK_ALWAYS_EAGER=False (async with Redis)
 
-CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_EAGER_PROPAGATES = True
-CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=True)
+CELERY_TASK_EAGER_PROPAGATES = env.bool("CELERY_TASK_EAGER_PROPAGATES", default=True)
+CELERY_TIMEZONE = TIME_ZONE
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -381,41 +393,82 @@ CELERY_RESULT_SERIALIZER = "json"
 RATELIMIT_ENABLE = env.bool("RATELIMIT_ENABLE", default=True)
 RATELIMIT_USE_CACHE = "default"
 
+# API Rate Limiting Configuration (used by UnifiedTenancyMiddleware)
+# Requests per minute by user type
+API_RATE_LIMITS = {
+    "authenticated": env.int("API_RATE_LIMIT_AUTH", default=60),     # 60/min for logged in users
+    "anonymous": env.int("API_RATE_LIMIT_ANON", default=10),         # 10/min for anonymous
+    "api_key": env.int("API_RATE_LIMIT_API_KEY", default=120),       # 120/min for API key auth
+    "admin": env.int("API_RATE_LIMIT_ADMIN", default=300),           # 300/min for admins
+}
+
+# Rate limit window in seconds
+API_RATE_LIMIT_WINDOW = env.int("API_RATE_LIMIT_WINDOW", default=60)
+
 # =============================================================================
-# ENCRYPTION & PASSWORDS
+# ENCRYPTION & SECURITY KEYS
 # =============================================================================
 
+# Fernet encryption keys (supports key rotation)
+# Primary key is used for encryption, old keys are used for decryption during rotation
+# Validation is handled by build_fernet_keys() in config/utils.py
+FERNET_KEYS = build_fernet_keys(
+    primary_key=env("FIELD_ENCRYPTION_KEY"),
+    old_key=env("FIELD_ENCRYPTION_KEY_OLD", default=None),
+)
 
-# Field encryption keys
-FERNET_KEYS = [env("FIELD_ENCRYPTION_KEY")]
+# Salt key for encrypted_fields (required)
+# Validation is handled by validate_salt_key() in config/utils.py
+SALT_KEY = validate_salt_key(env("SALT_KEY", default=None))
 
-# SALT_KEY for encrypted_fields
-# Should be a long, random string or list of strings for key rotation
-SALT_KEY = env("SALT_KEY", default=None)
-if not SALT_KEY:
-    raise ValueError("SALT_KEY must be set in your environment for encrypted_fields.")
-
+# Backup encryption (required in production, validated in prod.py)
 BACKUP_ENCRYPTION_PASSWORD = env("BACKUP_ENCRYPTION_PASSWORD", default=None)
-PASSWORD_RESET_TIMEOUT = 900  # 15 minutes
+
+# Password reset link expiration
+PASSWORD_RESET_TIMEOUT = 60 * 15  # 15 minutes
 
 # =============================================================================
-# ORGANIZATION
+# ORGANIZATION & ADMIN
 # =============================================================================
 
-ORGANIZATION_NAME = env("ORGANIZATION_NAME", default="ResSync Research Platform")
+ORGANIZATION_NAME = env("ORGANIZATION_NAME", default="ResSynt Research Platform")
 PLATFORM_VERSION = env("PLATFORM_VERSION", default="1.0.0")
-BACKUP_RETENTION_DAYS = 90
+SERVER_NAME = env("SERVER_NAME", default="ReSynt Production")
+BACKUP_RETENTION_DAYS = env.int("BACKUP_RETENTION_DAYS", default=90)
 
 ADMINS = [
-    ("Security Team", env("ADMIN_EMAIL", default="admin@resync.local")),
+    ("Security Team", env("ADMIN_EMAIL", default="admin@resynt.local")),
 ]
-SERVER_NAME = env("SERVER_NAME", default="ReSYNC Production")
 
 # =============================================================================
 # HEALTH CHECK
 # =============================================================================
 
 HEALTH_CHECK = {
-    "DISK_USAGE_MAX": 90,
-    "MEMORY_MIN": 100,
+    "DISK_USAGE_MAX": 90,  # Alert if disk usage > 90%
+    "MEMORY_MIN": 100,     # Alert if memory < 100MB
+}
+
+# django-health-check configuration
+HEALTH_CHECK_CONTRIB_INSTALLED_APPS = True
+
+# Custom health check settings
+HEALTH_CHECK_SETTINGS = {
+    # Database check
+    "db_timeout": 5,  # seconds
+    
+    # Cache check
+    "cache_key": "health_check_test",
+    "cache_timeout": 10,  # seconds
+    
+    # Disk check
+    "disk_path": "/",  # Path to check disk usage
+    "disk_usage_max": 90,  # Max percentage
+    
+    # Memory check
+    "memory_min_mb": 100,  # Minimum free memory in MB
+    
+    # Response time thresholds (ms)
+    "response_time_warning": 500,
+    "response_time_critical": 2000,
 }

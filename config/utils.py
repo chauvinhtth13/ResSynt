@@ -1,6 +1,7 @@
 """
 Configuration utilities for database and study app management.
 """
+import base64
 import logging
 import re
 from typing import Dict, List, Tuple
@@ -9,6 +10,100 @@ logger = logging.getLogger(__name__)
 
 # Valid identifier pattern (PostgreSQL)
 _IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+
+# =============================================================================
+# ENCRYPTION KEY VALIDATION
+# =============================================================================
+
+def validate_fernet_key(key: str, name: str = "FERNET_KEY") -> str:
+    """
+    Validate that a key is a valid Fernet key.
+    
+    Fernet keys must be 32 bytes, base64 url-safe encoded.
+    
+    Args:
+        key: The key string to validate
+        name: Name for error messages (e.g., "FIELD_ENCRYPTION_KEY")
+        
+    Returns:
+        The validated key (unchanged)
+        
+    Raises:
+        ValueError: If the key is invalid
+    """
+    if not key or not isinstance(key, str):
+        raise ValueError(f"{name} cannot be empty")
+    
+    key = key.strip()
+    
+    try:
+        decoded = base64.urlsafe_b64decode(key)
+        if len(decoded) != 32:
+            raise ValueError(
+                f"{name} must be 32 bytes when decoded (got {len(decoded)})"
+            )
+    except ValueError:
+        raise  # Re-raise our own ValueError
+    except Exception as e:
+        raise ValueError(f"{name} is not a valid Fernet key: {e}")
+    
+    return key
+
+
+def validate_salt_key(key: str, min_length: int = 32) -> str:
+    """
+    Validate salt key for encrypted fields.
+    
+    Args:
+        key: The salt key to validate
+        min_length: Minimum required length (default: 32)
+        
+    Returns:
+        The validated key (unchanged)
+        
+    Raises:
+        ValueError: If the key is invalid
+    """
+    if not key or not isinstance(key, str):
+        raise ValueError("SALT_KEY must be set in your environment for encrypted_fields.")
+    
+    key = key.strip()
+    
+    if len(key) < min_length:
+        raise ValueError(f"SALT_KEY must be at least {min_length} characters for security.")
+    
+    return key
+
+
+def build_fernet_keys(primary_key: str, old_key: str = None) -> List[str]:
+    """
+    Build and validate list of Fernet keys for encryption/decryption.
+    
+    The primary key is used for new encryption.
+    Old keys are kept for decrypting data encrypted with previous keys (key rotation).
+    
+    Args:
+        primary_key: Current encryption key (required)
+        old_key: Previous key for rotation (optional)
+        
+    Returns:
+        List of validated Fernet keys [primary, old] or [primary]
+    """
+    validated_primary = validate_fernet_key(primary_key, "FIELD_ENCRYPTION_KEY")
+    
+    keys = [validated_primary]
+    
+    if old_key:
+        validated_old = validate_fernet_key(old_key, "FIELD_ENCRYPTION_KEY_OLD")
+        keys.append(validated_old)
+    
+    return keys
+
+
+# =============================================================================
+# DATABASE IDENTIFIER VALIDATION
+# =============================================================================
 
 
 def validate_identifier(name: str, context: str = "identifier") -> str:

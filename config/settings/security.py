@@ -1,5 +1,8 @@
 """
 Security settings - CSP, headers, password validators, CSRF.
+
+These are base security settings shared across all environments.
+Environment-specific overrides (HTTPS, cookies) are in dev.py and prod.py.
 """
 import environ
 
@@ -14,6 +17,7 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Strict"
 CSRF_USE_SESSIONS = True
 CSRF_COOKIE_AGE = None
+# Note: CSRF_COOKIE_SECURE is set in dev.py (False) and prod.py (True)
 
 # =============================================================================
 # SECURITY HEADERS
@@ -21,15 +25,15 @@ CSRF_COOKIE_AGE = None
 
 X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_BROWSER_XSS_FILTER = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-
-# Additional security headers for production
-# These will be set via SECURE_* settings
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
-# Permissions Policy (formerly Feature Policy)
-# Disable unnecessary browser features
+# Note: HTTPS settings (SSL_REDIRECT, HSTS) are configured in prod.py only
+
+# =============================================================================
+# PERMISSIONS POLICY
+# =============================================================================
+
 PERMISSIONS_POLICY = {
     "accelerometer": [],
     "camera": [],
@@ -49,37 +53,45 @@ try:
     from csp.constants import SELF
 except ImportError:
     SELF = "'self'"
-    
+
 CSP_ENABLED = True
 
+# Base CSP directives - shared across environments
+_CSP_BASE_DIRECTIVES = {
+    "default-src": [SELF],
+    "script-src": [
+        SELF,
+        "https://cdn.jsdelivr.net",
+        "https://ajax.googleapis.com",
+    ],
+    "style-src": [
+        SELF,
+        "https://fonts.googleapis.com",
+        "https://cdn.jsdelivr.net",
+    ],
+    "font-src": [
+        SELF,
+        "https://fonts.gstatic.com",
+        "data:",
+    ],
+    "img-src": [
+        SELF,
+        "data:",
+        "blob:",
+        # Specific trusted domains for images
+        "https://cdn.jsdelivr.net",
+        "https://www.gravatar.com",
+        "https://ui-avatars.com",
+    ],
+    "connect-src": [SELF],
+    "frame-ancestors": ["'none'"],
+    "base-uri": [SELF],
+    "form-action": [SELF],
+}
+
+# Copy directives to avoid mutation issues
 CONTENT_SECURITY_POLICY = {
-    "DIRECTIVES": {
-        "default-src": [SELF],
-        "script-src": [
-            SELF,
-            "https://cdn.jsdelivr.net",
-            "https://ajax.googleapis.com",
-        ],
-        "style-src": [
-            SELF,
-            "https://fonts.googleapis.com",
-            "https://cdn.jsdelivr.net",
-        ],
-        "font-src": [
-            SELF,
-            "https://fonts.gstatic.com",
-            "data:",
-        ],
-        "img-src": [
-            SELF,
-            "data:",
-            "https:",
-        ],
-        "connect-src": [SELF],
-        "frame-ancestors": ["'none'"],
-        "base-uri": [SELF],
-        "form-action": [SELF],
-    },
+    "DIRECTIVES": {k: list(v) for k, v in _CSP_BASE_DIRECTIVES.items()},
 }
 
 CSP_INCLUDE_NONCE_IN = ["script-src", "style-src"]
@@ -98,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},  # Increased from 8 to 10
+        "OPTIONS": {"min_length": 8},
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -108,6 +120,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# =============================================================================
+# PASSWORD HASHERS (ordered by preference)
+# =============================================================================
+
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.ScryptPasswordHasher",
@@ -115,4 +131,3 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
 ]
-# =============================================================================

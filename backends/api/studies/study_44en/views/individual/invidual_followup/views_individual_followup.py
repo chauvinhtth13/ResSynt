@@ -595,7 +595,7 @@ def individual_followup_detail(request, subjectid, followup_id):
     
     This is kept for backward compatibility with old URLs
     """
-    logger.warning(f"⚠️ Using deprecated 'individual_followup_detail' - redirecting to 'individual_followup_update'")
+    logger.warning(f"Using deprecated 'individual_followup_detail' - redirecting to 'individual_followup_update'")
     return individual_followup_update(request, subjectid, followup_id)
 
 

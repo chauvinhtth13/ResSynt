@@ -772,10 +772,10 @@ def detect_exp1_flat_field_changes(request, exposure):
     - Comorbidities (checkboxes)
     - Radio buttons (shared_toilet, water_treatment, has_conditions)
     
-    ⚠️ IMPORTANT: These radio buttons are hardcoded HTML, NOT in Django form!
+    IMPORTANT: These radio buttons are hardcoded HTML, NOT in Django form!
     So we must compare POST values directly with database values.
     
-    ⚠️ CRITICAL: The exposure object passed in may have been modified by Django form binding.
+    CRITICAL: The exposure object passed in may have been modified by Django form binding.
     We MUST refresh from DB to get the actual stored values.
     
     Returns:
@@ -794,7 +794,7 @@ def detect_exp1_flat_field_changes(request, exposure):
     
     # ==========================================
     # 1. Radio buttons on main exposure model
-    # ⚠️ These are hardcoded HTML, not in Django form
+    # These are hardcoded HTML, not in Django form
     # ==========================================
     
     # DEBUG: Log actual database values
@@ -1000,10 +1000,10 @@ def detect_exp2_flat_field_changes(request, exposure):
     - Medication status (radio)
     - Medication checkboxes + duration
     
-    ⚠️ IMPORTANT: Radio buttons are hardcoded HTML, NOT in Django form!
+    IMPORTANT: Radio buttons are hardcoded HTML, NOT in Django form!
     Only detect change if POST actually has a value.
     
-    ⚠️ CRITICAL: The exposure object passed in may have been modified by Django form binding.
+    CRITICAL: The exposure object passed in may have been modified by Django form binding.
     We MUST refresh from DB to get the actual stored values.
     
     Returns:

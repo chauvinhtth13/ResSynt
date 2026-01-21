@@ -137,7 +137,7 @@ class BaseLaboratoryTestFormSet(BaseModelFormSet):
                         data[id_field_name] = str(instance.pk)
                         injected_count += 1
                         logger.warning(
-                            "⚠️ Injecting missing id for form %d: %s=%s (TESTTYPE=%s)",
+                            "Injecting missing id for form %d: %s=%s (TESTTYPE=%s)",
                             i, id_field_name, instance.pk, 
                             getattr(instance, 'TESTTYPE', 'UNKNOWN')
                         )

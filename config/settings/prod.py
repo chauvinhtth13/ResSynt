@@ -2,39 +2,57 @@
 Production settings.
 
 Usage: DJANGO_ENV=prod gunicorn config.wsgi:application
+
+Features:
+- DEBUG=False (mandatory)
+- HTTPS enforcement (SSL, HSTS)
+- Redis cache with database fallback
+- Cached templates for performance
+- SMTP email backend
+- Celery with Redis broker
 """
 import environ
-from .base import *
+
+from .base import *  # noqa: F401, F403
 
 env = environ.Env()
+
+# =============================================================================
+# CORE SETTINGS
+# =============================================================================
 
 DEBUG = False
 
 # =============================================================================
-# SECURITY HARDENING
+# VALIDATION
 # =============================================================================
 
-# Enforce backup encryption password in production
-if not BACKUP_ENCRYPTION_PASSWORD:
+if not BACKUP_ENCRYPTION_PASSWORD:  # noqa: F405
     raise ValueError("BACKUP_ENCRYPTION_PASSWORD must be set in production")
 
-# HTTPS
+if not ALLOWED_HOSTS:  # noqa: F405
+    raise ValueError("ALLOWED_HOSTS must be set in production")
+
+# =============================================================================
+# SECURITY (HTTPS Hardening)
+# =============================================================================
+
 SECURE_SSL_REDIRECT = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 LANGUAGE_COOKIE_SECURE = True
 
-# HSTS
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # =============================================================================
-# DATABASE OPTIMIZATION
+# DATABASE
 # =============================================================================
 
-DATABASES["default"].update({
+DATABASES["default"].update({  # noqa: F405
     "CONN_HEALTH_CHECKS": True,
     "CONN_MAX_AGE": 60,
     "OPTIONS": {
@@ -43,38 +61,32 @@ DATABASES["default"].update({
     },
 })
 
-# PgBouncer support
 if env.bool("USE_PGBOUNCER", default=False):
-    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
+    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True  # noqa: F405
 
 # =============================================================================
-# CACHE (Redis)
+# CACHE
 # =============================================================================
 
-redis_url = env("REDIS_URL", default=None)
+_redis_url = env("REDIS_URL", default=None)
 
-if redis_url:
+if _redis_url:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": redis_url,
+            "LOCATION": _redis_url,
             "KEY_PREFIX": "cache",
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 "IGNORE_EXCEPTIONS": True,
-                "CONNECTION_POOL_CLASS_KWARGS": {
-                    "max_connections": 50,
-                    "timeout": 20,
-                },
+                "CONNECTION_POOL_CLASS_KWARGS": {"max_connections": 50, "timeout": 20},
             },
         },
         "sessions": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": redis_url,
+            "LOCATION": _redis_url,
             "KEY_PREFIX": "session",
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            },
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
         },
     }
     SESSION_CACHE_ALIAS = "sessions"
@@ -87,11 +99,11 @@ else:
     }
 
 # =============================================================================
-# TEMPLATES (cached)
+# TEMPLATES
 # =============================================================================
 
-TEMPLATES[0]["APP_DIRS"] = False
-TEMPLATES[0]["OPTIONS"]["loaders"] = [
+TEMPLATES[0]["APP_DIRS"] = False  # noqa: F405
+TEMPLATES[0]["OPTIONS"]["loaders"] = [  # noqa: F405
     (
         "django.template.loaders.cached.Loader",
         [
@@ -105,7 +117,7 @@ TEMPLATES[0]["OPTIONS"]["loaders"] = [
 # STATIC FILES
 # =============================================================================
 
-STORAGES["staticfiles"] = {
+STORAGES["staticfiles"] = {  # noqa: F405
     "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
 }
 
@@ -125,22 +137,20 @@ CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
 CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes
 CELERY_WORKER_PREFETCH_MULTIPLIER = 4
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 100
-
-# Task routing
 CELERY_TASK_ROUTES = {
     "backends.*.tasks.high_priority_*": {"queue": "high"},
     "backends.*.tasks.low_priority_*": {"queue": "low"},
 }
 
 # =============================================================================
-# AXES (stricter in production)
+# AXES
 # =============================================================================
 
 AXES_VERBOSE = False
 AXES_ENABLE_ACCESS_FAILURE_LOG = True
 
 # =============================================================================
-# EMAIL (SMTP in production)
+# EMAIL
 # =============================================================================
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -149,6 +159,5 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # LOGGING
 # =============================================================================
 
-# Remove console_dev, keep only error-level console output
-LOGGING["root"]["handlers"] = ["console", "file_all", "file_error"]
-LOGGING["root"]["level"] = "INFO"
+LOGGING["root"]["handlers"] = ["console", "file_all", "file_error"]  # noqa: F405
+LOGGING["root"]["level"] = "INFO"  # noqa: F405

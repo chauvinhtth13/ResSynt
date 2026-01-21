@@ -74,17 +74,17 @@ def screening_case_create(request):
         messages.error(request, f'Site ID không hợp lệ: {siteid}')
         return redirect('study_43en:screening_case_list')
     
-    # 🔒 SECURITY FIX: Check user's ACTUAL site permissions (not just session)
+    # SECURITY FIX: Check user's ACTUAL site permissions (not just session)
     if not check_site_permission(request, siteid):
         user_sites = getattr(request, 'user_sites', set())
         logger.warning(
-            f"🚨 SECURITY: User {request.user.username} "
+            f"SECURITY: User {request.user.username} "
             f"(accessible_sites={user_sites}) "
             f"attempted to create screening for unauthorized site {siteid}"
         )
         messages.error(
             request,
-            f'🚨 Bạn không có quyền tạo screening cho site {siteid}! '
+            f'Bạn không có quyền tạo screening cho site {siteid}! '
             f'(Chỉ được tạo cho: {", ".join(sorted(user_sites)) if user_sites else "không có site nào"})'
         )
         return redirect('study_43en:screening_case_list')

@@ -186,11 +186,25 @@ class StudyMembership(models.Model):
 # Single signal handler for group sync
 @receiver(post_save, sender=StudyMembership)
 def sync_groups_on_save(sender, instance, created, **kwargs):
-    if not kwargs.get('raw', False):  # Tránh trong fixtures
+    """Sync user groups when membership is saved"""
+    if not kwargs.get('raw', False):  # Avoid during fixtures
         from backends.tenancy.utils import TenancyUtils
-        # Delay để tránh race condition
         from django.db import transaction
-        transaction.on_commit(lambda: TenancyUtils.sync_user_groups(instance.user))
+        
+        def _sync():
+            result = TenancyUtils.sync_user_groups(instance.user)
+            if created:
+                logger.info(
+                    f"Created membership for {instance.user.username} "
+                    f"in study {instance.study.code}"
+                )
+            if result['added'] > 0 or result['removed'] > 0:
+                logger.debug(
+                    f"Synced groups for {instance.user.username}: "
+                    f"+{result['added']}, -{result['removed']}"
+                )
+        
+        transaction.on_commit(_sync)
 
 
 @receiver(post_delete, sender=StudyMembership)  
@@ -198,4 +212,9 @@ def sync_groups_on_delete(sender, instance, **kwargs):
     """Sync user groups when membership deleted"""
     if instance.user:
         from backends.tenancy.utils import TenancyUtils
+        TenancyUtils.clear_user_cache(instance.user)
         TenancyUtils.sync_user_groups(instance.user)
+        logger.info(
+            f"Deleted membership for {instance.user.username} "
+            f"from study {instance.study.code}"
+        )

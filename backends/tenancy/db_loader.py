@@ -158,11 +158,11 @@ class EnhancedStudyDatabaseManager:
             # Use DatabaseStudyCreator for consistency
             from backends.tenancy.utils.db_study_creator import DatabaseStudyCreator
             
-            # Get connection string or kwargs
-            conn_string = DatabaseStudyCreator.get_connection_string(db_name)
+            # Get connection params
+            conn_params = DatabaseStudyCreator.get_connection_params(db_name)
             
             # Psycopg3 context manager with autocommit
-            with psycopg.connect(conn_string, autocommit=True) as conn:
+            with psycopg.connect(**conn_params, autocommit=True) as conn:
                 with conn.cursor() as cur:
                     # Check schema existence - parameterized
                     cur.execute(

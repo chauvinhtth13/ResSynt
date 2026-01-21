@@ -300,7 +300,7 @@ def audit_log_detail(request, log_id):
         try:
             user = User.objects.using('default').get(id=log.user_id)
         except User.DoesNotExist:
-            logger.warning(f"⚠️ User {log.user_id} not found")
+            logger.warning(f"User {log.user_id} not found")
     
     # ==========================================
     # 5. VERIFY INTEGRITY
@@ -310,7 +310,7 @@ def audit_log_detail(request, log_id):
         is_verified = log.verify_integrity()
     
     if not is_verified:
-        logger.warning(f"🚨 INTEGRITY CHECK FAILED for audit log {log_id}")
+        logger.warning(f"INTEGRITY CHECK FAILED for audit log {log_id}")
     else:
         logger.info(f" Integrity verified")
     

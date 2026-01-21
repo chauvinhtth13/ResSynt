@@ -98,7 +98,7 @@ def is_first_data_entry_for_lab_tests(forms_dict):
     formset = forms_dict.get('formsets', {}).get('laboratory_tests')
     
     if not formset:
-        logger.warning("⚠️ No laboratory_tests formset found in forms_dict")
+        logger.warning("No laboratory_tests formset found in forms_dict")
         return False
     
     logger.info(f" Checking data_entered flag for {len(formset.forms)} forms...")
@@ -142,7 +142,7 @@ def is_first_data_entry_for_lab_tests(forms_dict):
                            f"data_entered=False")
                 
         except LaboratoryTest.DoesNotExist:
-            logger.warning(f"   ⚠️ Instance pk={form.instance.pk} not found in DB")
+            logger.warning(f"   Instance pk={form.instance.pk} not found in DB")
             # Treat as first entry if can't find original
             continue
     
@@ -585,7 +585,7 @@ def laboratory_test_view(request, usubjid, lab_type):
     if not has_tests:
         messages.warning(
             request, 
-            f'⚠️ Chưa có xét nghiệm nào cho lần {lab_type}'
+            f'Chưa có xét nghiệm nào cho lần {lab_type}'
         )
         return redirect('study_43en:laboratory_test_list', usubjid=usubjid)
     

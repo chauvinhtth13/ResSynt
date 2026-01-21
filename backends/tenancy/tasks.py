@@ -95,10 +95,10 @@ def send_security_alert(self, alert_type: str, details: dict):
         
         # Build subject and message
         subject_map = {
-            'user_lockout': '🔒 User Account Locked Out',
-            'rate_limit_exceeded': '⚠️ Rate Limit Exceeded',
-            'invalid_user_attempt': '🚨 Invalid User Login Attempt',
-            'suspicious_activity': '🔴 Suspicious Activity Detected',
+            'user_lockout': 'User Account Locked Out',
+            'rate_limit_exceeded': 'Rate Limit Exceeded',
+            'invalid_user_attempt': 'Invalid User Login Attempt',
+            'suspicious_activity': 'Suspicious Activity Detected',
         }
         
         subject = f"[{settings.ORGANIZATION_NAME}] {subject_map.get(alert_type, 'Security Alert')}"

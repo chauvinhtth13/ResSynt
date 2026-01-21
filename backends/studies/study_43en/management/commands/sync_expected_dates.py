@@ -86,7 +86,7 @@ class Command(BaseCommand):
             
             if not calendar:
                 self.stdout.write(self.style.WARNING(
-                    f'  ⚠️  {enr.USUBJID_id} (Site {site_id}): Không tìm thấy lịch cho ngày {enrollment_date}'
+                    f'   {enr.USUBJID_id} (Site {site_id}): Không tìm thấy lịch cho ngày {enrollment_date}'
                 ))
                 no_calendar_count += 1
                 site_stats[site_id]['no_calendar'] += 1
@@ -134,7 +134,7 @@ class Command(BaseCommand):
         
         if no_calendar_count > 0:
             self.stdout.write(self.style.WARNING(
-                f'\n  ⚠️  {no_calendar_count} bệnh nhân không có lịch trong ExpectedCalendar'
+                f'\n   {no_calendar_count} bệnh nhân không có lịch trong ExpectedCalendar'
             ))
             if missing_dates:
                 self.stdout.write(self.style.WARNING(
@@ -171,7 +171,7 @@ class Command(BaseCommand):
             
             if not calendar:
                 self.stdout.write(self.style.WARNING(
-                    f'  ⚠️  {enr.USUBJID_id}: Không tìm thấy lịch cho ngày {enrollment_date}'
+                    f'   {enr.USUBJID_id}: Không tìm thấy lịch cho ngày {enrollment_date}'
                 ))
                 no_calendar_count += 1
                 continue
@@ -203,7 +203,7 @@ class Command(BaseCommand):
         )
         if no_calendar_count > 0:
             self.stdout.write(self.style.WARNING(
-                f'  ⚠️  {no_calendar_count} người tiếp xúc không có lịch trong ExpectedCalendar'
+                f'   {no_calendar_count} người tiếp xúc không có lịch trong ExpectedCalendar'
             ))
         
         return count

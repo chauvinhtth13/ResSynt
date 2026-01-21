@@ -288,7 +288,7 @@
     const $preview = $('#address-preview');
     
     if (!$preview.length) {
-      console.log('⚠️ Preview element not found');
+      console.log('Preview element not found');
       return;
     }
     

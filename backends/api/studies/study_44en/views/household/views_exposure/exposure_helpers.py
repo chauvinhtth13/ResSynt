@@ -90,7 +90,7 @@ def save_water_treatment(request, exposure):
         logger.info(f"Saved water treatment: {treatment_method}")
         return True
     else:
-        logger.warning("⚠️ No TREATMENT_METHOD found in POST data")
+        logger.warning("No TREATMENT_METHOD found in POST data")
     
     return False
 
@@ -173,7 +173,7 @@ def load_treatment_data(exposure):
             'method': treatment.TREATMENT_TYPE,
             'other': treatment.TREATMENT_TYPE_OTHER or ''
         }
-    logger.warning(f"⚠️ No treatment found for {exposure.HHID}")
+    logger.warning(f"No treatment found for {exposure.HHID}")
     return {'method': None, 'other': None}
 
 

@@ -166,7 +166,7 @@ def load_samples(individual):
     for sample in samples:
         form_prefix = reverse_mapping.get(sample.SAMPLE_TIME)
         if not form_prefix:
-            logger.warning(f"⚠️ Unknown SAMPLE_TIME: {sample.SAMPLE_TIME}")
+            logger.warning(f"Unknown SAMPLE_TIME: {sample.SAMPLE_TIME}")
             continue
         
         # Set collected value (yes/no/na)

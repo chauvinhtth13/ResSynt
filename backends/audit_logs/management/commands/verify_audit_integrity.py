@@ -90,7 +90,7 @@ class Command(BaseCommand):
         if total_invalid > 0:
             self.stdout.write(
                 self.style.ERROR(
-                    f'\n⚠️  ALERT: {total_invalid} audit log(s) may have been tampered!'
+                    f'\n ALERT: {total_invalid} audit log(s) may have been tampered!'
                 )
             )
         else:
