@@ -133,7 +133,7 @@ def screening_case_create(request):
         return process_crf_create(
             request=request,
             form_class=ScreeningCaseForm,
-            template_name='studies/study_43en/CRF/patient/screening_form.html',
+            template_name='studies/study_43en/patient/form/screening_form.html',
             redirect_url='study_43en:screening_case_list',
             pre_save_callback=pre_save,
             post_save_callback=post_save,
@@ -252,7 +252,7 @@ def screening_case_update(request, SCRID):
         request=request,
         instance=screening_case,
         form_class=ScreeningCaseForm,
-        template_name='studies/study_43en/CRF/patient/screening_form.html',
+        template_name='studies/study_43en/patient/form/screening_form.html',
         redirect_url='study_43en:screening_case_list',
         form_kwargs={'selected_site_id': selected_site_id},  #  THÊM
         extra_context={

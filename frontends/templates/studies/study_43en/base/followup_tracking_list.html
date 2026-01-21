@@ -154,12 +154,20 @@
                         " id="followup-row-{{ followup.pk }}">
                         <td>{{ forloop.counter }}</td>
                         <td>{{ followup.USUBJID }}</td>
-                        <td>{{ followup.INITIAL }}</td>
+                        <td>
+                            {% if followup.INITIAL %}
+                                {{ followup.INITIAL }}
+                            {% elif followup.INITIALS %}
+                                {{ followup.INITIALS }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
                             <span >Patient</span>
                             {% else %}
-                            <span class="badge badge-info ">Contact</span>
+                            <span >Contact</span>
                             {% endif %}
                         </td>
                         <td>{{ followup.get_VISIT_display }}</td>
@@ -293,7 +301,7 @@
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-success">
-            <i class="fas fa-check-circle mr-2"></i>Completed List
+            <i ></i>Completed List
             <span >{{ completed_followups.paginator.count }}</span>
         </h6>
     </div>
@@ -320,7 +328,15 @@
                     <tr class="table-success">
                         <td>{{ forloop.counter }}</td>
                         <td>{{ followup.USUBJID }}</td>
-                        <td>{{ followup.INITIAL }}</td>
+                        <td>
+                            {% if followup.INITIAL %}
+                                {{ followup.INITIAL }}
+                            {% elif followup.INITIALS %}
+                                {{ followup.INITIALS }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
                             <span >Patient</span>
@@ -461,7 +477,15 @@
                     <tr class="table-danger">
                         <td>{{ forloop.counter }}</td>
                         <td>{{ followup.USUBJID }}</td>
-                        <td>{{ followup.INITIAL }}</td>
+                        <td>
+                            {% if followup.INITIAL %}
+                                {{ followup.INITIAL }}
+                            {% elif followup.INITIALS %}
+                                {{ followup.INITIALS }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>
                             {% if followup.SUBJECT_TYPE == 'PATIENT' %}
                             <span >Patient</span>
@@ -558,7 +582,7 @@
     <div class="modal-content">
         <div class="modal-header bg-success text-white">
             <h5 class="modal-title" id="completeFollowupModalLabel">
-                <i class="fas fa-check-circle mr-2"></i>Đánh dấu hoàn thành
+                <i ></i>Confirm Follow-up Completion
             </h5>
         </div>
         <div class="modal-body">
@@ -572,7 +596,7 @@
                 
                 <div class="form-group">
                     <label for="actual_date_complete" class="font-weight-bold">
-                        <i class="fas fa-calendar-check mr-1"></i>Completed Date <span class="text-danger">*</span>
+                        <i ></i>Completed Date <span class="text-danger">*</span>
                     </label>
                     <input type="text" class="form-control datepicker" id="actual_date_complete" name="actual_date" placeholder="DD/MM/YYYY" required>
                     <small class="form-text text-muted">

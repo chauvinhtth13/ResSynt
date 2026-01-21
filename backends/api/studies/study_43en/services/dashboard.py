@@ -1150,27 +1150,27 @@ def get_kpneumoniae_isolation_stats_api(request):
             
             # Get enrolled patients for this site
             # ENR_CASE doesn't have SITEID directly, access via USUBJID (which is FK to SCR_CASE)
-            patients = ENR_CASE.objects.filter(USUBJID__SITEID=site_code)
+            patients = ENR_CASE.objects.using(DB_ALIAS).filter(USUBJID__SITEID=site_code)
             patient_count = patients.count()
             
-            # Clinical Kp (patients with Klebsiella at enrollment/infection)
-            # From SCR_CASE (screening data has SITEID)
-            clinical_kp = SCR_CASE.objects.filter(
+            # Clinical Kp (total K. pneumoniae culture results from LAB_Microbiology)
+            # Count ALL LAB_Microbiology records with IS_KLEBSIELLA=True (each LAB_CULTURE_ID = 1)
+            from backends.studies.study_43en.models.patient import LAB_Microbiology
+            clinical_kp = LAB_Microbiology.objects.using(DB_ALIAS).filter(
                 SITEID=site_code,
-                is_confirmed=True,
-                ISOLATEDKPNFROMINFECTIONORBLOOD=True
+                IS_KLEBSIELLA=True
             ).count()
             
             # Get patient samples for this site
             # SAM_CASE.USUBJID is FK to ENR_CASE.USUBJID which is FK to SCR_CASE.USUBJID
             # Access SITEID through: SAM_CASE -> USUBJID (ENR_CASE) -> USUBJID (SCR_CASE) -> SITEID
             try:
-                patient_samples = sam_case_model.objects.filter(
+                patient_samples = sam_case_model.objects.using(DB_ALIAS).filter(
                     USUBJID__USUBJID__SITEID=site_code
                 )
             except Exception as e:
                 logger.warning(f"Could not access SAM_CASE for site {site_code}: {e}")
-                patient_samples = sam_case_model.objects.none()
+                patient_samples = sam_case_model.objects.using(DB_ALIAS).none()
             
             # Throat swab statistics (KLEBPNEU_3)
             patient_throat = {}
@@ -1227,19 +1227,19 @@ def get_kpneumoniae_isolation_stats_api(request):
             # Get enrolled contacts for this site
             # ENR_CONTACT.USUBJID is OneToOne to SCR_CONTACT.USUBJID
             # SCR_CONTACT has SITEID field
-            contacts = ENR_CONTACT.objects.filter(USUBJID__SITEID=site_code)
+            contacts = ENR_CONTACT.objects.using(DB_ALIAS).filter(USUBJID__SITEID=site_code)
             contact_count = contacts.count()
             
             # Get contact samples for this site
             # SAM_CONTACT.USUBJID is FK to ENR_CONTACT.USUBJID which is OneToOne to SCR_CONTACT.USUBJID
             # Access SITEID through: SAM_CONTACT -> USUBJID (ENR_CONTACT) -> USUBJID (SCR_CONTACT) -> SITEID
             try:
-                contact_samples = sam_contact_model.objects.filter(
+                contact_samples = sam_contact_model.objects.using(DB_ALIAS).filter(
                     USUBJID__USUBJID__SITEID=site_code
                 )
             except Exception as e:
                 logger.warning(f"Could not access SAM_CONTACT for site {site_code}: {e}")
-                contact_samples = sam_contact_model.objects.none()
+                contact_samples = sam_contact_model.objects.using(DB_ALIAS).none()
             
             # Throat swab statistics (KLEBPNEU_3)
             contact_throat = {}

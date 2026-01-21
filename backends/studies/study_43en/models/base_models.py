@@ -138,10 +138,26 @@ class AuditFieldsMixin(models.Model):
         abstract = True
     
     def save(self, *args, **kwargs):
-        """Giữ nguyên"""
+        """
+        Save with version increment and cache invalidation.
+        
+        🔥 ADDED: Auto-invalidate Redis cache for this model
+        to ensure list pages show fresh data immediately.
+        """
         if self.pk:
             self.version += 1
         super().save(*args, **kwargs)
+        
+        # 🔥 Invalidate cache for this model after save
+        # This ensures list pages show fresh data immediately
+        try:
+            from backends.studies.study_43en.utils.site_utils import invalidate_cache
+            model_name = self.__class__.__name__
+            invalidate_cache(model_name=model_name)
+        except Exception as e:
+            # Don't fail save if cache invalidation fails
+            import logging
+            logging.getLogger(__name__).warning(f"Cache invalidation failed for {self.__class__.__name__}: {e}")
     
     def get_modification_info(self):
         """Giữ nguyên"""

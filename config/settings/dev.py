@@ -11,7 +11,7 @@ DEBUG = True
 # DEVELOPMENT OVERRIDES
 # =============================================================================
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", ".localhost"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", ".localhost", "192.168.38.9"]
 
 # =============================================================================
 # CACHE (Force LocMemCache in dev - SKIP Redis for speed)

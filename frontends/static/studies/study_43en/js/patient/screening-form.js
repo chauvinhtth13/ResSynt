@@ -29,7 +29,7 @@
       
       if (eligible) {
         statusDiv.removeClass('not-eligible').addClass('eligible')
-          .html('<i class="fas fa-check-circle mr-2"></i> Patient is eligible for the study');
+          .html('<i ></i> Patient is eligible for the study');
       } else {
         statusDiv.removeClass('eligible').addClass('not-eligible')
           .html('<i class="fas fa-times-circle mr-2"></i> Patient is not eligible for the study');

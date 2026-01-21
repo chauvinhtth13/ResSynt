@@ -95,7 +95,7 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):
     Returns:
         Filtered QuerySet using db_study_43en
     """
-    # 🔥 Cache key generation
+    # 🔥 Cache key generation - include model name for easier invalidation
     if use_cache:
         cache_key = _generate_cache_key('queryset', model.__name__, site_filter, filter_type)
         
@@ -130,6 +130,8 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):
         try:
             pks = list(queryset.values_list('pk', flat=True))
             cache.set(cache_key, pks, CACHE_TIMEOUT_SHORT)
+            # 🔥 Register the cache key for later invalidation
+            _register_cache_key(cache_key)
             logger.debug(f"💾 Cached: [{model.__name__}] {len(pks)} objects")
         except Exception as e:
             logger.warning(f"Failed to cache queryset: {e}")
@@ -141,13 +143,18 @@ def _generate_cache_key(*args):
     """
     Generate unique cache key from arguments
     
-    Example: 'site_query_SCR_CASE_all_all_v1'
+    🔥 UPDATED: Include model name explicitly in key for easier invalidation
+    Example: 'site_query_SCR_CASE_abc12345_v1'
     """
-    # Create deterministic hash
+    # First arg after 'queryset' is typically the model name
+    model_name = args[1] if len(args) > 1 else 'unknown'
+    
+    # Create deterministic hash from all args for uniqueness
     content = '_'.join(str(arg) for arg in args)
     hash_suffix = hashlib.md5(content.encode()).hexdigest()[:8]
     
-    return f"site_query_{hash_suffix}_v1"
+    # Include model name explicitly in key for pattern matching
+    return f"site_query_{model_name}_{hash_suffix}_v1"
 
 
 def batch_get_related(primary_instances, related_model, fk_field, site_filter, filter_type):
@@ -250,16 +257,59 @@ def invalidate_cache(model_name=None, site_filter=None):
     Args:
         model_name: Specific model to invalidate (None = all)
         site_filter: Specific site filter (None = all)
+        
+    🔥 FIX: Using registry-based invalidation that works with any cache backend
     """
-    if model_name and site_filter:
-        # Invalidate specific cache
-        pattern = f"site_query_*{model_name}*{site_filter}*"
-        cache.delete_pattern(pattern)
-        logger.info(f"🗑️ Invalidated cache: {model_name} @ {site_filter}")
-    else:
-        # Invalidate all site query cache
-        cache.delete_pattern("site_query_*")
-        logger.info(f"🗑️ Invalidated all site query cache")
+    # Get the cache key registry
+    registry_key = "site_query_registry_v1"
+    
+    try:
+        # Try to get registered cache keys
+        registered_keys = cache.get(registry_key) or set()
+        
+        if model_name:
+            # Invalidate only keys containing this model name
+            keys_to_delete = [k for k in registered_keys if model_name in k]
+            for key in keys_to_delete:
+                cache.delete(key)
+                registered_keys.discard(key)
+            logger.info(f"🗑️ Invalidated {len(keys_to_delete)} cache keys for {model_name}")
+        else:
+            # Invalidate all registered keys
+            for key in list(registered_keys):
+                cache.delete(key)
+            registered_keys.clear()
+            logger.info(f"🗑️ Invalidated all site query cache")
+        
+        # Update registry
+        cache.set(registry_key, registered_keys, CACHE_TIMEOUT_LONG)
+        
+    except Exception as e:
+        logger.warning(f"Cache invalidation error: {e}")
+        # Fallback: Try to use delete_pattern if available (django-redis)
+        try:
+            if hasattr(cache, 'delete_pattern'):
+                if model_name:
+                    cache.delete_pattern(f"*{model_name}*")
+                else:
+                    cache.delete_pattern("site_query_*")
+        except Exception as e2:
+            logger.warning(f"Fallback cache invalidation also failed: {e2}")
+
+
+def _register_cache_key(cache_key):
+    """
+    Register a cache key for later invalidation
+    
+    Call this when setting a cache value so we can track what to invalidate
+    """
+    registry_key = "site_query_registry_v1"
+    try:
+        registered_keys = cache.get(registry_key) or set()
+        registered_keys.add(cache_key)
+        cache.set(registry_key, registered_keys, CACHE_TIMEOUT_LONG)
+    except Exception as e:
+        logger.warning(f"Failed to register cache key {cache_key}: {e}")
 
 
 def get_site_filtered_object_or_404(model, site_filter, filter_type, **kwargs):

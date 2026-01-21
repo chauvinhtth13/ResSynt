@@ -76,12 +76,14 @@ def get_clinical_with_related(request, usubjid):
         USUBJID=screening_case
     )
     
-    # Get clinical case with site filtering
+    # Get clinical case - BYPASS CACHE for single record lookup
+    # Using use_cache=False to avoid stale data after create/update
     try:
         clinical_queryset = get_filtered_queryset(
             CLI_CASE,
             site_filter,
-            filter_type
+            filter_type,
+            use_cache=False  # 🔥 FIX: Bypass cache for single record lookup
         ).select_related(
             'USUBJID',
             'USUBJID__USUBJID'

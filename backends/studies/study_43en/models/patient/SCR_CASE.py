@@ -171,24 +171,30 @@ class SCR_CASE(AuditFieldsMixin):
             if not self.SITEID:
                 raise ValueError("SITEID is required to generate SCRID")
             
-            # Get max SCRID number for THIS SITE ONLY
-            # Each site counts from PS0001 independently
-            site_cases = SCR_CASE.objects.filter(
-                SITEID=self.SITEID
-            ).exclude(
-                SCRID__isnull=True
+            # 🚀 OPTIMIZED: Use database aggregation instead of fetching all records
+            # Extract numeric part from SCRID (PS0001 -> 0001) and find max
+            from django.db.models import Max, F, Value, IntegerField
+            from django.db.models.functions import Substr, Cast, Length
+            
+            # Get max SCRID number for THIS SITE ONLY using database aggregation
+            # This is MUCH faster than fetching all records and iterating
+            max_scrid = SCR_CASE.objects.filter(
+                SITEID=self.SITEID,
+                SCRID__startswith='PS',
+                SCRID__isnull=False
             ).exclude(
                 SCRID__exact=''
-            ).values_list('SCRID', flat=True)
+            ).annotate(
+                # Extract numeric part: SUBSTRING(SCRID FROM 3) -> '0001' from 'PS0001'
+                scrid_num=Cast(
+                    Substr('SCRID', 3),  # Skip 'PS' prefix
+                    IntegerField()
+                )
+            ).aggregate(
+                max_num=Max('scrid_num')
+            )
             
-            max_num = 0
-            for sid in site_cases:
-                # Extract number from PSXXXX format
-                m = re.match(r'PS(\d+)', str(sid))
-                if m:
-                    num = int(m.group(1))
-                    if num > max_num:
-                        max_num = num
+            max_num = max_scrid['max_num'] or 0
             
             # Generate new SCRID: PS0001, PS0002, etc. (per site)
             self.SCRID = f"PS{max_num + 1:04d}"
@@ -205,25 +211,28 @@ class SCR_CASE(AuditFieldsMixin):
         # 3. Generate SUBJID and USUBJID if eligible
         if is_eligible:
             if not self.SUBJID:
-                last_case = (
-                    SCR_CASE.objects
-                    .filter(SITEID=self.SITEID)
-                    .exclude(SUBJID__isnull=True)
-                    .exclude(SUBJID__exact='')
-                    .filter(SUBJID__startswith='A-')
-                    .order_by('-SUBJID')
-                    .first()
+                # 🚀 OPTIMIZED: Use database aggregation for SUBJID too
+                from django.db.models import Max
+                from django.db.models.functions import Substr, Cast
+                from django.db.models import IntegerField
+                
+                max_subjid = SCR_CASE.objects.filter(
+                    SITEID=self.SITEID,
+                    SUBJID__startswith='A-',
+                    SUBJID__isnull=False
+                ).exclude(
+                    SUBJID__exact=''
+                ).annotate(
+                    # Extract numeric part: SUBSTRING(SUBJID FROM 3) -> '001' from 'A-001'
+                    subjid_num=Cast(
+                        Substr('SUBJID', 3),  # Skip 'A-' prefix
+                        IntegerField()
+                    )
+                ).aggregate(
+                    max_num=Max('subjid_num')
                 )
                 
-                if last_case and last_case.SUBJID and last_case.SUBJID.startswith('A-'):
-                    try:
-                        last_number = int(last_case.SUBJID.split('-')[-1])
-                        next_number = last_number + 1
-                    except (ValueError, IndexError):
-                        next_number = 1
-                else:
-                    next_number = 1
-                
+                next_number = (max_subjid['max_num'] or 0) + 1
                 self.SUBJID = f"A-{next_number:03d}"
             
             if not self.USUBJID:

@@ -29,6 +29,8 @@ def get_patient_pii(patient):
     - INITIAL: from SCR_CASE
     - PHONE: from PERSONAL_DATA
     
+    FIXED: Use explicit database routing to avoid 'ENR_CASE does not exist' error
+    
     Args:
         patient: ENR_CASE instance
     Returns:
@@ -37,12 +39,23 @@ def get_patient_pii(patient):
     initial = ''
     phone = ''
     
-    # Get INITIAL from SCR_CASE
+    # Get INITIAL from SCR_CASE - use USUBJID_id directly (string value) 
+    # instead of accessing FK relationship which triggers implicit query
     try:
-        screening_case = patient.USUBJID  # ENR_CASE → SCR_CASE
-        initial = screening_case.INITIAL if screening_case else ''
-    except Exception:
-        pass
+        from backends.studies.study_43en.models.patient import SCR_CASE
+        
+        # Get USUBJID_id directly (it's the FK value string like "003-A-001")
+        usubjid_value = patient.USUBJID_id if hasattr(patient, 'USUBJID_id') else None
+        
+        if usubjid_value:
+            # Query SCR_CASE explicitly with using()
+            scr_case = SCR_CASE.objects.using('db_study_43en').filter(
+                USUBJID=usubjid_value
+            ).first()
+            if scr_case:
+                initial = scr_case.INITIAL or ''
+    except Exception as e:
+        logger.debug(f"Could not get INITIAL for patient: {e}")
     
     # Get PHONE from PERSONAL_DATA (query trực tiếp)
     try:
@@ -50,7 +63,8 @@ def get_patient_pii(patient):
         phone = personal_data.PHONE or ''
     except PERSONAL_DATA.DoesNotExist:
         phone = ''
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Could not get PHONE for patient: {e}")
         phone = ''
     
     return initial, phone
@@ -62,6 +76,8 @@ def get_contact_pii(contact):
     - INITIAL: from SCR_CONTACT
     - PHONE: from PERSONAL_CONTACT_DATA
     
+    FIXED: Use explicit database routing to avoid 'SCR_CONTACT does not exist' error
+    
     Args:
         contact: ENR_CONTACT instance
     Returns:
@@ -70,12 +86,22 @@ def get_contact_pii(contact):
     initial = ''
     phone = ''
     
-    # Get INITIAL from SCR_CONTACT
+    # Get INITIAL from SCR_CONTACT - use USUBJID_id directly (string value)
     try:
-        screening_contact = contact.USUBJID  # ENR_CONTACT → SCR_CONTACT
-        initial = screening_contact.INITIAL if screening_contact else ''
-    except Exception:
-        pass
+        from backends.studies.study_43en.models.contact import SCR_CONTACT
+        
+        # Get USUBJID_id directly (it's the FK value string like "003-B-001-1")
+        usubjid_value = contact.USUBJID_id if hasattr(contact, 'USUBJID_id') else None
+        
+        if usubjid_value:
+            # Query SCR_CONTACT explicitly with using()
+            scr_contact = SCR_CONTACT.objects.using('db_study_43en').filter(
+                USUBJID=usubjid_value
+            ).first()
+            if scr_contact:
+                initial = scr_contact.INITIAL or ''
+    except Exception as e:
+        logger.debug(f"Could not get INITIAL for contact: {e}")
     
     # Get PHONE from PERSONAL_CONTACT_DATA (query trực tiếp)
     try:
@@ -83,7 +109,8 @@ def get_contact_pii(contact):
         phone = personal_data.PHONE or ''
     except PERSONAL_CONTACT_DATA.DoesNotExist:
         phone = ''
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Could not get PHONE for contact: {e}")
         phone = ''
     
     return initial, phone
