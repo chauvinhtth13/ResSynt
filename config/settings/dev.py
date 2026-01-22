@@ -65,13 +65,24 @@ CACHES = {
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # =============================================================================
-# AXES (Verbose for debugging)
+# AXES (Development settings)
 # =============================================================================
 
 AXES_VERBOSE = True
-AXES_LOCKOUT_CALLABLE = "backends.api.base.account.lockout.dev_lockout_response"
 AXES_IPWARE_PROXY_COUNT = 0
 AXES_IPWARE_META_PRECEDENCE_ORDER = ["REMOTE_ADDR"]
+
+# Set AXES_TEST_MODE=True in .env to test full lockout behavior
+# Default: False = superuser bypass enabled for convenience
+AXES_TEST_MODE = env.bool("AXES_TEST_MODE", default=False)  # noqa: F405
+
+if AXES_TEST_MODE:
+    # Full lockout testing - same behavior as production
+    AXES_LOCKOUT_CALLABLE = "backends.api.base.account.lockout.lockout_response"
+    AXES_FAILURE_LIMIT = 3  # Lower limit for faster testing
+else:
+    # Dev convenience - superuser bypass
+    AXES_LOCKOUT_CALLABLE = "backends.api.base.account.lockout.dev_lockout_response"
 
 # =============================================================================
 # LOGGING

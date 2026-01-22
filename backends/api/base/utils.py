@@ -131,23 +131,3 @@ def validate_order_by(order_by: Optional[str], allowed_fields: list = None) -> O
         return None
     
     return order_by
-
-
-def sanitize_page_number(page: Optional[str]) -> int:
-    """
-    Sanitize page number parameter.
-    
-    Args:
-        page: Raw page number from user input
-        
-    Returns:
-        Valid page number (1 or higher)
-    """
-    if not page:
-        return 1
-    
-    try:
-        page_num = int(page)
-        return max(1, page_num)
-    except (ValueError, TypeError):
-        return 1

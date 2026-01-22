@@ -18,7 +18,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
-from django.db.models import Count, Q, Case, When, IntegerField
+from django.db.models import Count, Case, When, IntegerField
 from datetime import datetime
 import logging
 

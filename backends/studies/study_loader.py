@@ -215,29 +215,32 @@ class StudyAppLoader:
                         )
                     )
                     
-                    # Check if table exists first
+                    # Check if table exists in management schema first, then fallback to public
                     cur.execute("""
-                        SELECT EXISTS (
-                            SELECT FROM information_schema.tables 
-                            WHERE table_schema = %s 
-                            AND table_name = 'study_information'
-                        )
-                    """, (validated_schema,))
+                        SELECT table_schema FROM information_schema.tables 
+                        WHERE table_name = 'study_information'
+                        AND table_schema IN (%s, 'public')
+                        ORDER BY CASE WHEN table_schema = %s THEN 0 ELSE 1 END
+                        LIMIT 1
+                    """, (validated_schema, validated_schema))
                     
-                    table_exists = cur.fetchone()[0]
+                    result = cur.fetchone()
                     
-                    if not table_exists:
+                    if not result:
                         cls._cache.db_status = DatabaseStatus.NOT_MIGRATED
                         cls._log_status_message(DatabaseStatus.NOT_MIGRATED)
                         cls._cache.active_studies = set()
                         return set()
                     
-                    # Table exists, query studies
-                    cur.execute("""
-                        SELECT LOWER(code) 
-                        FROM study_information 
-                        WHERE status IN ('active', 'planning')
-                    """)
+                    # Table exists in found schema
+                    found_schema = result[0]
+                    
+                    # Query studies from the schema where table was found
+                    cur.execute(
+                        sql.SQL("SELECT LOWER(code) FROM {}.study_information WHERE status IN ('active', 'planning')").format(
+                            sql.Identifier(found_schema)
+                        )
+                    )
                     studies = {row[0] for row in cur.fetchall()}
             
             cls._cache.db_status = DatabaseStatus.OK

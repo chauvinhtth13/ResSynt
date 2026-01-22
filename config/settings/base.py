@@ -75,7 +75,8 @@ THIRD_PARTY_APPS = [
     "health_check",
     "health_check.db",
     "health_check.cache",
-    "django_extensions"
+    "django_extensions",
+    "honeypot",  # SECURITY: Honeypot protection for forms
 ]
 
 LOCAL_APPS = [
@@ -140,10 +141,11 @@ DATABASE_ROUTERS = ["backends.tenancy.db_router.TenantRouter"]
 # CACHE & SESSION
 # =============================================================================
 
-# Use Redis if available, otherwise fall back to in-memory cache
+# Redis configuration - set REDIS_ENABLED=False to disable Redis even if REDIS_URL is set
+REDIS_ENABLED = env.bool("REDIS_ENABLED", default=False)  # Disabled by default
 REDIS_URL = env("REDIS_URL", default=None)
 
-if REDIS_URL:  # Fixed: was "if not REDIS_URL is None"
+if REDIS_ENABLED and REDIS_URL:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
@@ -162,7 +164,7 @@ if REDIS_URL:  # Fixed: was "if not REDIS_URL is None"
         }
     }
 else:
-    # Fallback for development without Redis - use in-memory cache for speed
+    # Fallback - use in-memory cache (fast, no external dependency)
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -182,7 +184,30 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_SAVE_EVERY_REQUEST = False
+SESSION_SAVE_EVERY_REQUEST = True  # SECURITY: Update session on every request for idle timeout
+
+# Session idle timeout (in seconds) - logout inactive users
+# This works with SESSION_SAVE_EVERY_REQUEST=True to track last activity
+SESSION_IDLE_TIMEOUT = env.int("SESSION_IDLE_TIMEOUT", default=3600)  # 1 hour idle timeout
+
+# =============================================================================
+# ADMIN SECURITY
+# =============================================================================
+
+# Admin URL - default "admin/" for DEV, override in PROD with secret URL
+# Generate secret: python -c "import secrets; print(secrets.token_urlsafe(16))"
+ADMIN_URL = env("ADMIN_URL", default="admin/")
+
+# =============================================================================
+# HONEYPOT (Bot/Spam Protection)
+# =============================================================================
+
+# django-honeypot: Hidden field to trap bots on public forms
+HONEYPOT_FIELD_NAME = env("HONEYPOT_FIELD_NAME", default="website_url")
+HONEYPOT_VALUE = ""
+# DEV: Disable verification (always_ok) to avoid blocking during testing
+# PROD: Override with default verifier to enable protection
+HONEYPOT_VERIFIER = "honeypot.verifiers.always_ok"
 
 # =============================================================================
 # AUTHENTICATION

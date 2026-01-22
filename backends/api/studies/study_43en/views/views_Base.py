@@ -9,8 +9,7 @@ from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils.translation import gettext as _
-from backends.tenancy.models import Site
-from django.db.models import DateTimeField, DateField 
+from django.db.models import DateTimeField 
 
 #  Import models từ study app
 from backends.studies.study_43en.models.patient import (
@@ -40,7 +39,6 @@ import pandas as pd
 from django.http import HttpResponse
 from django.apps import apps
 from io import BytesIO
-from django.contrib.postgres.fields import JSONField
 from django.db.models import DateTimeField
 from django.http import HttpResponse
 
@@ -51,7 +49,6 @@ from backends.studies.study_43en.utils.site_utils import (
     get_site_filtered_object_or_404,
     batch_get_related,
     batch_check_exists,
-    invalidate_cache,
 )
 
 
@@ -534,15 +531,16 @@ def contact_detail(request, usubjid):
             has_enrollment = False
             contactexpecteddates = None
         
-        # Sample collection
+        # Sample collection - OPTIMIZED: Single query instead of count + first
         has_sample = False
         sample_collection = None
         sample_count = 0
         if has_enrollment:
-            sample_count = get_filtered_queryset(SAM_CONTACT, site_filter, filter_type).filter(USUBJID=enrollment_contact).count()
-            has_sample = sample_count > 0
+            sample_qs = get_filtered_queryset(SAM_CONTACT, site_filter, filter_type).filter(USUBJID=enrollment_contact)
+            sample_collection = sample_qs.first()
+            has_sample = sample_collection is not None
             if has_sample:
-                sample_collection = get_filtered_queryset(SAM_CONTACT, site_filter, filter_type).filter(USUBJID=enrollment_contact).first()
+                sample_count = sample_qs.count()
         
         # Follow-up 28
         followup_28 = None

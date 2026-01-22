@@ -57,16 +57,3 @@ def set_language_on_response(view_func):
         
         return response
     return wrapper
-
-
-def combined_language_decorator(view_func):
-    """
-    Combined decorator that ensures language and sets cookie.
-    Convenience decorator that combines both ensure_language and set_language_on_response.
-    
-    Usage:
-        @combined_language_decorator
-        def my_view(request):
-            ...
-    """
-    return set_language_on_response(ensure_language(view_func))

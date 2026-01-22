@@ -105,6 +105,11 @@ class UnifiedTenancyMiddleware:
                     return redirect(f"{reverse('account_login')}?next={request.path}")
                 return self._process_request(request)
             
+            # SECURITY: Check session idle timeout
+            idle_timeout_response = self._check_session_idle_timeout(request)
+            if idle_timeout_response:
+                return idle_timeout_response
+            
             # Check if account is active
             if not getattr(request.user, 'is_active', True):
                 return HttpResponse('Account deactivated.', status=403)
@@ -193,6 +198,57 @@ class UnifiedTenancyMiddleware:
             client_index = max(0, len(ips) - proxy_count - 1)
             return ips[client_index][:45]
         return request.META.get('REMOTE_ADDR', '127.0.0.1')[:45]
+    
+    # =========================================================================
+    # Session Idle Timeout
+    # =========================================================================
+    
+    def _check_session_idle_timeout(self, request: HttpRequest) -> Optional[HttpResponse]:
+        """
+        Check if session has been idle for too long.
+        
+        SECURITY: Logout inactive users to protect sensitive medical data.
+        Works with SESSION_SAVE_EVERY_REQUEST=True to track last activity.
+        
+        Returns:
+            HttpResponse if session expired, None otherwise
+        """
+        idle_timeout = getattr(settings, 'SESSION_IDLE_TIMEOUT', 3600)  # Default 1 hour
+        
+        if idle_timeout <= 0:
+            return None  # Disabled
+        
+        # Get last activity timestamp from session
+        last_activity = request.session.get('_last_activity')
+        current_time = time.time()
+        
+        if last_activity is not None:
+            idle_duration = current_time - last_activity
+            
+            if idle_duration > idle_timeout:
+                # Session expired due to inactivity
+                username = getattr(request.user, 'username', 'unknown')
+                logger.warning(
+                    f"SESSION_IDLE_TIMEOUT: User '{username}' logged out after "
+                    f"{int(idle_duration)}s idle (limit: {idle_timeout}s)"
+                )
+                
+                # Clear session and logout
+                from django.contrib.auth import logout
+                logout(request)
+                
+                # Redirect to login with message
+                from django.contrib import messages
+                messages.warning(
+                    request,
+                    'Phiên làm việc đã hết hạn do không hoạt động. Vui lòng đăng nhập lại.'
+                )
+                return redirect(f"{reverse('account_login')}?next={request.path}")
+        
+        # Update last activity timestamp
+        request.session['_last_activity'] = current_time
+        
+        return None
     
     # =========================================================================
     # Study Context

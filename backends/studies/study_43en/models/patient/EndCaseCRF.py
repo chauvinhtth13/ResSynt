@@ -2,7 +2,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.utils.functional import cached_property
-from backends.studies.study_43en.study_site_manage import SiteFilteredManager
 from backends.studies.study_43en.models.base_models import AuditFieldsMixin
 from datetime import date
 
@@ -477,28 +476,39 @@ class EndCaseCRF(AuditFieldsMixin):
         """
         Get study completion statistics
         
+        OPTIMIZED: Single aggregate query instead of 9 separate count queries
+        
         Returns:
             dict: Statistics on study completion rates
         """
-        total_cases = cls.objects.count()
+        from django.db.models import Count, Case, When, IntegerField, Q
+        
+        # Single aggregate query for all counts
+        aggregates = cls.objects.aggregate(
+            total_cases=Count('USUBJID'),
+            completed=Count(Case(When(STUDYCOMPLETED=True, then=1), output_field=IntegerField())),
+            withdrawn=Count(Case(When(~Q(WITHDRAWREASON=cls.WithdrawReasonChoices.NA), then=1), output_field=IntegerField())),
+            lost_to_followup=Count(Case(When(LOSTTOFOLLOWUP=cls.LostToFollowUpChoices.YES, then=1), output_field=IntegerField())),
+            incomplete=Count(Case(When(INCOMPLETE=cls.IncompleteChoices.YES, then=1), output_field=IntegerField())),
+            v1_completed=Count(Case(When(VICOMPLETED=True, then=1), output_field=IntegerField())),
+            v2_completed=Count(Case(When(V2COMPLETED=True, then=1), output_field=IntegerField())),
+            v3_completed=Count(Case(When(V3COMPLETED=True, then=1), output_field=IntegerField())),
+            v4_completed=Count(Case(When(V4COMPLETED=True, then=1), output_field=IntegerField())),
+        )
+        
+        total_cases = aggregates['total_cases']
         
         stats = {
             'total_cases': total_cases,
-            'completed': cls.objects.filter(STUDYCOMPLETED=True).count(),
-            'withdrawn': cls.objects.exclude(
-                WITHDRAWREASON=cls.WithdrawReasonChoices.NA
-            ).count(),
-            'lost_to_followup': cls.objects.filter(
-                LOSTTOFOLLOWUP=cls.LostToFollowUpChoices.YES
-            ).count(),
-            'incomplete': cls.objects.filter(
-                INCOMPLETE=cls.IncompleteChoices.YES
-            ).count(),
+            'completed': aggregates['completed'],
+            'withdrawn': aggregates['withdrawn'],
+            'lost_to_followup': aggregates['lost_to_followup'],
+            'incomplete': aggregates['incomplete'],
             'visit_completion_rates': {
-                'V1': cls.objects.filter(VICOMPLETED=True).count(),
-                'V2': cls.objects.filter(V2COMPLETED=True).count(),
-                'V3': cls.objects.filter(V3COMPLETED=True).count(),
-                'V4': cls.objects.filter(V4COMPLETED=True).count(),
+                'V1': aggregates['v1_completed'],
+                'V2': aggregates['v2_completed'],
+                'V3': aggregates['v3_completed'],
+                'V4': aggregates['v4_completed'],
             }
         }
         

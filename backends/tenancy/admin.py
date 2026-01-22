@@ -3,15 +3,10 @@
 Django Admin configuration for tenancy models
 Optimized for administrator management and axes monitoring
 """
-from typing import cast
 
-from django import forms
 from django.contrib import admin
-from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.db import transaction
-from django.db.models import Count, Q, F, Value
-from django.utils import timezone
+from django.db.models import Count, Q
 
 from .models import User, Study, Site, StudySite, StudyMembership
 

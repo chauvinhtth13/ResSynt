@@ -4,23 +4,17 @@ Views for authentication and dashboard
 Clean and maintainable - business logic moved to services
 """
 import logging
-from typing import Dict, Any
-from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_protect
-from django.http import HttpRequest, HttpResponse
-from django.utils import translation
 from django.urls import reverse
 
-from axes.exceptions import AxesBackendPermissionDenied
 
 from backends.tenancy.models import StudyMembership
 
 # Local imports
-from .constants import AppConstants, LoginMessages, SessionKeys
+from .constants import LoginMessages, SessionKeys
 from .decorators import ensure_language, set_language_on_response
 from .services import StudyService
 

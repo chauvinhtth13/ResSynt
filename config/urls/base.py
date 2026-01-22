@@ -1,6 +1,7 @@
 """
 Base URL patterns - Core Django and authentication routes.
 """
+from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
@@ -14,8 +15,8 @@ urlpatterns = [
     # Internationalization
     path("i18n/", include("django.conf.urls.i18n")),
     
-    # Admin
-    path("admin/", admin.site.urls),
+    # SECURITY: Admin at secret URL (configure ADMIN_URL in .env)
+    path(settings.ADMIN_URL, admin.site.urls),
     
     # Home redirect to login
     path('', RedirectView.as_view(url='/accounts/login/', permanent=False), name='home'),

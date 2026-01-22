@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.signals import user_login_failed
 from django.core.cache import cache
 from django.db import connections
-from django.db.models.signals import post_migrate, post_save, pre_delete
+from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from typing import Any, Optional

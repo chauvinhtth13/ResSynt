@@ -5,31 +5,23 @@ Base Views for Study 44EN
 Provides common functionality for household and individual views
 """
 
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Count, Prefetch, Exists, OuterRef
+from django.db.models import Q, Count, Exists, OuterRef
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib import messages
-from django.db import transaction
-from django.http import JsonResponse, HttpResponse
 
 # Security utilities
 from backends.api.base.utils import sanitize_search_query, validate_order_by
 
 from backends.studies.study_44en.models.household import (
-    HH_CASE, HH_Member, HH_Exposure, HH_WaterSource,
-    HH_WaterTreatment, HH_Animal, HH_FoodFrequency, HH_FoodSource
+    HH_CASE
 )
 from backends.studies.study_44en.models.individual import (
-    Individual, Individual_Exposure, Individual_FoodFrequency,
-    Individual_FollowUp, Individual_Sample
+    Individual, Individual_Exposure
 )
 
 from backends.audit_logs.utils.permission_decorators import (
     require_crf_view,
-    require_crf_add,
-    require_crf_change,
-    require_crf_delete,
 )
 
 

@@ -14,6 +14,7 @@ Django>=5.0,<6.0
 django-allauth>=65.0.0          # Authentication (allauth, allauth.account, allauth.usersessions)
 django-axes>=7.0.0              # Brute-force protection
 django-csp>=4.0                 # Content Security Policy
+django-honeypot>=1.2.0          # Honeypot spam/bot protection for forms
 
 # =============================================================================
 # Django Extensions & Utilities

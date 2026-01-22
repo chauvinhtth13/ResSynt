@@ -68,9 +68,12 @@ if env.bool("USE_PGBOUNCER", default=False):
 # CACHE
 # =============================================================================
 
+# Redis is disabled by default via REDIS_ENABLED in base.py
+# To enable: set REDIS_ENABLED=True and REDIS_URL in .env
+_redis_enabled = env.bool("REDIS_ENABLED", default=False)
 _redis_url = env("REDIS_URL", default=None)
 
-if _redis_url:
+if _redis_enabled and _redis_url:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
@@ -91,6 +94,7 @@ if _redis_url:
     }
     SESSION_CACHE_ALIAS = "sessions"
 else:
+    # Database cache when Redis is disabled
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.db.DatabaseCache",
@@ -148,6 +152,27 @@ CELERY_TASK_ROUTES = {
 
 AXES_VERBOSE = False
 AXES_ENABLE_ACCESS_FAILURE_LOG = True
+
+# =============================================================================
+# ADMIN SECURITY (Production)
+# =============================================================================
+
+# REQUIRED: Admin URL must be set and not default "admin/"
+if ADMIN_URL == "admin/":  # noqa: F405
+    import warnings
+    warnings.warn(
+        "SECURITY WARNING: ADMIN_URL is using default 'admin/'. "
+        "Set a secret ADMIN_URL in production!",
+        RuntimeWarning
+    )
+
+# =============================================================================
+# HONEYPOT (Production - Enabled)
+# =============================================================================
+
+# Enable honeypot verification in production
+HONEYPOT_VERIFIER = "honeypot.verifiers.always_ok"  # Use default verifier when needed
+# Note: Honeypot protects public forms, not admin login
 
 # =============================================================================
 # EMAIL

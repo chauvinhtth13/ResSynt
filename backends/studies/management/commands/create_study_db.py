@@ -67,12 +67,13 @@ class Command(BaseCommand):
                                 self.style.WARNING(
                                     f"Dropping existing database: {db_name}")
                             )
-                            # Terminate existing connections
-                            cursor.execute(f"""
-                                SELECT pg_terminate_backend(pid)
-                                FROM pg_stat_activity
-                                WHERE datname = %s AND pid <> pg_backend_pid()
-                            """, (db_name,))
+                            # Terminate existing connections - using parameterized query
+                            cursor.execute(
+                                "SELECT pg_terminate_backend(pid) "
+                                "FROM pg_stat_activity "
+                                "WHERE datname = %s AND pid <> pg_backend_pid()",
+                                (db_name,)
+                            )
 
                             cursor.execute(sql.SQL("DROP DATABASE {}").format(
                                 sql.Identifier(db_name)))
