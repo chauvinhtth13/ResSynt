@@ -10,12 +10,56 @@ import os
 import time
 import shutil
 from datetime import datetime, timezone
+from functools import wraps
 
 from django.conf import settings
 from django.db import connection, connections
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.views import View
+from django.utils.decorators import method_decorator
+
+
+def rate_limit_health_check(key_prefix: str, max_requests: int = 10, window_seconds: int = 60):
+    """
+    Rate limiting decorator for health check endpoints.
+    
+    Prevents abuse of detailed health endpoints that query databases.
+    Uses Django cache for tracking request counts.
+    
+    Args:
+        key_prefix: Unique prefix for cache key
+        max_requests: Maximum requests allowed per window
+        window_seconds: Time window in seconds
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(self, request, *args, **kwargs):
+            # Get client IP for rate limiting
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0].strip()
+            else:
+                ip = request.META.get('REMOTE_ADDR', 'unknown')
+            
+            cache_key = f"health_ratelimit:{key_prefix}:{ip}"
+            
+            # Get current count
+            current_count = cache.get(cache_key, 0)
+            
+            if current_count >= max_requests:
+                return JsonResponse({
+                    "status": "rate_limited",
+                    "message": f"Too many requests. Max {max_requests} per {window_seconds}s",
+                    "retry_after": window_seconds,
+                }, status=429)
+            
+            # Increment counter
+            cache.set(cache_key, current_count + 1, window_seconds)
+            
+            return view_func(self, request, *args, **kwargs)
+        return wrapper
+    return decorator
 
 
 class HealthCheckMixin:
@@ -82,14 +126,18 @@ class DetailedHealthCheckView(HealthCheckMixin, View):
     - Disk usage
     - Memory availability
     
+    Rate limited to 10 requests per minute per IP.
+    
     Usage:
         GET /health/detailed/
         
     Response:
         200 OK: All checks passed
         503 Service Unavailable: One or more checks failed
+        429 Too Many Requests: Rate limit exceeded
     """
     
+    @rate_limit_health_check('detailed', max_requests=10, window_seconds=60)
     def get(self, request):
         start_time = time.time()
         

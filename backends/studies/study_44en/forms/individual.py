@@ -64,9 +64,9 @@ class IndividualForm(forms.ModelForm):
             }),
             'EDUCATION': forms.Select(attrs={'class': 'form-select'}),
             'OCCUPATION': forms.Select(attrs={'class': 'form-select'}),
-            'OCCUPATION_OTHER': forms.TextInput(attrs={
+            'OCCUPATION_DETAIL': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('Specify other occupation')
+                'placeholder': _('Occupation detail')
             }),
             
             # Economic
@@ -89,8 +89,6 @@ class IndividualForm(forms.ModelForm):
         age = cleaned_data.get('AGE')
         ethnicity = cleaned_data.get('ETHNICITY')
         ethnicity_other = cleaned_data.get('ETHNICITY_OTHER')
-        occupation = cleaned_data.get('OCCUPATION')
-        occupation_other = cleaned_data.get('OCCUPATION_OTHER')
         
         # Either DOB or AGE required
         if not dob and age is None:
@@ -100,12 +98,6 @@ class IndividualForm(forms.ModelForm):
         if ethnicity == 'other' and not ethnicity_other:
             raise ValidationError({
                 'ETHNICITY_OTHER': _('Please specify other ethnicity')
-            })
-        
-        # Occupation OTHER validation
-        if occupation == 'other' and not occupation_other:
-            raise ValidationError({
-                'OCCUPATION_OTHER': _('Please specify other occupation')
             })
         
         return cleaned_data

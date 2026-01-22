@@ -58,10 +58,6 @@ class ClinicalCaseForm(forms.ModelForm):
     class Meta:
         model = CLI_CASE
         exclude = ['USUBJID']  # USUBJID set by view
-
-    class Meta:
-        model = CLI_CASE
-        exclude = ['USUBJID']
         
         #  ADD: Labels synced with model verbose_name
         labels = {

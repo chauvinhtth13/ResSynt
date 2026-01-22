@@ -13,6 +13,7 @@ import logging
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
+from django.core.cache import cache
 from django.db.models import Q
 from django.contrib import messages
 from datetime import datetime
@@ -25,8 +26,45 @@ from backends.studies.study_43en.utils.site_utils import get_site_filter_params
 # Explicit database alias for reliable routing
 DB_ALIAS = 'db_study_43en'
 
+# Cache timeout for filter options (5 minutes)
+FILTER_OPTIONS_CACHE_TIMEOUT = 300
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
+
+
+def _get_cached_filter_options():
+    """
+    Get filter options with caching.
+    
+    Returns cached actions and model_names to reduce DB queries.
+    User list is not cached as it may change more frequently.
+    """
+    cache_key = f'audit_log_filter_options_{DB_ALIAS}'
+    cached = cache.get(cache_key)
+    
+    if cached is not None:
+        return cached
+    
+    # Fetch from DB
+    actions = list(
+        AuditLog.objects.using(DB_ALIAS)
+        .values_list('action', flat=True)
+        .distinct()
+        .order_by('action')
+    )
+    
+    model_names = list(
+        AuditLog.objects.using(DB_ALIAS)
+        .values_list('model_name', flat=True)
+        .distinct()
+        .order_by('model_name')
+    )
+    
+    result = {'actions': actions, 'model_names': model_names}
+    cache.set(cache_key, result, FILTER_OPTIONS_CACHE_TIMEOUT)
+    
+    return result
 
 
 # ==========================================
@@ -161,7 +199,7 @@ def audit_log_list(request):
     logger.info(f" Found {paginator.count} audit logs, showing page {page_obj.number}/{paginator.num_pages}")
     
     # ==========================================
-    # 5. GET FILTER OPTIONS (DISTINCT & SORTED)
+    # 5. GET FILTER OPTIONS (OPTIMIZED WITH CACHING)
     # ==========================================
     
     # Get unique user_ids from audit logs (with explicit DB routing)
@@ -174,17 +212,10 @@ def audit_log_list(request):
         .filter(id__in=list(user_ids))\
         .order_by('username')
     
-    # Get unique actions (sorted) - with explicit DB routing
-    actions = AuditLog.objects.using(DB_ALIAS)\
-        .values_list('action', flat=True)\
-        .distinct()\
-        .order_by('action')
-    
-    # Get unique model names (sorted) - with explicit DB routing
-    model_names = AuditLog.objects.using(DB_ALIAS)\
-        .values_list('model_name', flat=True)\
-        .distinct()\
-        .order_by('model_name')
+    # Get cached filter options (actions & model_names)
+    filter_options = _get_cached_filter_options()
+    actions = filter_options['actions']
+    model_names = filter_options['model_names']
     
     logger.info(f" Filter options: {len(users)} users, {len(actions)} actions, {len(model_names)} models")
     
@@ -196,8 +227,8 @@ def audit_log_list(request):
         'page_obj': page_obj,
         'filters': filters,
         'users': users,
-        'actions': list(actions),        #  Convert to list
-        'model_names': list(model_names), #  Convert to list
+        'actions': actions,        #  Already a list from cache
+        'model_names': model_names, #  Already a list from cache
         'site_filter': site_filter,
         'filter_type': filter_type,
         'study_code': study_code,

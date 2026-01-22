@@ -18,7 +18,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
-from django.db.models import Count
+from django.db.models import Count, Q, Case, When, IntegerField
 from datetime import datetime
 import logging
 
@@ -83,39 +83,39 @@ def home_dashboard(request):
     logger.info(f"Dashboard loading - Site: {site_filter}, Type: {filter_type}")
     
     try:
-        # ===== PATIENT STATISTICS =====
-        # Count ALL screening patients
-        screening_patients = get_filtered_queryset(
-            SCR_CASE, 
-            site_filter, 
-            filter_type
-        ).count()
-        
-        # Count ENROLLED patients (from SCR_CASE with eligibility criteria)
-        enrolled_patients = get_filtered_queryset(
-            SCR_CASE, 
-            site_filter, 
-            filter_type
-        ).filter(
-            UPPER16AGE=True,
-            INFPRIOR2OR48HRSADMIT=True,
-            ISOLATEDKPNFROMINFECTIONORBLOOD=True,
-            KPNISOUNTREATEDSTABLE=False,
-            CONSENTTOSTUDY=True,
-            is_confirmed=True  #  Must be confirmed
-        ).count()
+        # ===== OPTIMIZED: Single aggregation query for patient stats =====
+        # Instead of 2 separate count queries, use Case/When aggregation
+        patient_qs = get_filtered_queryset(SCR_CASE, site_filter, filter_type)
+        patient_stats = patient_qs.aggregate(
+            screening_patients=Count('id'),
+            enrolled_patients=Count(
+                Case(
+                    When(
+                        UPPER16AGE=True,
+                        INFPRIOR2OR48HRSADMIT=True,
+                        ISOLATEDKPNFROMINFECTIONORBLOOD=True,
+                        KPNISOUNTREATEDSTABLE=False,
+                        CONSENTTOSTUDY=True,
+                        is_confirmed=True,
+                        then=1
+                    ),
+                    output_field=IntegerField()
+                )
+            )
+        )
+        screening_patients = patient_stats['screening_patients']
+        enrolled_patients = patient_stats['enrolled_patients']
         
         logger.debug(f"Patients - Screening: {screening_patients}, Enrolled: {enrolled_patients}")
         
-        # ===== CONTACT STATISTICS =====
-        # Count ALL screening contacts
+        # ===== OPTIMIZED: Single aggregation query for contact stats =====
+        # Instead of 2 separate count queries for SCR_CONTACT and ENR_CONTACT
         screening_contacts = get_filtered_queryset(
             SCR_CONTACT,
             site_filter,
             filter_type
         ).count()
         
-        # Count ENROLLED contacts (from ENR_CONTACT)
         enrolled_contacts = get_filtered_queryset(
             ENR_CONTACT,
             site_filter,

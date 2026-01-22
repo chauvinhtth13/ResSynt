@@ -1,10 +1,13 @@
 from django import template
 
+# Import dict filters from centralized location
+from backends.studies.study_43en.templatetags.dict_filters import get_item
+
 register = template.Library()
 
+# dict_item is deprecated - use get_item from dict_filters.py instead
+# Keeping for backwards compatibility
 @register.filter
 def dict_item(dictionary, key):
-    """Lấy giá trị từ dictionary với key được đưa vào"""
-    if key in dictionary:
-        return dictionary.get(key)
-    return []
+    """DEPRECATED: Use get_item from dict_filters.py instead"""
+    return get_item(dictionary, key)

@@ -20,7 +20,7 @@ AuditLog, AuditLogDetail = create_audit_models('study_43en')
 from .base_models import AuditFieldsMixin, TimestampMixin, SiteFilteredMixin
 
 # ==========================================
-# STUDY 43EN MODELS (EXISTING)
+# STUDY 43EN MODELS
 # ==========================================
 # Import patient models
 from .patient import *
@@ -50,45 +50,53 @@ __all__ = [
     'SiteFilteredMixin',
     
     # ==========================================
-    # STUDY 44EN - HOUSEHOLD MODELS (8 models)
+    # STUDY 43EN PATIENT MODELS
     # ==========================================
-    'HH_CASE',                  # Main household
-    'HH_Member',                # Household members
-    'HH_Exposure',              # Household exposure
-    'HH_WaterSource',           # Water sources (normalized)
-    'HH_WaterTreatment',        # Water treatment (normalized)
-    'HH_Animal',                # Animals (normalized)
-    'HH_FoodFrequency',         # Food frequency
-    'HH_FoodSource',            # Food sources
+    # Screening & Enrollment
+    'SCR_CASE',
+    'ENR_CASE',
+    'ENR_CASE_MedHisDrug',
+    'UnderlyingCondition',
+    
+    # Clinical
+    'CLI_CASE',
+    'HospiProcess',
+    'ImproveSympt',
+    'LaboratoryTest',
+    'OtherTest',
+    'AEHospEvent',
+    'HistorySymptom',
+    'Symptom_72H',
+    
+    # Antibiotics & Drugs
+    'PriorAntibiotic',
+    'InitialAntibiotic',
+    'MainAntibiotic',
+    'VasoIDrug',
+    
+    # Sample & Lab
+    'SAM_CASE',
+    'LAB_Microbiology',
+    'AntibioticSensitivity',
+    
+    # Follow-up
+    'FU_CASE_28',
+    'FU_CASE_90',
+    'FollowUpAntibiotic',
+    'FollowUpAntibiotic90',
+    'Rehospitalization',
+    'Rehospitalization90',
+    
+    # Discharge & End
+    'DISCH_CASE',
+    'DischargeICD',
+    'EndCaseCRF',
+    
+    # Personal Data
+    'PERSONAL_DATA',
     
     # ==========================================
-    # STUDY 44EN - INDIVIDUAL MODELS (13 models)
+    # STUDY 43EN CONTACT MODELS
     # ==========================================
-    # Demographics & Basic Info
-    'Individual',               # Individual demographic info
-    'Individual_Exposure',      # Individual exposure factors
-    
-    # Water & Sanitation
-    'Individual_WaterSource',   # Individual water sources
-    'Individual_WaterTreatment', # Individual water treatment
-    
-    # Medical History
-    'Individual_Comorbidity',   # Comorbidities
-    'Individual_Vaccine',       # Vaccination records
-    'Individual_Hospitalization', # Hospitalization (3 months)
-    'Individual_Medication',    # Medication use (3 months)
-    
-    # Lifestyle & Behavior
-    'Individual_FoodFrequency', # Individual food frequency
-    'Individual_Travel',        # Travel history
-    
-    # Follow-up & Monitoring
-    'Individual_FollowUp',      # Follow-up visits (Day 14, 28, 90)
-    'Individual_Symptom',       # Symptoms at follow-up
-    'Individual_Sample',        # Sample collection
-    
-    # ==========================================
-    # STUDY 43EN MODELS (EXISTING)
-    # ==========================================
-    # Note: patient.__all__, contact.__all__, etc. are included
+    # (imported via contact subpackage)
 ]

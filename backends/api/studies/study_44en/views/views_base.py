@@ -7,11 +7,14 @@ Provides common functionality for household and individual views
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Count, Prefetch
+from django.db.models import Q, Count, Prefetch, Exists, OuterRef
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 from django.db import transaction
 from django.http import JsonResponse, HttpResponse
+
+# Security utilities
+from backends.api.base.utils import sanitize_search_query, validate_order_by
 
 from backends.studies.study_44en.models.household import (
     HH_CASE, HH_Member, HH_Exposure, HH_WaterSource,
@@ -56,6 +59,11 @@ def get_filtered_individuals(user):
 #     ...
 
 
+# Allowed fields for order_by validation
+HOUSEHOLD_ORDER_FIELDS = ['HHID', 'WARD', 'CITY', 'last_modified_at', 'created_at']
+INDIVIDUAL_ORDER_FIELDS = ['INITIALS', 'last_modified_at', 'created_at', 'followup_count', 'sample_count']
+
+
 @login_required
 @require_crf_view('hh_case')
 def household_list(request):
@@ -64,8 +72,8 @@ def household_list(request):
     """
     queryset = get_filtered_households(request.user)
     
-    # Search functionality
-    search_query = request.GET.get('search', '')
+    # SECURITY: Sanitize search input
+    search_query = sanitize_search_query(request.GET.get('search', ''))
     if search_query:
         queryset = queryset.filter(
             Q(HHID__icontains=search_query) |
@@ -73,8 +81,11 @@ def household_list(request):
             Q(CITY__icontains=search_query)
         )
     
-    # Ordering
-    order_by = request.GET.get('order_by', '-last_modified_at')
+    # SECURITY: Validate order_by parameter
+    order_by = validate_order_by(
+        request.GET.get('order_by'),
+        HOUSEHOLD_ORDER_FIELDS
+    ) or '-last_modified_at'
     queryset = queryset.order_by(order_by)
     
     # Pagination
@@ -105,8 +116,8 @@ def individual_list(request):
     """
     queryset = get_filtered_individuals(request.user).select_related('MEMBERID', 'MEMBERID__HHID')
     
-    # Search functionality
-    search_query = request.GET.get('search', '')
+    # SECURITY: Sanitize search input
+    search_query = sanitize_search_query(request.GET.get('search', ''))
     if search_query:
         queryset = queryset.filter(
             Q(MEMBER__MEMBERID__icontains=search_query) |
@@ -115,19 +126,26 @@ def individual_list(request):
             Q(MEMBER__LAST_NAME__icontains=search_query)
         )
     
-    # Annotate with counts
+    # OPTIMIZED: Annotate with counts and has_exposure in single query
+    # Use Exists subquery to avoid N+1 for has_exposure check
     queryset = queryset.annotate(
         followup_count=Count('follow_ups', distinct=True),
-        sample_count=Count('samples', distinct=True)
+        sample_count=Count('samples', distinct=True),
+        has_exposure=Exists(
+            Individual_Exposure.objects.filter(individual_id=OuterRef('pk'))
+        )
     )
     
-    # Ordering
-    order_by = request.GET.get('order_by', '-last_modified_at')
+    # SECURITY: Validate order_by parameter
+    order_by = validate_order_by(
+        request.GET.get('order_by'),
+        INDIVIDUAL_ORDER_FIELDS
+    ) or '-last_modified_at'
     queryset = queryset.order_by(order_by)
     
-    # Calculate summary stats
+    # Calculate summary stats - use annotated field instead of extra query
     total_count = queryset.count()
-    exposure_count = queryset.filter(exposure__isnull=False).count()
+    exposure_count = queryset.filter(has_exposure=True).count()
     
     # Pagination
     paginator = Paginator(queryset, 25)
@@ -140,9 +158,7 @@ def individual_list(request):
     except EmptyPage:
         individuals = paginator.page(paginator.num_pages)
     
-    # Add has_exposure to each individual
-    for individual in individuals:
-        individual.has_exposure = hasattr(individual, 'exposure') and individual.exposure is not None
+    # REMOVED: N+1 loop - has_exposure is now annotated
     
     context = {
         'individuals': individuals,

@@ -6,7 +6,7 @@ Fetches data from database for TMG report generation.
 Uses same logic as dashboard.py for consistency.
 """
 
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Case, When, IntegerField
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
 import logging
@@ -130,57 +130,62 @@ class ReportDataService:
         - SAMPLE_TYPE='2': Day 10
         - SAMPLE_TYPE='3': Day 28
         - SAMPLE_TYPE='4': Day 90
+        
+        OPTIMIZED: Uses aggregation to reduce N+1 queries
         """
         try:
-            from backends.studies.study_43en.models.patient import SAM_CASE, ENR_CASE
-            from backends.studies.study_43en.models.contact import SAM_CONTACT, ENR_CONTACT
+            from backends.studies.study_43en.models.patient import SAM_CASE
+            from backends.studies.study_43en.models.contact import SAM_CONTACT
             
-            # Get enrolled patients/contacts for site filtering
+            # Build base querysets with site filtering
             if self.site_filter:
-                enrolled_patients = ENR_CASE.objects.using(DB_ALIAS).filter(
-                    USUBJID__SITEID=self.site_filter
-                ).values('USUBJID')
-                patient_samples_qs = SAM_CASE.objects.using(DB_ALIAS).filter(
-                    USUBJID__in=enrolled_patients
-                )
-                
-                enrolled_contacts = ENR_CONTACT.objects.using(DB_ALIAS).filter(
-                    USUBJID__SITEID=self.site_filter
-                ).values('USUBJID')
-                contact_samples_qs = SAM_CONTACT.objects.using(DB_ALIAS).filter(
-                    USUBJID__in=enrolled_contacts
-                )
+                patient_samples_qs = SAM_CASE.site_objects.using(DB_ALIAS).filter_by_site(self.site_filter)
+                contact_samples_qs = SAM_CONTACT.site_objects.using(DB_ALIAS).filter_by_site(self.site_filter)
             else:
                 patient_samples_qs = SAM_CASE.objects.using(DB_ALIAS)
                 contact_samples_qs = SAM_CONTACT.objects.using(DB_ALIAS)
             
-            # PATIENT SAMPLING - by visit
-            patient_stats = {}
-            for visit_num in ['1', '2', '3', '4']:
-                visit_samples = patient_samples_qs.filter(SAMPLE_TYPE=visit_num, SAMPLE=True)
-                patient_stats[f'visit{visit_num}'] = {
-                    'total': visit_samples.count(),
-                    'blood': visit_samples.filter(BLOOD=True).count(),
-                    'stool': visit_samples.filter(STOOL=True).count(),
-                    'rectswab': visit_samples.filter(RECTSWAB=True).count(),
-                    'throatswab': visit_samples.filter(THROATSWAB=True).count(),
-                }
-            
-            # CONTACT SAMPLING - by visit  
-            contact_stats = {}
-            for visit_num in ['1', '2', '3', '4']:
-                visit_samples = contact_samples_qs.filter(SAMPLE_TYPE=visit_num, SAMPLE=True)
-                contact_stats[f'visit{visit_num}'] = {
-                    'total': visit_samples.count(),
-                    'blood': visit_samples.filter(BLOOD=True).count(),
-                    'stool': visit_samples.filter(STOOL=True).count(),
-                    'rectswab': visit_samples.filter(RECTSWAB=True).count(),
-                    'throatswab': visit_samples.filter(THROATSWAB=True).count(),
-                }
+            def _aggregate_sample_stats(samples_qs):
+                """
+                OPTIMIZED: Single query with conditional aggregation
+                Instead of 4 visits x 5 counts = 20 queries, now just 1 query
+                """
+                stats = {}
+                
+                # Use values + annotate for efficient grouped aggregation
+                aggregated = samples_qs.filter(SAMPLE=True).values('SAMPLE_TYPE').annotate(
+                    total=Count('pk'),
+                    blood=Count(Case(When(BLOOD=True, then=1), output_field=IntegerField())),
+                    stool=Count(Case(When(STOOL=True, then=1), output_field=IntegerField())),
+                    rectswab=Count(Case(When(RECTSWAB=True, then=1), output_field=IntegerField())),
+                    throatswab=Count(Case(When(THROATSWAB=True, then=1), output_field=IntegerField())),
+                )
+                
+                # Convert to dict by visit
+                for row in aggregated:
+                    visit_key = f"visit{row['SAMPLE_TYPE']}"
+                    stats[visit_key] = {
+                        'total': row['total'],
+                        'blood': row['blood'],
+                        'stool': row['stool'],
+                        'rectswab': row['rectswab'],
+                        'throatswab': row['throatswab'],
+                    }
+                
+                # Ensure all visits have entries (even if 0)
+                for visit_num in ['1', '2', '3', '4']:
+                    visit_key = f"visit{visit_num}"
+                    if visit_key not in stats:
+                        stats[visit_key] = {
+                            'total': 0, 'blood': 0, 'stool': 0,
+                            'rectswab': 0, 'throatswab': 0
+                        }
+                
+                return stats
             
             return {
-                'patient': patient_stats,
-                'contact': contact_stats,
+                'patient': _aggregate_sample_stats(patient_samples_qs),
+                'contact': _aggregate_sample_stats(contact_samples_qs),
             }
             
         except Exception as e:
@@ -220,6 +225,9 @@ class ReportDataService:
         """
         Lấy thống kê K. pneumoniae isolation
         Giống format Table 7 trong PDF report
+        
+        OPTIMIZED: Reduced from ~40 queries per site to ~4 queries per site
+        using aggregation
         """
         try:
             from backends.studies.study_43en.models.patient import SCR_CASE, ENR_CASE, SAM_CASE
@@ -228,75 +236,68 @@ class ReportDataService:
             sites_to_query = [self.site_filter] if self.site_filter else ['003', '020', '011']
             result_data = {}
             
+            def _aggregate_kp_stats(samples_qs):
+                """
+                OPTIMIZED: Single query with conditional aggregation for all visits
+                """
+                stats = {}
+                
+                # Group by SAMPLE_TYPE and aggregate all counts in one query
+                aggregated = samples_qs.values('SAMPLE_TYPE').annotate(
+                    throat_total=Count(Case(When(THROATSWAB=True, then=1), output_field=IntegerField())),
+                    throat_kp=Count(Case(When(THROATSWAB=True, KLEBPNEU_3=True, then=1), output_field=IntegerField())),
+                    stool_total=Count(Case(
+                        When(Q(STOOL=True) | Q(RECTSWAB=True), then=1), 
+                        output_field=IntegerField()
+                    )),
+                    stool_kp=Count(Case(
+                        When(
+                            (Q(STOOL=True) | Q(RECTSWAB=True)) & (Q(KLEBPNEU_1=True) | Q(KLEBPNEU_2=True)),
+                            then=1
+                        ),
+                        output_field=IntegerField()
+                    )),
+                )
+                
+                for row in aggregated:
+                    visit_key = f"visit{row['SAMPLE_TYPE']}"
+                    stats[visit_key] = {
+                        'throat_total': row['throat_total'],
+                        'throat_kp': row['throat_kp'],
+                        'stool_total': row['stool_total'],
+                        'stool_kp': row['stool_kp'],
+                    }
+                
+                # Ensure all visits exist
+                for visit_num in ['1', '2', '3', '4']:
+                    visit_key = f"visit{visit_num}"
+                    if visit_key not in stats:
+                        stats[visit_key] = {
+                            'throat_total': 0, 'throat_kp': 0,
+                            'stool_total': 0, 'stool_kp': 0
+                        }
+                
+                return stats
+            
             for site_code in sites_to_query:
                 site_name = SITE_NAMES.get(site_code, site_code)
                 
-                # PATIENT DATA
-                patients = ENR_CASE.objects.using(DB_ALIAS).filter(USUBJID__SITEID=site_code)
-                patient_count = patients.count()
+                # PATIENT DATA - Use site_objects for consistent filtering
+                patient_count = ENR_CASE.site_objects.using(DB_ALIAS).filter_by_site(site_code).count()
                 
                 # Clinical Kp (at screening)
-                clinical_kp = SCR_CASE.objects.using(DB_ALIAS).filter(
-                    SITEID=site_code,
+                clinical_kp = SCR_CASE.site_objects.using(DB_ALIAS).filter_by_site(site_code).filter(
                     ISOLATEDKPNFROMINFECTIONORBLOOD=True
                 ).count()
                 
-                # Patient samples
-                patient_samples = SAM_CASE.objects.using(DB_ALIAS).filter(
-                    USUBJID__in=patients.values('USUBJID')
-                )
-                
-                patient_kp_data = {}
-                for visit_num in ['1', '2', '3', '4']:
-                    visit_samples = patient_samples.filter(SAMPLE_TYPE=visit_num)
-                    
-                    # Throat swab: KLEBPNEU_3
-                    throat_total = visit_samples.filter(THROATSWAB=True).count()
-                    throat_kp = visit_samples.filter(THROATSWAB=True, KLEBPNEU_3=True).count()
-                    
-                    # Stool/Rectal: KLEBPNEU_1 or KLEBPNEU_2
-                    stool_total = visit_samples.filter(Q(STOOL=True) | Q(RECTSWAB=True)).count()
-                    stool_kp = visit_samples.filter(
-                        Q(STOOL=True) | Q(RECTSWAB=True)
-                    ).filter(
-                        Q(KLEBPNEU_1=True) | Q(KLEBPNEU_2=True)
-                    ).count()
-                    
-                    patient_kp_data[f'visit{visit_num}'] = {
-                        'throat_total': throat_total,
-                        'throat_kp': throat_kp,
-                        'stool_total': stool_total,
-                        'stool_kp': stool_kp,
-                    }
+                # Patient samples - Use site_objects
+                patient_samples = SAM_CASE.site_objects.using(DB_ALIAS).filter_by_site(site_code)
+                patient_kp_data = _aggregate_kp_stats(patient_samples)
                 
                 # CONTACT DATA
-                contacts = ENR_CONTACT.objects.using(DB_ALIAS).filter(USUBJID__SITEID=site_code)
-                contact_count = contacts.count()
-                
-                contact_samples = SAM_CONTACT.objects.using(DB_ALIAS).filter(
-                    USUBJID__in=contacts.values('USUBJID')
-                )
-                
-                contact_kp_data = {}
-                for visit_num in ['1', '2', '3', '4']:
-                    visit_samples = contact_samples.filter(SAMPLE_TYPE=visit_num)
-                    
-                    throat_total = visit_samples.filter(THROATSWAB=True).count()
-                    throat_kp = visit_samples.filter(THROATSWAB=True, KLEBPNEU_3=True).count()
-                    
-                    stool_total = visit_samples.filter(Q(STOOL=True) | Q(RECTSWAB=True)).count()
-                    stool_kp = visit_samples.filter(
-                        Q(STOOL=True) | Q(RECTSWAB=True)
-                    ).filter(
-                        Q(KLEBPNEU_1=True) | Q(KLEBPNEU_2=True)
-                    ).count()
-                    
-                    contact_kp_data[f'visit{visit_num}'] = {
-                        'throat_total': throat_total,
-                        'throat_kp': throat_kp,
-                        'stool_total': stool_total,
-                        'stool_kp': stool_kp,
-                    }
+                contact_count = ENR_CONTACT.site_objects.using(DB_ALIAS).filter_by_site(site_code).count()
+                contact_samples = SAM_CONTACT.site_objects.using(DB_ALIAS).filter_by_site(site_code)
+                contact_kp_data = _aggregate_kp_stats(contact_samples)
                 
                 result_data[site_code] = {
                     'site_name': site_name,

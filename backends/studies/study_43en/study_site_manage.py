@@ -29,6 +29,49 @@ logger = logging.getLogger(__name__)
 DB_ALIAS = 'db_study_43en'
 
 
+# Valid site codes - for security validation
+VALID_SITE_CODES = frozenset({'003', '011', '020'})
+
+# Cache for model field analysis (avoids repeated reflection)
+_MODEL_FIELDS_CACHE = {}
+_FILTER_STRATEGY_CACHE = {}
+
+
+def _validate_site_code(site_code):
+    """
+    SECURITY: Validate site code to prevent injection attacks
+    
+    Args:
+        site_code: Site code to validate
+    
+    Returns:
+        True if valid, False otherwise
+    """
+    if not site_code or site_code == 'all':
+        return True
+    
+    if isinstance(site_code, str):
+        # Only alphanumeric site codes allowed (e.g., '003', '011')
+        return site_code.isalnum() and len(site_code) <= 10
+    
+    if isinstance(site_code, (list, tuple)):
+        return all(_validate_site_code(code) for code in site_code)
+    
+    return False
+
+
+def _get_cached_model_fields(model):
+    """
+    Get model fields with caching to avoid repeated reflection
+    """
+    model_name = model.__name__
+    if model_name not in _MODEL_FIELDS_CACHE:
+        _MODEL_FIELDS_CACHE[model_name] = frozenset(
+            f.name for f in model._meta.get_fields()
+        )
+    return _MODEL_FIELDS_CACHE[model_name]
+
+
 class SiteFilteredQuerySet(models.QuerySet):
     """
     Custom QuerySet with intelligent site filtering
@@ -38,6 +81,8 @@ class SiteFilteredQuerySet(models.QuerySet):
     - Model có USUBJID CharField → filter theo prefix (e.g., "003-001")  
     - Model có USUBJID ForeignKey → filter qua related model
     - Model có ENROLLCASE → filter qua enrollment chain
+    
+    SECURITY: All site codes are validated before use.
     """
     
     def filter_by_site(self, site_id):
@@ -58,6 +103,13 @@ class SiteFilteredQuerySet(models.QuerySet):
             >>> ENR_CASE.site_objects.filter_by_site(['003', '011'])
             >>> CLI_CASE.site_objects.filter_by_site('all')
         """
+        # ==========================================
+        # SECURITY: Validate site_id input
+        # ==========================================
+        if not _validate_site_code(site_id):
+            logger.error(f"[{self.model.__name__}] SECURITY: Invalid site_id format: {site_id}")
+            return self.none()  # Return empty for security
+        
         # ==========================================
         # CASE 0: No filter - Return all
         # ==========================================
@@ -87,107 +139,41 @@ class SiteFilteredQuerySet(models.QuerySet):
     
     
     def _get_model_fields(self):
-        """Get list of model field names"""
-        return [f.name for f in self.model._meta.get_fields()]
+        """Get list of model field names (cached)"""
+        return _get_cached_model_fields(self.model)
     
     
     def _filter_multiple_sites(self, site_codes):
         """
-        Filter by multiple sites using Q objects (OR conditions)
+        Filter by multiple sites - delegates to unified filter method
         
-        Strategy Priority:
-        1. SITEID field (direct) - Most common for base models
-        2. USUBJID CharField - Extract site from prefix
-        3. USUBJID ForeignKey - Traverse relationship
-        4. ENROLLCASE - Clinical forms reference
+        OPTIMIZED: Uses __in lookup for single query instead of OR chain
         """
-        model = self.model
-        model_name = model.__name__
-        model_fields = self._get_model_fields()
-        q_objects = Q()
-        
-        # ==========================================
-        # Strategy 1: Direct SITEID field
-        # ==========================================
-        if 'SITEID' in model_fields:
-            logger.debug(f"[{model_name}] Multiple sites via SITEID field")
-            for site_code in site_codes:
-                q_objects |= Q(SITEID=site_code)
-            return self.filter(q_objects)
-        
-        # ==========================================
-        # Strategy 2: USUBJID CharField
-        # ==========================================
-        if 'USUBJID' in model_fields:
-            field = model._meta.get_field('USUBJID')
-            
-            if isinstance(field, models.CharField):
-                logger.debug(f"[{model_name}] Multiple sites via USUBJID CharField prefix")
-                for site_code in site_codes:
-                    q_objects |= Q(USUBJID__startswith=f"{site_code}-")
-                return self.filter(q_objects)
-            
-            # ==========================================
-            # Strategy 3: USUBJID ForeignKey/OneToOneField
-            # ==========================================
-            elif isinstance(field, (models.ForeignKey, models.OneToOneField)):
-                logger.debug(f"[{model_name}] Multiple sites via USUBJID FK")
-                return self._filter_multiple_sites_via_fk(site_codes, field)
-        
-        # ==========================================
-        # Strategy 4: ENROLLCASE (Clinical forms)
-        # ==========================================
-        if 'ENROLLCASE' in model_fields:
-            field = model._meta.get_field('ENROLLCASE')
-            if isinstance(field, models.ForeignKey):
-                logger.debug(f"[{model_name}] Multiple sites via ENROLLCASE FK chain")
-                # ENROLLCASE → ENR_CASE → USUBJID (SCR_CASE) → SITEID
-                for site_code in site_codes:
-                    q_objects |= Q(ENROLLCASE__USUBJID__SITEID=site_code)
-                return self.filter(q_objects)
-        
-        # ==========================================
-        # Strategy 5: LAB_CULTURE_ID (AntibioticSensitivity)
-        # ==========================================
-        if 'LAB_CULTURE_ID' in model_fields:
-            field = model._meta.get_field('LAB_CULTURE_ID')
-            if isinstance(field, models.ForeignKey):
-                logger.debug(f"[{model_name}] Multiple sites via LAB_CULTURE_ID FK")
-                # LAB_CULTURE_ID → LAB_Microbiology → SITEID
-                for site_code in site_codes:
-                    q_objects |= Q(LAB_CULTURE_ID__SITEID=site_code)
-                return self.filter(q_objects)
-        
-        # ==========================================
-        # No valid strategy found
-        # ==========================================
-        logger.error(f"[{model_name}]  No site filtering strategy found")
-        logger.error(f"[{model_name}] Available fields: {model_fields}")
-        
-        #  CRITICAL: Return empty queryset for security
-        return self.none()
+        return self._apply_site_filter(site_codes, is_single=False)
     
     
-    def _filter_multiple_sites_via_fk(self, site_codes, fk_field):
+    def _filter_via_fk(self, site_codes, fk_field, is_single=False):
         """
-        Filter multiple sites through ForeignKey relationship
+        UNIFIED: Filter through ForeignKey relationship (single or multiple sites)
         
         Handles nested FK chains:
         - ENR_CASE → SCR_CASE (USUBJID__SITEID)
         - CLI_CASE → ENR_CASE → SCR_CASE (USUBJID__USUBJID__SITEID)
+        
+        OPTIMIZED: Uses __in lookup for multiple sites
         """
         model = self.model
         model_name = model.__name__
         related_model = fk_field.related_model
-        related_fields = [f.name for f in related_model._meta.get_fields()]
-        q_objects = Q()
+        related_fields = _get_cached_model_fields(related_model)
+        single_code = site_codes[0] if is_single else None
         
         # Related model has SITEID directly
         if 'SITEID' in related_fields:
-            logger.debug(f"[{model_name}] Multiple sites via USUBJID__SITEID")
-            for site_code in site_codes:
-                q_objects |= Q(USUBJID__SITEID=site_code)
-            return self.filter(q_objects)
+            logger.debug(f"[{model_name}] Site filter via USUBJID__SITEID")
+            if is_single:
+                return self.filter(USUBJID__SITEID=single_code)
+            return self.filter(USUBJID__SITEID__in=site_codes)
         
         # Related model has USUBJID (nested FK chain)
         if 'USUBJID' in related_fields:
@@ -195,46 +181,66 @@ class SiteFilteredQuerySet(models.QuerySet):
             
             # Related USUBJID is CharField
             if isinstance(related_field, models.CharField):
-                logger.debug(f"[{model_name}] Multiple sites via USUBJID__USUBJID prefix")
-                for site_code in site_codes:
-                    q_objects |= Q(USUBJID__USUBJID__startswith=f"{site_code}-")
+                logger.debug(f"[{model_name}] Site filter via USUBJID__USUBJID prefix")
+                if is_single:
+                    return self.filter(USUBJID__USUBJID__startswith=f"{single_code}-")
+                # Multiple: use Q objects for OR on startswith
+                q_objects = Q()
+                for code in site_codes:
+                    q_objects |= Q(USUBJID__USUBJID__startswith=f"{code}-")
                 return self.filter(q_objects)
             
             # Double nested FK (rare: CLI_CASE → ENR_CASE → SCR_CASE)
             elif isinstance(related_field, (models.ForeignKey, models.OneToOneField)):
-                logger.debug(f"[{model_name}] Multiple sites via double nested FK")
+                logger.debug(f"[{model_name}] Site filter via double nested FK")
                 nested_related_model = related_field.related_model
-                nested_fields = [f.name for f in nested_related_model._meta.get_fields()]
+                nested_fields = _get_cached_model_fields(nested_related_model)
                 
                 if 'SITEID' in nested_fields:
-                    for site_code in site_codes:
-                        q_objects |= Q(USUBJID__USUBJID__SITEID=site_code)
+                    if is_single:
+                        return self.filter(USUBJID__USUBJID__SITEID=single_code)
+                    return self.filter(USUBJID__USUBJID__SITEID__in=site_codes)
                 else:
-                    for site_code in site_codes:
-                        q_objects |= Q(USUBJID__USUBJID__USUBJID__startswith=f"{site_code}-")
-                
-                return self.filter(q_objects)
+                    if is_single:
+                        return self.filter(USUBJID__USUBJID__USUBJID__startswith=f"{single_code}-")
+                    q_objects = Q()
+                    for code in site_codes:
+                        q_objects |= Q(USUBJID__USUBJID__USUBJID__startswith=f"{code}-")
+                    return self.filter(q_objects)
         
-        logger.error(f"[{model_name}]  Cannot resolve FK relationship for multiple sites")
+        logger.error(f"[{model_name}] Cannot resolve FK relationship for site filtering")
         return self.none()
     
     
     def _filter_single_site(self, site_code):
         """
-        Filter by single site
+        Filter by single site - delegates to unified filter method
+        """
+        # Delegate to multiple sites with single-item list for code reuse
+        return self._apply_site_filter([site_code], is_single=True)
+    
+    def _apply_site_filter(self, site_codes, is_single=False):
+        """
+        Unified site filtering logic for both single and multiple sites
         
-        Same strategy priority as multiple sites but with simpler syntax
+        OPTIMIZED: Single method handles both cases, reducing code duplication
         """
         model = self.model
         model_name = model.__name__
         model_fields = self._get_model_fields()
         
+        # For single site, extract the value
+        single_code = site_codes[0] if is_single else None
+        
         # ==========================================
         # Strategy 1: Direct SITEID field
         # ==========================================
         if 'SITEID' in model_fields:
-            logger.debug(f"[{model_name}] Single site via SITEID field")
-            return self.filter(SITEID=site_code)
+            filter_type = "Single" if is_single else "Multiple"
+            logger.debug(f"[{model_name}] {filter_type} site via SITEID field")
+            if is_single:
+                return self.filter(SITEID=single_code)
+            return self.filter(SITEID__in=site_codes)
         
         # ==========================================
         # Strategy 2: USUBJID CharField
@@ -243,15 +249,21 @@ class SiteFilteredQuerySet(models.QuerySet):
             field = model._meta.get_field('USUBJID')
             
             if isinstance(field, models.CharField):
-                logger.debug(f"[{model_name}] Single site via USUBJID CharField prefix")
-                return self.filter(USUBJID__startswith=f"{site_code}-")
+                logger.debug(f"[{model_name}] Site filter via USUBJID CharField prefix")
+                if is_single:
+                    return self.filter(USUBJID__startswith=f"{single_code}-")
+                # Multiple sites: use Q objects for OR
+                q_objects = Q()
+                for code in site_codes:
+                    q_objects |= Q(USUBJID__startswith=f"{code}-")
+                return self.filter(q_objects)
             
             # ==========================================
             # Strategy 3: USUBJID ForeignKey/OneToOneField
             # ==========================================
             elif isinstance(field, (models.ForeignKey, models.OneToOneField)):
-                logger.debug(f"[{model_name}] Single site via USUBJID FK")
-                return self._filter_single_site_via_fk(site_code, field)
+                logger.debug(f"[{model_name}] Site filter via USUBJID FK")
+                return self._filter_via_fk(site_codes, field, is_single)
         
         # ==========================================
         # Strategy 4: ENROLLCASE (Clinical forms)
@@ -259,9 +271,10 @@ class SiteFilteredQuerySet(models.QuerySet):
         if 'ENROLLCASE' in model_fields:
             field = model._meta.get_field('ENROLLCASE')
             if isinstance(field, models.ForeignKey):
-                logger.debug(f"[{model_name}] Single site via ENROLLCASE FK chain")
-                # ENROLLCASE → ENR_CASE → USUBJID (SCR_CASE) → SITEID
-                return self.filter(ENROLLCASE__USUBJID__SITEID=site_code)
+                logger.debug(f"[{model_name}] Site filter via ENROLLCASE FK chain")
+                if is_single:
+                    return self.filter(ENROLLCASE__USUBJID__SITEID=single_code)
+                return self.filter(ENROLLCASE__USUBJID__SITEID__in=site_codes)
         
         # ==========================================
         # Strategy 5: LAB_CULTURE_ID (AntibioticSensitivity)
@@ -269,17 +282,16 @@ class SiteFilteredQuerySet(models.QuerySet):
         if 'LAB_CULTURE_ID' in model_fields:
             field = model._meta.get_field('LAB_CULTURE_ID')
             if isinstance(field, models.ForeignKey):
-                logger.debug(f"[{model_name}] Single site via LAB_CULTURE_ID FK")
-                # LAB_CULTURE_ID → LAB_Microbiology → SITEID
-                return self.filter(LAB_CULTURE_ID__SITEID=site_code)
+                logger.debug(f"[{model_name}] Site filter via LAB_CULTURE_ID FK")
+                if is_single:
+                    return self.filter(LAB_CULTURE_ID__SITEID=single_code)
+                return self.filter(LAB_CULTURE_ID__SITEID__in=site_codes)
         
         # ==========================================
-        # No valid strategy found
+        # No valid strategy found - SECURITY: return empty
         # ==========================================
-        logger.error(f"[{model_name}]  No site filtering strategy found")
-        logger.error(f"[{model_name}] Available fields: {model_fields}")
-        
-        #  CRITICAL: Return empty queryset for security
+        logger.error(f"[{model_name}] No site filtering strategy found")
+        logger.error(f"[{model_name}] Available fields: {list(model_fields)}")
         return self.none()
     
     

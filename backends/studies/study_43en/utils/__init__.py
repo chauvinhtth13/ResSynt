@@ -1,43 +1,16 @@
 # Define utility functions for site filtering
-from django.shortcuts import get_object_or_404
-from django.http import Http404
+# NOTE: Main implementation is in site_utils.py
+# This file provides backwards-compatible imports
 
-def get_site_filtered_object_or_404(model_class, site_id=None, **kwargs):
-    """
-    Lấy một object từ database, có xử lý cho site_id.
-    Nếu site_id là 'all' hoặc None, sẽ truy vấn từ tất cả các site.
-    Nếu site_id có giá trị, sẽ kiểm tra xem object có thuộc về site đó không.
-    
-    Returns:
-        model_class instance: Nếu tìm thấy object
-        
-    Raises:
-        Http404: Nếu không tìm thấy object hoặc object không thuộc về site_id được chỉ định
-    """
-    if site_id is None or site_id == 'all':
-        # Nếu không có site_id hoặc site_id là 'all', lấy object từ tất cả sites
-        return get_object_or_404(model_class, **kwargs)
-    else:
-        # Nếu có site_id, kiểm tra đối tượng thuộc về site đó
-        obj = get_object_or_404(model_class, **kwargs)
-        
-        # Kiểm tra xem object có thuộc về site_id không
-        if hasattr(obj, 'SITEID'):
-            # Nếu object có SITEID trực tiếp
-            if obj.SITEID != site_id:
-                raise Http404("Object không thuộc về site được chọn")
-        elif hasattr(obj, 'USUBJID'):
-            # Nếu object có USUBJID dạng chuỗi với prefix là site_id
-            if isinstance(obj.USUBJID, str):
-                if not obj.USUBJID.startswith(f"{site_id}-"):
-                    raise Http404("Object không thuộc về site được chọn")
-            # Nếu object có USUBJID là foreign key đến model khác
-            elif hasattr(obj.USUBJID, 'USUBJID'):
-                if isinstance(obj.USUBJID.USUBJID, str):
-                    if not obj.USUBJID.USUBJID.startswith(f"{site_id}-"):
-                        raise Http404("Object không thuộc về site được chọn")
-        
-        return obj
+from backends.studies.study_43en.utils.site_utils import (
+    get_site_filtered_object_or_404,
+    get_filtered_queryset,
+    get_site_filter_params,
+    batch_get_related,
+    batch_check_exists,
+    invalidate_cache,
+)
+
 
 def get_queryset_for_model(model_class, site_id=None):
     """
