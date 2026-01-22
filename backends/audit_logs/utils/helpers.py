@@ -61,32 +61,37 @@ def normalize_value(val: Any) -> str:
     - Boolean → '1'/'0'
     - Date → 'YYYY-MM-DD'
     - String → lowercase
+    
+    OPTIMIZED: Early returns for common cases
     """
+    # Fast path for None/empty (most common)
     if val is None or val == '':
         return ''
     
-    # Handle empty lists (ArrayField)
-    if isinstance(val, list) and not val:
-        return ''
+    # Type-based handling with early returns
+    val_type = type(val)
     
-    if isinstance(val, bool):
+    if val_type is bool:
         return '1' if val else '0'
     
-    if isinstance(val, (date, datetime)):
+    if val_type in (date, datetime):
         return val.strftime('%Y-%m-%d')
     
-    v = str(val).strip()
+    if val_type is list:
+        return '' if not val else str(val)
     
-    # CRITICAL FIX: Don't normalize 'None' string to empty!
-    # Database might have literal string 'None', keep it as is
-    # Only normalize if lowercase AND checking for actual null indicators
-    # but 'None' in database is DATA, not null!
+    # String handling
+    v = str(val).strip()
     if not v:
         return ''
     
-    if v.lower() in ['no', 'false']:
+    # Use lowercase for comparison (cache the result)
+    v_lower = v.lower()
+    
+    # Boolean string normalization (O(1) set lookup)
+    if v_lower in {'no', 'false'}:
         return '0'
-    if v.lower() in ['yes', 'true']:
+    if v_lower in {'yes', 'true'}:
         return '1'
     
     # Normalize dates (DD/MM/YYYY → YYYY-MM-DD) using pre-compiled pattern
@@ -94,7 +99,7 @@ def normalize_value(val: Any) -> str:
         parts = v.split('/')
         return f"{parts[2]}-{parts[1].zfill(2)}-{parts[0].zfill(2)}"
     
-    return v.lower()
+    return v_lower
 
 
 def format_value_for_display(val: Any) -> str:

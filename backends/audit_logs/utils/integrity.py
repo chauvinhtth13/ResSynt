@@ -4,6 +4,11 @@ BASE Integrity Checker - Shared across all studies
 
 HMAC-SHA-256 checksum for audit log integrity verification
 Enhanced with secret key for tamper-proof checksums
+
+SECURITY:
+- Uses HMAC with secret key (not just hash)
+- Constant-time comparison to prevent timing attacks
+- Supports Django's SECRET_KEY rotation via AUDIT_INTEGRITY_SECRET setting
 """
 import hashlib
 import hmac
@@ -16,7 +21,11 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 # Get secret key from settings (fallback to SECRET_KEY if not defined)
+# SECURITY: Use dedicated key for audit integrity if available
 AUDIT_SECRET_KEY = getattr(settings, 'AUDIT_INTEGRITY_SECRET', settings.SECRET_KEY)
+
+# Pre-encode secret key for reuse (optimization)
+_AUDIT_SECRET_KEY_BYTES = AUDIT_SECRET_KEY.encode('utf-8')
 
 
 class IntegrityChecker:
@@ -114,14 +123,17 @@ class IntegrityChecker:
         }
         
         # Generate HMAC checksum with secret key
+        # OPTIMIZATION: Use pre-encoded secret key
         canonical_string = json.dumps(canonical_data, sort_keys=True)
         hash_hex = hmac.new(
-            AUDIT_SECRET_KEY.encode(),
-            canonical_string.encode(),
+            _AUDIT_SECRET_KEY_BYTES,
+            canonical_string.encode('utf-8'),
             hashlib.sha256
         ).hexdigest()
         
-        logger.debug(f"Generated HMAC checksum: {hash_hex[:16]}...")
+        # Only log at DEBUG level to reduce overhead
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Generated HMAC checksum: %s...", hash_hex[:16])
         
         return hash_hex
     
@@ -172,15 +184,16 @@ class IntegrityChecker:
         calculated_checksum = IntegrityChecker.generate_checksum(audit_data)
         
         # Use constant-time comparison to prevent timing attacks
+        # SECURITY: hmac.compare_digest is resistant to timing attacks
         is_valid = hmac.compare_digest(calculated_checksum, stored_checksum)
         
         if not is_valid:
+            # Log security event - potential tampering detected
             logger.error(
-                f"INTEGRITY VIOLATION: AuditLog {audit_log.id}\n"
-                f"   Expected: {calculated_checksum[:16]}...\n"
-                f"   Stored:   {stored_checksum[:16]}..."
+                "INTEGRITY VIOLATION: AuditLog %s - checksum mismatch (expected: %s..., stored: %s...)",
+                audit_log.id, calculated_checksum[:16], stored_checksum[:16]
             )
-        else:
-            logger.debug(f"Integrity verified for AuditLog {audit_log.id}")
+        elif logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Integrity verified for AuditLog %s", audit_log.id)
         
         return is_valid

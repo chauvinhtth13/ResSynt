@@ -26,10 +26,10 @@ logger = logging.getLogger(__name__)
 # Default database alias (can be overridden per-call)
 DEFAULT_DB_ALIAS = 'db_study_43en'
 
-# 🚀 Cache timeout configuration
-CACHE_TIMEOUT_SHORT = 300  # 5 minutes - cho query results
-CACHE_TIMEOUT_MEDIUM = 1800  # 30 minutes - cho metadata
-CACHE_TIMEOUT_LONG = 3600  # 1 hour - cho rarely changed data
+# Cache timeout configuration
+CACHE_TIMEOUT_SHORT = 300  # 5 minutes - for query results
+CACHE_TIMEOUT_MEDIUM = 1800  # 30 minutes - for metadata
+CACHE_TIMEOUT_LONG = 3600  # 1 hour - for rarely changed data
 
 
 def get_site_filter_params(request):
@@ -79,7 +79,7 @@ def get_site_filter_params(request):
 
 def get_filtered_queryset(model, site_filter, filter_type, use_cache=True, db_alias=None):
     """
-    🚀 OPTIMIZED: Get filtered queryset với Redis caching
+    OPTIMIZED: Get filtered queryset with Redis caching
     
     Args:
         model: Django model class
@@ -93,14 +93,14 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True, db_al
     """
     db = db_alias or DEFAULT_DB_ALIAS
     
-    # 🔥 Cache key generation
+    # Cache key generation
     if use_cache:
         cache_key = _generate_cache_key('queryset', model.__name__, site_filter, filter_type, db)
         
         # Try to get from cache
         cached_pks = cache.get(cache_key)
         if cached_pks is not None:
-            logger.debug(f"Cache HIT: [{model.__name__}] {len(cached_pks)} objects")
+            logger.debug("Cache HIT: [%s] %d objects", model.__name__, len(cached_pks))
             # Return queryset filtered by cached PKs
             return model.objects.using(db).filter(pk__in=cached_pks)
     
@@ -123,14 +123,14 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True, db_al
         logger.debug(f"[{model.__name__}] Query single site: {site_filter}")
         queryset = model.site_objects.using(db).filter_by_site(site_filter)
     
-    # 🔥 Cache the result (PKs only to save memory)
+    # Cache the result (PKs only to save memory)
     if use_cache:
         try:
             pks = list(queryset.values_list('pk', flat=True))
             cache.set(cache_key, pks, CACHE_TIMEOUT_SHORT)
-            logger.debug(f"💾 Cached: [{model.__name__}] {len(pks)} objects")
+            logger.debug("Cached: [%s] %d objects", model.__name__, len(pks))
         except Exception as e:
-            logger.warning(f"Failed to cache queryset: {e}")
+            logger.warning("Failed to cache queryset: %s", e)
     
     return queryset
 
@@ -150,7 +150,7 @@ def _generate_cache_key(*args):
 
 def batch_get_related(primary_instances, related_model, fk_field, site_filter, filter_type):
     """
-    🚀 BATCH GET related objects trong 1 query thay vì N queries
+    BATCH GET related objects in 1 query instead of N queries
     
     Args:
         primary_instances: List of primary model instances (e.g., SCR_CASE instances)
@@ -193,14 +193,14 @@ def batch_get_related(primary_instances, related_model, fk_field, site_filter, f
     for instance in primary_instances:
         result[instance.pk] = related_map.get(instance.pk)
     
-    logger.info(f"🚀 Batch got {len(related_map)}/{len(primary_instances)} {related_model.__name__} in 1 query")
+    logger.info("Batch got %d/%d %s in 1 query", len(related_map), len(primary_instances), related_model.__name__)
     
     return result
 
 
 def batch_check_exists(instances, check_models, fk_field, site_filter, filter_type):
     """
-    🚀 BATCH CHECK existence của multiple models
+    BATCH CHECK existence of multiple models
     
     Args:
         instances: List of instances to check against
@@ -236,14 +236,14 @@ def batch_check_exists(instances, check_models, fk_field, site_filter, filter_ty
             instance_pk = instance.pk
             results[instance_pk][model.__name__] = instance_pk in existing_pks
     
-    logger.info(f"🚀 Batch checked {len(check_models)} models for {len(instances)} instances")
+    logger.info("Batch checked %d models for %d instances", len(check_models), len(instances))
     
     return results
 
 
 def invalidate_cache(model_name=None, site_filter=None):
     """
-    🗑️ Invalidate cache khi có data changes
+    Invalidate cache when data changes
     
     Args:
         model_name: Specific model to invalidate (None = all)
@@ -253,11 +253,11 @@ def invalidate_cache(model_name=None, site_filter=None):
         # Invalidate specific cache
         pattern = f"site_query_*{model_name}*{site_filter}*"
         cache.delete_pattern(pattern)
-        logger.info(f"🗑️ Invalidated cache: {model_name} @ {site_filter}")
+        logger.info("Invalidated cache: %s @ %s", model_name, site_filter)
     else:
         # Invalidate all site query cache
         cache.delete_pattern("site_query_*")
-        logger.info(f"🗑️ Invalidated all site query cache")
+        logger.info("Invalidated all site query cache")
 
 
 def get_site_filtered_object_or_404(model, site_filter, filter_type, **kwargs):

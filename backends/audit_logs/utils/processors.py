@@ -131,7 +131,7 @@ class BaseAuditProcessor:
             'reasons_json': reasons_data,
         }
         
-        logger.info(f" Set audit_data with {len(changes)} changes")
+        logger.info("Set audit_data with %d changes", len(changes))
     
     def _show_reason_modal(self, request, context: Dict, changes: List[Dict],
                           submitted_reasons: Dict = None):
@@ -267,19 +267,11 @@ class AuditProcessor(BaseAuditProcessor):
         # STEP 7: Save with audit
         try:
             with transaction.atomic():
-                #  DEBUG: Log form data before save
-                logger.debug(f"💾 Saving instance with changes:")
-                for change in changes:
-                    logger.debug(f"   {change['field']}: {change['old_display']} → {change['new_display']}")
+                # Log form data before save at DEBUG level only
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug("Saving instance with %d changes", len(changes))
                 
                 instance = form.save(commit=False)
-                
-                #  DEBUG: Verify instance has new values
-                for change in changes:
-                    field_name = change['field']
-                    if hasattr(instance, field_name):
-                        current_value = getattr(instance, field_name)
-                        logger.debug(f"   After save(commit=False): {field_name} = {current_value}")
                 
                 if hasattr(instance, 'last_modified_by_id'):
                     instance.last_modified_by_id = request.user.id
@@ -288,7 +280,7 @@ class AuditProcessor(BaseAuditProcessor):
                 
                 instance.save()
                 
-                logger.info(f" Instance saved successfully with {len(changes)} changes")
+                logger.info("Instance saved successfully with %d changes", len(changes))
             
             messages.success(request, 'Cập nhật thành công với audit trail!')
             return redirect(redirect_url)
@@ -517,7 +509,7 @@ class MultiFormAuditProcessor(BaseAuditProcessor):
             
             # Log changes for this specific formset
             if changes:
-                logger.info(" Formset '%s': %d changes detected", name, len(changes))
+                logger.debug("Formset '%s': %d changes detected", name, len(changes))
         return all_changes
     
     def _build_context(self, forms_dict, extra_context):
@@ -647,17 +639,17 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                 should_skip_reason = skip_change_reason(forms_dict)
                 
                 if should_skip_reason:
-                    logger.info(" Skip change reason: Detected as first data entry")
+                    logger.info("Skip change reason: Detected as first data entry")
                     # Force empty changes to skip reason modal
                     all_changes = []
                 else:
-                    logger.info(" Change reason required: Real update detected")
+                    logger.debug("Change reason required: Real update detected")
                     
-                    #  FIX: If standard change detection failed but we know there are real updates,
+                    # If standard change detection failed but we know there are real updates,
                     # generate synthetic changes from _real_update_forms
                     if not all_changes and '_real_update_forms' in forms_dict:
                         real_update_forms = forms_dict['_real_update_forms']
-                        logger.info(f" Generating synthetic changes for {len(real_update_forms)} real update forms")
+                        logger.debug("Generating synthetic changes for %d real update forms", len(real_update_forms))
                         
                         for update_info in real_update_forms:
                             form = update_info['form']
@@ -682,10 +674,10 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                                     'display_name': f"{test_type} - {field_name}",
                                 })
                         
-                        logger.info(f" Generated {len(all_changes)} synthetic changes")
+                        logger.debug("Generated %d synthetic changes", len(all_changes))
                     
             except Exception as e:
-                logger.error(f" Error in skip_change_reason callable: {e}", exc_info=True)
+                logger.error("Error in skip_change_reason callable: %s", e, exc_info=True)
                 # On error, DON'T skip (safer approach)
                 should_skip_reason = False
         
@@ -709,17 +701,13 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
             messages.warning(request, 'Vui lòng nhập lý do thay đổi cho tất cả các trường.')
             
             context = self._build_context(forms_dict, extra_context)
-            #  CRITICAL FIX: Pass POST data to template for hidden form
+            # Pass POST data to template for hidden form
             context['edit_post_data'] = dict(request.POST.items())
             context = self._show_reason_modal(request, context, all_changes, reasons_data)
             
-            #  DEBUG: Log context keys
-            logger.info(f" Context keys when showing reason modal: {list(context.keys())}")
-            logger.info(f" Has 'form': {'form' in context}")
-            logger.info(f" Has 'edit_post_data': {'edit_post_data' in context}")
-            logger.info(f" Has 'medhisdrug_formset': {'medhisdrug_formset' in context}")
-            if 'formsets' in forms_dict:
-                logger.info(f" Formsets in forms_dict: {list(forms_dict['formsets'].keys())}")
+            # Log only at DEBUG level to reduce overhead
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("Context keys when showing reason modal: %s", list(context.keys()))
             
             return render(request, template_name, context)
         
@@ -775,7 +763,7 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
                     )
             
             all_old_data['formsets'][name] = formset_old_data
-            logger.info(" Captured %d old %s records", len(formset_old_data), name)
+            logger.debug("Captured %d old %s records", len(formset_old_data), name)
         
         return all_old_data
     
@@ -842,19 +830,19 @@ class ComplexAuditProcessor(MultiFormAuditProcessor):
             
             if not formset_valid:
                 logger.error("Formset '%s' errors: %s", name, formset.errors)
-                logger.error("Formset '%s' non_form_errors: %s", name, formset.non_form_errors())
+                if formset.non_form_errors():
+                    logger.error("Formset '%s' non_form_errors: %s", name, formset.non_form_errors())
                 
-                #  DEBUG: Log which forms have id errors
-                for i, form_errors in enumerate(formset.errors):
-                    if form_errors and 'id' in form_errors:
-                        test_name = getattr(formset.forms[i].instance, 'TESTTYPE', 'UNKNOWN')
-                        test_pk = getattr(formset.forms[i].instance, 'pk', 'NO_PK')
-                        logger.error(
-                            " Form %d has missing 'id': TESTTYPE=%s, pk=%s, "
-                            "form.instance.pk=%s, id_in_POST=%s",
-                            i, test_name, test_pk, formset.forms[i].instance.pk,
-                            f"{formset.prefix}-{i}-id" in formset.data if formset.data else 'NO_DATA'
-                        )
+                # Log which forms have id errors at DEBUG level only
+                if logger.isEnabledFor(logging.DEBUG):
+                    for i, form_errors in enumerate(formset.errors):
+                        if form_errors and 'id' in form_errors:
+                            test_name = getattr(formset.forms[i].instance, 'TESTTYPE', 'UNKNOWN')
+                            test_pk = getattr(formset.forms[i].instance, 'pk', 'NO_PK')
+                            logger.debug(
+                                "Form %d has missing 'id': TESTTYPE=%s, pk=%s",
+                                i, test_name, test_pk
+                            )
             
             valid = formset_valid and valid
         
@@ -1084,7 +1072,7 @@ def process_crf_update(
     # Auto-detect which tier to use
     if forms_config and save_callback:
         # Tier 3: Complex forms with formsets
-        logger.info(" Auto-detected: Complex form with formsets (Tier 3)")
+        logger.debug("Auto-detected: Complex form with formsets (Tier 3)")
         processor = ComplexAuditProcessor()
         return processor.process_complex_update(
             request=request,
@@ -1099,7 +1087,7 @@ def process_crf_update(
     
     elif forms_config:
         # Tier 2: Multiple related forms
-        logger.info(" Auto-detected: Multiple related forms (Tier 2)")
+        logger.debug("Auto-detected: Multiple related forms (Tier 2)")
         processor = MultiFormAuditProcessor()
         return processor.process_multi_form_update(
             request=request,
@@ -1113,7 +1101,7 @@ def process_crf_update(
     
     else:
         # Tier 1: Simple single form
-        logger.info(" Auto-detected: Simple single form (Tier 1)")
+        logger.debug("Auto-detected: Simple single form (Tier 1)")
         processor = AuditProcessor()
         return processor.process_form_update(
             request=request,
@@ -1174,7 +1162,7 @@ def process_crf_create(
     form = form_class(request.POST, request.FILES, **form_kwargs)
     
     if not form.is_valid():
-        logger.error(f" Form validation failed: {form.errors}")
+        logger.error("Form validation failed: %s", form.errors)
         messages.error(request, 'Vui lòng kiểm tra lại các trường bị lỗi!')
         
         context = {
@@ -1187,7 +1175,7 @@ def process_crf_create(
     
     # Save
     try:
-        logger.info(" Form valid, creating...")
+        logger.debug("Form valid, creating...")
         
         with transaction.atomic():
             instance = form.save(commit=False)
@@ -1208,7 +1196,7 @@ def process_crf_create(
             
             instance.save()
             
-            logger.info(f" Created successfully!")
+            logger.info("Created successfully")
         
         messages.success(request, 'Tạo mới thành công!')
         
@@ -1221,7 +1209,7 @@ def process_crf_create(
         return redirect(redirect_url)
         
     except Exception as e:
-        logger.error(f" Create failed: {e}", exc_info=True)
+        logger.error("Create failed: %s", e, exc_info=True)
         messages.error(request, f'Lỗi khi tạo: {str(e)}')
         
         context = {

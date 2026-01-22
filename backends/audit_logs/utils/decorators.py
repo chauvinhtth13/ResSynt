@@ -81,39 +81,39 @@ def _lookup_site_from_db(patient_id, patient_model=None):
     Returns:
         str: Site ID or None
     """
+    if not patient_id:
+        return None
+    
     from django.core.cache import cache
     
     patient_id_str = str(patient_id)
     
-    # Try cache first
+    # Try cache first (O(1) lookup)
     cache_key = f'site_lookup:{patient_id_str}'
     cached = cache.get(cache_key)
-    if cached:
-        return cached
+    if cached is not None:  # Use 'is not None' to handle empty string cached values
+        return cached if cached else None
     
     site_id = None
     
-    try:
-        # Try generic lookup if model provided
-        if patient_model:
-            # Try common ID field names
-            for id_field in ['USUBJID', 'SCRID', 'SUBJECTID', 'HHID', 'MEMBERID']:
-                if hasattr(patient_model, id_field):
-                    try:
-                        site_id = patient_model.objects.filter(
-                            **{id_field: patient_id_str}
-                        ).values_list('SITEID', flat=True).first()
-                        if site_id:
-                            break
-                    except:
-                        continue
-                
-    except Exception as e:
-        logger.debug("Could not query SITEID from database: %s", e)
+    # Try generic lookup if model provided
+    if patient_model:
+        # Common ID field names (ordered by frequency)
+        id_fields = ('USUBJID', 'SCRID', 'SUBJECTID', 'HHID', 'MEMBERID')
+        
+        for id_field in id_fields:
+            if hasattr(patient_model, id_field):
+                try:
+                    site_id = patient_model.objects.filter(
+                        **{id_field: patient_id_str}
+                    ).values_list('SITEID', flat=True).first()
+                    if site_id:
+                        break
+                except Exception:
+                    continue
     
-    # Cache result (even None to avoid repeated failed lookups)
-    if site_id:
-        cache.set(cache_key, site_id, 300)  # Cache for 5 minutes
+    # Cache result (even empty string to avoid repeated failed lookups)
+    cache.set(cache_key, site_id or '', 300)  # Cache for 5 minutes
     
     return site_id
 
@@ -183,19 +183,17 @@ def audit_log(model_name: str, get_patient_id_from: str = 'usubjid',
             # 1. From audit_data (set by view) - Most accurate
             # 2. Auto-detect CREATE from URL pattern
             # 3. From request method + patient_id - Fallback
-            if audit_data.get('action'):
-                action = audit_data.get('action')
-            elif request.method == 'GET':
-                action = 'VIEW'
-            elif request.method == 'POST':
-                # Auto-detect CREATE from URL path
-                path = request.path.lower()
-                if '/create' in path or '_create' in path:
-                    action = 'CREATE'
+            action = audit_data.get('action')
+            
+            if not action:
+                if request.method == 'GET':
+                    action = 'VIEW'
+                elif request.method == 'POST':
+                    # Auto-detect CREATE from URL path (case-insensitive)
+                    path_lower = request.path.lower()
+                    action = 'CREATE' if '/create' in path_lower or '_create' in path_lower else 'UPDATE'
                 else:
-                    action = 'UPDATE'
-            else:
-                action = 'UNKNOWN'
+                    action = 'UNKNOWN'
             
             # NEW: Auto-log CREATE and VIEW even without audit_data
             if request.user.is_authenticated:

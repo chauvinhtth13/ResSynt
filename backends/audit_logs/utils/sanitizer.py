@@ -75,64 +75,15 @@ _CONTROL_CHARS_PATTERN = re.compile(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]')
 
 
 class SecuritySanitizer:
-    """Comprehensive security sanitizer"""
+    """
+    Comprehensive security sanitizer
     
-    # Enhanced XSS patterns (prevent bypasses)
-    XSS_PATTERNS = [
-        r'<\s*script[^>]*>',                       # <script> opening tag
-        r'<\s*/\s*script\s*>',                     # </script> closing tag
-        r'javascript\s*:',                          # javascript: protocol
-        r'on\w+\s*=',                              # onclick=, onerror=, etc.
-        r'<\s*iframe',                             # <iframe
-        r'<\s*object',                             # <object
-        r'<\s*embed',                              # <embed
-        r'<\s*img[^>]*(on\w+|src\s*=\s*["\']?\s*javascript)',  # <img with events
-        r'<\s*svg[^>]*on\w+',                      # SVG events
-        r'<\s*body[^>]*on\w+',                     # Body events
-        r'expression\s*\(',                        # CSS expression()
-        r'vbscript\s*:',                           # vbscript: protocol
-        r'data\s*:\s*text/html',                   # data:text/html
-        r'&#\d+;',                                 # HTML entities
-        r'\\u[0-9a-f]{4}',                         # Unicode escape
-        r'<\s*meta[^>]*http-equiv',                # <meta http-equiv
-    ]
+    Uses pre-compiled module-level regex patterns for better performance.
+    Patterns are defined once at module load time.
+    """
     
-    # More precise SQL patterns (require SQL context)
-    SQL_PATTERNS = [
-        r'union\s+select',                         # UNION SELECT
-        r'select\s+.*\s+from',                     # SELECT ... FROM
-        r'insert\s+into',                          # INSERT INTO
-        r'update\s+.*\s+set',                      # UPDATE ... SET
-        r'delete\s+from',                          # DELETE FROM
-        r'drop\s+(table|database)',                # DROP TABLE/DATABASE
-        r'create\s+(table|database)',              # CREATE TABLE/DATABASE
-        r'alter\s+table',                          # ALTER TABLE
-        r"'--",                                    # SQL comment with quote
-        r'--',                                     # SQL comment
-        r'/\*.*?\*/',                              # /* comment */
-        r"'\s*(or|and)\s+'",                       # '1' or '1'='1
-        r'xp_cmdshell',                            # SQL Server xp_cmdshell
-        r'sp_executesql',                          # SQL Server sp_executesql
-        # Additional bypass techniques
-        r'0x[0-9a-f]+',                            # Hex encoding
-        r'char\s*\(',                              # CHAR() function
-        r'concat\s*\(',                            # CONCAT() function
-        r'benchmark\s*\(',                         # MySQL benchmark attack
-        r'sleep\s*\(',                             # Time-based blind SQLi
-        r'pg_sleep',                               # PostgreSQL sleep
-        r'waitfor\s+delay',                        # SQL Server waitfor
-        r'load_file\s*\(',                         # MySQL file read
-        r'into\s+(out|dump)file',                  # MySQL file write
-        r'information_schema',                     # Schema discovery
-        r'sys\.tables|sysobjects',                 # SQL Server sys tables
-        r'pg_catalog',                             # PostgreSQL catalog
-    ]
-    
-    CMD_PATTERNS = [
-        r"[;&|`$]",      # Shell metacharacters
-        r"\$\{.*?\}",    # ${...} expansion
-        r"\$\(.*?\)",    # $(...) command substitution
-    ]
+    # Use pre-compiled patterns from module level (avoid recompiling)
+    # _XSS_PATTERNS, _SQL_PATTERNS, _CMD_PATTERNS are already compiled
     
     def __init__(self, min_length: int = 3, max_length: int = 1000):
         """
@@ -216,34 +167,33 @@ class SecuritySanitizer:
         text = _CONTROL_CHARS_PATTERN.sub('', text)
         
         # 5. Check XSS patterns (use pre-compiled patterns)
-        xss_detected = False
+        # Early termination: check XSS first, most common attack vector
         for pattern in _XSS_PATTERNS:
             if pattern.search(text):
                 errors.append('Lý do chứa mã HTML/JavaScript không hợp lệ')
-                logger.warning(
-                    "XSS ATTEMPT blocked: %s = %s", field_name, original[:100]
-                )
-                xss_detected = True
-                break
+                logger.warning("XSS ATTEMPT blocked: %s", field_name)
+                # Return early on XSS detection - no need to check other patterns
+                return {
+                    'valid': False,
+                    'sanitized': html.escape(text, quote=True),
+                    'errors': errors,
+                    'warnings': warnings
+                }
         
         # 6. Check SQL patterns (use pre-compiled patterns)
-        if not xss_detected:  # Skip if already detected malicious content
-            for pattern in _SQL_PATTERNS:
-                if pattern.search(text):
-                    errors.append('Lý do chứa từ khóa SQL không hợp lệ')
-                    logger.warning(
-                        "SQL INJECTION ATTEMPT blocked: %s = %s", field_name, original[:100]
-                    )
-                    break
+        for pattern in _SQL_PATTERNS:
+            if pattern.search(text):
+                errors.append('Lý do chứa từ khóa SQL không hợp lệ')
+                logger.warning("SQL INJECTION ATTEMPT blocked: %s", field_name)
+                break
         
         # 7. Check command injection patterns (use pre-compiled patterns)
-        for pattern in _CMD_PATTERNS:
-            if pattern.search(text):
-                errors.append('Lý do chứa ký tự đặc biệt không hợp lệ')
-                logger.warning(
-                    "CMD INJECTION ATTEMPT blocked: %s = %s", field_name, original[:100]
-                )
-                break
+        if not errors:  # Skip if already detected SQL injection
+            for pattern in _CMD_PATTERNS:
+                if pattern.search(text):
+                    errors.append('Lý do chứa ký tự đặc biệt không hợp lệ')
+                    logger.warning("CMD INJECTION ATTEMPT blocked: %s", field_name)
+                    break
         
         # 8. Special character ratio check (Vietnamese-aware)
         unsafe_chars = sum(1 for c in text if not self._is_safe_char(c))
