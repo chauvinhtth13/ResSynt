@@ -232,9 +232,14 @@ class StudyRoleManager:
         ).select_related('content_type')
         
         if not all_permissions.exists():
-            logger.warning(
+            # This is expected during initial migration when ContentTypes exist
+            # but Permission objects haven't been created by auth's post_migrate yet.
+            # Django creates permissions in post_migrate signal from django.contrib.auth.
+            # Use debug level since this is normal during migration sequence.
+            logger.debug(
                 f"No permissions found for app_label '{app_label}'. "
-                f"Make sure migrations have been run for study_{study_code.lower()}."
+                f"This is normal if migrations are still running. "
+                f"Permissions will be synced after all migrations complete."
             )
             return stats
         

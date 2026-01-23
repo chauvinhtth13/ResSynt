@@ -1,0 +1,126 @@
+# English translations for ResSynt project.
+# Copyright (C) 2026
+# This file is distributed under the same license as the ResSynt package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ResSynt 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-23 10:00+0700\n"
+"PO-Revision-Date: 2026-01-23 10:00+0700\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: backends/api/studies/study_43en/services/dashboard.py
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "All Sites"
+msgstr "All Sites"
+
+#: backends/api/studies/study_43en/services/dashboard.py
+msgid "No Sites"
+msgstr "No Sites"
+
+#: backends/api/studies/study_43en/services/dashboard.py
+msgid "Unknown Site"
+msgstr "Unknown Site"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "43EN Management Report"
+msgstr "43EN Management Report"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Refresh"
+msgstr "Refresh"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Study Site"
+msgstr "Study Site"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Last Update"
+msgstr "Last Update"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Screening Patients"
+msgstr "Screening Patients"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Enrolled Patients"
+msgstr "Enrolled Patients"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Screening Contacts"
+msgstr "Screening Contacts"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Enrolled Contacts"
+msgstr "Enrolled Contacts"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Patient Enrollment Progress"
+msgstr "Patient Enrollment Progress"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Loading..."
+msgstr "Loading..."
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Loading chart data..."
+msgstr "Loading chart data..."
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Monthly Screening & Enrollment Statistics"
+msgstr "Monthly Screening & Enrollment Statistics"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "View by"
+msgstr "View by"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Year"
+msgstr "Year"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Quarter"
+msgstr "Quarter"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Month"
+msgstr "Month"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Apply"
+msgstr "Apply"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Statistics Table"
+msgstr "Statistics Table"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Contact Monthly Screening & Enrollment Statistics"
+msgstr "Contact Monthly Screening & Enrollment Statistics"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Loading contact data..."
+msgstr "Loading contact data..."
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "K. pneumoniae isolated from throat swab & stool/rectal swab samples"
+msgstr "K. pneumoniae isolated from throat swab & stool/rectal swab samples"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Loading K. pneumoniae data..."
+msgstr "Loading K. pneumoniae data..."
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Sample Management: Patient & Contact Sampling Follow-up"
+msgstr "Sample Management: Patient & Contact Sampling Follow-up"
+
+#: frontends/templates/studies/study_43en/base/management_report.html
+msgid "Loading sampling data..."
+msgstr "Loading sampling data..."

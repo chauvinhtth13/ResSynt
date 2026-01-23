@@ -34,8 +34,8 @@ from .services import dashboard
 app_name = 'study_43en'
 
 urlpatterns = [
-    # ===== DASHBOARD & CHARTS =====
-    path('dashboard/', dashboard.home_dashboard, name='home_dashboard'),
+    # ===== MANAGEMENT REPORT & CHARTS =====
+    path('dashboard/', dashboard.management_report, name='management_report'),
     
     path('api/dashboard-stats/', 
          dashboard.get_dashboard_stats_api, 

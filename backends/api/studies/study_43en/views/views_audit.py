@@ -72,7 +72,7 @@ def _get_cached_filter_options():
 # ==========================================
 
 @login_required
-@require_crf_view('AuditLog', redirect_to='study_43en:home_dashboard')
+@require_crf_view('AuditLog', redirect_to='study_43en:management_report')
 def audit_log_list(request):
     """
     List all audit logs with filters and site-based access control

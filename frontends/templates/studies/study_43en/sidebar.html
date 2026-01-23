@@ -16,7 +16,7 @@
         {% trans "Dashboard" %}
       </p>
 
-      <a href="{% url 'study_43en:home_dashboard' %}" class="sidebar-item mb-2">
+      <a href="{% url 'study_43en:management_report' %}" class="sidebar-item mb-2">
         <i class="bi bi-speedometer2"></i>{% trans "Management Report" %}
       </a>
 
@@ -94,7 +94,7 @@
         {% trans "Tools" %}
       </p>
 
-      {% if can_export %}
+      
       <a href="{% url 'study_43en:export_data' %}" class="sidebar-item mb-2">
         <i class="bi bi-arrow-down-circle"></i>{% trans "Export Data" %}
       </a>
@@ -102,7 +102,6 @@
       <a href="{% url 'study_43en:report_export' %}" class="sidebar-item">
         <i class="bi bi-clipboard-data"></i>{% trans "Export TMG Report" %}
       </a>
-      {% endif %}
     </div>
   </nav>
 

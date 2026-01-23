@@ -130,7 +130,7 @@ def get_filtered_queryset(model, site_filter, filter_type, use_cache=True):
         try:
             pks = list(queryset.values_list('pk', flat=True))
             cache.set(cache_key, pks, CACHE_TIMEOUT_SHORT)
-            logger.debug(f"💾 Cached: [{model.__name__}] {len(pks)} objects")
+            logger.debug(f"Cached: [{model.__name__}] {len(pks)} objects")
         except Exception as e:
             logger.warning(f"Failed to cache queryset: {e}")
     

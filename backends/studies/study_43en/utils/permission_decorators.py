@@ -49,7 +49,7 @@ def require_study_permission(permission_codename: str, redirect_to: str = None):
                 if redirect_to:
                     return redirect(redirect_to)
                 else:
-                    return redirect('study_43en:home_dashboard')
+                    return redirect('study_43en:management_report')
             
             return view_func(request, *args, **kwargs)
         
@@ -148,7 +148,7 @@ def require_export_permission(redirect_to: str = None):
             
             if redirect_to:
                 return redirect(redirect_to)
-            return redirect('study_43en:home_dashboard')
+            return redirect('study_43en:management_report')
         
         return wrapper
     return decorator
@@ -172,7 +172,7 @@ def check_site_access(get_site_from: str = 'instance'):
                         f"(site={user_site}) -> target={site_id}"
                     )
                     messages.error(request, 'Bạn không có quyền truy cập site này!')
-                    return redirect('study_43en:home_dashboard')
+                    return redirect('study_43en:management_report')
             
             return view_func(request, *args, **kwargs)
         

@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # ==========================================
 
 @login_required
-@require_crf_view('scr_contact', redirect_to='study_43en:home_dashboard')
+@require_crf_view('scr_contact', redirect_to='study_43en:management_report')
 def screening_contact_list(request):
     """
     List contact screening cases

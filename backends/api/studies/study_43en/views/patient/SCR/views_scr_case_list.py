@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # backends/studies/study_43en/views/patient/views_SCR.py
 
 @login_required
-@require_crf_view('scr_case', redirect_to='study_43en:home_dashboard')
+@require_crf_view('scr_case', redirect_to='study_43en:management_report')
 def screening_case_list(request):
     """
     List screening cases with site selection modal

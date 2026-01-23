@@ -18,8 +18,11 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
-from django.db.models import Count, Case, When, IntegerField
-from datetime import datetime
+from django.db.models import Count, Case, When, IntegerField, Q
+from django.utils.translation import gettext as _
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
+from functools import wraps
 import logging
 
 # Import site utilities
@@ -36,12 +39,14 @@ from backends.studies.study_43en.models import (
     ENR_CONTACT,    # Contact enrollment
 )
 
+# Import tenancy models (for site/study info)
+from backends.tenancy.models import Site, Study, StudySite
+
 # Import sample models (with fallback)
 try:
     from backends.studies.study_43en.models.patient.SAM_CASE import SAM_CASE
     from backends.studies.study_43en.models.contact.SAM_CONTACT import SAM_CONTACT
 except ImportError:
-    # Models may not exist yet or use different import path
     SAM_CASE = None
     SAM_CONTACT = None
 
@@ -52,16 +57,182 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 DB_ALIAS = 'db_study_43en'
+STUDY_CODE = '43EN'
+
+# Site configuration for enrollment targets
+SITE_CONFIG = {
+    'all': {'target': 750, 'start_date': date(2024, 7, 1)},
+    '003': {'target': 200, 'start_date': date(2024, 7, 1)},
+    '011': {'target': 400, 'start_date': date(2025, 10, 13)},
+    '020': {'target': 150, 'start_date': date(2025, 11, 5)},
+}
+
+SITE_NAMES = {'003': 'HTD', '020': 'NHTD', '011': 'Cho Ray'}
+
+# Study timeline
+STUDY_START_DATE = date(2024, 7, 1)
+STUDY_END_DATE = date(2027, 4, 30)
+CHART_END_DATE = date(2027, 5, 1)
+TOTAL_STUDY_MONTHS = 35
 
 
 # ============================================================================
-# MAIN DASHBOARD VIEW
+# DYNAMIC SITE CODES HELPER
+# ============================================================================
+
+def get_study_site_codes(request):
+    """
+    Get all site codes linked to the current study from StudySite.
+    
+    Args:
+        request: HTTP request with study info from middleware
+    
+    Returns:
+        tuple: Site codes linked to current study, e.g. ('003', '011', '020')
+    """
+    study = getattr(request, 'study', None)
+    
+    if study:
+        # Get sites from StudySite relationship
+        site_codes = StudySite.objects.filter(
+            study=study
+        ).values_list('site__code', flat=True)
+        return tuple(sorted(site_codes))
+    
+    # Fallback: try to get study by STUDY_CODE
+    try:
+        study_obj = Study.objects.get(code=STUDY_CODE)
+        site_codes = StudySite.objects.filter(
+            study=study_obj
+        ).values_list('site__code', flat=True)
+        return tuple(sorted(site_codes))
+    except Study.DoesNotExist:
+        logger.warning(f"Study {STUDY_CODE} not found, using empty site codes")
+        return ()
+
+
+def get_site_names_from_db(request):
+    """
+    Get site names mapping from database.
+    
+    Returns:
+        dict: {site_code: abbreviation} e.g. {'003': 'HTD', '020': 'NHTD'}
+    """
+    study = getattr(request, 'study', None)
+    
+    if study:
+        sites = Site.objects.filter(
+            site_studies__study=study
+        ).values('code', 'abbreviation')
+        return {s['code']: s['abbreviation'] for s in sites}
+    
+    # Fallback to constant
+    return SITE_NAMES
+
+
+# ============================================================================
+# SECURITY HELPERS
+# ============================================================================
+
+def get_user_site_context(request):
+    """
+    Extract user's site permissions from request (set by middleware).
+    
+    Returns:
+        tuple: (user_sites: set, can_access_all: bool)
+    """
+    return (
+        getattr(request, 'user_sites', set()),
+        getattr(request, 'can_access_all_sites', False)
+    )
+
+
+def build_allowed_sites_list(request, user_sites, can_access_all):
+    """
+    Build list of sites user can access for dropdown/API.
+    
+    Args:
+        request: HttpRequest (for getting study's linked sites)
+        user_sites: set of site codes
+        can_access_all: bool
+        
+    Returns:
+        list: Site codes with 'all' option if applicable
+    """
+    study_site_codes = get_study_site_codes(request)
+    
+    if can_access_all:
+        return ['all'] + list(study_site_codes)
+    elif user_sites and len(user_sites) > 1:
+        return ['all'] + sorted(user_sites)
+    elif user_sites:
+        return sorted(user_sites)
+    return []
+
+
+def validate_site_access(request, site_code):
+    """
+    Validate user has permission to access a specific site.
+    
+    Args:
+        request: HttpRequest
+        site_code: str - site code to validate
+        
+    Returns:
+        tuple: (is_valid: bool, error_response: JsonResponse or None)
+    """
+    if site_code == 'all':
+        return True, None
+        
+    user_sites, can_access_all = get_user_site_context(request)
+    
+    if can_access_all or site_code in user_sites:
+        return True, None
+    
+    logger.warning(
+        f"Access denied: User {request.user.username} attempted to access site {site_code}"
+    )
+    return False, JsonResponse({
+        'success': False,
+        'error': f'Bạn không có quyền truy cập site {site_code}',
+        'allowed_sites': build_allowed_sites_list(request, user_sites, can_access_all),
+    }, status=403)
+
+
+def get_site_filter_with_validation(request):
+    """
+    Get site filter from request parameter or middleware, with validation.
+    
+    Args:
+        request: HttpRequest
+        
+    Returns:
+        tuple: (site_filter, filter_type, allowed_sites, error_response)
+               error_response is None if valid
+    """
+    user_sites, can_access_all = get_user_site_context(request)
+    allowed_sites = build_allowed_sites_list(request, user_sites, can_access_all)
+    
+    site_param = request.GET.get('site')
+    
+    if site_param and site_param != 'all':
+        is_valid, error = validate_site_access(request, site_param)
+        if not is_valid:
+            return None, None, allowed_sites, error
+        return site_param, 'single', allowed_sites, None
+    
+    site_filter, filter_type = get_site_filter_params(request)
+    return site_filter, filter_type, allowed_sites, None
+
+
+# ============================================================================
+# MAIN MANAGEMENT REPORT VIEW
 # ============================================================================
 
 @login_required
-def home_dashboard(request):
+def management_report(request):
     """
-    Main dashboard view - BACKEND ONLY
+    Management Report view - BACKEND ONLY
     
     Shows:
     - Screening patients count
@@ -75,19 +246,25 @@ def home_dashboard(request):
         request: HttpRequest with site context from middleware
         
     Returns:
-        Rendered dashboard template with statistics
+        Rendered management report template with statistics
     """
+    # DEBUG: Log request attributes from middleware
+    logger.info(f"Management Report - request.study: {getattr(request, 'study', 'NOT SET')}")
+    logger.info(f"Management Report - request.user_sites: {getattr(request, 'user_sites', 'NOT SET')}")
+    logger.info(f"Management Report - request.can_access_all_sites: {getattr(request, 'can_access_all_sites', 'NOT SET')}")
+    
     # Get site filter from middleware context
     site_filter, filter_type = get_site_filter_params(request)
     
-    logger.info(f"Dashboard loading - Site: {site_filter}, Type: {filter_type}")
+    logger.info(f"Management Report loading - Site: {site_filter}, Type: {filter_type}")
     
     try:
         # ===== OPTIMIZED: Single aggregation query for patient stats =====
         # Instead of 2 separate count queries, use Case/When aggregation
+        # Note: SCR_CASE uses USUBJID as primary key, not 'id' - use 'pk' instead
         patient_qs = get_filtered_queryset(SCR_CASE, site_filter, filter_type)
         patient_stats = patient_qs.aggregate(
-            screening_patients=Count('id'),
+            screening_patients=Count('pk'),
             enrolled_patients=Count(
                 Case(
                     When(
@@ -124,19 +301,19 @@ def home_dashboard(request):
         
         logger.debug(f"Contacts - Screening: {screening_contacts}, Enrolled: {enrolled_contacts}")
         
+        # ===== SITE PERMISSIONS =====
+        user_sites, can_access_all = get_user_site_context(request)
+        accessible_sites = build_allowed_sites_list(request, user_sites, can_access_all)
+        # Remove 'all' from accessible_sites for dropdown (it's added separately in template)
+        accessible_sites = [s for s in accessible_sites if s != 'all']
+        
+        logger.debug(f"Site permissions - user_sites: {user_sites}, can_access_all: {can_access_all}")
+        
         # ===== SITE NAME GENERATION =====
         site_name = _get_site_display_name(site_filter, filter_type)
         
-        # ===== SITE PERMISSIONS =====
-        # Get user's accessible sites from middleware
-        user_sites = getattr(request, 'user_sites', set())
-        can_access_all = getattr(request, 'can_access_all_sites', False)
-        
-        # Build accessible sites list for dropdown
-        if can_access_all:
-            accessible_sites = ['003', '011', '020']  # All sites in order
-        else:
-            accessible_sites = sorted(list(user_sites))
+        # ===== STUDY NAME - From Database =====
+        study_name = _get_study_name(request)
         
         # ===== BUILD CONTEXT =====
         context = {
@@ -144,7 +321,7 @@ def home_dashboard(request):
             'study': getattr(request, 'study', None),
             'study_code': '43en',
             'study_folder': 'studies/study_43en',
-            'study_name': "Klebsiella pneumoniae Epidemiology Study",
+            'study_name': study_name,
             
             # Site information
             'site_name': site_name,
@@ -164,18 +341,18 @@ def home_dashboard(request):
         }
         
         logger.info(
-            f"Dashboard loaded successfully - "
+            f"Management Report loaded successfully - "
             f"Patients: {screening_patients}/{enrolled_patients}, "
             f"Contacts: {screening_contacts}/{enrolled_contacts}"
         )
         
-        return render(request, 'studies/study_43en/home_dashboard.html', context)
+        return render(request, 'studies/study_43en/base/management_report.html', context)
         
     except Exception as e:
-        logger.error(f"Dashboard error: {str(e)}", exc_info=True)
+        logger.error(f"Management Report error: {str(e)}", exc_info=True)
         
         # Return error context
-        return render(request, 'studies/study_43en/home_dashboard.html', {
+        return render(request, 'studies/study_43en/base/management_report.html', {
             'error': str(e),
             'today': datetime.now(),
             'study_folder': 'studies/study_43en',
@@ -187,60 +364,251 @@ def home_dashboard(request):
 # HELPER FUNCTIONS
 # ============================================================================
 
+def _get_study_name(request):
+    """
+    Get study name from database based on current study context.
+    
+    Args:
+        request: HttpRequest with study context from middleware
+        
+    Returns:
+        str: Study name in current language (vi/en), empty string if not found
+    """
+    try:
+        # Try to get study from request context (set by middleware)
+        study = getattr(request, 'study', None)
+        if study:
+            # Check name property first (handles language switching)
+            for attr in ('name', 'name_en', 'name_vi'):
+                name = getattr(study, attr, None)
+                if name and name.strip():
+                    return name
+        
+        # Fallback: Query by study code
+        study = Study.objects.filter(code=STUDY_CODE).values('name_en', 'name_vi').first()
+        if study:
+            return study.get('name_en') or study.get('name_vi') or ""
+        
+        logger.warning("Study name not found in database")
+        return ""
+        
+    except Exception as e:
+        logger.warning(f"Could not fetch study name: {e}")
+        return ""
+
+
 def _get_site_display_name(site_filter, filter_type):
     """
-    Generate human-readable site name for display
+    Generate human-readable site name for display.
+    
+    Format:
+    - All Sites: "All Sites" / "Tất cả các site"
+    - Single site: "003 - HTD" (mã site - tên viết tắt)
+    - Multiple sites: "003 - HTD | 011 - CR"
     
     Args:
         site_filter: 'all' | str | list
         filter_type: 'all' | 'single' | 'multiple'
         
     Returns:
-        str: Display name (e.g., "All Sites", "003 - Site Name", "003, 011 (+2 more)")
+        str: Display name
     """
+    # All Sites case
     if filter_type == 'all' or site_filter == 'all':
-        return "All Sites"
+        return _("All Sites")
     
     try:
-        from backends.tenancy.models import Site
-        
         if filter_type == 'single':
-            # Single site
-            site = Site.objects.get(code=site_filter)
-            return f"{site.code} - {site.name}"
+            site = Site.objects.filter(code=site_filter).values('code', 'abbreviation').first()
+            if site:
+                return f"{site['code']} - {site['abbreviation']}" if site['abbreviation'] else site['code']
+            return f"Site {site_filter}"
             
         elif filter_type == 'multiple':
-            # Multiple sites
-            sites = Site.objects.filter(code__in=site_filter)
-            site_count = sites.count()
+            site_codes = site_filter if isinstance(site_filter, list) else list(site_filter)
+            sites = Site.objects.filter(code__in=site_codes).values('code', 'abbreviation').order_by('code')
             
-            if site_count == 0:
-                return "No Sites"
-            elif site_count == 1:
-                site = sites.first()
-                return f"{site.code} - {site.name}"
-            else:
-                # Show first 3 sites
-                site_codes = [s.code for s in sites[:3]]
-                site_names = ', '.join(site_codes)
-                
-                if site_count > 3:
-                    return f"{site_names} (+{site_count - 3} more)"
-                else:
-                    return site_names
+            if not sites:
+                return _("No Sites")
+            
+            site_names = [
+                f"{s['code']} - {s['abbreviation']}" if s['abbreviation'] else s['code']
+                for s in sites
+            ]
+            return " | ".join(site_names)
                     
     except Exception as e:
         logger.warning(f"Could not fetch site name: {e}")
-        
-        # Fallback
         if filter_type == 'single':
             return f"Site {site_filter}"
         elif filter_type == 'multiple' and site_filter:
             return f"{len(site_filter)} Sites"
-        else:
-            return "Unknown Site"
     
-    return "All Sites"
+    return _("All Sites")
+
+
+def _generate_month_labels(start_date, end_date):
+    """
+    Generate list of month labels and date objects.
+    
+    Args:
+        start_date: date - start of range
+        end_date: date - end of range
+        
+    Returns:
+        tuple: (months: list[str], month_dates: list[date])
+    """
+    months = []
+    month_dates = []
+    current = start_date.replace(day=1)
+    end = end_date.replace(day=1)
+    
+    while current <= end:
+        months.append(current.strftime('%m/%Y'))
+        month_dates.append(current)
+        current += relativedelta(months=1)
+    
+    return months, month_dates
+
+
+def _calculate_target_cumulative(filter_type, site_filter, site_target, site_start_date, month_dates):
+    """
+    Calculate cumulative target enrollment for chart.
+    
+    Args:
+        filter_type: 'all' | 'single' | 'multiple'
+        site_filter: site code(s)
+        site_target: int - total target
+        site_start_date: date - when site started
+        month_dates: list of date objects
+        
+    Returns:
+        list: Cumulative target values (None for months before site start)
+    """
+    target_cumulative = []
+    cumulative = 0.0
+    
+    if filter_type == 'all' or site_filter == 'all':
+        # Phase 1 (07/2024-06/2025): 15/month, Phase 2: 25/month
+        phase_1_end = date(2025, 6, 30)
+        
+        for month_date in month_dates:
+            cumulative += 15 if month_date <= phase_1_end else 25
+            target_cumulative.append(round(cumulative))
+        
+        # Ensure last value is exactly 750
+        if target_cumulative:
+            target_cumulative[-1] = 750
+    else:
+        # Individual sites: distribute evenly
+        site_start_month = site_start_date.replace(day=1)
+        
+        # Count available months
+        available_months = sum(1 for d in month_dates if d >= site_start_month)
+        monthly_step = site_target / available_months if available_months > 0 else 0
+        
+        for month_date in month_dates:
+            if month_date < site_start_month:
+                target_cumulative.append(None)
+            else:
+                cumulative += monthly_step
+                target_cumulative.append(round(cumulative))
+        
+        # Ensure last non-null value is exactly the target
+        non_null_indices = [i for i, v in enumerate(target_cumulative) if v is not None]
+        if non_null_indices:
+            target_cumulative[non_null_indices[-1]] = int(site_target)
+    
+    return target_cumulative
+
+
+def _calculate_actual_cumulative(site_filter, filter_type, months, month_dates):
+    """
+    Calculate actual cumulative enrollment from database.
+    
+    Args:
+        site_filter: site code(s)
+        filter_type: 'all' | 'single' | 'multiple'
+        months: list of month labels (MM/YYYY)
+        month_dates: list of date objects
+        
+    Returns:
+        tuple: (actual_cumulative: list, last_enrollment_date: date or None)
+    """
+    # Get enrollment dates
+    enrolled_qs = get_filtered_queryset(
+        ENR_CASE, site_filter, filter_type
+    ).filter(ENRDATE__isnull=False).values_list('ENRDATE', flat=True)
+    
+    enrollment_dates = list(enrolled_qs)
+    last_enrollment_date = max(enrollment_dates) if enrollment_dates else None
+    
+    # Count by month
+    enrollment_by_month = {}
+    for enr_date in enrollment_dates:
+        if enr_date:
+            month_key = enr_date.strftime('%m/%Y')
+            enrollment_by_month[month_key] = enrollment_by_month.get(month_key, 0) + 1
+    
+    # Build cumulative array
+    actual_cumulative = []
+    cumulative = 0
+    has_started = False
+    
+    for i, month in enumerate(months):
+        month_date = month_dates[i]
+        month_count = enrollment_by_month.get(month, 0)
+        
+        # Cut off after last enrollment date
+        if last_enrollment_date and month_date > last_enrollment_date:
+            actual_cumulative.append(None)
+        elif month_count > 0:
+            has_started = True
+            cumulative += month_count
+            actual_cumulative.append(cumulative)
+        elif has_started:
+            actual_cumulative.append(cumulative)
+        else:
+            actual_cumulative.append(None)
+    
+    return actual_cumulative, last_enrollment_date
+
+
+def _get_monthly_counts(model, site_filter, filter_type, date_field, start_date, end_date, months, extra_filters=None):
+    """
+    Get counts per month for a model.
+    
+    Args:
+        model: Django model class
+        site_filter: site code(s)
+        filter_type: 'all' | 'single' | 'multiple'
+        date_field: str - name of date field
+        start_date: date
+        end_date: date
+        months: list of month labels
+        extra_filters: dict - additional filter conditions
+        
+    Returns:
+        list: Count per month
+    """
+    qs = get_filtered_queryset(model, site_filter, filter_type).filter(
+        **{f'{date_field}__isnull': False},
+        **{f'{date_field}__gte': start_date},
+        **{f'{date_field}__lte': end_date},
+    )
+    
+    if extra_filters:
+        qs = qs.filter(**extra_filters)
+    
+    # Count by month
+    counts_by_month = {}
+    for record in qs.values(date_field):
+        record_date = record[date_field]
+        if record_date:
+            month_key = record_date.strftime('%m/%Y')
+            counts_by_month[month_key] = counts_by_month.get(month_key, 0) + 1
+    
+    return [counts_by_month.get(month, 0) for month in months]
 
 
 # ============================================================================
@@ -322,251 +690,49 @@ def get_dashboard_stats_api(request):
 @login_required
 def get_enrollment_chart_api(request):
     """
-    API endpoint for enrollment chart data
+    API endpoint for enrollment chart data.
     
-    Query Parameters:
-        site: Optional site code ('003', '020', '011') to override user's site filter
-    
-    Returns:
-        JSON with:
-        - months: List of month labels (MM/YYYY format)
-        - target: Target enrollment per month (cumulative) with stepped increase
-        - actual: Actual enrollment per month (cumulative, null after last enrollment)
-        - site_target: Total target for current site filter
-        - allowed_sites: List of sites user can access
-    
-    Target Logic:
-        - All Sites: 15 patients/month (07/2024-06/2025), then adjust to reach 750 by 04/2027
-        - Site 003: Starts 07/2024
-        - Site 020: Starts 10/2025
-        - Site 011: Starts 11/2025
-    
-    Usage:
-        GET /api/enrollment-chart/
-        GET /api/enrollment-chart/?site=003
+    Returns cumulative enrollment target and actual data for charting.
     """
-    from datetime import date
-    from dateutil.relativedelta import relativedelta
-    from backends.studies.study_43en.utils.permission_decorators import check_site_permission
-    
-    # Get user's allowed sites from middleware
-    user_sites = getattr(request, 'user_sites', set())
-    can_access_all = getattr(request, 'can_access_all_sites', False)
-    
-    # Build allowed_sites list
-    # Multi-site users also get 'all' option (but 'all' means only their authorized sites)
-    if can_access_all:
-        allowed_sites = ['all', '003', '020', '011']
-    elif user_sites and len(user_sites) > 1:
-        # Multi-site user: add 'all' option + their sites
-        allowed_sites = ['all'] + sorted(list(user_sites))
-    elif user_sites:
-        # Single-site user: only their site (no 'all' option)
-        allowed_sites = sorted(list(user_sites))
-    else:
-        allowed_sites = []
-    
-    # Check if site parameter is provided
-    site_param = request.GET.get('site', None)
-    
-    if site_param and site_param != 'all':
-        # SECURITY: Validate user has permission to access this site
-        if not can_access_all and site_param not in user_sites:
-            logger.warning(f"Chart API: User {request.user.username} denied access to site {site_param}")
-            return JsonResponse({
-                'success': False,
-                'error': f'Bạn không có quyền truy cập site {site_param}',
-                'allowed_sites': allowed_sites,
-            }, status=403)
-        
-        # Override with provided site
-        site_filter = site_param
-        filter_type = 'single'
-        logger.info(f"Chart API: Using site from parameter: {site_param}")
-    else:
-        # Use default site filter from middleware
-        site_filter, filter_type = get_site_filter_params(request)
-        logger.info(f"Chart API: Using site from middleware: {site_filter}, type: {filter_type}")
+    # Validate site access and get filter
+    site_filter, filter_type, allowed_sites, error = get_site_filter_with_validation(request)
+    if error:
+        return error
     
     try:
-        # ===== DEFINE TARGETS AND START DATES =====
-        SITE_CONFIG = {
-            'all': {
-                'target': 750,
-                'start_date': date(2024, 7, 1),
-            },
-            '003': {
-                'target': 200,
-                'start_date': date(2024, 7, 1),    # 01/07/2024
-            },
-            '011': {
-                'target': 400,
-                'start_date': date(2025, 10, 13),  # 13/10/2025
-            },
-            '020': {
-                'target': 150,
-                'start_date': date(2025, 11, 5),   # 05/11/2025
-            },
-        }
-        
         # Get configuration for current site
         if filter_type == 'all' or site_filter == 'all':
-            site_target = SITE_CONFIG['all']['target']
-            site_start_date = SITE_CONFIG['all']['start_date']
+            config = SITE_CONFIG['all']
+            site_target = config['target']
+            site_start_date = config['start_date']
         elif filter_type == 'single':
             config = SITE_CONFIG.get(site_filter, {})
             site_target = config.get('target', 0)
-            site_start_date = config.get('start_date', date(2024, 7, 1))
+            site_start_date = config.get('start_date', STUDY_START_DATE)
         elif filter_type == 'multiple':
-            # For multiple sites: earliest start date, sum of targets
-            site_target = sum(SITE_CONFIG.get(site, {}).get('target', 0) for site in site_filter)
+            site_target = sum(SITE_CONFIG.get(s, {}).get('target', 0) for s in site_filter)
             site_start_date = min(
-                SITE_CONFIG.get(site, {}).get('start_date', date(2024, 7, 1)) 
-                for site in site_filter
+                SITE_CONFIG.get(s, {}).get('start_date', STUDY_START_DATE) 
+                for s in site_filter
             )
         else:
             site_target = 0
-            site_start_date = date(2024, 7, 1)
+            site_start_date = STUDY_START_DATE
         
-        # ===== STUDY PERIOD =====
-        chart_start_date = date(2024, 7, 1)   # Chart always starts from 07/2024
-        end_date = date(2027, 4, 30)          # 30/04/2027 (display date)
-        chart_end_date = date(2027, 5, 1)     # 01/05/2027 (for 35 months of data)
+        # Generate month labels
+        months, month_dates = _generate_month_labels(STUDY_START_DATE, CHART_END_DATE)
         
-        # Per research protocol: 35 months total
-        # Note: This is the official study duration from protocol document
-        total_months = 35
+        # Calculate target line
+        target_cumulative = _calculate_target_cumulative(
+            filter_type, site_filter, site_target, site_start_date, month_dates
+        )
         
-        # ===== GENERATE MONTH LABELS =====
-        # Generate 35 months: 07/2024 to 05/2027 (inclusive)
-        months = []
-        month_dates = []  # Keep date objects for calculations
-        current_date = chart_start_date
+        # Get actual enrollment data
+        actual_cumulative, last_enrollment_date = _calculate_actual_cumulative(
+            site_filter, filter_type, months, month_dates
+        )
         
-        while current_date <= chart_end_date:
-            months.append(current_date.strftime('%m/%Y'))
-            month_dates.append(current_date)
-            current_date += relativedelta(months=1)
-        
-        logger.info(f"Total months: {len(months)} data points, protocol says {total_months} months")
-        
-        # ===== CALCULATE TARGET LINE =====
-        
-        if filter_type == 'all' or site_filter == 'all':
-            # ALL SITES: Use specific step pattern
-            # Phase 1 (07/2024-06/2025): 15 patients/month
-            # Phase 2 (07/2025-04/2027): 25 patients/month
-            
-            phase_1_end = date(2025, 6, 30)
-            
-            target_cumulative = []
-            cumulative_target = 0.0
-            
-            for month_date in month_dates:
-                if month_date <= phase_1_end:
-                    # Phase 1: 15/month
-                    cumulative_target += 15
-                else:
-                    # Phase 2: 25/month
-                    cumulative_target += 25
-                
-                target_cumulative.append(round(cumulative_target))
-            
-            # Ensure last value is exactly 750
-            if target_cumulative:
-                target_cumulative[-1] = 750
-            
-            logger.info(f"All sites: Phase 1 (15/month) until 06/2025, Phase 2 (25/month) until 05/2027")
-        
-        else:
-            # INDIVIDUAL SITES: Distribute evenly across available months
-            
-            # Calculate number of months from site start to study end
-            site_available_months = 0
-            temp_date = site_start_date.replace(day=1)
-            while temp_date <= chart_end_date:
-                site_available_months += 1
-                temp_date += relativedelta(months=1)
-            
-            logger.info(f"Site {site_filter} has {site_available_months} months available from {site_start_date} to {chart_end_date}")
-            
-            # Calculate monthly target to reach site_target evenly
-            if site_available_months > 0:
-                monthly_target_step = site_target / site_available_months
-            else:
-                monthly_target_step = 0
-            
-            logger.info(f"Monthly target step: {monthly_target_step:.2f} to reach {site_target} in {site_available_months} months")
-            
-            target_cumulative = []
-            cumulative_target = 0.0
-            
-            # FIX: Compare by month (first day of month), not exact date
-            # This ensures site 011 (start 05/11/2025) shows target from 11/2025, not 12/2025
-            site_start_month = site_start_date.replace(day=1)
-
-            for month_date in month_dates:
-                # FIXED: Compare month_date (already 1st of month) with site_start_month
-                if month_date < site_start_month:
-                    target_cumulative.append(None)
-                else:
-                    # Site has started - add monthly step
-                    cumulative_target += monthly_target_step
-                    target_cumulative.append(round(cumulative_target))
-
-            # Ensure last non-null value is exactly the target
-            non_null_indices = [i for i, v in enumerate(target_cumulative) if v is not None]
-            if non_null_indices:
-                target_cumulative[non_null_indices[-1]] = int(site_target)
-        
-        # ===== GET ACTUAL ENROLLMENT DATA =====
-        enrolled_qs = get_filtered_queryset(
-            ENR_CASE, site_filter, filter_type
-        ).filter(
-            ENRDATE__isnull=False
-        ).values('ENRDATE').order_by('ENRDATE')
-        
-        # Find last enrollment date
-        enrollment_dates = [record['ENRDATE'] for record in enrolled_qs if record['ENRDATE']]
-        last_enrollment_date = max(enrollment_dates) if enrollment_dates else None
-        
-        logger.info(f"Last enrollment date: {last_enrollment_date}")
-        
-        # Count enrollments by month
-        enrollment_by_month = {}
-        for enr_date in enrollment_dates:
-            month_key = enr_date.strftime('%m/%Y')
-            enrollment_by_month[month_key] = enrollment_by_month.get(month_key, 0) + 1
-        
-        # ===== CALCULATE ACTUAL CUMULATIVE WITH CUTOFF =====
-        actual_cumulative = []
-        cumulative_count = 0
-        has_started = False
-        cutoff_reached = False
-        
-        for i, month in enumerate(months):
-            month_date = month_dates[i]
-            month_count = enrollment_by_month.get(month, 0)
-            
-            # Check if we've passed last enrollment date
-            if last_enrollment_date and month_date > last_enrollment_date:
-                cutoff_reached = True
-            
-            if cutoff_reached:
-                # After last enrollment, use null (cut the line)
-                actual_cumulative.append(None)
-            elif month_count > 0:
-                has_started = True
-                cumulative_count += month_count
-                actual_cumulative.append(cumulative_count)
-            elif has_started:
-                # After first enrollment but no new enrollments this month
-                actual_cumulative.append(cumulative_count)
-            else:
-                # Before first enrollment
-                actual_cumulative.append(None)
-        
-        # ===== RETURN DATA =====
+        # Return data
         return JsonResponse({
             'success': True,
             'data': {
@@ -574,11 +740,11 @@ def get_enrollment_chart_api(request):
                 'target': target_cumulative,
                 'actual': actual_cumulative,
                 'site_target': site_target,
-                'total_months': total_months,
+                'total_months': TOTAL_STUDY_MONTHS,
                 'site_start_date': site_start_date.strftime('%d/%m/%Y'),
-                'site_start_month': site_start_date.strftime('%m/%Y'),  # For display
-                'chart_start_date': chart_start_date.strftime('%d/%m/%Y'),
-                'chart_end_date': end_date.strftime('%d/%m/%Y'),
+                'site_start_month': site_start_date.strftime('%m/%Y'),
+                'chart_start_date': STUDY_START_DATE.strftime('%d/%m/%Y'),
+                'chart_end_date': STUDY_END_DATE.strftime('%d/%m/%Y'),
                 'last_enrollment_date': last_enrollment_date.strftime('%d/%m/%Y') if last_enrollment_date else None,
             },
             'allowed_sites': allowed_sites,
@@ -597,121 +763,38 @@ def get_enrollment_chart_api(request):
 @require_GET
 @login_required
 def get_monthly_screening_enrollment_api(request):
-    """
-    API endpoint for monthly screening and enrollment statistics
-    
-    Query Parameters:
-        site: Optional site code ('003', '020', '011', 'all')
-        start_date: Optional start date (YYYY-MM-DD format)
-        end_date: Optional end date (YYYY-MM-DD format)
-    
-    Returns:
-        JSON with:
-        - months: List of month labels (MM/YYYY)
-        - screening: Screening count per month
-        - enrollment: Enrollment count per month
-    
-    Usage:
-        GET /api/monthly-stats/
-        GET /api/monthly-stats/?site=003&start_date=2024-07-01&end_date=2025-12-31
-    """
-    from datetime import date, datetime
-    from dateutil.relativedelta import relativedelta
+    """API endpoint for monthly screening and enrollment statistics."""
+    # Validate site access and get filter
+    site_filter, filter_type, allowed_sites, error = get_site_filter_with_validation(request)
+    if error:
+        return error
     
     try:
-        # Get user's allowed sites from middleware
-        user_sites = getattr(request, 'user_sites', set())
-        can_access_all = getattr(request, 'can_access_all_sites', False)
-        
-        # Get query parameters
-        site_param = request.GET.get('site', None)
-        start_date_str = request.GET.get('start_date', None)
-        end_date_str = request.GET.get('end_date', None)
-        
-        # Determine site filter with permission validation
-        if site_param and site_param != 'all':
-            # SECURITY: Validate user has permission to access this site
-            if not can_access_all and site_param not in user_sites:
-                logger.warning(f"Monthly stats API: User {request.user.username} denied access to site {site_param}")
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Bạn không có quyền truy cập site {site_param}',
-                }, status=403)
-            
-            site_filter = site_param
-            filter_type = 'single'
-            logger.info(f"Monthly stats API: Using site from parameter: {site_param}")
-        else:
-            site_filter, filter_type = get_site_filter_params(request)
-            logger.info(f"Monthly stats API: Using site from middleware: {site_filter}, type: {filter_type}")
-        
         # Parse date range
-        if start_date_str:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        else:
-            start_date = date(2024, 7, 1)  # Default: study start
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
         
-        if end_date_str:
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-        else:
-            end_date = date.today()  # Default: today
+        start_date = (
+            datetime.strptime(start_date_str, '%Y-%m-%d').date() 
+            if start_date_str else STUDY_START_DATE
+        )
+        end_date = (
+            datetime.strptime(end_date_str, '%Y-%m-%d').date() 
+            if end_date_str else date.today()
+        )
         
-        logger.info(f"Date range: {start_date} to {end_date}")
+        # Generate month labels
+        months, _ = _generate_month_labels(start_date, end_date.replace(day=1))
         
-        # ===== GENERATE MONTH LABELS =====
-        months = []
-        month_dates = []
-        current_date = start_date.replace(day=1)  # First day of start month
-        end_month = end_date.replace(day=1)
+        # Get screening and enrollment data
+        screening_data = _get_monthly_counts(
+            SCR_CASE, site_filter, filter_type, 'SCREENINGFORMDATE', start_date, end_date, months
+        )
+        enrollment_data = _get_monthly_counts(
+            SCR_CASE, site_filter, filter_type, 'SCREENINGFORMDATE', start_date, end_date, months,
+            extra_filters={'is_confirmed': True}
+        )
         
-        while current_date <= end_month:
-            months.append(current_date.strftime('%m/%Y'))
-            month_dates.append(current_date)
-            current_date += relativedelta(months=1)
-        
-        # ===== GET SCREENING DATA =====
-        screening_qs = get_filtered_queryset(
-            SCR_CASE, site_filter, filter_type
-        ).filter(
-            SCREENINGFORMDATE__isnull=False,
-            SCREENINGFORMDATE__gte=start_date,
-            SCREENINGFORMDATE__lte=end_date
-        ).values('SCREENINGFORMDATE')
-        
-        screening_by_month = {}
-        for record in screening_qs:
-            scr_date = record['SCREENINGFORMDATE']
-            if scr_date:
-                month_key = scr_date.strftime('%m/%Y')
-                screening_by_month[month_key] = screening_by_month.get(month_key, 0) + 1
-        
-        # ===== GET ENROLLMENT DATA =====
-        # Enrolled patients from SCR_CASE (is_confirmed=True)
-        enrolled_qs = get_filtered_queryset(
-            SCR_CASE, site_filter, filter_type
-        ).filter(
-            is_confirmed=True,
-            SCREENINGFORMDATE__isnull=False,
-            SCREENINGFORMDATE__gte=start_date,
-            SCREENINGFORMDATE__lte=end_date
-        ).values('SCREENINGFORMDATE')
-        
-        enrollment_by_month = {}
-        for record in enrolled_qs:
-            enr_date = record['SCREENINGFORMDATE']
-            if enr_date:
-                month_key = enr_date.strftime('%m/%Y')
-                enrollment_by_month[month_key] = enrollment_by_month.get(month_key, 0) + 1
-        
-        # ===== BUILD DATA ARRAYS =====
-        screening_data = []
-        enrollment_data = []
-        
-        for month in months:
-            screening_data.append(screening_by_month.get(month, 0))
-            enrollment_data.append(enrollment_by_month.get(month, 0))
-        
-        # ===== RETURN DATA =====
         return JsonResponse({
             'success': True,
             'data': {
@@ -736,121 +819,38 @@ def get_monthly_screening_enrollment_api(request):
 @require_GET
 @login_required
 def get_monthly_contact_stats_api(request):
-    """
-    API endpoint for monthly contact screening and enrollment statistics
-    
-    Query Parameters:
-        site: Optional site code ('003', '020', '011', 'all')
-        start_date: Optional start date (YYYY-MM-DD format)
-        end_date: Optional end date (YYYY-MM-DD format)
-    
-    Returns:
-        JSON with:
-        - months: List of month labels (MM/YYYY)
-        - screening: Screening contact count per month
-        - enrollment: Enrollment contact count per month
-    
-    Usage:
-        GET /api/contact-monthly-stats/
-        GET /api/contact-monthly-stats/?site=003&start_date=2024-07-01&end_date=2025-12-31
-    """
-    from datetime import date, datetime
-    from dateutil.relativedelta import relativedelta
+    """API endpoint for monthly contact screening and enrollment statistics."""
+    # Validate site access and get filter
+    site_filter, filter_type, allowed_sites, error = get_site_filter_with_validation(request)
+    if error:
+        return error
     
     try:
-        # Get user's allowed sites from middleware
-        user_sites = getattr(request, 'user_sites', set())
-        can_access_all = getattr(request, 'can_access_all_sites', False)
-        
-        # Get query parameters
-        site_param = request.GET.get('site', None)
-        start_date_str = request.GET.get('start_date', None)
-        end_date_str = request.GET.get('end_date', None)
-        
-        # Determine site filter with permission validation
-        if site_param and site_param != 'all':
-            # SECURITY: Validate user has permission to access this site
-            if not can_access_all and site_param not in user_sites:
-                logger.warning(f"Contact monthly stats API: User {request.user.username} denied access to site {site_param}")
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Bạn không có quyền truy cập site {site_param}',
-                }, status=403)
-            
-            site_filter = site_param
-            filter_type = 'single'
-            logger.info(f"Contact monthly stats API: Using site from parameter: {site_param}")
-        else:
-            site_filter, filter_type = get_site_filter_params(request)
-            logger.info(f"Contact monthly stats API: Using site from middleware: {site_filter}, type: {filter_type}")
-        
         # Parse date range
-        if start_date_str:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        else:
-            start_date = date(2024, 7, 1)  # Default: study start
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
         
-        if end_date_str:
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-        else:
-            end_date = date.today()  # Default: today
+        start_date = (
+            datetime.strptime(start_date_str, '%Y-%m-%d').date() 
+            if start_date_str else STUDY_START_DATE
+        )
+        end_date = (
+            datetime.strptime(end_date_str, '%Y-%m-%d').date() 
+            if end_date_str else date.today()
+        )
         
-        logger.info(f"Contact date range: {start_date} to {end_date}")
+        # Generate month labels
+        months, _ = _generate_month_labels(start_date, end_date.replace(day=1))
         
-        # ===== GENERATE MONTH LABELS =====
-        months = []
-        month_dates = []
-        current_date = start_date.replace(day=1)  # First day of start month
-        end_month = end_date.replace(day=1)
+        # Get screening and enrollment data using helper
+        screening_data = _get_monthly_counts(
+            SCR_CONTACT, site_filter, filter_type, 'SCREENINGFORMDATE', start_date, end_date, months
+        )
+        enrollment_data = _get_monthly_counts(
+            SCR_CONTACT, site_filter, filter_type, 'SCREENINGFORMDATE', start_date, end_date, months,
+            extra_filters={'is_confirmed': True}
+        )
         
-        while current_date <= end_month:
-            months.append(current_date.strftime('%m/%Y'))
-            month_dates.append(current_date)
-            current_date += relativedelta(months=1)
-        
-        # ===== GET SCREENING CONTACT DATA =====
-        screening_qs = get_filtered_queryset(
-            SCR_CONTACT, site_filter, filter_type
-        ).filter(
-            SCREENINGFORMDATE__isnull=False,
-            SCREENINGFORMDATE__gte=start_date,
-            SCREENINGFORMDATE__lte=end_date
-        ).values('SCREENINGFORMDATE')
-        
-        screening_by_month = {}
-        for record in screening_qs:
-            scr_date = record['SCREENINGFORMDATE']
-            if scr_date:
-                month_key = scr_date.strftime('%m/%Y')
-                screening_by_month[month_key] = screening_by_month.get(month_key, 0) + 1
-        
-        # ===== GET ENROLLMENT CONTACT DATA =====
-        # Enrolled contacts from SCR_CONTACT (is_confirmed=True)
-        enrolled_qs = get_filtered_queryset(
-            SCR_CONTACT, site_filter, filter_type
-        ).filter(
-            is_confirmed=True,
-            SCREENINGFORMDATE__isnull=False,
-            SCREENINGFORMDATE__gte=start_date,
-            SCREENINGFORMDATE__lte=end_date
-        ).values('SCREENINGFORMDATE')
-        
-        enrollment_by_month = {}
-        for record in enrolled_qs:
-            enr_date = record['SCREENINGFORMDATE']
-            if enr_date:
-                month_key = enr_date.strftime('%m/%Y')
-                enrollment_by_month[month_key] = enrollment_by_month.get(month_key, 0) + 1
-        
-        # ===== BUILD DATA ARRAYS =====
-        screening_data = []
-        enrollment_data = []
-        
-        for month in months:
-            screening_data.append(screening_by_month.get(month, 0))
-            enrollment_data.append(enrollment_by_month.get(month, 0))
-        
-        # ===== RETURN DATA =====
         return JsonResponse({
             'success': True,
             'data': {
@@ -876,9 +876,7 @@ def get_monthly_contact_stats_api(request):
 @login_required
 def get_sampling_followup_stats_api(request):
     """
-    API endpoint for patient and contact sampling follow-up statistics
-    
-    Similar to Table 5: Patient sampling and follow-up from study report
+    API endpoint for patient and contact sampling follow-up statistics.
     
     Query Parameters:
         site: Optional site code ('003', '020', '011', 'all')
@@ -891,124 +889,47 @@ def get_sampling_followup_stats_api(request):
     Sample types counted:
     - Total sampling: STOOL + RECTSWAB + THROATSWAB (not blood)
     - Blood sampling: BLOOD only
-    
-    Usage:
-        GET /api/sampling-followup/
-        GET /api/sampling-followup/?site=003
     """
-    from django.db.models import Count, Q, F
+    # Validate site access and get filter
+    site_filter, filter_type, allowed_sites, error = get_site_filter_with_validation(request)
+    if error:
+        return error
+    
+    def _get_visit_stats(samples_qs, visit_type):
+        """Get sampling stats for a specific visit type."""
+        visit_samples = samples_qs.filter(SAMPLE_TYPE=visit_type, SAMPLE=True)
+        return {
+            'total': visit_samples.count(),
+            'blood': visit_samples.filter(BLOOD=True).count(),
+        }
     
     try:
-        # Get user's allowed sites from middleware
-        user_sites = getattr(request, 'user_sites', set())
-        can_access_all = getattr(request, 'can_access_all_sites', False)
-        
-        # Get query parameters
-        site_param = request.GET.get('site', None)
-        
-        # Determine site filter with permission validation
-        if site_param and site_param != 'all':
-            # SECURITY: Validate user has permission to access this site
-            if not can_access_all and site_param not in user_sites:
-                logger.warning(f"Sampling followup API: User {request.user.username} denied access to site {site_param}")
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Bạn không có quyền truy cập site {site_param}',
-                }, status=403)
-            
-            site_filter = site_param
-            filter_type = 'single'
-            logger.info(f"Sampling followup API: Using site from parameter: {site_param}")
-        else:
-            site_filter, filter_type = get_site_filter_params(request)
-            logger.info(f"Sampling followup API: Using site from middleware: {site_filter}, type: {filter_type}")
-        
         # ===== PATIENT SAMPLING STATISTICS =====
+        enrolled_patients = get_filtered_queryset(ENR_CASE, site_filter, filter_type).count()
         
-        # Total enrolled patients
-        enrolled_patients = get_filtered_queryset(
-            ENR_CASE, site_filter, filter_type
-        ).count()
-        
-        # Get all patient samples filtered by site
         patient_samples_qs = SAM_CASE.objects.filter(
             USUBJID__in=get_filtered_queryset(ENR_CASE, site_filter, filter_type).values('USUBJID')
         )
         
-        patient_stats = {}
-        
-        # Sample Visit 1 (Day 1)
-        visit1_samples = patient_samples_qs.filter(SAMPLE_TYPE='1', SAMPLE=True)
-        patient_stats['visit1'] = {
-            'total': visit1_samples.count(),
-            'blood': visit1_samples.filter(BLOOD=True).count(),
+        patient_stats = {
+            'visit1': _get_visit_stats(patient_samples_qs, '1'),  # Day 1
+            'visit2': _get_visit_stats(patient_samples_qs, '2'),  # Day 10
+            'visit3': _get_visit_stats(patient_samples_qs, '3'),  # Day 28
+            'visit4': _get_visit_stats(patient_samples_qs, '4'),  # Day 90
         }
-        
-        # Sample Visit 2 (Day 10)
-        visit2_samples = patient_samples_qs.filter(SAMPLE_TYPE='2', SAMPLE=True)
-        patient_stats['visit2'] = {
-            'total': visit2_samples.count(),
-            'blood': visit2_samples.filter(BLOOD=True).count(),
-        }
-        
-        # Sample Visit 3 (Day 28)
-        visit3_samples = patient_samples_qs.filter(SAMPLE_TYPE='3', SAMPLE=True)
-        patient_stats['visit3'] = {
-            'total': visit3_samples.count(),
-            'blood': visit3_samples.filter(BLOOD=True).count(),
-        }
-        
-        # Sample Visit 4 (Day 90)
-        visit4_samples = patient_samples_qs.filter(SAMPLE_TYPE='4', SAMPLE=True)
-        patient_stats['visit4'] = {
-            'total': visit4_samples.count(),
-            'blood': visit4_samples.filter(BLOOD=True).count(),
-        }
-        
-        # Discharged patients (those with enrollment but no ongoing follow-up)
-        # Assuming discharged = enrolled but not actively in follow-up
-        # You may need to adjust this logic based on your actual discharge tracking
-        discharged_patients = enrolled_patients  # Placeholder
         
         # ===== CONTACT SAMPLING STATISTICS =====
+        enrolled_contacts = get_filtered_queryset(ENR_CONTACT, site_filter, filter_type).count()
         
-        # Total enrolled contacts
-        enrolled_contacts = get_filtered_queryset(
-            ENR_CONTACT, site_filter, filter_type
-        ).count()
-        
-        # Get all contact samples filtered by site
         contact_samples_qs = SAM_CONTACT.objects.filter(
             USUBJID__in=get_filtered_queryset(ENR_CONTACT, site_filter, filter_type).values('USUBJID')
         )
         
-        contact_stats = {}
-        
-        # Sample Visit 1 (Day 1)
-        c_visit1_samples = contact_samples_qs.filter(SAMPLE_TYPE='1', SAMPLE=True)
-        contact_stats['visit1'] = {
-            'total': c_visit1_samples.count(),
-            'blood': c_visit1_samples.filter(BLOOD=True).count(),
-        }
-        
-        # Sample Visit 2 (Day 10) - Not applicable for contacts based on PDF
-        contact_stats['visit2'] = {
-            'total': None,
-            'blood': None,
-        }
-        
-        # Sample Visit 3 (Day 28)
-        c_visit3_samples = contact_samples_qs.filter(SAMPLE_TYPE='3', SAMPLE=True)
-        contact_stats['visit3'] = {
-            'total': c_visit3_samples.count(),
-            'blood': c_visit3_samples.filter(BLOOD=True).count(),
-        }
-        
-        # Sample Visit 4 (Day 90)
-        c_visit4_samples = contact_samples_qs.filter(SAMPLE_TYPE='4', SAMPLE=True)
-        contact_stats['visit4'] = {
-            'total': c_visit4_samples.count(),
-            'blood': c_visit4_samples.filter(BLOOD=True).count(),
+        contact_stats = {
+            'visit1': _get_visit_stats(contact_samples_qs, '1'),  # Day 1
+            'visit2': {'total': None, 'blood': None},  # Not applicable for contacts
+            'visit3': _get_visit_stats(contact_samples_qs, '3'),  # Day 28
+            'visit4': _get_visit_stats(contact_samples_qs, '4'),  # Day 90
         }
         
         # ===== RETURN DATA =====
@@ -1017,18 +938,12 @@ def get_sampling_followup_stats_api(request):
             'data': {
                 'patient': {
                     'enrolled': enrolled_patients,
-                    'visit1': patient_stats['visit1'],
-                    'visit2': patient_stats['visit2'],
-                    'visit3': patient_stats['visit3'],
-                    'visit4': patient_stats['visit4'],
-                    'discharged': discharged_patients,
+                    'discharged': enrolled_patients,  # Placeholder
+                    **patient_stats,
                 },
                 'contact': {
                     'enrolled': enrolled_contacts,
-                    'visit1': contact_stats['visit1'],
-                    'visit2': contact_stats['visit2'],
-                    'visit3': contact_stats['visit3'],
-                    'visit4': contact_stats['visit4'],
+                    **contact_stats,
                 },
             },
             'site_name': _get_site_display_name(site_filter, filter_type),
@@ -1047,9 +962,7 @@ def get_sampling_followup_stats_api(request):
 @login_required
 def get_kpneumoniae_isolation_stats_api(request):
     """
-    API endpoint for K. pneumoniae isolation statistics from samples
-    
-    Similar to Table 7: No. of K. pneumoniae isolated from samples
+    API endpoint for K. pneumoniae isolation statistics from samples.
     
     Query Parameters:
         site: Optional site code ('003', '020', '011', 'all')
@@ -1057,104 +970,67 @@ def get_kpneumoniae_isolation_stats_api(request):
     Returns:
         JSON with isolation stats by site, subject type, and sample type
     
-    Site Mapping:
-        - 003 = HTD
-        - 020 = NHTD
-        - 011 = Cho Ray
-    
     Data Structure:
         - Clinical Kp: Patients with Klebsiella at enrollment/infection
         - Throat swab: Day 1, 10, 28, 90 (KLEBPNEU_3 positive / Total THROATSWAB)
         - Stool/Rectal: Day 1, 10, 28, 90 (KLEBPNEU_1 or KLEBPNEU_2 positive / Total STOOL or RECTSWAB)
-    
-    Usage:
-        GET /api/kpneumoniae-isolation/
-        GET /api/kpneumoniae-isolation/?site=003
     """
     from django.db.models import Q
-    from django.apps import apps
+    
+    # Validate site access and get filter
+    site_filter, filter_type, allowed_sites, error = get_site_filter_with_validation(request)
+    if error:
+        return error
+    
+    def _get_sample_stat(samples_qs, day, sample_type, positive_filter):
+        """Get sample statistics for a specific day and sample type."""
+        try:
+            if sample_type == 'throat':
+                samples = samples_qs.filter(SAMPLE_TYPE=day, THROATSWAB=True)
+                total = samples.count()
+                positive = samples.filter(KLEBPNEU_3=True).count()
+            else:  # stool_rectal
+                samples = samples_qs.filter(SAMPLE_TYPE=day).filter(Q(STOOL=True) | Q(RECTSWAB=True))
+                total = samples.count()
+                positive = samples.filter(Q(KLEBPNEU_1=True) | Q(KLEBPNEU_2=True)).count()
+            return {
+                'positive': positive,
+                'total': total,
+                'display': f"{positive}/{total}" if total > 0 else "-"
+            }
+        except Exception as e:
+            logger.warning(f"Error getting {sample_type} samples day {day}: {e}")
+            return {'positive': 0, 'total': 0, 'display': "-"}
+    
+    def _get_all_sample_stats(samples_qs):
+        """Get all sample statistics (throat and stool_rectal) for all days."""
+        throat = {f'day{day}': _get_sample_stat(samples_qs, day, 'throat', None) for day in ['1', '2', '3', '4']}
+        stool_rectal = {f'day{day}': _get_sample_stat(samples_qs, day, 'stool_rectal', None) for day in ['1', '2', '3', '4']}
+        return throat, stool_rectal
     
     try:
-        # Get user's allowed sites from middleware
-        user_sites = getattr(request, 'user_sites', set())
-        can_access_all = getattr(request, 'can_access_all_sites', False)
+        # Get study's linked site codes from database
+        study_site_codes = get_study_site_codes(request)
+        site_names_map = get_site_names_from_db(request)
         
-        # Build allowed_sites list
-        # Multi-site users also get 'all' option (but 'all' means only their authorized sites)
-        if can_access_all:
-            allowed_sites = ['all', '003', '020', '011']
-        elif user_sites and len(user_sites) > 1:
-            # Multi-site user: add 'all' option + their sites
-            allowed_sites = ['all'] + sorted(list(user_sites))
-        elif user_sites:
-            # Single-site user: only their site (no 'all' option)
-            allowed_sites = sorted(list(user_sites))
-        else:
-            allowed_sites = []
-        
-        # Get query parameter
-        site_param = request.GET.get('site', None)
-        
-        # Determine which sites to include in results
-        if site_param and site_param != 'all':
-            # SECURITY: Validate user has permission to access this site
-            if not can_access_all and site_param not in user_sites:
-                logger.warning(f"K. pneumoniae API: User {request.user.username} denied access to site {site_param}")
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Bạn không có quyền truy cập site {site_param}',
-                    'allowed_sites': allowed_sites,
-                }, status=403)
-            
-            sites_to_query = [site_param]
-            logger.info(f"K. pneumoniae API: Using site from parameter: {site_param}")
-        else:
-            # Use all sites or user's allowed sites
-            if can_access_all:
-                sites_to_query = ['003', '020', '011']
-            elif user_sites:
-                sites_to_query = [s for s in ['003', '020', '011'] if s in user_sites]
-            else:
-                sites_to_query = []
-            logger.info(f"K. pneumoniae API: Using sites: {sites_to_query}")
-        
-        # Import SAM models (with multiple fallback strategies)
-        sam_case_model = SAM_CASE
-        sam_contact_model = SAM_CONTACT
-        
-        if sam_case_model is None or sam_contact_model is None:
-            try:
-                # Try app registry
-                sam_case_model = apps.get_model('study_43en', 'SAM_CASE')
-                sam_contact_model = apps.get_model('study_43en', 'SAM_CONTACT')
-            except LookupError:
-                logger.error("SAM_CASE or SAM_CONTACT models not found")
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Sample collection models (SAM_CASE/SAM_CONTACT) are not available',
-                }, status=404)
-        
-        # Site name mapping
-        SITE_NAMES = {
-            '003': 'HTD',
-            '020': 'NHTD', 
-            '011': 'Cho Ray',
-        }
+        # Determine which sites to query
+        if filter_type == 'single':
+            sites_to_query = [site_filter]
+        elif filter_type == 'multiple':
+            sites_to_query = [s for s in study_site_codes if s in site_filter]
+        else:  # 'all'
+            sites_to_query = list(study_site_codes)
         
         result_data = {}
         
         for site_code in sites_to_query:
-            site_name = SITE_NAMES[site_code]
+            site_name = site_names_map.get(site_code, site_code)
             
             # ===== PATIENT DATA =====
-            
-            # Get enrolled patients for this site
-            # ENR_CASE doesn't have SITEID directly, access via USUBJID (which is FK to SCR_CASE)
             patients = ENR_CASE.objects.filter(USUBJID__SITEID=site_code)
             patient_count = patients.count()
             
             # Clinical Kp (patients with Klebsiella at enrollment/infection)
-            # From SCR_CASE (screening data has SITEID)
             clinical_kp = SCR_CASE.objects.filter(
                 SITEID=site_code,
                 is_confirmed=True,
@@ -1162,138 +1038,28 @@ def get_kpneumoniae_isolation_stats_api(request):
             ).count()
             
             # Get patient samples for this site
-            # SAM_CASE.USUBJID is FK to ENR_CASE.USUBJID which is FK to SCR_CASE.USUBJID
-            # Access SITEID through: SAM_CASE -> USUBJID (ENR_CASE) -> USUBJID (SCR_CASE) -> SITEID
             try:
-                patient_samples = sam_case_model.objects.filter(
-                    USUBJID__USUBJID__SITEID=site_code
-                )
+                patient_samples = SAM_CASE.objects.filter(USUBJID__USUBJID__SITEID=site_code)
             except Exception as e:
                 logger.warning(f"Could not access SAM_CASE for site {site_code}: {e}")
-                patient_samples = sam_case_model.objects.none()
+                patient_samples = SAM_CASE.objects.none()
             
-            # Throat swab statistics (KLEBPNEU_3)
-            patient_throat = {}
-            for day in ['1', '2', '3', '4']:
-                try:
-                    samples = patient_samples.filter(SAMPLE_TYPE=day, THROATSWAB=True)
-                    total = samples.count()
-                    positive = samples.filter(KLEBPNEU_3=True).count()
-                    patient_throat[f'day{day}'] = {
-                        'positive': positive,
-                        'total': total,
-                        'display': f"{positive}/{total}" if total > 0 else "-"
-                    }
-                except Exception as e:
-                    logger.warning(f"Error getting patient throat samples for site {site_code} day {day}: {e}")
-                    patient_throat[f'day{day}'] = {
-                        'positive': 0,
-                        'total': 0,
-                        'display': "-"
-                    }
-            
-            # Stool/Rectal swab statistics (KLEBPNEU_1 or KLEBPNEU_2)
-            patient_stool_rectal = {}
-            for day in ['1', '2', '3', '4']:
-                try:
-                    # Get samples with either stool or rectal
-                    samples = patient_samples.filter(
-                        SAMPLE_TYPE=day
-                    ).filter(
-                        Q(STOOL=True) | Q(RECTSWAB=True)
-                    )
-                    total = samples.count()
-                    
-                    # Count positive (either stool or rectal positive)
-                    positive = samples.filter(
-                        Q(KLEBPNEU_1=True) | Q(KLEBPNEU_2=True)
-                    ).count()
-                    
-                    patient_stool_rectal[f'day{day}'] = {
-                        'positive': positive,
-                        'total': total,
-                        'display': f"{positive}/{total}" if total > 0 else "-"
-                    }
-                except Exception as e:
-                    logger.warning(f"Error getting patient stool/rectal samples for site {site_code} day {day}: {e}")
-                    patient_stool_rectal[f'day{day}'] = {
-                        'positive': 0,
-                        'total': 0,
-                        'display': "-"
-                    }
+            # Get patient sample stats using helper
+            patient_throat, patient_stool_rectal = _get_all_sample_stats(patient_samples)
             
             # ===== CONTACT DATA =====
-            
-            # Get enrolled contacts for this site
-            # ENR_CONTACT.USUBJID is OneToOne to SCR_CONTACT.USUBJID
-            # SCR_CONTACT has SITEID field
             contacts = ENR_CONTACT.objects.filter(USUBJID__SITEID=site_code)
             contact_count = contacts.count()
             
             # Get contact samples for this site
-            # SAM_CONTACT.USUBJID is FK to ENR_CONTACT.USUBJID which is OneToOne to SCR_CONTACT.USUBJID
-            # Access SITEID through: SAM_CONTACT -> USUBJID (ENR_CONTACT) -> USUBJID (SCR_CONTACT) -> SITEID
             try:
-                contact_samples = sam_contact_model.objects.filter(
-                    USUBJID__USUBJID__SITEID=site_code
-                )
+                contact_samples = SAM_CONTACT.objects.filter(USUBJID__USUBJID__SITEID=site_code)
             except Exception as e:
                 logger.warning(f"Could not access SAM_CONTACT for site {site_code}: {e}")
-                contact_samples = sam_contact_model.objects.none()
+                contact_samples = SAM_CONTACT.objects.none()
             
-            # Throat swab statistics (KLEBPNEU_3)
-            contact_throat = {}
-            for day in ['1', '2', '3', '4']:
-                try:
-                    samples = contact_samples.filter(SAMPLE_TYPE=day, THROATSWAB=True)
-                    total = samples.count()
-                    positive = samples.filter(KLEBPNEU_3=True).count()
-                    contact_throat[f'day{day}'] = {
-                        'positive': positive,
-                        'total': total,
-                        'display': f"{positive}/{total}" if total > 0 else "-"
-                    }
-                except Exception as e:
-                    logger.warning(f"Error getting contact throat samples for site {site_code} day {day}: {e}")
-                    contact_throat[f'day{day}'] = {
-                        'positive': 0,
-                        'total': 0,
-                        'display': "-"
-                    }
-            
-            # Stool/Rectal swab statistics (KLEBPNEU_1 or KLEBPNEU_2)
-            contact_stool_rectal = {}
-            for day in ['1', '2', '3', '4']:
-                try:
-                    # Get samples with either stool or rectal
-                    samples = contact_samples.filter(
-                        SAMPLE_TYPE=day
-                    ).filter(
-                        Q(STOOL=True) | Q(RECTSWAB=True)
-                    )
-                    total = samples.count()
-                    
-                    # Count positive (either stool or rectal positive)
-                    positive = samples.filter(
-                        Q(KLEBPNEU_1=True) | Q(KLEBPNEU_2=True)
-                    ).count()
-                    
-                    contact_stool_rectal[f'day{day}'] = {
-                        'positive': positive,
-                        'total': total,
-                        'display': f"{positive}/{total}" if total > 0 else "-"
-                    }
-                except Exception as e:
-                    logger.warning(f"Error getting contact stool/rectal samples for site {site_code} day {day}: {e}")
-                    contact_stool_rectal[f'day{day}'] = {
-                        'positive': 0,
-                        'total': 0,
-                        'display': "-"
-                    }
-            
-            # ===== COMPLICATED CASES =====
-            # Patients with clinical Kp (same as clinical_kp)
-            complicated_count = clinical_kp
+            # Get contact sample stats using helper
+            contact_throat, contact_stool_rectal = _get_all_sample_stats(contact_samples)
             
             # ===== BUILD SITE DATA =====
             result_data[site_code] = {
@@ -1310,7 +1076,7 @@ def get_kpneumoniae_isolation_stats_api(request):
                     'stool_rectal': contact_stool_rectal,
                 },
                 'complicated': {
-                    'count': complicated_count,
+                    'count': clinical_kp,  # Same as clinical_kp
                 },
             }
         

@@ -1,9 +1,0 @@
-/**
- * Form Validation Styles
- * Minimal custom styles - relies mostly on Bootstrap 4/AdminLTE
- */
-
-/* Hover effect for error items */
-.error-item-hover:hover {
-    border-color: #dc3545 !important; /* danger */
-}

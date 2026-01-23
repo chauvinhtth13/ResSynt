@@ -424,6 +424,13 @@ def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> No
     This signal ensures:
     1. Groups are created for the study (if they don't exist)
     2. Permissions are assigned to groups based on role templates
+    
+    Note: This signal runs after each app's migrations. Permissions may not exist
+    yet if django.contrib.auth's post_migrate hasn't run. This is handled gracefully
+    by StudyRoleManager.assign_permissions() which returns early if no permissions found.
+    
+    For reliable permission sync, use the management command:
+        python manage.py sync_study_permissions
     """
     if not _is_study_app(sender):
         return
@@ -434,10 +441,32 @@ def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> No
         return
     
     from backends.tenancy.utils.role_manager import StudyRoleManager
+    from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
     
     try:
+        # Check if permissions exist for this app before attempting sync
+        app_label = f'study_{study_code.lower()}'
+        content_types_exist = ContentType.objects.filter(app_label=app_label).exists()
+        permissions_exist = Permission.objects.filter(content_type__app_label=app_label).exists()
         
-        # Then assign permissions (force=True to ensure consistency)
+        if not content_types_exist:
+            # ContentTypes not created yet - this is expected during initial migration
+            logger.debug(
+                f"ContentTypes for {app_label} not ready yet. "
+                f"Permissions will be synced after migrations complete."
+            )
+            return
+        
+        if not permissions_exist:
+            # ContentTypes exist but Permissions don't - auth's post_migrate hasn't run yet
+            logger.debug(
+                f"Permissions for {app_label} not created yet. "
+                f"This is normal - auth app creates permissions after all migrations."
+            )
+            return
+        
+        # Permissions exist, proceed with sync
         result = StudyRoleManager.assign_permissions(study_code, force=True)
         
         total_changes = result.get('permissions_assigned', 0) + result.get('permissions_removed', 0)
@@ -449,7 +478,7 @@ def sync_study_permissions_after_migrate(sender: AppConfig, **kwargs: Any) -> No
                 f"removed {result.get('permissions_removed', 0)} permissions"
             )
         else:
-            logger.debug(f"No permission changes needed for study {study_code}")
+            logger.debug(f"Permissions already in sync for study {study_code}")
             
     except Exception as e:
         logger.error(
