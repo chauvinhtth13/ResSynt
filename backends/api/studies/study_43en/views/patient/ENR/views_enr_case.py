@@ -28,7 +28,7 @@ from backends.studies.study_43en.forms.patient.ENR import (
     UnderlyingConditionForm,
     EnrollmentCaseForm,  # Updated version without PII fields,
 )
-from backends.studies.study_43en.forms.patient.PER_DATA import PersonalDataForm
+from backends.studies.study_43en.forms.patient.PERSONAL_form import PersonalDataForm
 
 from backends.audit_logs.utils.decorators import audit_log
 from backends.audit_logs.utils.processors import process_complex_update

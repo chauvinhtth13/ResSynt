@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # =========================================
+  # PostgreSQL Database
+  # =========================================
+  db:
+    image: postgres:17
+    container_name: ressynt_postgres
+    restart: unless-stopped
+    
+    environment:
+      POSTGRES_USER: ressynt_admin
+      POSTGRES_PASSWORD: Oucru@201252
+      POSTGRES_DB: db_management
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    
+    volumes:
+      # Persistent data storage
+      - postgres_data:/var/lib/postgresql/data
+      # Init scripts (run only on first start)
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+      # Backup files for restore
+      - ./postgres/backups:/backups:ro
+    
+    ports:
+      - "5432:5432"
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ressynt_admin -d db_management"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    
+    networks:
+      - ressynt_network
+
+  # =========================================
+  # Django Web Application
+  # =========================================
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: ressynt_web
+    restart: unless-stopped
+    
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        echo 'Running migrations...' &&
+        python manage.py migrate --database=default &&
+        echo 'Collecting static files...' &&
+        python manage.py collectstatic --noinput &&
+        echo 'Starting Gunicorn...' &&
+        gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile - config.wsgi:application
+      "
+    
+    volumes:
+      # Source code (for development - remove in production)
+      - ..:/app
+      # Persistent storage
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+      - logs_volume:/app/logs
+      - backups_volume:/app/backups
+    
+    ports:
+      - "8000:8000"
+    
+    env_file:
+      - .env.docker
+    
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    networks:
+      - ressynt_network
+
+# =========================================
+# Named Volumes (Persistent Storage)
+# =========================================
+volumes:
+  postgres_data:
+    name: ressynt_postgres_data
+  static_volume:
+    name: ressynt_static
+  media_volume:
+    name: ressynt_media
+  logs_volume:
+    name: ressynt_logs
+  backups_volume:
+    name: ressynt_backups
+
+# =========================================
+# Networks
+# =========================================
+networks:
+  ressynt_network:
+    name: ressynt_network
+    driver: bridge

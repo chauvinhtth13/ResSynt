@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.functional import cached_property
 from backends.studies.study_43en.models.base_models import AuditFieldsMixin
-from backends.studies.study_43en.models.patient.PER_DATA import PERSONAL_DATA
+from backends.studies.study_43en.models.patient.PERSONAL_DATA import PERSONAL_DATA
 from datetime import date
 from dateutil.relativedelta import relativedelta
 

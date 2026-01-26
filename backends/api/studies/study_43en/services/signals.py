@@ -12,7 +12,7 @@ from backends.studies.study_43en.models.schedule import (
     ExpectedCalendar, ExpectedDates, ContactExpectedDates, FollowUpStatus
 )
 # Import trực tiếp PII models
-from backends.studies.study_43en.models.patient.PER_DATA import PERSONAL_DATA
+from backends.studies.study_43en.models.patient.PERSONAL_DATA import PERSONAL_DATA
 from backends.studies.study_43en.models.contact.PER_CONTACT_DATA import PERSONAL_CONTACT_DATA
 import logging
 

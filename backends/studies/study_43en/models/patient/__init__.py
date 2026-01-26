@@ -57,7 +57,7 @@ from .DISCH_CASE import DISCH_CASE, DischargeICD
 from .EndCaseCRF import EndCaseCRF
 
 # Personal Data
-from .PER_DATA import PERSONAL_DATA
+from .PERSONAL_DATA import PERSONAL_DATA
 
 
 # Export all models

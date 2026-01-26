@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+.env
+.env.local
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Project specific
+logs/*
+backups/*
+staticfiles/*
+mediafiles/*
+*.sqlite3
+db.sqlite3
+
+# Documentation
+*.md
+docs/
+
+# OS
+.DS_Store
+Thumbs.db
