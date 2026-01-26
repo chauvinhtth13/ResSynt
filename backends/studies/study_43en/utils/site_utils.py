@@ -27,10 +27,12 @@ CACHE_TIMEOUT_LONG = 3600  # 1 hour - cho rarely changed data
 
 def get_site_filter_params(request):
     """
-    REFACTORED: Single source of truth - uses middleware context
+    REFACTORED: Single source of truth - uses middleware context + URL params
     
-    Determine site filter strategy from UnifiedTenancyMiddleware context.
-    Middleware ALWAYS injects site context for Study 43EN.
+    Determine site filter strategy from:
+    1. URL parameter 'sites' (multiselect) - e.g., ?sites=003,011,020
+    2. URL parameter 'site' (single select) - e.g., ?site=003
+    3. UnifiedTenancyMiddleware context
     
     Returns:
         tuple: (site_filter, filter_type)
@@ -38,10 +40,11 @@ def get_site_filter_params(request):
             - filter_type: 'all' | 'single' | 'multiple'
     
     Priority Order:
-        1. Single site selected → filter by that site only
-        2. can_access_all_sites=True → no site filtering (see ALL)
-        3. Multiple sites assigned → filter by user's sites
-        4. Fallback → empty (no access)
+        1. URL 'sites' param (multiselect) → filter by selected sites
+        2. URL 'site' param (single) → filter by that site only
+        3. can_access_all_sites=True → no site filtering (see ALL)
+        4. Multiple sites assigned → filter by user's sites
+        5. Fallback → empty (no access)
     """
     # Get from UnifiedTenancyMiddleware context
     selected_site_id = getattr(request, 'selected_site_id', 'all')
@@ -56,13 +59,50 @@ def get_site_filter_params(request):
     else:
         user_sites = list(user_sites)
     
+    # =========================================================================
+    # URL PARAMETER HANDLING (Multiselect Dropdown)
+    # =========================================================================
+    
+    # Check for 'sites' param (multiselect) first
+    sites_param = request.GET.get('sites', '')
+    if sites_param and sites_param != 'all':
+        # Parse comma-separated sites
+        requested_sites = [s.strip() for s in sites_param.split(',') if s.strip()]
+        
+        if requested_sites:
+            # Security: Validate user has access to requested sites
+            if can_access_all:
+                # User can access all - allow any valid site
+                logger.info(f"Site filter: multiselect {requested_sites} (admin)")
+                return (requested_sites, 'multiple')
+            else:
+                # Filter to only sites user has access to
+                allowed = [s for s in requested_sites if s in user_sites]
+                if allowed:
+                    logger.info(f"Site filter: multiselect {allowed}")
+                    if len(allowed) == 1:
+                        return (allowed[0], 'single')
+                    return (allowed, 'multiple')
+                else:
+                    logger.warning(f"Site filter: access denied for sites {requested_sites}")
+    
+    # Check for 'site' param (single select) - legacy support
+    site_param = request.GET.get('site', '')
+    if site_param and site_param != 'all':
+        # Security: Validate user has access
+        if can_access_all or site_param in user_sites:
+            logger.info(f"Site filter: single site '{site_param}'")
+            return (site_param, 'single')
+        else:
+            logger.warning(f"Site filter: access denied for site {site_param}")
+    
     # Log current context for debugging
     logger.debug(
         f"Site filter context: selected={selected_site_id}, "
         f"can_access_all={can_access_all}, user_sites={user_sites}"
     )
     
-    # Strategy 1: Single site selected by user
+    # Strategy 1: Single site selected by user (from session)
     if selected_site_id and selected_site_id != 'all':
         logger.info(f"Site filter: single site '{selected_site_id}'")
         return (selected_site_id, 'single')

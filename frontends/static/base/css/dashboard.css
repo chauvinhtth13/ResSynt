@@ -55,7 +55,6 @@
 .dashboard-content {
   margin-left: var(--sidebar-width);
   min-height: 100vh;
-  background-color: var(--bs-body-bg, #f8f9fa);
   transition: margin-left var(--sidebar-transition-duration) var(--sidebar-transition-timing);
 }
 

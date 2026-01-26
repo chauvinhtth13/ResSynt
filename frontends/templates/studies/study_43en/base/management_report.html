@@ -2,13 +2,18 @@
 {% load static %}
 {% load i18n %}
 
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'studies/study_43en/css/home_dashboard.css' %}">
+{% endblock %}
 
 {% block dashboard_content %}
-<div class="rounded-3 mb-4 bg-navy-blue-900 text-white p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+
+
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center mb-3 me-1">
         <div class="min-w-0 flex-grow-1">
-            <h5 class="h5 fw-bold mb-1">{% trans "43EN Management Report" %}</h5>
-            <p class="text-white-50 mb-0 small line-clamp-2" title="{{ study_name }}">
+            <h5 class="h5 fw-bold mb-1">{% trans "43EN Management Dashboard" %}</h5>
+            <p class="text-white-80 mb-0 small line-clamp-2" title="{{ study_name }}">
                 {{ study_name }}
             </p>
         </div>
@@ -19,412 +24,176 @@
     </div>
 
     <!-- Bottom Row: Stats -->
-    <div
-        class="d-flex flex-wrap justify-content-between gap-3 gap-lg-4 pt-2 border-top border-secondary border-opacity-25">
-        <div class="d-flex align-items-center gap-2">
-            <div class="bg-white bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center"
-                style="width: 45px; height: 45px; flex-shrink: 0;">
-                <i class="bi bi-geo-alt-fill text-white fs-5"></i>
-            </div>
-
-            <div class="d-flex flex-column justify-content-center">
-                <span class="text-white-50 text-uppercase fw-semibold"
-                    style="font-size: 0.75rem; letter-spacing: 0.5px;">
+    <div class="d-flex justify-content-between align-items-center border-top border-white border-opacity-25 pt-3">
+        <div class="d-flex flex-column justify-content-center">
+                <span class="small text-uppercase fw-semibold text-white-80 mb-1">
                     {% trans "Study Site" %}
                 </span>
 
-                <span class="text-white fw-bold lh-1 mt-1">
-                    {{ site_name }}
-                </span>
-            </div>
+                {% if user_sites_count == 1 %}
+                    <span class="text-white fw-bold">
+                        <i class="bi bi-geo-alt-fill text-accent-cyan me-1"></i>{{ site_name }}
+                    </span>
+                {% else %}
+                    <div class="dropdown" id="siteSelectContainer">
+                        <button class="btn btn-cyber-dropdown-sm dropdown-toggle" 
+                                style="width: 8rem;"
+                                type="button" 
+                                id="siteSelectBtn" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false"
+                                aria-label="{% trans 'Select study site' %}">
+                            <span id="selectedSiteLabel" class="text-truncate">{{ site_name }}</span>
+                        </button>
+                        
+                        <div class="dropdown-menu dropdown-menu-base dropdown-menu-select p-0" 
+                             style="width: 8rem;" 
+                             aria-labelledby="siteSelectBtn">
+                            
+                            {# Site List - Clickable items with auto-apply #}
+                            <div class="site-option-list px-2 py-2" id="siteOptionsList" 
+                                 style="max-height: 280px; overflow-y: auto;">
+                                
+                                {# All Sites Option #}
+                                <button type="button" 
+                                        class="site-option-btn d-flex align-items-center gap-2 w-100"
+                                        data-value="all"
+                                        data-display="{% trans 'All Sites' %}">
+                                    <span class="text-truncate">{% trans "All Sites" %}</span>
+                                </button>
+                                
+                                {# Divider #}
+                                <hr class="my-1 border-white border-opacity-25">
+                                
+                                {# Individual Sites #}
+                                {% for site_item in accessible_sites_data %}
+                                <button type="button" 
+                                        class="site-option-btn d-flex align-items-center gap-2 w-100"
+                                        data-value="{{ site_item.code }}"
+                                        data-display="{{ site_item.display }}">
+                                    <span class="text-truncate">{{ site_item.display }}</span>
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="selectedSiteInput" name="site" value="{% if filter_type == 'all' %}all{% else %}{{ site_filter }}{% endif %}">
+                {% endif %}
         </div>
 
-        <div class="d-flex align-items-center gap-2">
-            <div class="bg-white bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center"
-                style="width: 45px; height: 45px; flex-shrink: 0;">
-                <i class="bi bi-clock-history text-white fs-5"></i>
+        <div class="d-flex justify-content-center gap-2">
+            <div class="icon-box icon-box--light">
+                <i class="bi bi-clock-history text-white"></i>
             </div>
             <div class="d-flex flex-column justify-content-center">
-                <span class="text-white-50 text-uppercase fw-semibold"
-                    style="font-size: 0.75rem; letter-spacing: 0.5px;">{% trans "Last Update" %}</span>
-                <span class="text-white fw-bold lh-1 mt-1">{{ today|date:"d/m/Y H:i" }}</span>
+                <span class="small text-uppercase fw-semibold text-white-80">{% trans "Last Update" %}</span>
+                <span class="text-white fw-bold">{{ today|date:"d/m/Y H:i" }}</span>
             </div>
         </div>
     </div>
 </div>
 
-{# Statistics Cards #}
-<div class="row g-4 mb-4">
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card h-100 border-0 shadow-sm border-start border-4 border-primary">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Screening Patients" %}</p>
-                        <h2 class="fw-bold mb-0 text-primary">{{ screening_patients|default:0 }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="card chart-card mb-4">
+    <div class="chart-card-header">
+        <span class="fw-bold">{% trans "Patient Enrollment Progress" %}</span>
     </div>
-
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card h-100 border-0 shadow-sm border-start border-4 border-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Enrolled Patients" %}</p>
-                        <h2 class="fw-bold mb-0 text-success">{{ enrolled_patients|default:0 }}</h2>
-                    </div>
-                </div>
+    <div class="card-body p-0">
+        <div id="chartLoading" style="display: flex;">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
+            <span class="loading-text">{% trans "Loading chart data..." %}</span>
         </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card h-100 border-0 shadow-sm border-start border-4 border-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Screening Contacts" %}</p>
-                        <h2 class="fw-bold mb-0 text-info">{{ screening_contacts|default:0 }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card h-100 border-0 shadow-sm border-start border-4 border-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <p class="text-uppercase fw-bold text-muted small mb-1">{% trans "Enrolled Contacts" %}</p>
-                        <h2 class="fw-bold mb-0 text-warning">{{ enrolled_contacts|default:0 }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div id="enrollmentChart"></div>
     </div>
 </div>
 
-{# Enrollment Chart #}
 <div class="row g-4 mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bi bi-graph-up text-primary me-2"></i>
-                        {% trans "Patient Enrollment Progress" %}
-                    </h6>
-
-                    {# Site Filter Dropdown #}
-                    <select class="form-select form-select-sm site-filter-select" data-chart="enrollment"
-                        style="width: auto; min-width: 120px;">
-                        <option value="all">{% trans "All Sites" %}</option>
-                        {% for site in accessible_sites %}
-                        <option value="{{ site }}">{{ site }}</option>
-                        {% endfor %}
+    <div class="col-12 col-xl-6">
+        <div class="card chart-card">
+            <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold">{% trans "Screening & Enrollment Patients" %}</span>
+                
+                {# Simple Filter: View Mode + Year #}
+                <div class="d-flex align-items-center gap-2">
+                    {# View Mode Selector (Quarter or Month) #}
+                    <select class="form-select form-select-sm" id="patientViewMode" style="width: auto;">
+                        <option value="quarter" selected>{% trans "By Quarter" %}</option>
+                        <option value="month">{% trans "By Month" %}</option>
+                    </select>
+                    
+                    {# Year Selector #}
+                    <select class="form-select form-select-sm" id="patientYear" style="width: auto;">
+                        <option value="all" selected>{% trans "All" %}</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
                     </select>
                 </div>
             </div>
-            <div class="card-body">
-                {# Chart container #}
-                <div id="enrollmentChart" style="width: 100%; height: 450px;"></div>
-
-                {# Loading indicator #}
-                <div id="chartLoading" class="text-center py-5">
+            <div class="card-body position-relative">
+                <div id="patientChartLoading" class="chart-loading-overlay">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                    <p class="text-muted mt-2">{% trans "Loading chart data..." %}</p>
+                    <span class="loading-text mt-2">{% trans "Loading chart data..." %}</span>
                 </div>
+                <div id="patientMonthlyChart"></div>
             </div>
         </div>
     </div>
-</div>
-
-{# Monthly Screening & Enrollment Chart + Table #}
-<div class="row g-4 mb-4">
-    {# Chart Card - 70% #}
-    <div class="col-12 col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bi bi-bar-chart-line text-primary me-2"></i>
-                        {% trans "Monthly Screening & Enrollment Statistics" %}
-                    </h6>
-
-                    {# Filters #}
-                    <div class="d-flex gap-2 flex-wrap">
-                        {# Site Filter Dropdown #}
-                        <select class="form-select form-select-sm monthly-site-select" data-chart="monthly"
-                            style="width: auto; min-width: 120px;">
-                            <option value="all">{% trans "All Sites" %}</option>
-                            {% for site in accessible_sites %}
-                            <option value="{{ site }}">{{ site }}</option>
-                            {% endfor %}
-                        </select>
-
-                        {# Period Type Filter #}
-                        <div class="input-group input-group-sm" style="width: auto;">
-                            <label class="input-group-text">{% trans "View by" %}</label>
-                            <select class="form-select" id="periodType" style="min-width: 100px;">
-                                <option value="year">{% trans "Year" %}</option>
-                                <option value="quarter">{% trans "Quarter" %}</option>
-                                <option value="month" selected>{% trans "Month" %}</option>
-                            </select>
-                        </div>
-
-                        {# Year Selector #}
-                        <div class="input-group input-group-sm" id="yearSelector" style="width: auto;">
-                            <label class="input-group-text">{% trans "Year" %}</label>
-                            <select class="form-select" id="selectedYear" style="min-width: 100px;">
-                                <option value="all">{% trans "All Years" %}</option>
-                                <option value="2024">2024</option>
-                                <option value="2025" selected>2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                            </select>
-                        </div>
-
-                        {# Quarter Selector #}
-                        <div class="input-group input-group-sm" id="quarterSelector"
-                            style="width: auto; display: none;">
-                            <label class="input-group-text">{% trans "Quarter" %}</label>
-                            <select class="form-select" id="selectedQuarter" style="min-width: 100px;">
-                                <option value="all">{% trans "All Quarters" %}</option>
-                                <option value="Q1">Q1 (Jan-Mar)</option>
-                                <option value="Q2">Q2 (Apr-Jun)</option>
-                                <option value="Q3">Q3 (Jul-Sep)</option>
-                                <option value="Q4">Q4 (Oct-Dec)</option>
-                            </select>
-                        </div>
-
-                        {# Month Selector #}
-                        <div class="input-group input-group-sm" id="monthSelector" style="width: auto; display: none;">
-                            <label class="input-group-text">{% trans "Month" %}</label>
-                            <select class="form-select" id="selectedMonth" style="min-width: 120px;">
-                                <option value="all">{% trans "All Months" %}</option>
-                                <option value="01">{% trans "January" %}</option>
-                                <option value="02">{% trans "February" %}</option>
-                                <option value="03">{% trans "March" %}</option>
-                                <option value="04">{% trans "April" %}</option>
-                                <option value="05">{% trans "May" %}</option>
-                                <option value="06">{% trans "June" %}</option>
-                                <option value="07">{% trans "July" %}</option>
-                                <option value="08">{% trans "August" %}</option>
-                                <option value="09">{% trans "September" %}</option>
-                                <option value="10">{% trans "October" %}</option>
-                                <option value="11">{% trans "November" %}</option>
-                                <option value="12">{% trans "December" %}</option>
-                            </select>
-                        </div>
-
-                        {# Apply Button #}
-                        <button class="btn btn-sm btn-primary" type="button" id="monthlyApplyFilter">
-                            <i class="bi bi-search"></i> {% trans "Apply" %}
-                        </button>
-                    </div>
+    <div class="col-12 col-xl-6">
+        <div class="card chart-card">
+            <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold">{% trans "Screening & Enrollment Contact" %}</span>
+                
+                {# Simple Filter: View Mode + Year #}
+                <div class="d-flex align-items-center gap-2">
+                    {# View Mode Selector (Quarter or Month) #}
+                    <select class="form-select form-select-sm" id="contactViewMode" style="width: auto;">
+                        <option value="quarter" selected>{% trans "By Quarter" %}</option>
+                        <option value="month">{% trans "By Month" %}</option>
+                    </select>
+                    
+                    {# Year Selector #}
+                    <select class="form-select form-select-sm" id="contactYear" style="width: auto;">
+                        <option value="all" selected>{% trans "All" %}</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                    </select>
                 </div>
             </div>
-            <div class="card-body">
-                <div id="monthlyChart" style="width: 100%; height: 400px;"></div>
-
-                {# Loading indicator #}
-                <div id="monthlyChartLoading" class="text-center py-5">
+            <div class="card-body position-relative">
+                <div id="contactChartLoading" class="chart-loading-overlay">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                    <p class="text-muted mt-2">{% trans "Loading chart data..." %}</p>
+                    <span class="loading-text mt-2">{% trans "Loading chart data..." %}</span>
                 </div>
+                <div id="contactMonthlyChart"></div>
             </div>
         </div>
     </div>
 
-    {# Table Card - 30% #}
-    <div class="col-12 col-lg-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0 fw-bold">
-                    <i class="bi bi-table text-primary me-2"></i>
-                    {% trans "Statistics Table" %}
-                </h6>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height: 470px; overflow-y: auto;">
-                    <table class="table table-sm table-hover mb-0" id="monthlyStatsTable">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th>{% trans "Month" %}</th>
-                                <th class="text-end">{% trans "Screening" %}</th>
-                                <th class="text-end">{% trans "Enrollment" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="3" class="text-center text-muted">
-                                    {% trans "Loading..." %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-{# Contact Monthly Screening & Enrollment Chart + Table #}
-<div class="row g-4 mb-4">
-    {# Chart Card - 70% #}
-    <div class="col-12 col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bi bi-bar-chart-line text-success me-2"></i>
-                        {% trans "Contact Monthly Screening & Enrollment Statistics" %}
-                    </h6>
-
-                    {# Filters #}
-                    <div class="d-flex gap-2 flex-wrap">
-                        {# Site Filter Dropdown #}
-                        <select class="form-select form-select-sm contact-site-select" data-chart="contact"
-                            style="width: auto; min-width: 120px;">
-                            <option value="all">{% trans "All Sites" %}</option>
-                            {% for site in accessible_sites %}
-                            <option value="{{ site }}">{{ site }}</option>
-                            {% endfor %}
-                        </select>
-
-                        {# Period Type Filter #}
-                        <div class="input-group input-group-sm" style="width: auto;">
-                            <label class="input-group-text">{% trans "View by" %}</label>
-                            <select class="form-select" id="contactPeriodType" style="min-width: 100px;">
-                                <option value="year">{% trans "Year" %}</option>
-                                <option value="quarter">{% trans "Quarter" %}</option>
-                                <option value="month" selected>{% trans "Month" %}</option>
-                            </select>
-                        </div>
-
-                        {# Year Selector #}
-                        <div class="input-group input-group-sm" id="contactYearSelector" style="width: auto;">
-                            <label class="input-group-text">{% trans "Year" %}</label>
-                            <select class="form-select" id="contactSelectedYear" style="min-width: 100px;">
-                                <option value="all">{% trans "All Years" %}</option>
-                                <option value="2024">2024</option>
-                                <option value="2025" selected>2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                            </select>
-                        </div>
-
-                        {# Quarter Selector #}
-                        <div class="input-group input-group-sm" id="contactQuarterSelector"
-                            style="width: auto; display: none;">
-                            <label class="input-group-text">{% trans "Quarter" %}</label>
-                            <select class="form-select" id="contactSelectedQuarter" style="min-width: 100px;">
-                                <option value="all">{% trans "All Quarters" %}</option>
-                                <option value="Q1">Q1 (Jan-Mar)</option>
-                                <option value="Q2">Q2 (Apr-Jun)</option>
-                                <option value="Q3">Q3 (Jul-Sep)</option>
-                                <option value="Q4">Q4 (Oct-Dec)</option>
-                            </select>
-                        </div>
-
-                        {# Month Selector #}
-                        <div class="input-group input-group-sm" id="contactMonthSelector"
-                            style="width: auto; display: none;">
-                            <label class="input-group-text">{% trans "Month" %}</label>
-                            <select class="form-select" id="contactSelectedMonth" style="min-width: 120px;">
-                                <option value="all">{% trans "All Months" %}</option>
-                                <option value="01">{% trans "January" %}</option>
-                                <option value="02">{% trans "February" %}</option>
-                                <option value="03">{% trans "March" %}</option>
-                                <option value="04">{% trans "April" %}</option>
-                                <option value="05">{% trans "May" %}</option>
-                                <option value="06">{% trans "June" %}</option>
-                                <option value="07">{% trans "July" %}</option>
-                                <option value="08">{% trans "August" %}</option>
-                                <option value="09">{% trans "September" %}</option>
-                                <option value="10">{% trans "October" %}</option>
-                                <option value="11">{% trans "November" %}</option>
-                                <option value="12">{% trans "December" %}</option>
-                            </select>
-                        </div>
-
-                        {# Apply Button #}
-                        <button class="btn btn-sm btn-success" type="button" id="contactApplyFilter">
-                            <i class="bi bi-search"></i> {% trans "Apply" %}
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div id="contactMonthlyChart" style="width: 100%; height: 400px;"></div>
-
-                {# Loading indicator #}
-                <div id="contactChartLoading" class="text-center py-5">
-                    <div class="spinner-border text-success" role="status">
-                        <span class="visually-hidden">{% trans "Loading..." %}</span>
-                    </div>
-                    <p class="text-muted mt-2">{% trans "Loading contact data..." %}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {# Table Card - 30% #}
-    <div class="col-12 col-lg-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0 fw-bold">
-                    <i class="bi bi-table text-success me-2"></i>
-                    {% trans "Statistics Table" %}
-                </h6>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height: 470px; overflow-y: auto;">
-                    <table class="table table-sm table-hover mb-0" id="contactStatsTable">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th>{% trans "Month" %}</th>
-                                <th class="text-end">{% trans "Screening" %}</th>
-                                <th class="text-end">{% trans "Enrollment" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="3" class="text-center text-muted">
-                                    {% trans "Loading..." %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# Sample Management & K. pneumoniae Tables - Combined Row #}
+<!-- {# Sample Management & K. pneumoniae Tables - Combined Row #}
 <div class="row g-4 mb-4">
     {# K. pneumoniae Isolation Statistics Table - 60% #}
     <div class="col-12 col-xl-7">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bi bi-virus text-danger me-2"></i>
+        <div class="card chart-card chart-card--full-height">
+            <div class="chart-card__header">
+                <div class="header-flex">
+                    <h6 class="chart-card__title">
+                        <i class="bi bi-virus text-danger"></i>
                         {% trans "K. pneumoniae isolated from throat swab & stool/rectal swab samples" %}
                     </h6>
 
                     {# Site Filter Dropdown #}
-                    <select class="form-select form-select-sm kpneumoniae-site-select" data-chart="kpneumoniae"
-                        style="width: auto; min-width: 120px;">
+                    <select class="site-filter kpneumoniae-site-select" data-chart="kpneumoniae">
                         <option value="all">{% trans "All Sites" %}</option>
                         {% for site in accessible_sites %}
                         <option value="{{ site }}">{{ site }}</option>
@@ -434,11 +203,11 @@
             </div>
             <div class="card-body">
                 {# Loading indicator #}
-                <div id="kpneumoniaeLoading" class="text-center py-5">
-                    <div class="spinner-border text-danger" role="status">
+                <div id="kpneumoniaeLoading" class="loading-container">
+                    <div class="spinner-border loading-spinner--danger" role="status">
                         <span class="visually-hidden">{% trans "Loading..." %}</span>
                     </div>
-                    <p class="text-muted mt-2">{% trans "Loading K. pneumoniae data..." %}</p>
+                    <p class="loading-text">{% trans "Loading K. pneumoniae data..." %}</p>
                 </div>
 
                 {# K. pneumoniae Table #}
@@ -475,9 +244,9 @@
                         </table>
                     </div>
 
-                    <div class="alert alert-secondary mt-3">
+                    <div class="alert-note alert-note--secondary">
                         <small>
-                            <i class="bi bi-asterisk me-1"></i>
+                            <i class="bi bi-asterisk"></i>
                             <strong>*</strong>
                             {% trans "K. pneumoniae positive sample / Total collected samples" %}
                         </small>
@@ -489,17 +258,16 @@
 
     {# Sampling Follow-up Table (Patient & Contact) - 40% #}
     <div class="col-12 col-xl-5">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bi bi-clipboard-data text-info me-2"></i>
+        <div class="card chart-card chart-card--full-height">
+            <div class="chart-card__header">
+                <div class="header-flex">
+                    <h6 class="chart-card__title">
+                        <i class="bi bi-clipboard-data text-info"></i>
                         {% trans "Sample Management: Patient & Contact Sampling Follow-up" %}
                     </h6>
 
                     {# Site Filter Dropdown #}
-                    <select class="form-select form-select-sm sampling-site-select" data-chart="sampling"
-                        style="width: auto; min-width: 120px;">
+                    <select class="site-filter sampling-site-select" data-chart="sampling">
                         <option value="all">{% trans "All Sites" %}</option>
                         {% for site in accessible_sites %}
                         <option value="{{ site }}">{{ site }}</option>
@@ -509,11 +277,11 @@
             </div>
             <div class="card-body">
                 {# Loading indicator #}
-                <div id="samplingLoading" class="text-center py-5">
-                    <div class="spinner-border text-info" role="status">
+                <div id="samplingLoading" class="loading-container">
+                    <div class="spinner-border loading-spinner--info" role="status">
                         <span class="visually-hidden">{% trans "Loading..." %}</span>
                     </div>
-                    <p class="text-muted mt-2">{% trans "Loading sampling data..." %}</p>
+                    <p class="loading-text">{% trans "Loading sampling data..." %}</p>
                 </div>
 
                 {# Sampling Table #}
@@ -543,9 +311,9 @@
                         </table>
                     </div>
 
-                    <div class="alert alert-info mt-3">
+                    <div class="alert-note alert-note--info">
                         <small>
-                            <i class="bi bi-info-circle me-1"></i>
+                            <i class="bi bi-info-circle"></i>
                             <strong>{% trans "Note:" %}</strong>
                             {% trans "Total Sampling includes Stool, Rectal Swab, and Throat Swab samples (excludes
                             blood). Blood Sampling is counted separately." %}
@@ -555,31 +323,21 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 {% endblock %}
 
 
 {% block dashboard_js %}
+{# Site Selection Dropdown JavaScript #}
+<script nonce="{{ request.csp_nonce }}"
+    src="{% static 'studies/study_43en/js/management-dashboard/site-selector.js' %}"></script>
 
 {# Dashboard JavaScript - Enrollment Progress Chart #}
 <script nonce="{{ request.csp_nonce }}"
-    src="{% static 'studies/study_43en/js/home_dashboard/home_dashboard.js' %}"></script>
+    src="{% static 'studies/study_43en/js/management-dashboard/enrollment-progress.js' %}"></script>
 
-{# Patient Monthly Statistics JavaScript - Bar Chart + Table #}
+{# Monthly Statistics Charts - Patient & Contact #}
 <script nonce="{{ request.csp_nonce }}"
-    src="{% static 'studies/study_43en/js/home_dashboard/monthly_stats.js' %}"></script>
-
-{# Contact Monthly Statistics JavaScript - Bar Chart + Table #}
-<script nonce="{{ request.csp_nonce }}"
-    src="{% static 'studies/study_43en/js/home_dashboard/contact_stats.js' %}"></script>
-
-{# Sampling Follow-up JavaScript - Table Only #}
-<script nonce="{{ request.csp_nonce }}"
-    src="{% static 'studies/study_43en/js/home_dashboard/sampling_followup.js' %}"></script>
-
-{# K. pneumoniae Isolation JavaScript - Table Only #}
-<script nonce="{{ request.csp_nonce }}"
-    src="{% static 'studies/study_43en/js/home_dashboard/kpneumoniae_isolation.js' %}"></script>
-
+    src="{% static 'studies/study_43en/js/management-dashboard/monthly-statistics.js' %}"></script>
 {% endblock %}

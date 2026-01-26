@@ -72,8 +72,8 @@ SITE_NAMES = {'003': 'HTD', '020': 'NHTD', '011': 'Cho Ray'}
 # Study timeline
 STUDY_START_DATE = date(2024, 7, 1)
 STUDY_END_DATE = date(2027, 4, 30)
-CHART_END_DATE = date(2027, 5, 1)
-TOTAL_STUDY_MONTHS = 35
+CHART_END_DATE = date(2027, 4, 1)  # Chart ends at 04/2027
+TOTAL_STUDY_MONTHS = 34
 
 
 # ============================================================================
@@ -116,7 +116,7 @@ def get_site_names_from_db(request):
     Get site names mapping from database.
     
     Returns:
-        dict: {site_code: abbreviation} e.g. {'003': 'HTD', '020': 'NHTD'}
+        dict: {site_code: "code - abbreviation"} e.g. {'003': '003 - HTD', '020': '020 - NHTD'}
     """
     study = getattr(request, 'study', None)
     
@@ -124,10 +124,13 @@ def get_site_names_from_db(request):
         sites = Site.objects.filter(
             site_studies__study=study
         ).values('code', 'abbreviation')
-        return {s['code']: s['abbreviation'] for s in sites}
+        return {
+            s['code']: f"{s['code']} - {s['abbreviation']}" if s['abbreviation'] else s['code']
+            for s in sites
+        }
     
-    # Fallback to constant
-    return SITE_NAMES
+    # Fallback to constant - format as "code - abbreviation"
+    return {code: f"{code} - {abbr}" for code, abbr in SITE_NAMES.items()}
 
 
 # ============================================================================
@@ -307,7 +310,29 @@ def management_report(request):
         # Remove 'all' from accessible_sites for dropdown (it's added separately in template)
         accessible_sites = [s for s in accessible_sites if s != 'all']
         
-        logger.debug(f"Site permissions - user_sites: {user_sites}, can_access_all: {can_access_all}")
+        # Get site names mapping for display in dropdown
+        site_names_map = get_site_names_from_db(request)
+        # Build accessible_sites_data with code and display name
+        accessible_sites_data = [
+            {'code': code, 'display': site_names_map.get(code, code)}
+            for code in accessible_sites
+        ]
+        
+        # Calculate user sites count for UI logic:
+        # - 1 site: show text only
+        # - >1 sites or can_access_all: show dropdown selector
+        user_sites_list = list(user_sites) if user_sites else []
+        user_sites_count = len(accessible_sites) if can_access_all else len(user_sites_list)
+        
+        # Get currently selected sites for multiselect dropdown state
+        if filter_type == 'all':
+            selected_sites = accessible_sites  # All sites selected
+        elif filter_type == 'single':
+            selected_sites = [site_filter] if site_filter else accessible_sites
+        else:  # multiple
+            selected_sites = site_filter if isinstance(site_filter, list) else [site_filter]
+        
+        logger.debug(f"Site permissions - user_sites: {user_sites}, can_access_all: {can_access_all}, count: {user_sites_count}")
         
         # ===== SITE NAME GENERATION =====
         site_name = _get_site_display_name(site_filter, filter_type)
@@ -327,8 +352,12 @@ def management_report(request):
             'site_name': site_name,
             'site_filter': site_filter,
             'filter_type': filter_type,
-            'accessible_sites': accessible_sites,  # NEW: For dropdown
-            'can_access_all_sites': can_access_all,  # NEW: For UI logic
+            'accessible_sites': accessible_sites,  # For dropdown options (list of codes)
+            'accessible_sites_data': accessible_sites_data,  # For dropdown with display names
+            'selected_sites': selected_sites,  # Currently selected sites for multiselect state
+            'can_access_all_sites': can_access_all,  # For UI logic
+            'user_sites_count': user_sites_count,  # Number of sites user can access
+            'user_sites_list': user_sites_list,  # List of user's assigned sites
             
             # Statistics
             'screening_patients': screening_patients,
@@ -489,35 +518,36 @@ def _calculate_target_cumulative(filter_type, site_filter, site_target, site_sta
     cumulative = 0.0
     
     if filter_type == 'all' or site_filter == 'all':
-        # Phase 1 (07/2024-06/2025): 15/month, Phase 2: 25/month
-        phase_1_end = date(2025, 6, 30)
+        # Phase 1 (07/2024-07/2025): 15/month, Phase 2 (08/2025-03/2027): 27/month
+        # 04/2027 is final month - set directly to target
+        phase_1_end = date(2025, 7, 31)  # End of July 2025
+        final_month = date(2027, 4, 1)   # April 2027 - study end
         
         for month_date in month_dates:
-            cumulative += 15 if month_date <= phase_1_end else 25
-            target_cumulative.append(round(cumulative))
-        
-        # Ensure last value is exactly 750
-        if target_cumulative:
-            target_cumulative[-1] = 750
+            if month_date >= final_month:
+                # Final month: set to target directly, no increment
+                target_cumulative.append(750)
+            else:
+                cumulative += 15 if month_date <= phase_1_end else 27
+                target_cumulative.append(round(cumulative))
     else:
-        # Individual sites: distribute evenly
+        # Individual sites: distribute evenly, 04/2027 set to target
         site_start_month = site_start_date.replace(day=1)
+        final_month = date(2027, 4, 1)  # April 2027 - study end
         
-        # Count available months
-        available_months = sum(1 for d in month_dates if d >= site_start_month)
-        monthly_step = site_target / available_months if available_months > 0 else 0
+        # Count available months (excluding final month which is set directly)
+        available_months = sum(1 for d in month_dates if d >= site_start_month and d < final_month)
+        monthly_step = site_target / (available_months + 1) if available_months > 0 else site_target
         
         for month_date in month_dates:
             if month_date < site_start_month:
                 target_cumulative.append(None)
+            elif month_date >= final_month:
+                # Final month: set to target directly
+                target_cumulative.append(int(site_target))
             else:
                 cumulative += monthly_step
                 target_cumulative.append(round(cumulative))
-        
-        # Ensure last non-null value is exactly the target
-        non_null_indices = [i for i, v in enumerate(target_cumulative) if v is not None]
-        if non_null_indices:
-            target_cumulative[non_null_indices[-1]] = int(site_target)
     
     return target_cumulative
 
@@ -525,6 +555,8 @@ def _calculate_target_cumulative(filter_type, site_filter, site_target, site_sta
 def _calculate_actual_cumulative(site_filter, filter_type, months, month_dates):
     """
     Calculate actual cumulative enrollment from database.
+    
+    Optimized version using database-level aggregation.
     
     Args:
         site_filter: site code(s)
@@ -535,20 +567,37 @@ def _calculate_actual_cumulative(site_filter, filter_type, months, month_dates):
     Returns:
         tuple: (actual_cumulative: list, last_enrollment_date: date or None)
     """
-    # Get enrollment dates
-    enrolled_qs = get_filtered_queryset(
+    from django.db.models.functions import TruncMonth, ExtractYear, ExtractMonth
+    from django.db.models import Max
+    from collections import Counter
+    
+    # Get base queryset with only needed fields
+    base_qs = get_filtered_queryset(
         ENR_CASE, site_filter, filter_type
-    ).filter(ENRDATE__isnull=False).values_list('ENRDATE', flat=True)
+    ).filter(ENRDATE__isnull=False).only('ENRDATE')
     
-    enrollment_dates = list(enrolled_qs)
-    last_enrollment_date = max(enrollment_dates) if enrollment_dates else None
+    # Get last enrollment date and count by month in a single pass
+    # Using database-level aggregation for better performance
+    # Use 'pk' instead of 'id' as model uses USUBJID as primary key
+    monthly_counts = (
+        base_qs
+        .annotate(
+            enr_year=ExtractYear('ENRDATE'),
+            enr_month=ExtractMonth('ENRDATE')
+        )
+        .values('enr_year', 'enr_month')
+        .annotate(count=Count('pk'))
+        .order_by('enr_year', 'enr_month')
+    )
     
-    # Count by month
+    # Get max date efficiently
+    last_enrollment_date = base_qs.aggregate(max_date=Max('ENRDATE'))['max_date']
+    
+    # Build month key -> count mapping
     enrollment_by_month = {}
-    for enr_date in enrollment_dates:
-        if enr_date:
-            month_key = enr_date.strftime('%m/%Y')
-            enrollment_by_month[month_key] = enrollment_by_month.get(month_key, 0) + 1
+    for row in monthly_counts:
+        month_key = f"{row['enr_month']:02d}/{row['enr_year']}"
+        enrollment_by_month[month_key] = row['count']
     
     # Build cumulative array
     actual_cumulative = []
@@ -578,6 +627,8 @@ def _get_monthly_counts(model, site_filter, filter_type, date_field, start_date,
     """
     Get counts per month for a model.
     
+    Optimized with database-level aggregation instead of Python iteration.
+    
     Args:
         model: Django model class
         site_filter: site code(s)
@@ -591,6 +642,8 @@ def _get_monthly_counts(model, site_filter, filter_type, date_field, start_date,
     Returns:
         list: Count per month
     """
+    from django.db.models.functions import ExtractYear, ExtractMonth
+    
     qs = get_filtered_queryset(model, site_filter, filter_type).filter(
         **{f'{date_field}__isnull': False},
         **{f'{date_field}__gte': start_date},
@@ -600,13 +653,23 @@ def _get_monthly_counts(model, site_filter, filter_type, date_field, start_date,
     if extra_filters:
         qs = qs.filter(**extra_filters)
     
-    # Count by month
+    # Use database-level aggregation for better performance
+    # Use 'pk' instead of 'id' as models may use custom primary keys
+    monthly_counts = (
+        qs
+        .annotate(
+            record_year=ExtractYear(date_field),
+            record_month=ExtractMonth(date_field)
+        )
+        .values('record_year', 'record_month')
+        .annotate(count=Count('pk'))
+    )
+    
+    # Build month key -> count mapping
     counts_by_month = {}
-    for record in qs.values(date_field):
-        record_date = record[date_field]
-        if record_date:
-            month_key = record_date.strftime('%m/%Y')
-            counts_by_month[month_key] = counts_by_month.get(month_key, 0) + 1
+    for row in monthly_counts:
+        month_key = f"{row['record_month']:02d}/{row['record_year']}"
+        counts_by_month[month_key] = row['count']
     
     return [counts_by_month.get(month, 0) for month in months]
 

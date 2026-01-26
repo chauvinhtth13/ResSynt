@@ -115,10 +115,13 @@
 /* ==========================================================================
    2. BASE RESETS & TYPOGRAPHY
    ========================================================================== */
-
 html {
     height: 100%;
     scroll-behavior: smooth;
+}
+
+body {
+    background-color: #f8fafc !important;
 }
 
 .font-chakra-petch {
@@ -492,6 +495,63 @@ a.btn-nav-action:active {
 .btn-cyber-outline-sm:hover .bi-arrow-clockwise {
     transform: rotate(180deg);
 }
+
+.btn-cyber-dropdown-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: rgb(255, 255, 255);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: var(--radius-sm);
+    transition: color var(--duration-normal) var(--ease-out-quad),
+                border-color var(--duration-normal) var(--ease-out-quad);
+}
+
+.btn-cyber-dropdown-sm.dropdown-toggle::after {
+    transition: transform var(--duration-normal) var(--ease-out-quad);
+}
+
+.btn-cyber-dropdown-sm.show.dropdown-toggle::after {
+    transform: rotate(180deg);
+}
+
+/* Hover state */
+.btn-cyber-dropdown-sm:hover {
+    color: var(--color-accent-cyan);
+    border-color: var(--color-accent-cyan) !important;
+}
+
+/* Show state - khi dropdown đang mở (priority cao hơn focus) */
+.btn-cyber-dropdown-sm.show,
+.btn-cyber-dropdown-sm.show:focus {
+    color: var(--color-accent-cyan);
+    border-color: var(--color-accent-cyan) !important;
+}
+
+/* Focus visible - chỉ keyboard navigation */
+.btn-cyber-dropdown-sm:focus-visible {
+    color: var(--color-accent-cyan);
+    border-color: var(--color-accent-cyan) !important;
+    outline: 2px solid rgba(var(--rgb-accent-cyan), 0.5);
+    outline-offset: 2px;
+}
+
+/* Remove focus effect for mouse clicks - chỉ khi KHÔNG có .show */
+.btn-cyber-dropdown-sm:focus:not(:focus-visible):not(.show) {
+    outline: none;
+    color: rgb(255, 255, 255);
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.btn-cyber-dropdown-sm:active {
+    transform: scale(0.97);
+}
+
 
 /* ----- BTN-NOTIFICATION ----- */
 .btn-notification {
