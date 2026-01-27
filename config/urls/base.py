@@ -14,6 +14,9 @@ urlpatterns = [
     # Internationalization
     path("i18n/", include("django.conf.urls.i18n")),
     
+    # Health Check
+    path(r'health/', include('health_check.urls')),
+    
     # Admin
     path("admin/", admin.site.urls),
     

@@ -39,7 +39,7 @@ DATABASES["default"].update({
     "CONN_MAX_AGE": 60,
     "OPTIONS": {
         "connect_timeout": 10,
-        "options": "-c statement_timeout=30000",  # 30s query timeout
+        "options": f"-c statement_timeout=30000 -c search_path={MANAGEMENT_DB_SCHEMA},public",  # 30s query timeout + search_path (management)
     },
 })
 
@@ -106,7 +106,7 @@ TEMPLATES[0]["OPTIONS"]["loaders"] = [
 # =============================================================================
 
 STORAGES["staticfiles"] = {
-    "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    "BACKEND": "config.storage.NonStrictCompressedManifestStaticFilesStorage",
 }
 
 # =============================================================================
