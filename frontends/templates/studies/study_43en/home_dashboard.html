@@ -18,7 +18,7 @@
         <div class="min-w-0 flex-grow-1">
             <h5 class="h5 fw-bold mb-1">{% trans "43EN Study Dashboard" %}</h5>
             <p class="text-white-50 mb-0 small line-clamp-2" title="{{ study_name|default:'' }}">
-                {{ study_name|default:"" }}
+                {{ study_name|default:""|safe }}
             </p>
         </div>
         <button class="btn-cyber-outline-sm flex-shrink-0" id="refreshBtn">
@@ -428,7 +428,7 @@
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <h6 class="mb-0 fw-bold">
                         <i class="bi bi-virus text-danger me-2"></i>
-                        {% trans "K. pneumoniae isolated from throat swab & stool/rectal swab samples" %}
+                        <em>{% trans "K. pneumoniae" %}</em> {% trans "isolated from throat swab & stool/rectal swab samples" %}
                     </h6>
 
                     {# Site Filter Dropdown #}
@@ -488,7 +488,7 @@
                         <small>
                             <i class="bi bi-asterisk me-1"></i>
                             <strong>*</strong>
-                            {% trans "K. pneumoniae positive sample / Total collected samples" %}
+                            <em>{% trans "K. pneumoniae" %}</em> {% trans "positive sample / Total collected samples" %}
                         </small>
                     </div>
                 </div>

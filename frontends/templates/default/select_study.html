@@ -51,7 +51,7 @@
                         <div class="study-item__code-badge">{{ study.code }}</div>
                     </div>
                     <div class="study-item__col study-item__col--name d-none d-md-flex" data-col="name">
-                        <span class="study-item__name">{{ study.name|default:"—" }}</span>
+                        <span class="study-item__name">{{ study.name|default:"—"|safe }}</span>
                     </div>
                     <div class="study-item__col study-item__col--status d-none d-lg-flex" data-col="status">
                         <span class="status-badge status-badge--{{ study.status }}">

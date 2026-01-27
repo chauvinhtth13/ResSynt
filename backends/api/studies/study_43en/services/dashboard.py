@@ -144,7 +144,7 @@ def home_dashboard(request):
             'study': getattr(request, 'study', None),
             'study_code': '43en',
             'study_folder': 'studies/study_43en',
-            'study_name': "Klebsiella pneumoniae Epidemiology Study",
+            'study_name': "The characteristics and associated factors of community-acquired hypervirulent <i>Klebsiella pneumoniae</i> infections",
             
             # Site information
             'site_name': site_name,

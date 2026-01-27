@@ -12,6 +12,9 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db import transaction
 from django.db.models import Count, Q, F, Value
 from django.utils import timezone
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
+import re
 
 from .models import User, Study, Site, StudySite, StudyMembership
 
@@ -197,6 +200,69 @@ class UserAdmin(BaseUserAdmin):
     clear_user_cache.short_description = 'Clear user cache'
 
 
+
+# ==========================================
+# STUDY FORM WITH HTML SUPPORT
+# ==========================================
+
+class StudyForm(forms.ModelForm):
+    """Custom form for Study with HTML support in name fields"""
+    
+    class Meta:
+        model = Study
+        fields = '__all__'
+        widgets = {
+            'name_vi': forms.Textarea(attrs={
+                'rows': 3,
+                'cols': 80,
+                'style': 'font-family: monospace;',
+                'placeholder': 'Ví dụ: 44EN: Community surveillance of antimicrobial resistant and hypervirulent <i>Escherichia coli</i> and <i>Klebsiella pneumoniae</i>'
+            }),
+            'name_en': forms.Textarea(attrs={
+                'rows': 3,
+                'cols': 80,
+                'style': 'font-family: monospace;',
+                'placeholder': 'Example: 44EN: Community surveillance of antimicrobial resistant and hypervirulent <i>Escherichia coli</i> and <i>Klebsiella pneumoniae</i>'
+            }),
+        }
+        help_texts = {
+            'name_vi': 'Bạn có thể sử dụng các thẻ HTML để định dạng: <i>text</i> hoặc <em>text</em> cho chữ nghiêng, <b>text</b> hoặc <strong>text</strong> cho chữ đậm.',
+            'name_en': 'You can use HTML tags for formatting: <i>text</i> or <em>text</em> for italics, <b>text</b> or <strong>text</strong> for bold.',
+        }
+    
+    def clean_name_vi(self):
+        """Sanitize HTML in Vietnamese name"""
+        return self._sanitize_html(self.cleaned_data.get('name_vi', ''))
+    
+    def clean_name_en(self):
+        """Sanitize HTML in English name"""
+        return self._sanitize_html(self.cleaned_data.get('name_en', ''))
+    
+    def _sanitize_html(self, text):
+        """Allow only safe HTML tags: i, em, b, strong, sup, sub"""
+        if not text:
+            return text
+        
+        # Allowed tags
+        allowed_tags = ['i', 'em', 'b', 'strong', 'sup', 'sub']
+        
+        # Remove all tags except allowed ones
+        # This is a simple sanitization - for production, consider using bleach library
+        import html
+        
+        # First, escape all HTML
+        safe_text = escape(text)
+        
+        # Then, restore allowed tags
+        for tag in allowed_tags:
+            # Restore opening tags
+            safe_text = safe_text.replace(f'&lt;{tag}&gt;', f'<{tag}>')
+            # Restore closing tags
+            safe_text = safe_text.replace(f'&lt;/{tag}&gt;', f'</{tag}>')
+        
+        return safe_text
+
+
 # ==========================================
 # STUDY SITE INLINE
 # ==========================================
@@ -221,6 +287,8 @@ class StudySiteInline(admin.TabularInline):
 @admin.register(Study)
 class StudyAdmin(admin.ModelAdmin):
     """Study administration"""
+    
+    form = StudyForm  # Use custom form with HTML support
 
     list_display = (
         'code',
@@ -244,7 +312,8 @@ class StudyAdmin(admin.ModelAdmin):
             'fields': ('code', 'status')
         }),
         ('Names', {
-            'fields': ('name_vi', 'name_en')
+            'fields': ('name_vi', 'name_en'),
+            'description': 'Bạn có thể sử dụng HTML tags để định dạng (ví dụ: &lt;i&gt;Escherichia coli&lt;/i&gt; cho chữ nghiêng)'
         }),
         ('Database Information', {
             'fields': ('db_name', 'database_info'),
@@ -285,7 +354,9 @@ class StudyAdmin(admin.ModelAdmin):
         )
     
     def name_display(self, obj):
-        return obj.name
+        """Display name with HTML formatting"""
+        # Use mark_safe to render HTML tags
+        return mark_safe(obj.name)
     name_display.short_description = 'Name'
 
     def users_count_display(self, obj):
