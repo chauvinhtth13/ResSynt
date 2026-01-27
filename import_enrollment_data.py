@@ -66,7 +66,7 @@ from backends.studies.study_43en.models.patient import DISCH_CASE
 # CẤU HÌNH
 # ==========================================
 STUDY_DATABASE = 'db_study_43en'
-STUDYID = 'KLEB-NET'
+STUDYID = '43EN'
 
 SITE_MAPPING = {
     'HTD': '003',
@@ -256,6 +256,31 @@ def get_site_id(hospital_site):
     return SITE_MAPPING.get(site, site)
 
 
+def get_current_max_subjid_number(siteid):
+    """
+    Lấy số thứ tự lớn nhất hiện tại của SUBJID cho site
+    Returns: int (0 nếu chưa có record nào)
+    """
+    last_case = (
+        SCR_CASE.objects
+        .using(STUDY_DATABASE)
+        .filter(SITEID=siteid)
+        .exclude(SUBJID__isnull=True)
+        .exclude(SUBJID__exact='')
+        .filter(SUBJID__startswith='A-')
+        .order_by('-SUBJID')
+        .first()
+    )
+    
+    if last_case and last_case.SUBJID:
+        try:
+            return int(last_case.SUBJID.split('-')[-1])
+        except (ValueError, IndexError):
+            pass
+            
+    return 0
+
+
 def normalize_ward(ward_str, siteid):
     """
     Normalize ward name to match database values
@@ -416,6 +441,8 @@ def import_csv_to_db(csv_file):
     success = 0
     error = 0
     skipped = 0
+    # Track SUBJID counter per site for this import session
+    subjid_counters = {}
     
     print(f"\n{'='*80}")
     print(f"BẮT ĐẦU IMPORT DỮ LIỆU ENROLLMENT VÀ CÁC CRF LIÊN QUAN")
@@ -443,28 +470,45 @@ def import_csv_to_db(csv_file):
                 hospital_site = row.get('Hospital site', '').strip()
                 siteid = get_site_id(hospital_site)
                 usubjid = convert_study_id_to_usubjid(study_id_raw)
-                
+
                 if not usubjid:
                     print(f"⚠️  Dòng {total}: Không có Study ID hợp lệ")
                     skipped += 1
                     continue
-                
+
                 # Check if SCR_CASE exists
                 try:
                     scr_case = SCR_CASE.objects.using(STUDY_DATABASE).get(USUBJID=usubjid)
                 except SCR_CASE.DoesNotExist:
-                    print(f"⚠️  {usubjid}: SCR_CASE không tồn tại - Bỏ qua")
-                    skipped += 1
-                    continue
-                
+                    # Nếu không tìm thấy SCR_CASE, thử tạo SUBJID/USUBJID theo logic đánh số lại cho từng site
+                    
+                    # Initialize counter from DB if not in session
+                    if siteid not in subjid_counters:
+                         subjid_counters[siteid] = get_current_max_subjid_number(siteid)
+
+                    # Increment
+                    subjid_counters[siteid] += 1
+                    subjid_number = subjid_counters[siteid]
+                    
+                    new_subjid = f"A-{subjid_number:03d}"
+                    new_usubjid = f"{siteid}-{new_subjid}"
+                    # Thử tìm lại SCR_CASE với USUBJID mới
+                    try:
+                        scr_case = SCR_CASE.objects.using(STUDY_DATABASE).get(USUBJID=new_usubjid)
+                        usubjid = new_usubjid
+                    except SCR_CASE.DoesNotExist:
+                        print(f"⚠️  {usubjid}: SCR_CASE không tồn tại - Bỏ qua (đã thử mapping sang {new_usubjid})")
+                        skipped += 1
+                        continue
+
                 # Parse dates
                 icf_date = parse_date(row.get('ICF Date', ''))
                 admission_date = parse_date(row.get('Admission Date', ''))
                 discharge_date = parse_date(row.get('Discharge Date', ''))
-                
+
                 # Parse DOB
                 day_of_birth, month_of_birth, year_of_birth = parse_dob(row.get('DoB', ''))
-                
+
                 # Parse other fields
                 gender = parse_gender(row.get('Gender', ''))
                 ward = normalize_ward(row.get('Ward', ''), siteid)
@@ -472,7 +516,7 @@ def import_csv_to_db(csv_file):
                 phone = parse_phone(row.get('Phone No.', ''))
                 patient_id = row.get('Patient ID', '').strip() or None  # MEDRECORDID
                 address_parts = parse_address(row.get('Address', ''))
-                
+
                 # ==========================================
                 # 1. CREATE/UPDATE ENR_CASE
                 # ==========================================
@@ -487,7 +531,7 @@ def import_csv_to_db(csv_file):
                         'SEX': gender,
                     }
                 )
-                
+
                 if not enr_created:
                     # Update existing
                     updated = False
@@ -505,10 +549,10 @@ def import_csv_to_db(csv_file):
                     if gender and not enr_case.SEX:
                         enr_case.SEX = gender
                         updated = True
-                    
+
                     if updated:
                         enr_case.save(using=STUDY_DATABASE)
-                
+
                 # ==========================================
                 # 2. CREATE/UPDATE PERSONAL_DATA (PII)
                 # ==========================================
@@ -526,7 +570,7 @@ def import_csv_to_db(csv_file):
                         'PRIMARY_ADDRESS': 'old',  # Sử dụng old address
                     }
                 )
-                
+
                 if not pd_created:
                     # Update existing if fields are empty
                     updated = False
@@ -554,11 +598,11 @@ def import_csv_to_db(csv_file):
                     if address_parts['PROVINCECITY'] and not personal_data.PROVINCECITY:
                         personal_data.PROVINCECITY = address_parts['PROVINCECITY']
                         updated = True
-                    
+
                     if updated:
                         personal_data.PRIMARY_ADDRESS = 'old'
                         personal_data.save(using=STUDY_DATABASE)
-                
+
                 # ==========================================
                 # 3. CREATE/UPDATE CLI_CASE (Clinical)
                 # ==========================================
@@ -570,12 +614,12 @@ def import_csv_to_db(csv_file):
                             'ADMISDEPT': ward,
                         }
                     )
-                    
+
                     if not cli_created:
                         if admission_date and not cli_case.ADMISDATE:
                             cli_case.ADMISDATE = admission_date
                             cli_case.save(using=STUDY_DATABASE)
-                
+
                 # ==========================================
                 # 4. CREATE/UPDATE DISCH_CASE (Discharge)
                 # ==========================================
@@ -590,17 +634,17 @@ def import_csv_to_db(csv_file):
                             'INITIAL': scr_case.INITIAL,
                         }
                     )
-                    
+
                     if not disch_created:
                         if discharge_date and not disch_case.DISCHDATE:
                             disch_case.DISCHDATE = discharge_date
                             disch_case.save(using=STUDY_DATABASE)
-                
+
                 success += 1
                 enr_status = "🆕" if enr_created else "📝"
                 print(f"{enr_status} {usubjid} | Site: {siteid} | Ward: {ward} | "
                       f"ICF: {icf_date} | Adm: {admission_date} | Disch: {discharge_date}")
-                
+
             except Exception as e:
                 error += 1
                 print(f"❌ Dòng {total} ({study_id_raw}): Lỗi - {str(e)}")
@@ -645,9 +689,9 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
     possible_paths = [
-        os.path.join(script_dir, "Book2.csv"),
-        os.path.join(project_root, "Book2.csv"),
-        os.path.join(project_root, "data_import", "Book2.csv"),
+        os.path.join(script_dir, "Book3.csv"),
+        os.path.join(project_root, "Book3.csv"),
+        os.path.join(project_root, "data_import", "Book3.csv"),
     ]
     
     csv_file = None

@@ -5,9 +5,10 @@
  * Features:
  * - Enrollment chart with ECharts
  * - Target vs Actual comparison
+ * - Progress calculated against FINAL TARGET (750), not current month target
  * - Responsive design
  * 
- * Version: 2.2 - Fixed
+ * Version: 2.3 - FIXED PROGRESS CALCULATION
  */
 
 (function () {
@@ -210,9 +211,7 @@
         const trimmedTarget = data.target.slice(startIndex);
         const trimmedActual = data.actual.slice(startIndex);
 
-
-
-        // Chart options (rest stays the same)
+        // Chart options
         const option = {
             title: {
                 text: `Target: ${data.site_target} patients`,
@@ -255,15 +254,17 @@
                         `;
                     });
 
-                    const targetValue = params[0] ? params[0].value : null;
+                    // ✅ CRITICAL FIX: Progress = actualValue / FINAL TARGET (750)
+                    // NOT actualValue / current month target
                     const actualValue = params[1] && params[1].value !== null ? params[1].value : null;
+                    const finalTarget = data.site_target; // Use final target from backend (750 for all, 200/400/150 for sites)
 
-                    if (targetValue !== null && actualValue !== null && targetValue > 0) {
-                        const progress = ((actualValue / targetValue) * 100).toFixed(1);
+                    if (actualValue !== null && finalTarget > 0) {
+                        const progress = ((actualValue / finalTarget) * 100).toFixed(1);
 
                         html += `
                             <div style="margin-top: 8px; padding-top: 5px; border-top: 1px solid #eee;">
-                                Progress: <strong>${progress}%</strong>
+                                Progress: <strong>${progress}%</strong> of ${finalTarget}
                             </div>
                         `;
                     }

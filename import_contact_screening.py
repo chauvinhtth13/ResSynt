@@ -216,35 +216,38 @@ def parse_contact_eligibility_criteria(eligibility, recruited, unrecruited_reaso
         'CONSENTTOSTUDY': True,         # Consent to participate
         'UNRECRUITED_REASON': None,
     }
-    
+
     is_eligible = eligibility and recruited
-    
+
     if is_eligible:
         return criteria
-    
+
     # Không đủ điều kiện → phân tích lý do
     reason = (unrecruited_reason or '').strip().lower()
-    
+
     # Reason 1: Age < 18 years
     if '1.' in reason or 'age < 18' in reason or 'age <18' in reason or 'tuổi' in reason:
         criteria['CONSENTTOSTUDY'] = False
-    
+
     # Reason 2: DO NOT live in the same household
     elif '2.' in reason or 'not live' in reason or 'do not live' in reason or 'household' in reason or 'sống' in reason:
         criteria['LIVEIN5DAYS3MTHS'] = False
         criteria['CONSENTTOSTUDY'] = False
-    
+
     # Reason 3: DO NOT share meals or provide direct care
     elif '3.' in reason or 'not share' in reason or 'do not share' in reason or 'meals' in reason or 'care' in reason or 'bữa ăn' in reason:
         criteria['MEALCAREONCEDAY'] = False
         criteria['CONSENTTOSTUDY'] = False
-    
+
     # Các lý do khác
     else:
+        # Không match với các lý do cụ thể → lưu vào UNRECRUITED_REASON
+        # Set CONSENTTOSTUDY = False để đánh dấu không tuyển
         criteria['CONSENTTOSTUDY'] = False
-    
+
+    # Luôn lưu lý do gốc vào UNRECRUITED_REASON
     criteria['UNRECRUITED_REASON'] = unrecruited_reason if unrecruited_reason else None
-    
+
     return criteria
 
 
@@ -322,10 +325,10 @@ def import_contact_csv_to_db(csv_file):
                     skipped += 1
                     continue
                 
-                # Kiểm tra contact đã tồn tại chưa
-                existing = SCR_CONTACT.objects.using(STUDY_DATABASE).filter(SCRID=scrid).first()
+                # Kiểm tra contact đã tồn tại chưa (theo SCRID và SITEID)
+                existing = SCR_CONTACT.objects.using(STUDY_DATABASE).filter(SCRID=scrid, SITEID=siteid).first()
                 if existing:
-                    print(f"⚠️  {scrid}: Đã tồn tại - Bỏ qua")
+                    print(f"⚠️  {scrid} (Site {siteid}): Đã tồn tại - Bỏ qua")
                     skipped += 1
                     continue
                 
@@ -432,7 +435,7 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
     possible_paths = [
-        os.path.join(script_dir, "Book3.csv"),
+        os.path.join(script_dir, "Book2.csv"),
     ]
     
     csv_file = None
