@@ -392,19 +392,19 @@ def get_enrollment_chart_api(request):
         # ===== DEFINE TARGETS AND START DATES =====
         SITE_CONFIG = {
             'all': {
-                'target': 750,
+                'target': 750,  # 270 + 380 + 100
                 'start_date': date(2024, 7, 1),
             },
             '003': {
-                'target': 200,
+                'target': 270,
                 'start_date': date(2024, 7, 1),    # 01/07/2024
             },
             '011': {
-                'target': 400,
+                'target': 380,
                 'start_date': date(2025, 10, 13),  # 13/10/2025
             },
             '020': {
-                'target': 150,
+                'target': 100,
                 'start_date': date(2025, 11, 5),   # 05/11/2025
             },
         }
@@ -991,10 +991,11 @@ def get_sampling_followup_stats_api(request):
             'blood': c_visit1_samples.filter(BLOOD=True).count(),
         }
         
-        # Sample Visit 2 (Day 10) - Not applicable for contacts based on PDF
+        # Sample Visit 2 (Day 10)
+        c_visit2_samples = contact_samples_qs.filter(SAMPLE_TYPE='2', SAMPLE=True)
         contact_stats['visit2'] = {
-            'total': None,
-            'blood': None,
+            'total': c_visit2_samples.count(),
+            'blood': c_visit2_samples.filter(BLOOD=True).count(),
         }
         
         # Sample Visit 3 (Day 28)
@@ -1328,5 +1329,161 @@ def get_kpneumoniae_isolation_stats_api(request):
             'success': False,
             'error': str(e),
         }, status=500)
+
+
+@require_GET
+@login_required
+def get_missed_declined_reasons_api(request):
+    """
+    API endpoint for missed/declined consent reasons statistics
+    
+    Query Parameters:
+        site: Optional site code ('003', '020', '011', 'all')
+    
+    Returns:
+        JSON with:
+        - patient_reasons: Dict with reason counts for patients
+        - contact_reasons: Dict with reason counts for contacts
+    
+    Reasons tracked:
+    1. Participant does not want to participate in research
+    2. Not enough time/ too busy to commit
+    3. Not able to get informed consent
+    4. Dr/RN too busy to screen participant properly
+    
+    Usage:
+        GET /api/missed-declined-reasons/
+        GET /api/missed-declined-reasons/?site=003
+    """
+    from django.db.models import Q, Count, Case, When, IntegerField
+    
+    try:
+        # Get user's allowed sites from middleware
+        user_sites = getattr(request, 'user_sites', set())
+        can_access_all = getattr(request, 'can_access_all_sites', False)
+        
+        # Get query parameter
+        site_param = request.GET.get('site', None)
+        
+        # Determine site filter with permission validation
+        if site_param and site_param != 'all':
+            # SECURITY: Validate user has permission to access this site
+            if not can_access_all and site_param not in user_sites:
+                logger.warning(f"Missed/declined API: User {request.user.username} denied access to site {site_param}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Bạn không có quyền truy cập site {site_param}',
+                }, status=403)
+            
+            site_filter = site_param
+            filter_type = 'single'
+            logger.info(f"Missed/declined API: Using site from parameter: {site_param}")
+        else:
+            site_filter, filter_type = get_site_filter_params(request)
+            logger.info(f"Missed/declined API: Using site from middleware: {site_filter}, type: {filter_type}")
+        
+        # ===== PATIENT MISSED/DECLINED REASONS =====
+        # Get all non-recruited patients (is_confirmed=False)
+        patient_qs = get_filtered_queryset(
+            SCR_CASE, site_filter, filter_type
+        ).filter(
+            is_confirmed=False,
+            UNRECRUITED_REASON__isnull=False
+        ).exclude(
+            UNRECRUITED_REASON__exact=''
+        )
+
+        # Đếm tất cả lý do thực tế (full text, không nhóm)
+        from collections import Counter, defaultdict
+        patient_reason_list = list(patient_qs.values_list('UNRECRUITED_REASON', flat=True))
+        contact_reason_list = list(get_filtered_queryset(
+            SCR_CONTACT, site_filter, filter_type
+        ).filter(
+            is_confirmed=False,
+            UNRECRUITED_REASON__isnull=False
+        ).exclude(
+            UNRECRUITED_REASON__exact=''
+        ).values_list('UNRECRUITED_REASON', flat=True))
+
+        # Đếm tất cả lý do thực tế (full text, lấy cả null/blank)
+        from collections import Counter, defaultdict
+        # Lấy tất cả lý do (bao gồm cả None và '')
+        patient_reason_list = list(get_filtered_queryset(
+            SCR_CASE, site_filter, filter_type
+        ).filter(
+            is_confirmed=False
+        ).values_list('UNRECRUITED_REASON', flat=True))
+        contact_reason_list = list(get_filtered_queryset(
+            SCR_CONTACT, site_filter, filter_type
+        ).filter(
+            is_confirmed=False
+        ).values_list('UNRECRUITED_REASON', flat=True))
+
+        # Normalize: None, '' thành 'NULL/BLANK'
+        def norm_reason(r):
+            if r is None or (isinstance(r, str) and r.strip() == ''):
+                return 'NULL/BLANK'
+            return r.strip()
+
+        patient_counter = Counter([norm_reason(r) for r in patient_reason_list])
+        contact_counter = Counter([norm_reason(r) for r in contact_reason_list])
+
+        # Gộp tất cả lý do xuất hiện ở cả patient/contact
+        all_reasons = set(patient_counter.keys()) | set(contact_counter.keys())
+        reasons_dict = {}
+        for reason in sorted(all_reasons):
+            reasons_dict[reason] = {
+                'patient': patient_counter.get(reason, 0),
+                'contact': contact_counter.get(reason, 0),
+            }
+
+        # Tổng số
+        patient_total = sum(patient_counter.values())
+        contact_total = sum(contact_counter.values())
+
+        # ===== RETURN DATA =====
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'reasons': reasons_dict,
+                'patient': {
+                    'total': patient_total,
+                },
+                'contact': {
+                    'total': contact_total,
+                },
+            },
+            'site_name': _get_site_display_name(site_filter, filter_type),
+            'timestamp': datetime.now().isoformat(),
+        })
+        
+    except Exception as e:
+        logger.error(f"Missed/declined reasons API error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+        }, status=500)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

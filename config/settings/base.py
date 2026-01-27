@@ -402,7 +402,7 @@ PASSWORD_RESET_TIMEOUT = 900  # 15 minutes
 # ORGANIZATION
 # =============================================================================
 
-ORGANIZATION_NAME = env("ORGANIZATION_NAME", default="ResSync Research Platform")
+ORGANIZATION_NAME = env("ORGANIZATION_NAME", default="ResSynt Research Platform")
 PLATFORM_VERSION = env("PLATFORM_VERSION", default="1.0.0")
 BACKUP_RETENTION_DAYS = 90
 

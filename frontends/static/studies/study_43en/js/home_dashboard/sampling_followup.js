@@ -166,8 +166,8 @@
                 label: 'Sampling_Visit 2 (Day 10)',
                 patient_total: data.patient.visit2.total,
                 patient_blood: data.patient.visit2.blood,
-                contact_total: formatValue(null),  // Not applicable for contacts
-                contact_blood: formatValue(null),
+                contact_total: data.contact.visit2.total,
+                contact_blood: data.contact.visit2.blood,
             },
             {
                 label: 'Sampling_Visit 3 (Day 28)',

@@ -1,14 +1,19 @@
 /**
- * Monthly Screening & Enrollment Statistics
- * ==========================================
+ * Monthly Screening & Enrollment Statistics - FIXED VERSION
+ * ==========================================================
+ * 
+ * CHANGES:
+ * - Fixed date range calculation to respect "today" limit
+ * - Added proper padding for date strings
+ * - Improved period filtering
  * 
  * Features:
  * - Bar chart (70%) + Data table (30%)
  * - Site filter buttons
- * - Date range filter
+ * - Date range filter (Year/Quarter/Month)
  * - Responsive design
  * 
- * Version: 1.0
+ * Version: 2.0
  */
 
 (function () {
@@ -139,6 +144,10 @@
 
     /**
      * Calculate date range from year/quarter/month selection
+     * 
+     * FIXED: Now properly handles date range for filtering data
+     * - "All" period: Shows ALL available data from study start to today
+     * - Specific period: Shows only data within selected period
      */
     function calculateDateRange() {
         const periodType = CONFIG.PERIOD_TYPE;
@@ -157,6 +166,12 @@
                 // Specific year: Jan 1 to Dec 31
                 startDate = `${year}-01-01`;
                 endDate = `${year}-12-31`;
+                
+                // Don't show months beyond today
+                const today = new Date().toISOString().split('T')[0];
+                if (endDate > today) {
+                    endDate = today;
+                }
             }
         } else if (periodType === 'quarter') {
             if (year === 'all' || quarter === 'all') {
@@ -177,7 +192,13 @@
                 // Last day of end month
                 const endMonth = parseInt(months.end);
                 const lastDay = new Date(parseInt(year), endMonth, 0).getDate();
-                endDate = `${year}-${months.end}-${lastDay}`;
+                endDate = `${year}-${months.end}-${String(lastDay).padStart(2, '0')}`;
+                
+                // Don't show months beyond today
+                const today = new Date().toISOString().split('T')[0];
+                if (endDate > today) {
+                    endDate = today;
+                }
             }
         } else if (periodType === 'month') {
             if (year === 'all' || month === 'all') {
@@ -190,7 +211,13 @@
 
                 // Last day of month
                 const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-                endDate = `${year}-${month}-${lastDay}`;
+                endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+                
+                // Don't show days beyond today
+                const today = new Date().toISOString().split('T')[0];
+                if (endDate > today) {
+                    endDate = today;
+                }
             }
         }
 
