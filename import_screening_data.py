@@ -7,15 +7,17 @@ Hospital site,Screening Code,Patient's Initials,Screening Date,Eligibility,Recru
 Site Mapping:
 - HTD → 003
 - CRH → 011
+- NHTD → 020  ← ADDED
 
 QUAN TRỌNG - FORMAT DỮ LIỆU:
 1. SCRID: PS-{SITEID}-{NUMBER}
    - HTD: PS-003-0001, PS-003-0002...
    - CRH: PS-011-0001, PS-011-0002...
+   - NHTD: PS-020-0001, PS-020-0002...  ← ADDED
 
 2. USUBJID: {SITEID}-{SUBJID} (KHÔNG CÓ 43EN)
-   - CSV input: 43EN-003-A-001
-   - Database: 003-A-001 ✅
+   - CSV input: 43EN-003-A-001 hoặc 43EN-020-A-001
+   - Database: 003-A-001 hoặc 020-A-001 ✅
 
 Target Database: db_study_43en
 """
@@ -68,6 +70,7 @@ STUDY_DATABASE = 'db_study_43en'
 SITE_MAPPING = {
     'HTD': '003',
     'CRH': '011',
+    'NHTD': '020',  # ← ADDED
 }
 
 # ==========================================
@@ -75,7 +78,7 @@ SITE_MAPPING = {
 # ==========================================
 
 def parse_date(date_str):
-    """Parse date: 3-Jul-24, 13-Oct-25"""
+    """Parse date: 3-Jul-24, 13-Oct-25, 6-Nov-25"""
     if not date_str or not date_str.strip():
         return None
     
@@ -103,6 +106,17 @@ def get_site_id(hospital_site):
     site = hospital_site.strip().upper()
     site = re.sub(r'[^A-Z0-9]', '', site)
     
+    # Check exact matches first
+    if site == 'NHTD':  # ← ADDED
+        return SITE_MAPPING['NHTD']
+    if site == 'CRH':
+        return SITE_MAPPING['CRH']
+    if site == 'HTD':
+        return SITE_MAPPING['HTD']
+    
+    # Check partial matches
+    if 'NHTD' in site:  # ← ADDED
+        return SITE_MAPPING['NHTD']
     if 'CRH' in site:
         return SITE_MAPPING['CRH']
     if 'HTD' in site:
@@ -117,8 +131,10 @@ def parse_study_id(study_id_str):
     
     Input examples:
     - 43EN-003-A-001 → USUBJID: 003-A-001
+    - 43EN-020-A-001 → USUBJID: 020-A-001  ← ADDED
     - 43DN-011-A-012 → USUBJID: 011-A-012 (fix typo)
     - 003-A-001      → USUBJID: 003-A-001
+    - 020-A-001      → USUBJID: 020-A-001  ← ADDED
     
     Returns: (studyid, siteid, subjid, usubjid)
     """
@@ -131,7 +147,7 @@ def parse_study_id(study_id_str):
     match = re.match(r'(\w+)-(\d{3})-(A-\d{3})', study_id_str)
     if match:
         studyid = match.group(1)  # 43EN or 43DN
-        siteid = match.group(2)   # 003
+        siteid = match.group(2)   # 003, 011, 020
         subjid = match.group(3)   # A-001
         
         # Fix typo 43DN → 43EN
@@ -140,16 +156,16 @@ def parse_study_id(study_id_str):
             studyid = '43EN'
         
         # CRITICAL: USUBJID = SITEID-SUBJID (XÓA 43EN prefix)
-        usubjid = f"{siteid}-{subjid}"  # 003-A-001 (NOT 43EN-003-A-001)
+        usubjid = f"{siteid}-{subjid}"  # 003-A-001 or 020-A-001 (NOT 43EN-...)
         
         return studyid, siteid, subjid, usubjid
     
     # Pattern 2: 003-A-001 (already without prefix)
     match2 = re.match(r'(\d{3})-(A-\d{3})', study_id_str)
     if match2:
-        siteid = match2.group(1)  # 003
+        siteid = match2.group(1)  # 003, 011, 020
         subjid = match2.group(2)  # A-001
-        usubjid = study_id_str    # 003-A-001
+        usubjid = study_id_str    # 003-A-001 or 020-A-001
         studyid = '43EN'
         
         return studyid, siteid, subjid, usubjid
@@ -213,8 +229,8 @@ def import_csv_to_db(csv_file):
     print(f"🗄️  Database: {STUDY_DATABASE}")
     print(f"📋 Study ID: 43EN")
     print(f"\n🔑 FORMAT:")
-    print(f"   - SCRID: PS-{{SITEID}}-{{NUMBER}} (e.g., PS-003-0001)")
-    print(f"   - USUBJID: {{SITEID}}-{{SUBJID}} (e.g., 003-A-001, KHÔNG CÓ 43EN)")
+    print(f"   - SCRID: PS-{{SITEID}}-{{NUMBER}} (e.g., PS-003-0001, PS-020-0001)")
+    print(f"   - USUBJID: {{SITEID}}-{{SUBJID}} (e.g., 003-A-001, 020-A-001, KHÔNG CÓ 43EN)")
     print(f"{'='*70}\n")
     
     # Load existing SCRIDs to memory (OPTIMIZATION)
@@ -256,10 +272,14 @@ def import_csv_to_db(csv_file):
                 # CRITICAL: SCRID = PS-{SITEID}-{NUMBER} để unique toàn database
                 # HTD/PS0001 → PS-003-0001
                 # CRH/PS0001 → PS-011-0001
+                # NHTD/PS0001 → PS-020-0001  ← WORKS NOW
                 screening_code_number = screening_code.replace('PS', '').strip()
+                # Pad với zeros nếu cần (PS0001 → 0001, PS1 → 0001)
+                if screening_code_number.isdigit():
+                    screening_code_number = screening_code_number.zfill(4)
                 scrid = f"PS-{siteid}-{screening_code_number}"
                 
-                initial = row.get("Patient's Initials", '').strip()
+                initial = row.get("Patient's initials", row.get("Patient's Initials", '')).strip()
                 screening_date = parse_date(row.get('Screening Date', ''))
                 eligibility = parse_yes_no(row.get('Eligibility', ''))
                 recruited = parse_yes_no(row.get('Recruited', ''))
@@ -306,7 +326,7 @@ def import_csv_to_db(csv_file):
                 # Set Study ID if eligible (USUBJID đã xóa 43EN prefix)
                 if is_eligible and usubjid_from_csv:
                     screening_case.SUBJID = subjid_from_csv
-                    screening_case.USUBJID = usubjid_from_csv  # 003-A-001 (NOT 43EN-003-A-001)
+                    screening_case.USUBJID = usubjid_from_csv  # 003-A-001 or 020-A-001 (NOT 43EN-...)
                 
                 # Add to batch
                 records_to_create.append(screening_case)

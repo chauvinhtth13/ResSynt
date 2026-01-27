@@ -223,14 +223,22 @@ def import_contact_sample_data(csv_file):
             continue
         
         try:
-            # Check if ENR_CONTACT exists
+            # Check if SCR_CONTACT exists first (USUBJID is stored on SCR_CONTACT)
             try:
-                enr_contact = ENR_CONTACT.objects.using(STUDY_DATABASE).get(USUBJID=contact_usubjid)
-            except ENR_CONTACT.DoesNotExist:
-                print(f"⚠️  {contact_usubjid}: ENR_CONTACT không tồn tại - Bỏ qua")
+                scr_contact = SCR_CONTACT.objects.using(STUDY_DATABASE).get(USUBJID=contact_usubjid)
+            except SCR_CONTACT.DoesNotExist:
+                print(f"⚠️  {contact_usubjid}: SCR_CONTACT không tồn tại - Bỏ qua")
                 stats['not_found'] += 1
                 continue
-            
+
+            # Then get ENR_CONTACT by passing the SCR_CONTACT object (USUBJID is a OneToOneField)
+            try:
+                enr_contact = ENR_CONTACT.objects.using(STUDY_DATABASE).get(USUBJID=scr_contact)
+            except ENR_CONTACT.DoesNotExist:
+                print(f"⚠️  {contact_usubjid}: ENR_CONTACT không tồn tại (chưa enroll) - Bỏ qua")
+                stats['not_found'] += 1
+                continue
+
             print(f"\n📋 Processing: {contact_usubjid}")
             
             # ==========================================
@@ -354,15 +362,19 @@ def import_contact_sample_data(csv_file):
     
     for site_name, site_id in site_mapping.items():
         try:
+            # Safer approach: find SCR_CONTACT entries for site, then related ENR_CONTACT, then SAM_CONTACT
+            scr_qs = SCR_CONTACT.objects.using(STUDY_DATABASE).filter(USUBJID__startswith=f"{site_id}-B-")
+            enr_qs = ENR_CONTACT.objects.using(STUDY_DATABASE).filter(USUBJID__in=scr_qs)
+
             sam_count = SAM_CONTACT.objects.using(STUDY_DATABASE).filter(
-                USUBJID__USUBJID__startswith=f"{site_id}-B-"
+                USUBJID__in=enr_qs
             ).count()
-            
+
             sam_with_samples = SAM_CONTACT.objects.using(STUDY_DATABASE).filter(
-                USUBJID__USUBJID__startswith=f"{site_id}-B-",
+                USUBJID__in=enr_qs,
                 SAMPLE=True
             ).count()
-            
+
             print(f"\n   {site_name} (Site {site_id}):")
             print(f"     - Total SAM_CONTACT: {sam_count}")
             print(f"     - With samples: {sam_with_samples}")
@@ -387,7 +399,7 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
     possible_paths = [
-        os.path.join(script_dir, "Book6.csv"),
+        os.path.join(script_dir, "Book1.csv"),
     ]
     
     file_path = None

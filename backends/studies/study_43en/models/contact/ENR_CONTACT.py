@@ -71,6 +71,14 @@ class ENR_CONTACT(AuditFieldsMixin):
         help_text=_('e.g., spouse, child, parent, sibling')
     )
     
+    RECRUITDEPT = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name=_('Recruitment Department')
+    )
+
     # ==========================================
     # BIRTH INFORMATION
     # ==========================================

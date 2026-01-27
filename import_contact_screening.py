@@ -8,6 +8,7 @@ Table: SCR_CONTACT
 Site Mapping:
 - HTD → 003
 - CRH → 011
+- NHTD → 020  ← ADDED
 
 Logic:
 - Eligibility=YES và Recruited=YES → is_confirmed=True, tạo SUBJID và USUBJID
@@ -77,6 +78,7 @@ STUDYID = '43EN'
 SITE_MAPPING = {
     'HTD': '003',
     'CRH': '011',
+    'NHTD': '020',  # ← ADDED
 }
 
 # ==========================================
@@ -92,7 +94,7 @@ def parse_date(date_str):
     date_str = re.sub(r'^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+', '', date_str, flags=re.IGNORECASE)
     
     formats = [
-        '%d-%b-%y',   # 3-Jul-24
+        '%d-%b-%y',   # 3-Jul-24, 6-Nov-25
         '%d-%b-%Y',   # 3-Jul-2024
         '%d/%m/%Y',   # 03/07/2024
         '%d/%m/%y',   # 03/07/24
@@ -122,19 +124,37 @@ def parse_yes_no(value):
 def get_site_id(hospital_site):
     """Map hospital site to SITEID"""
     site = hospital_site.strip().upper()
+    site = re.sub(r'[^A-Z0-9]', '', site)
+    
+    # Check exact matches first
+    if site == 'NHTD':  # ← ADDED
+        return SITE_MAPPING['NHTD']
+    if site == 'CRH':
+        return SITE_MAPPING['CRH']
+    if site == 'HTD':
+        return SITE_MAPPING['HTD']
+    
+    # Check partial matches
+    if 'NHTD' in site:  # ← ADDED
+        return SITE_MAPPING['NHTD']
+    if 'CRH' in site:
+        return SITE_MAPPING['CRH']
+    if 'HTD' in site:
+        return SITE_MAPPING['HTD']
+    
     return SITE_MAPPING.get(site, site)
 
 
 def convert_screening_code_contact(code, siteid):
     """
-    Convert CS0001 → CS-003-0001
+    Convert CS0001 → CS-003-0001 or CS-020-0001
     
     Args:
         code: Screening code từ CSV (eg. CS0001, CS001)
-        siteid: Site ID (eg. 003)
+        siteid: Site ID (eg. 003, 011, 020)
     
     Returns:
-        str: Formatted SCRID (eg. CS-003-0001)
+        str: Formatted SCRID (eg. CS-003-0001, CS-020-0001)
     """
     if not code:
         return None
@@ -158,14 +178,23 @@ def convert_patient_study_id(study_id):
     """
     Convert Patient Study ID to USUBJID của SCR_CASE
     43EN-003-A-001 → 003-A-001
+    43EN-020-A-001 → 020-A-001  ← ADDED
+    003-A-001 → 003-A-001
+    020-A-001 → 020-A-001  ← ADDED
     """
     if not study_id:
         return None
     
     study_id = study_id.strip()
     
+    # Remove 43EN prefix if present
     if study_id.startswith('43EN-'):
-        return study_id[5:]
+        return study_id[5:]  # Remove "43EN-"
+    
+    # Fix typo 43DN → 43EN
+    if study_id.startswith('43DN-'):
+        print(f"    ⚠️  Fixed typo: 43DN → 43EN in {study_id}")
+        return study_id[5:]  # Remove "43DN-"
     
     return study_id
 
@@ -174,6 +203,7 @@ def get_next_contact_subjid(siteid, patient_number):
     """
     Lấy SUBJID tiếp theo cho contact
     Format: B-001-1, B-001-2, ... (B-{patient_number}-{index})
+    Supports all sites: 003, 011, 020
     """
     last_contact = (
         SCR_CONTACT.objects
@@ -273,6 +303,10 @@ def import_contact_csv_to_db(csv_file):
     print(f"🗄️  Database: {STUDY_DATABASE}")
     print(f"📊 Schema: data")
     print(f"📋 Study ID: {STUDYID}")
+    print(f"\n🔑 FORMAT:")
+    print(f"   - SCRID: CS-{{SITEID}}-{{NUMBER}} (e.g., CS-003-0001, CS-020-0001)")
+    print(f"   - USUBJID: {{SITEID}}-{{SUBJID}} (e.g., 003-B-001-1, 020-B-001-1)")
+    print(f"   - Patient USUBJID: {{SITEID}}-{{SUBJID}} (e.g., 003-A-001, 020-A-001)")
     print(f"{'='*80}\n")
     
     with open(csv_file, encoding='utf-8-sig') as f:
@@ -307,14 +341,14 @@ def import_contact_csv_to_db(csv_file):
                 # Parse dữ liệu
                 siteid = get_site_id(hospital_site)
                 scrid = convert_screening_code_contact(screening_code, siteid)
-                initial = row.get("Contact's Initials", '') or row.get("Patient's Initials", '')
+                initial = row.get("Contact's Initials", '') or row.get("Contact's initials", '') or row.get("Patient's Initials", '') or row.get("Patient's initials", '')
                 initial = initial.strip() if initial else ''
                 screening_date = parse_date(row.get('Screening Date', ''))
                 eligibility = parse_yes_no(row.get('Eligibility', ''))
                 recruited = parse_yes_no(row.get('Recruited', ''))
                 unrecruited_reason = row.get('Unrecruited Reason', '').strip() or None
                 
-                # Convert Patient Study ID to USUBJID
+                # Convert Patient Study ID to USUBJID (remove 43EN prefix)
                 patient_usubjid = convert_patient_study_id(patient_study_id_raw)
                 
                 # Kiểm tra SCR_CASE (Patient) tồn tại
@@ -342,7 +376,7 @@ def import_contact_csv_to_db(csv_file):
                 usubjid = None
                 
                 if is_eligible:
-                    # Extract patient number từ patient_usubjid (003-A-001 → 001)
+                    # Extract patient number từ patient_usubjid (003-A-001 → 001 or 020-A-001 → 001)
                     patient_parts = patient_usubjid.split('-')
                     patient_number = patient_parts[-1] if len(patient_parts) >= 3 else '001'
                     
@@ -357,7 +391,7 @@ def import_contact_csv_to_db(csv_file):
                         used_subjids[track_key] += 1
                     
                     subjid = f"B-{patient_number}-{used_subjids[track_key]}"
-                    usubjid = f"{siteid}-{subjid}"
+                    usubjid = f"{siteid}-{subjid}"  # 003-B-001-1 or 020-B-001-1
                 
                 # Tạo instance
                 contact_screening = SCR_CONTACT(
@@ -413,7 +447,30 @@ def import_contact_csv_to_db(csv_file):
         confirmed_site = SCR_CONTACT.objects.using(STUDY_DATABASE).filter(
             SITEID=site_id, is_confirmed=True
         ).count()
-        print(f"   {site_name} (Site {site_id}): {total_site} contacts ({confirmed_site} recruited)")
+        
+        # Get SCRID range
+        first_scrid = (
+            SCR_CONTACT.objects.using(STUDY_DATABASE)
+            .filter(SITEID=site_id)
+            .order_by('SCRID')
+            .first()
+        )
+        last_scrid = (
+            SCR_CONTACT.objects.using(STUDY_DATABASE)
+            .filter(SITEID=site_id)
+            .order_by('-SCRID')
+            .first()
+        )
+        
+        scrid_range = 'N/A'
+        if first_scrid and last_scrid:
+            if first_scrid.SCRID == last_scrid.SCRID:
+                scrid_range = first_scrid.SCRID
+            else:
+                scrid_range = f"{first_scrid.SCRID} - {last_scrid.SCRID}"
+        
+        print(f"   {site_name} (Site {site_id}): {total_site} contacts "
+              f"({confirmed_site} recruited) | SCRID: {scrid_range}")
     
     print()
     
@@ -435,7 +492,8 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
     possible_paths = [
-        os.path.join(script_dir, "Book2.csv"),
+        os.path.join(script_dir, "Book1.csv"),
+        os.path.join(project_root, "Book1.csv"),
     ]
     
     csv_file = None
@@ -457,7 +515,7 @@ if __name__ == "__main__":
             sys.exit(1)
     
     print("\n" + "="*80)
-    print("SCRIPT IMPORT DỮ LIỆU CONTACT SCREENING")
+    print("SCRIPT IMPORT DỮ LIỆU CONTACT SCREENING - HỖ TRỢ 3 SITE")
     print("="*80)
     print(f"📁 CSV File: {csv_file}")
     print(f"🗄️  Database: {STUDY_DATABASE}")
@@ -473,6 +531,9 @@ if __name__ == "__main__":
     print(f"   1. Age < 18 years → UNRECRUITED_REASON")
     print(f"   2. DO NOT live in same household → LIVEIN5DAYS3MTHS = False")
     print(f"   3. DO NOT share meals/care → MEALCAREONCEDAY = False")
+    print(f"\n🔑 FORMAT:")
+    print(f"   - SCRID: CS-{{SITEID}}-{{NUMBER}}")
+    print(f"   - USUBJID: {{SITEID}}-{{SUBJID}} (XÓA 43EN prefix)")
     print("="*80)
     
     confirm = input("\n⚠️  Bạn có chắc chắn muốn import? (yes/no): ").strip()

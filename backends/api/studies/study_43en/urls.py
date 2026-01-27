@@ -62,6 +62,9 @@ urlpatterns = [
     path('api/kpneumoniae-isolation/', 
          dashboard.get_kpneumoniae_isolation_stats_api, 
          name='kpneumoniae_isolation_api'),
+    path('api/missed-declined-reasons/', 
+        dashboard.get_missed_declined_reasons_api, 
+            name='missed_declined_reasons_api'),
 
     # ===== SCREENING CASE =====
     path('screening/', views_scr_case_list.screening_case_list, name='screening_case_list'),

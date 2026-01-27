@@ -40,10 +40,10 @@ DEPARTMENTS_BY_SITE = {
     ],
     
     '020': [  # Bệnh viện Bệnh Nhiệt Đới Trung Ương - NHTD/020
-        ('Cấp cứu', 'Cấp cứu'),
+        ('Khoa Cấp cứu', 'Khoa Cấp cứu'),
         ('Trung tâm Hồi sức tích cực', 'Trung tâm Hồi sức tích cực'),
-        ('Nhiễm khuẩn tổng hợp', 'Nhiễm khuẩn tổng hợp'),
-        ('Viêm gan', 'Viêm gan'),
+        ('Khoa Nhiễm khuẩn tổng hợp', 'Khoa Nhiễm khuẩn tổng hợp'),
+        ('Khoa Viêm gan', 'Khoa Viêm gan'),
         ('Trung tâm Phẫu thuật Gan Mật', 'Trung tâm Phẫu thuật Gan Mật'),
     ],
     

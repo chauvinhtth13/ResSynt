@@ -440,7 +440,21 @@ def import_contact_enrollment(file_path):
             
             # Check if SCR_CONTACT exists
             try:
-                scr_contact = SCR_CONTACT.objects.using(STUDY_DATABASE).get(USUBJID=usubjid)
+                # Debug: In ra mã USUBJID đang kiểm tra và các mã trong DB
+                usubjid_db_list = list(SCR_CONTACT.objects.using(STUDY_DATABASE).values_list('USUBJID', flat=True))
+                usubjid_db_list_stripped = [str(u).strip() for u in usubjid_db_list]
+                print(f"[DEBUG] Đang kiểm tra USUBJID: '{usubjid}' (sau strip: '{usubjid.strip()}')")
+                print(f"[DEBUG] Có trong DB: {usubjid in usubjid_db_list}")
+                print(f"[DEBUG] Có trong DB (strip): {usubjid.strip() in usubjid_db_list_stripped}")
+                if usubjid not in usubjid_db_list and usubjid.strip() not in usubjid_db_list_stripped:
+                    print(f"⚠️  {usubjid}: SCR_CONTACT không tồn tại (so sánh strip) - Bỏ qua")
+                    skipped += 1
+                    continue
+                # Lấy đúng object (dùng strip)
+                try:
+                    scr_contact = SCR_CONTACT.objects.using(STUDY_DATABASE).get(USUBJID=usubjid)
+                except SCR_CONTACT.DoesNotExist:
+                    scr_contact = SCR_CONTACT.objects.using(STUDY_DATABASE).get(USUBJID=usubjid.strip())
             except SCR_CONTACT.DoesNotExist:
                 print(f"⚠️  {usubjid}: SCR_CONTACT không tồn tại - Bỏ qua")
                 skipped += 1
@@ -461,22 +475,37 @@ def import_contact_enrollment(file_path):
             # ==========================================
             # 1. CREATE/UPDATE ENR_CONTACT
             # ==========================================
-            enr_contact, enr_created = ENR_CONTACT.objects.using(STUDY_DATABASE).get_or_create(
-                USUBJID=scr_contact,
-                defaults={
-                    'ENRDATE': icf_date,
-                    'RELATIONSHIP': relationship,
-                    'DAYOFBIRTH': day_of_birth,
-                    'MONTHOFBIRTH': month_of_birth,
-                    'YEAROFBIRTH': year_of_birth,
-                    'SEX': gender,
-                }
-            )
-            
+            # Sửa: Kiểm tra ENR_CONTACT tồn tại chưa, nếu chưa thì tạo mới
+            try:
+                enr_contact = ENR_CONTACT.objects.using(STUDY_DATABASE).get(USUBJID=scr_contact)
+                enr_created = False
+            except ENR_CONTACT.DoesNotExist:
+                enr_contact = ENR_CONTACT.objects.using(STUDY_DATABASE).create(
+                    USUBJID=scr_contact,
+                    ENRDATE=icf_date,
+                    RECRUITDEPT=ward,
+                    RELATIONSHIP=relationship,
+                    DAYOFBIRTH=day_of_birth,
+                    MONTHOFBIRTH=month_of_birth,
+                    YEAROFBIRTH=year_of_birth,
+                    SEX=gender,
+                )
+                enr_created = True
+
+            # Nếu không tìm thấy ENR_CONTACT và không tạo được, in debug rõ ràng
+            if not enr_contact:
+                print(f"⚠️  {usubjid}: ENR_CONTACT không tồn tại và không tạo được - Bỏ qua")
+                skipped += 1
+                continue
+
+            # Nếu đã có, cập nhật các trường còn thiếu
             if not enr_created:
                 updated = False
                 if icf_date and not enr_contact.ENRDATE:
                     enr_contact.ENRDATE = icf_date
+                    updated = True
+                if ward and not enr_contact.RECRUITDEPT:
+                    enr_contact.RECRUITDEPT = ward
                     updated = True
                 if relationship and not enr_contact.RELATIONSHIP:
                     enr_contact.RELATIONSHIP = relationship
@@ -489,7 +518,6 @@ def import_contact_enrollment(file_path):
                 if gender and not enr_contact.SEX:
                     enr_contact.SEX = gender
                     updated = True
-                
                 if updated:
                     enr_contact.save(using=STUDY_DATABASE)
             
@@ -567,7 +595,7 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
     possible_paths = [
-        os.path.join(script_dir, "Book4.csv"),
+        os.path.join(script_dir, "Book2.csv"),
     ]
     
     file_path = None

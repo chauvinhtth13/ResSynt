@@ -689,9 +689,9 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
     possible_paths = [
-        os.path.join(script_dir, "Book3.csv"),
-        os.path.join(project_root, "Book3.csv"),
-        os.path.join(project_root, "data_import", "Book3.csv"),
+        os.path.join(script_dir, "Book1.csv"),
+        os.path.join(project_root, "Book1.csv"),
+        os.path.join(project_root, "data_import", "Book1.csv"),
     ]
     
     csv_file = None
