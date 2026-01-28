@@ -4,7 +4,7 @@
    Thứ tự load: Bootstrap 5 → base.css → authentication.css
    
    Structure:
-   1. Page-specific Variables
+   1. Page-specific Variables (extends base.css + Bootstrap)
    2. Typography & Branding
    3. Form Components
    4. Auth Buttons
@@ -19,12 +19,13 @@
 
 /* ==========================================================================
    1. PAGE-SPECIFIC VARIABLES
+   Extends base.css - Uses Bootstrap validation colors
    ========================================================================== */
 
 :root {
     /* ========== Typography ========== */
     --font-primary: 'Chakra Petch', sans-serif;
-    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-body: var(--bs-body-font-family, system-ui, -apple-system, sans-serif);
 
     /* ========== Auth Sizing ========== */
     --auth-logo-height: 100px;
@@ -34,10 +35,10 @@
     --auth-card-max-width: 400px;
     --auth-card-padding: 2.5rem;
     
-    /* ========== Validation ========== */
+    /* ========== Validation - Using Bootstrap danger colors ========== */
     --color-error: #ff6b7a;
-    --color-error-bg: rgba(220, 53, 69, 0.15);
-    --color-error-border: rgba(220, 53, 69, 0.3);
+    --color-error-bg: var(--bs-danger-bg-subtle, rgba(220, 53, 69, 0.15));
+    --color-error-border: var(--bs-danger-border-subtle, rgba(220, 53, 69, 0.3));
 }
 
 

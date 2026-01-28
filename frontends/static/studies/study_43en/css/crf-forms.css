@@ -2,59 +2,60 @@
    CRF-FORMS.CSS - UNIFIED STYLING FOR ALL CRF FORMS
    Study 43EN - Clinical Research Forms
    
+   Load order: Bootstrap 5 → base.css → dashboard.css → crf-forms.css
+   
    This file consolidates all CRF form styling including:
    - Screening, Enrollment, Clinical forms
    - Laboratory, Microbiology forms
    - Discharge, End Case forms
    - Follow-up forms
    
-   Dependencies: base.css (for CSS variables)
+   Dependencies: Bootstrap 5, base.css (for CSS variables)
    ======================================================================== */
 
 /* ==============================
    1. CSS VARIABLES (CRF-SPECIFIC)
+   Extends Bootstrap + base.css
    ============================== */
 :root {
-    /* Form Section Colors */
+    /* Form Section Gradients - Custom for CRF theme */
     --crf-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --crf-gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    --crf-gradient-warning: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
-    --crf-gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    --crf-gradient-info: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    --crf-gradient-success: linear-gradient(135deg, var(--bs-success, #10b981) 0%, #059669 100%);
+    --crf-gradient-warning: linear-gradient(135deg, var(--bs-orange, #fb923c) 0%, #f97316 100%);
+    --crf-gradient-danger: linear-gradient(135deg, var(--bs-danger, #ef4444) 0%, #dc2626 100%);
+    --crf-gradient-info: linear-gradient(135deg, var(--bs-cyan, #06b6d4) 0%, #0891b2 100%);
 
-    /* Form Colors */
-    --crf-section-bg: #f8f9fa;
+    /* Form Colors - Using Bootstrap variables */
+    --crf-section-bg: var(--bs-gray-100, #f8f9fa);
     --crf-section-border: #667eea;
     --crf-input-focus: rgba(102, 126, 234, 0.25);
     --crf-performed-bg: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    --crf-performed-border: #10b981;
+    --crf-performed-border: var(--bs-success, #10b981);
 
     /* Spacing */
     --crf-section-padding: 20px;
     --crf-item-margin: 15px;
-    --crf-card-radius: 8px;
+    --crf-card-radius: var(--bs-border-radius-lg, 0.5rem);
 }
 
 /* ==============================
    2. BASE CARD STYLES
+   Extends Bootstrap .card - only add what's different
    ============================== */
-.crf-card,
-.card {
+.crf-card {
     border: none;
     margin-bottom: 25px;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    box-shadow: var(--bs-box-shadow-sm);
     transition: box-shadow 0.3s ease;
 }
 
-.crf-card:hover,
-.card:hover {
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+.crf-card:hover {
+    box-shadow: var(--bs-box-shadow);
 }
 
-.crf-card-header,
-.card-header {
+.crf-card-header {
     padding: 15px 20px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    border-bottom: 1px solid var(--bs-border-color, rgba(0, 0, 0, 0.125));
 }
 
 .crf-card-title,
@@ -1288,21 +1289,6 @@
     box-shadow: 0 4px 8px rgba(6, 182, 212, 0.3);
 }
 
-/* Button Pulse Animation */
-.btn-pulse {
-    animation: crf-pulse-animation 1.5s infinite;
-}
-
-@keyframes crf-pulse-animation {
-    0% {
-        box-shadow: 0 0 0 0px rgba(40, 167, 69, 0.4);
-    }
-
-    100% {
-        box-shadow: 0 0 0 15px rgba(40, 167, 69, 0);
-    }
-}
-
 /* Add Formset Row Button */
 .add-formset-row,
 #add-medication-btn,
@@ -1813,30 +1799,6 @@
     font-weight: 500;
 }
 
-/* Add Culture Section */
-.add-culture-section {
-    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-    border: 2px solid #10b981;
-    border-radius: var(--crf-card-radius);
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
-}
-
-.add-culture-section h5 {
-    color: #10b981;
-    border-bottom: 2px solid #10b981;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-}
-
-.add-culture-section h5 i {
-    margin-right: 10px;
-}
-
 /* Culture Info Header */
 .culture-info-header {
     background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);
@@ -1855,26 +1817,6 @@
     border-radius: 4px;
     font-family: monospace;
     font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.culture-id-badge {
-    background: var(--crf-gradient-info);
-    color: white;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-.badge-kpn,
-.kpn-badge {
-    background: var(--crf-gradient-danger);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.75rem;
     font-weight: 600;
 }
 
@@ -2042,16 +1984,6 @@
     box-shadow: 0 2px 6px rgba(220, 53, 69, 0.15);
 }
 
-.kpn-info-alert {
-    background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);
-    border: 1px solid #ffc107;
-    border-left: 4px solid #ffc107;
-    border-radius: var(--crf-card-radius);
-    padding: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.1);
-}
-
 /* Button Variants */
 .btn-antibiotic {
     background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
@@ -2084,26 +2016,6 @@
     display: flex;
     gap: 5px;
     flex-wrap: nowrap;
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #6c757d;
-}
-
-.empty-state i {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    opacity: 0.3;
-    color: #667eea;
-}
-
-.empty-state h4 {
-    color: #495057;
-    font-weight: 600;
-    margin-bottom: 10px;
 }
 
 /* Chart Container */

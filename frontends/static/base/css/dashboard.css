@@ -2,43 +2,35 @@
 
 /* ==========================================
    DASHBOARD VARIABLES
-   Kế thừa từ base.css, bổ sung cho dashboard
+   Extends base.css - Uses Bootstrap variables where possible
    ========================================== */
 :root {
   /* Sidebar Dimensions */
   --sidebar-width: 18rem;
   --sidebar-width-collapsed: 4.5rem;
   
-  /* Sidebar Transitions */
+  /* Sidebar Transitions - Using base.css timing */
   --sidebar-transition-duration: 0.4s;
-  --sidebar-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-transition-timing: var(--ease-in-out, cubic-bezier(0.4, 0, 0.2, 1));
   
-  /* Sidebar Colors - Sử dụng biến từ base.css */
+  /* Sidebar Colors - Using base.css variables */
   --sidebar-bg: var(--color-midnight-navy-900);
   --sidebar-bg-gradient: linear-gradient(180deg, 
     var(--color-midnight-navy-900) 0%,
     var(--color-midnight-navy-950) 100%
   );
-  --sidebar-border-color: rgba(255, 255, 255, 0.08);
+  --sidebar-border-color: var(--bs-border-color-translucent, rgba(255, 255, 255, 0.08));
   --sidebar-text-muted: rgba(255, 255, 255, 0.5);
   --sidebar-text-default: rgba(255, 255, 255, 0.75);
-  --sidebar-text-active: #ffffff;
+  --sidebar-text-active: var(--bs-white, #ffffff);
   
-  /* Sidebar Item */
+  /* Sidebar Item - Using base.css variables */
   --sidebar-item-hover-bg: rgba(var(--rgb-accent-cyan), 0.12);
   --sidebar-item-active-bg: rgba(var(--rgb-accent-cyan), 0.2);
   --sidebar-item-border-radius: var(--radius-md);
   
   /* ========== Sidebar Typography Scale ==========
-     Base: 1rem = 16px
-     Scale ratio: ~1.125 (Major Second)
-     
-     Hierarchy:
-     - Header Title:  1.125rem (18px) - Brand name, nổi bật
-     - Item Text:     0.9375rem (15px) - Navigation links, dễ đọc
-     - Subtitle:      0.875rem (14px) - Card headers
-     - Title:         0.75rem (12px) - Section labels, uppercase
-     - Icon:          1.125rem (18px) - Cân đối với text
+     Uses Bootstrap font-size conventions where possible
   */
   --sidebar-font-header: 1.125rem;
   --sidebar-font-item: 0.9375rem;
@@ -441,41 +433,18 @@
    Luôn cố định ở bottom, chứa Sign Out, etc.
    ========================================== */
 .sidebar-footer {
+  position: relative;
   flex-shrink: 0;
   padding: 0.75rem;
   
   /* Separator với nav */
   border-top: 1px solid var(--sidebar-border-color);
-  background: rgba(0, 0, 0, 0.2);
   
   /* Subtle gradient để tạo depth */
   background: linear-gradient(180deg,
     rgba(0, 0, 0, 0.15) 0%,
     rgba(0, 0, 0, 0.25) 100%
   );
-}
-
-/* Item trong footer - full width */
-.sidebar-footer .sidebar-item {
-  margin-bottom: 0;
-}
-
-/* Nếu có nhiều item trong footer */
-.sidebar-footer .sidebar-item + .sidebar-item {
-  margin-top: 0.25rem;
-}
-
-
-/* ==========================================
-   SIDEBAR FOOTER
-   ========================================== */
-.sidebar-footer {
-  flex-shrink: 0;
-  padding: 0.75rem;
-  
-  /* Separator line */
-  border-top: 1px solid var(--sidebar-border-color);
-  background: rgba(0, 0, 0, 0.15);
 }
 
 /* Footer với prism line effect */
@@ -495,29 +464,7 @@
   );
 }
 
-/* Footer item spacing */
-.sidebar-footer .sidebar-item {
-  margin-bottom: 0;
-}
-
-.sidebar-footer .sidebar-item + .sidebar-item {
-  margin-top: 0.25rem;
-}
-
-
-/* ==========================================
-   SIDEBAR FOOTER
-   ========================================== */
-.sidebar-footer {
-  flex-shrink: 0;
-  padding: 0.75rem;
-  
-  /* Separator */
-  border-top: 1px solid var(--sidebar-border-color);
-  background: rgba(0, 0, 0, 0.15);
-}
-
-/* Footer item không có margin-bottom */
+/* Item trong footer - full width */
 .sidebar-footer .sidebar-item {
   margin-bottom: 0;
 }
@@ -700,3 +647,446 @@
   }
 }
 
+
+/* ==========================================
+   SHARED DASHBOARD COMPONENTS
+   Reusable styles for all study dashboards
+   ========================================== */
+
+/* ------------------------------------------
+   DASHBOARD HEADER (Dark Theme)
+   ------------------------------------------ */
+.dashboard-header {
+  border-radius: var(--radius-lg, 0.75rem);
+  margin-bottom: 1.5rem;
+  background-color: var(--color-midnight-navy-900, #0f172a);
+  color: #fff;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header .icon-box {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-header .icon-box i {
+  font-size: 1.125rem;
+}
+
+/* ------------------------------------------
+   CHART CARD (Light Theme)
+   ------------------------------------------ */
+.chart-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg, 0.75rem);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.chart-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chart-card-header .fw-bold {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.chart-card .card-body {
+  position: relative;
+  padding: 0.75rem 1rem;
+  background-color: #ffffff;
+}
+
+/* ------------------------------------------
+   CHART LOADING OVERLAY
+   ------------------------------------------ */
+.chart-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(2px);
+  border-radius: var(--radius-md, 0.5rem);
+  z-index: 10;
+}
+
+.chart-loading-overlay .spinner-border {
+  width: 2rem;
+  height: 2rem;
+  border-width: 0.2rem;
+}
+
+.chart-loading-overlay .loading-text {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+/* Chart Error State */
+.chart-error {
+  text-align: center;
+  padding: 2rem;
+}
+
+.chart-error i {
+  font-size: 2.5rem;
+  color: #ef4444;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.chart-error span {
+  display: block;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+/* ------------------------------------------
+   SITE SELECTOR DROPDOWN
+   ------------------------------------------ */
+.site-selector-dropdown .dropdown-menu {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+.site-selector-dropdown .dropdown-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Site Option Buttons */
+.site-option-btn {
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-sm, 0.375rem);
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: 
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.site-option-btn:hover {
+  background-color: rgba(var(--rgb-accent-cyan), 0.12);
+  color: #fff;
+}
+
+.site-option-btn:active {
+  transform: scale(0.98);
+  background-color: rgba(var(--rgb-accent-cyan), 0.18);
+}
+
+/* Active/Selected state */
+.site-option-btn.active {
+  background-color: rgba(var(--rgb-accent-cyan), 0.15);
+  color: var(--color-accent-cyan);
+  font-weight: 500;
+}
+
+.site-option-btn.active:hover {
+  background-color: rgba(var(--rgb-accent-cyan), 0.2);
+}
+
+/* Check icon - only visible when active */
+.site-option-btn .check-icon {
+  opacity: 0;
+  color: var(--color-accent-cyan);
+  font-size: 1rem;
+  transition: opacity 0.15s ease;
+}
+
+.site-option-btn.active .check-icon {
+  opacity: 1;
+}
+
+/* Option icon */
+.site-option-btn .option-icon {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.site-option-btn.active .option-icon {
+  opacity: 1;
+  color: var(--color-accent-cyan);
+}
+
+/* Loading state when navigating */
+.site-option-btn.loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.site-option-btn.loading::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid transparent;
+  border-top-color: var(--color-accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes site-btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Site List Scrollbar */
+.site-option-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--rgb-accent-cyan), 0.3) transparent;
+}
+
+.site-option-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.site-option-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.site-option-list::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--rgb-accent-cyan), 0.3);
+  border-radius: 4px;
+}
+
+.site-option-list::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(var(--rgb-accent-cyan), 0.5);
+}
+
+/* ------------------------------------------
+   CHART TOOLTIPS (ECharts custom HTML)
+   ------------------------------------------ */
+.chart-tooltip {
+  min-width: 160px;
+  font-size: 0.8125rem;
+}
+
+.chart-tooltip .tooltip-header {
+  padding: 0.625rem 0.875rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #0f172a;
+  border-radius: 8px 8px 0 0;
+}
+
+.chart-tooltip .tooltip-body {
+  padding: 0.625rem 0.875rem;
+}
+
+.chart-tooltip .tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.chart-tooltip .tooltip-marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chart-tooltip .tooltip-label {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.chart-tooltip .tooltip-value {
+  font-weight: 600;
+  color: #0f172a;
+  margin-left: auto;
+}
+
+.chart-tooltip .tooltip-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.chart-tooltip .progress-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.chart-tooltip .progress-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.chart-tooltip .progress-text {
+  font-weight: 600;
+  font-size: 0.75rem;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ------------------------------------------
+   REFRESH BUTTON ANIMATION
+   ------------------------------------------ */
+.refresh-icon {
+  transition: transform 0.3s ease;
+}
+
+.refresh-icon.spin {
+  animation: refresh-spin 1s linear infinite;
+}
+
+@keyframes refresh-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.refresh-btn:hover .refresh-icon {
+  transform: rotate(180deg);
+}
+
+.refresh-btn:hover .refresh-icon.spin {
+  transform: none;
+}
+
+/* ------------------------------------------
+   DATA TABLE CONTAINER
+   Scrollable table with sticky header
+   ------------------------------------------ */
+.data-table-container {
+  flex: 1;
+  min-height: 240px;
+  max-height: 260px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-sm, 0.375rem);
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.data-table-container .table {
+  margin-bottom: 0;
+  border-color: #e5e7eb;
+}
+
+.data-table-container .table th,
+.data-table-container .table td {
+  border-color: #e5e7eb;
+}
+
+/* First row header rounded top corners */
+.data-table-container .table thead tr:first-child th:first-child {
+  border-top-left-radius: 0.3rem;
+}
+
+.data-table-container .table thead tr:first-child th:last-child {
+  border-top-right-radius: 0.3rem;
+}
+
+/* Scrollbar styling */
+.data-table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.data-table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.data-table-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+.data-table-container::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+/* Sticky table header */
+.data-table-container thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  box-shadow: inset 0 -1px 0 #e5e7eb;
+}
+
+/* Compact table styling */
+.chart-card .table-sm td,
+.chart-card .table-sm th {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* ------------------------------------------
+   UTILITY CLASSES
+   ------------------------------------------ */
+.text-white-80 {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* ------------------------------------------
+   SHARED RESPONSIVE STYLES
+   ------------------------------------------ */
+@media (max-width: 768px) {
+  .dashboard-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .chart-card .card-body {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .dashboard-header {
+    padding: 1rem;
+  }
+  
+  .dashboard-header .icon-box {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .dashboard-header .icon-box i {
+    font-size: 1rem;
+  }
+  
+  .chart-card-header {
+    padding: 0.875rem 1rem;
+  }
+}
