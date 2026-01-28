@@ -2,15 +2,14 @@
  * Sampling Follow-up Statistics (Patient & Contact)
  * ==================================================
  * 
- * Similar to Table 5: Patient sampling and follow-up from study report
+ * Table: Patient and Contact sampling by visit schedule
  * 
  * Features:
- * - Patient and Contact sampling by visit
- * - Total sampling (stool + rectal + throat)
- * - Blood sampling (separate)
- * - Site filter
+ * - Simple 3-column layout: Schedule, Patient, Contact
+ * - Site filter integration with global site selector
+ * - Day 1, 10, 28, 90 timepoints
  * 
- * Version: 1.0
+ * Version: 2.0 - Simplified and integrated with site-selector
  */
 
 (function () {
@@ -26,36 +25,42 @@
     };
 
     // ========================================================================
+    // DOM ELEMENTS
+    // ========================================================================
+
+    const DOM = {
+        tableContainer: () => document.getElementById('samplingTableContainer'),
+        tableBody: () => document.getElementById('samplingTableBody'),
+        loading: () => document.getElementById('samplingLoading'),
+    };
+
+    // ========================================================================
     // DOM READY
     // ========================================================================
 
     document.addEventListener('DOMContentLoaded', function () {
-
-        // Initialize
-        initSamplingSiteButtons();
+        initSiteSelector();
         loadSamplingData();
     });
 
     // ========================================================================
-    // SITE FILTER BUTTONS
+    // SITE SELECTOR INTEGRATION
     // ========================================================================
 
     /**
-     * Initialize sampling site filter dropdown
+     * Initialize site selector listener (uses global site-selector.js)
      */
-    function initSamplingSiteButtons() {
-        const filterSelect = document.querySelector('.sampling-site-select');
+    function initSiteSelector() {
+        // Listen for site change events from global site selector
+        document.addEventListener('siteChanged', function (e) {
+            CONFIG.CURRENT_SITE = e.detail.site || 'all';
+            loadSamplingData();
+        });
 
-        if (filterSelect) {
-            filterSelect.addEventListener('change', function () {
-                const site = this.value;
-
-                // Update current site
-                CONFIG.CURRENT_SITE = site;
-
-                // Reload data
-                loadSamplingData();
-            });
+        // Get initial site from hidden input
+        const siteInput = document.getElementById('selectedSiteInput');
+        if (siteInput) {
+            CONFIG.CURRENT_SITE = siteInput.value || 'all';
         }
     }
 
@@ -67,16 +72,11 @@
      * Load sampling follow-up statistics data
      */
     function loadSamplingData() {
-        const tableContainer = document.getElementById('samplingTableContainer');
-        const loadingIndicator = document.getElementById('samplingLoading');
+        const loading = DOM.loading();
+        const container = DOM.tableContainer();
 
         // Show loading
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'block';
-        }
-        if (tableContainer) {
-            tableContainer.style.display = 'none';
-        }
+        if (loading) loading.style.display = 'flex';
 
         // Build API URL
         const params = new URLSearchParams({
@@ -104,28 +104,16 @@
                     throw new Error(result.error || 'Unknown error');
                 }
 
-
                 // Hide loading
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
-                }
-                if (tableContainer) {
-                    tableContainer.style.display = 'block';
-                }
+                if (loading) loading.style.display = 'none';
 
                 // Render table
                 renderSamplingTable(result.data);
             })
             .catch(error => {
-
-                if (loadingIndicator) {
-                    loadingIndicator.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        Failed to load sampling data: ${escapeHtml(error.message)}
-                    </div>
-                `;
-                }
+                console.error('Sampling data error:', error);
+                if (loading) loading.style.display = 'none';
+                renderError(error.message);
             });
     }
 
@@ -134,94 +122,66 @@
     // ========================================================================
 
     /**
-     * Render sampling follow-up table
+     * Render sampling follow-up table with simple 3-column layout
      */
     function renderSamplingTable(data) {
-        const tbody = document.getElementById('samplingTableBody');
-        if (!tbody) {
-            return;
-        }
+        const tbody = DOM.tableBody();
+        if (!tbody) return;
 
         // Clear existing rows
         tbody.innerHTML = '';
 
-        // Helper function to format value (handle null)
-        const formatValue = (val) => {
-            if (val === null || val === undefined) {
-                return '<span class="text-muted">-</span>';
-            }
-            return `<strong>${val}</strong>`;
-        };
-
-        // Define rows based on Table 5 structure
-        const rows = [
-            {
-                label: 'Sampling_Visit 1 (Day 1)',
-                patient_total: data.patient.visit1.total,
-                patient_blood: data.patient.visit1.blood,
-                contact_total: data.contact.visit1.total,
-                contact_blood: data.contact.visit1.blood,
-            },
-            {
-                label: 'Sampling_Visit 2 (Day 10)',
-                patient_total: data.patient.visit2.total,
-                patient_blood: data.patient.visit2.blood,
-                contact_total: formatValue(null),  // Not applicable for contacts
-                contact_blood: formatValue(null),
-            },
-            {
-                label: 'Sampling_Visit 3 (Day 28)',
-                patient_total: data.patient.visit3.total,
-                patient_blood: data.patient.visit3.blood,
-                contact_total: data.contact.visit3.total,
-                contact_blood: formatValue(null),  // Based on PDF
-            },
-            {
-                label: 'Sampling_Visit 4 (Day 90)',
-                patient_total: data.patient.visit4.total,
-                patient_blood: data.patient.visit4.blood,
-                contact_total: data.contact.visit4.total,
-                contact_blood: formatValue(null),
-            },
+        // Define schedule rows
+        const schedules = [
+            { key: 'visit1', label: 'Day 1' },
+            { key: 'visit2', label: 'Day 10' },
+            { key: 'visit3', label: 'Day 28' },
+            { key: 'visit4', label: 'Day 90' },
         ];
 
         // Render each row
-        rows.forEach(row => {
+        schedules.forEach(schedule => {
             const tr = document.createElement('tr');
 
-            // Schedule column
-            const scheduleCell = document.createElement('td');
-            scheduleCell.className = 'fw-semibold';
-            scheduleCell.textContent = row.label;
-            tr.appendChild(scheduleCell);
+            // Schedule label
+            const labelCell = document.createElement('td');
+            labelCell.className = 'fw-bold';
+            labelCell.textContent = schedule.label;
+            tr.appendChild(labelCell);
 
-            // Patient Total Sampling
-            const patientTotalCell = document.createElement('td');
-            patientTotalCell.className = 'text-center bg-primary bg-opacity-10';
-            patientTotalCell.innerHTML = formatValue(row.patient_total);
-            tr.appendChild(patientTotalCell);
+            // Patient count
+            const patientCell = document.createElement('td');
+            patientCell.className = 'text-center';
+            const patientVal = data?.patient?.[schedule.key]?.total;
+            patientCell.textContent = patientVal !== undefined && patientVal !== null ? patientVal : '-';
+            tr.appendChild(patientCell);
 
-            // Patient Blood Sampling
-            const patientBloodCell = document.createElement('td');
-            patientBloodCell.className = 'text-center bg-primary bg-opacity-10';
-            patientBloodCell.innerHTML = formatValue(row.patient_blood);
-            tr.appendChild(patientBloodCell);
-
-            // Contact Total Sampling
-            const contactTotalCell = document.createElement('td');
-            contactTotalCell.className = 'text-center bg-success bg-opacity-10';
-            contactTotalCell.innerHTML = formatValue(row.contact_total);
-            tr.appendChild(contactTotalCell);
-
-            // Contact Blood Sampling
-            const contactBloodCell = document.createElement('td');
-            contactBloodCell.className = 'text-center bg-success bg-opacity-10';
-            contactBloodCell.innerHTML = formatValue(row.contact_blood);
-            tr.appendChild(contactBloodCell);
+            // Contact count
+            const contactCell = document.createElement('td');
+            contactCell.className = 'text-center';
+            const contactVal = data?.contact?.[schedule.key]?.total;
+            contactCell.textContent = contactVal !== undefined && contactVal !== null ? contactVal : '-';
+            tr.appendChild(contactCell);
 
             tbody.appendChild(tr);
         });
+    }
 
+    /**
+     * Render error message
+     */
+    function renderError(message) {
+        const tbody = DOM.tableBody();
+        if (!tbody) return;
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${escapeHtml(message)}
+                </td>
+            </tr>
+        `;
     }
 
     // ========================================================================

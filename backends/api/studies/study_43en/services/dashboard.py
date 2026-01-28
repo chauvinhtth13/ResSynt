@@ -62,9 +62,9 @@ STUDY_CODE = '43EN'
 # Site configuration for enrollment targets
 SITE_CONFIG = {
     'all': {'target': 750, 'start_date': date(2024, 7, 1)},
-    '003': {'target': 200, 'start_date': date(2024, 7, 1)},
-    '011': {'target': 400, 'start_date': date(2025, 10, 13)},
-    '020': {'target': 150, 'start_date': date(2025, 11, 5)},
+    '003': {'target': 270, 'start_date': date(2024, 7, 1)},
+    '011': {'target': 380, 'start_date': date(2025, 10, 13)},
+    '020': {'target': 100, 'start_date': date(2025, 11, 5)},
 }
 
 SITE_NAMES = {'003': 'HTD', '020': 'NHTD', '011': 'Cho Ray'}
@@ -73,7 +73,7 @@ SITE_NAMES = {'003': 'HTD', '020': 'NHTD', '011': 'Cho Ray'}
 STUDY_START_DATE = date(2024, 7, 1)
 STUDY_END_DATE = date(2027, 4, 30)
 CHART_END_DATE = date(2027, 4, 1)  # Chart ends at 04/2027
-TOTAL_STUDY_MONTHS = 34
+TOTAL_STUDY_MONTHS = 35
 
 
 # ============================================================================

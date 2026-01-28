@@ -1,133 +1,44 @@
-
-# Site filtering utilities
-from backends.studies.study_43en.utils.site_utils import (
-    get_site_filter_params,
-    get_filtered_queryset,
-    get_site_filtered_object_or_404
-)
-
-# backends/studies/study_43en/views/patient/endcase/helpers.py
+# backends/api/studies/study_43en/views/patient/endcase/helpers.py
 """
-End Case CRF Helper Functions
+End Case CRF Helper Functions.
 
-Provides:
-- Query optimization helpers
-- Form utilities
-- Audit helpers
-- Context builders
+Provides query optimization, form utilities, and business logic helpers.
 """
-
 import logging
+from datetime import date
 from django.shortcuts import get_object_or_404
 
-# Import models
 from backends.studies.study_43en.models.patient import (
-    SCR_CASE,
-    ENR_CASE,
-    EndCaseCRF,
+    SCR_CASE, ENR_CASE, EndCaseCRF,
+)
+
+# Use shared utilities
+from backends.api.studies.study_43en.views.shared import (
+    set_audit_metadata,
+    make_form_readonly,
+    get_patient_case_chain,
 )
 
 logger = logging.getLogger(__name__)
 
 
-# ==========================================
-# AUDIT HELPERS
-# ==========================================
-
-def set_audit_metadata(instance, user):
-    """
-    Set audit fields on instance
-    
-    Args:
-        instance: Model instance with audit fields
-        user: User object
-    
-    Usage:
-        set_audit_metadata(endcase, request.user)
-    """
-    if hasattr(instance, 'last_modified_by_id'):
-        instance.last_modified_by_id = user.id
-    if hasattr(instance, 'last_modified_by_username'):
-        instance.last_modified_by_username = user.username
-
-
-# ==========================================
-# QUERY OPTIMIZATION HELPERS
-# ==========================================
-
 def get_endcase_with_related(request, usubjid):
     """
-    Get end case with optimized queries
-    
-    Optimizations:
-    - select_related: Reduce queries for foreign keys
-    - Single query structure
-    
-    Args:
-        usubjid: Patient ID (USUBJID)
+    Get end case with optimized queries.
     
     Returns:
         tuple: (screening_case, enrollment_case, endcase or None)
-    
-    Raises:
-        Http404: If screening or enrollment not found
-    
-    Example:
-        screening, enrollment, endcase = get_endcase_with_related('SITE01-A-001')
     """
-    # Get site filtering parameters
-    site_filter, filter_type = get_site_filter_params(request)
-
-    # Get screening case
-    #  Get with site filtering
-    screening_case = get_site_filtered_object_or_404(
-        SCR_CASE,
-        site_filter,
-        filter_type,
-        USUBJID=usubjid
-    )
+    screening, enrollment, _ = get_patient_case_chain(request, usubjid)
     
-    # Get enrollment case
-    enrollment_case = get_object_or_404(
-        ENR_CASE.objects.select_related('USUBJID'),
-        USUBJID=screening_case
-    )
-    
-    # Get end case if exists
     try:
         endcase = EndCaseCRF.objects.select_related(
-            'USUBJID',           # ENR_CASE
-            'USUBJID__USUBJID'   # SCR_CASE
-        ).get(USUBJID=enrollment_case)
+            'USUBJID', 'USUBJID__USUBJID'
+        ).get(USUBJID=enrollment)
         
-        logger.debug(f"Loaded end case for {usubjid}")
-        return screening_case, enrollment_case, endcase
-    
+        return screening, enrollment, endcase
     except EndCaseCRF.DoesNotExist:
-        return screening_case, enrollment_case, None
-
-
-# ==========================================
-# FORM UTILITIES
-# ==========================================
-
-def make_form_readonly(form):
-    """
-    Make all form fields readonly
-    
-    Args:
-        form: Django form
-    
-    Example:
-        form = EndCaseCRFForm(instance=endcase)
-        make_form_readonly(form)
-    """
-    for field in form.fields.values():
-        field.disabled = True
-        field.widget.attrs.update({
-            'readonly': True,
-            'disabled': True
-        })
+        return screening, enrollment, None
 
 
 # ==========================================

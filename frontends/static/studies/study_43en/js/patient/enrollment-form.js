@@ -204,87 +204,91 @@
   // ADDRESS SYSTEM TOGGLE
   // ==========================================
   function initAddressSystemToggle() {
-    console.log(' Initializing address system toggle...');
+    console.log('✓ Init address toggle (with smart address integration)...');
     
-    const $newAddressFields = $('#new-address-fields');
-    const $oldAddressFields = $('#old-address-fields');
-    const $addressPreview = $('#address-preview');
+    const $newFields = $('#new-address-fields');
+    const $oldFields = $('#old-address-fields');
     
-    console.log('Address elements found:', {
-      newFields: $newAddressFields.length,
-      oldFields: $oldAddressFields.length,
-      preview: $addressPreview.length,
-      radios: $('.address-system-radio').length
-    });
-    
-    if (!$newAddressFields.length || !$oldAddressFields.length) {
-      console.error(' Address field containers not found!');
+    if (!$newFields.length || !$oldFields.length) {
+      console.error('✗ Address containers not found');
       return;
     }
     
-    // Toggle address fields based on selection
+    // Toggle on radio change
     $('.address-system-radio').on('change', function() {
-      const selectedValue = $(this).val();
-      console.log(' Address system selected:', selectedValue);
+      const mode = $(this).val();
+      console.log('✓ Mode selected:', mode);
       
-      // Hide all first with animation
-      $newAddressFields.slideUp(200);
-      $oldAddressFields.slideUp(200);
+      // Hide all
+      $newFields.slideUp(200);
+      $oldFields.slideUp(200);
       
-      // Show based on selection after hide animation completes
+      // Show selected and trigger smart address
       setTimeout(() => {
-        if (selectedValue === 'new' || selectedValue === 'both') {
-          $newAddressFields.slideDown(300);
-          console.log(' Showing NEW address fields');
+        if (mode === 'new') {
+          $newFields.slideDown(300);
+          console.log('✓ Showing NEW address fields');
+        } else if (mode === 'old') {
+          $oldFields.slideDown(300);
+          console.log('✓ Showing OLD address fields');
         }
-        if (selectedValue === 'old' || selectedValue === 'both') {
-          $oldAddressFields.slideDown(300);
-          console.log(' Showing OLD address fields');
-        }
+        
+        // CRITICAL: Re-initialize smart address after visibility change
+        setTimeout(() => {
+          if (window.SmartAddress && window.SmartAddress.reinitialize) {
+            console.log('✓ Triggering smart address re-init...');
+            window.SmartAddress.reinitialize();
+          }
+          updateAddressPreview();
+        }, 350); // Wait for slideDown to complete
+        
       }, 250);
+    });
+    
+    // Initialize - trigger on page load
+    const $checked = $('.address-system-radio:checked');
+    if ($checked.length) {
+      console.log('Initial mode:', $checked.val());
       
-      updateAddressPreview();
-    });
-    
-    // Update preview on input
-    const addressInputs = [
-      'input[name="STREET_NEW"]',
-      'input[name="WARD_NEW"]', 
-      'input[name="DISTRICT_NEW"]',
-      'input[name="CITY_NEW"]',
-      'input[name="STREET"]',
-      'input[name="WARD"]',
-      'input[name="DISTRICT"]',
-      'input[name="PROVINCECITY"]'
-    ].join(', ');
-    
-    $(addressInputs).on('input', function() {
-      updateAddressPreview();
-    });
-    
-    // Initialize on page load
-    const $checkedRadio = $('.address-system-radio:checked');
-    if ($checkedRadio.length) {
-      console.log('Initial address system:', $checkedRadio.val());
-      $checkedRadio.trigger('change');
+      // Show the correct container immediately (no animation on load)
+      if ($checked.val() === 'new') {
+        $newFields.show();
+      } else if ($checked.val() === 'old') {
+        $oldFields.show();
+      }
+      
+      // Let smart address initialize after a moment
+      setTimeout(() => {
+        if (window.SmartAddress && window.SmartAddress.init) {
+          console.log('✓ Initial smart address init...');
+          window.SmartAddress.init();
+        }
+      }, 100);
     } else {
-      // Default to 'new' if nothing selected
-      console.log('No address system selected, defaulting to NEW');
-      $('#id_PRIMARY_ADDRESS_new').prop('checked', true).trigger('change');
+      // Default to NEW
+      console.log('No selection, defaulting to NEW');
+      $('#id_PRIMARY_ADDRESS_new').prop('checked', true);
+      $newFields.show();
+      
+      setTimeout(() => {
+        if (window.SmartAddress && window.SmartAddress.init) {
+          window.SmartAddress.init();
+        }
+      }, 100);
     }
     
-    console.log(' Address system toggle ready');
+    console.log('✓ Toggle ready');
   }
-  
+
   /**
-   * Update address preview with enhanced formatting
+   * Update preview - READ from smart address hidden fields
    */
   function updateAddressPreview() {
     const selectedSystem = $('input[name="PRIMARY_ADDRESS"]:checked').val();
     const $preview = $('#address-preview');
     
     if (!$preview.length) {
-      console.log(' Preview element not found');
+      console.log('Preview element not found');
       return;
     }
     
@@ -292,58 +296,97 @@
     let hasNewAddress = false;
     let hasOldAddress = false;
     
-    // NEW ADDRESS
-    if (selectedSystem === 'new' || selectedSystem === 'both') {
-      const streetNew = $('input[name="STREET_NEW"]').val()?.trim();
-      const wardNew = $('input[name="WARD_NEW"]').val()?.trim();
-      const districtNew = $('input[name="DISTRICT_NEW"]').val()?.trim();
-      const cityNew = $('input[name="CITY_NEW"]').val()?.trim();
+    // NEW ADDRESS (Direct wards, no districts)
+    if (selectedSystem === 'new') {
+      const houseNumber = $('#house-number-new').val()?.trim();      // NEW: House number
+      const street = $('input[name="STREET_NEW"]').val()?.trim() || $('#street-input-new').val()?.trim();
+      const ward = $('#ward-hidden-input-new').val()?.trim();        // From smart address
+      const city = $('input[name="CITY_NEW"]').val()?.trim();
       
-      if (streetNew || wardNew || districtNew || cityNew) {
+      if (houseNumber || street || ward || city) {
         hasNewAddress = true;
-        const newAddressParts = [streetNew, wardNew, districtNew, cityNew].filter(Boolean);
+        const addressParts = [];
         
-        previewHTML += `
+        // Combine house number and street
+        if (houseNumber && street) {
+          addressParts.push(houseNumber + ', ' + street);
+        } else if (houseNumber) {
+          addressParts.push(houseNumber);
+        } else if (street) {
+          addressParts.push(street);
+        }
+        
+        if (ward) addressParts.push(ward);
+        if (city) addressParts.push(city);
+        
+        previewHTML = `
           <div class="address-preview-section">
             <span class="address-preview-label">
               <i class="fas fa-map-marked-alt mr-1"></i>Địa chỉ mới:
             </span>
-            <span class="address-preview-value">${newAddressParts.join(', ')}</span>
+            <span class="address-preview-value">${addressParts.join(', ')}</span>
           </div>
         `;
       }
     }
     
-    // OLD ADDRESS
-    if (selectedSystem === 'old' || selectedSystem === 'both') {
-      const street = $('input[name="STREET"]').val()?.trim();
-      const ward = $('input[name="WARD"]').val()?.trim();
-      const district = $('input[name="DISTRICT"]').val()?.trim();
+    // OLD ADDRESS (With districts - smart address)
+    else if (selectedSystem === 'old') {
+      const houseNumber = $('#full-address-input').val()?.trim();    // OLD: House number in STREET field
+      const street = $('#street-autocomplete').val()?.trim();        // From autocomplete
+      const ward = $('#ward-hidden-input').val()?.trim();            // From smart address hidden field
+      const district = $('#district-hidden-input').val()?.trim();    // From smart address hidden field
       const city = $('input[name="PROVINCECITY"]').val()?.trim();
-      
-      if (street || ward || district || city) {
+
+      if (houseNumber || street || ward || district || city) {
         hasOldAddress = true;
-        const oldAddressParts = [street, ward, district, city].filter(Boolean);
+        const addressParts = [];
         
-        previewHTML += `
+        // Combine house number and street
+        if (houseNumber && street) {
+          addressParts.push(houseNumber + ', ' + street);
+        } else if (houseNumber) {
+          addressParts.push(houseNumber);
+        } else if (street) {
+          addressParts.push(street);
+        }
+        
+        if (ward) addressParts.push(ward);
+        if (district) addressParts.push(district);
+        if (city) addressParts.push(city);
+
+        previewHTML = `
           <div class="address-preview-section">
             <span class="address-preview-label">
               <i class="fas fa-archive mr-1"></i>Địa chỉ cũ:
             </span>
-            <span class="address-preview-value">${oldAddressParts.join(', ')}</span>
+            <span class="address-preview-value">${addressParts.join(', ')}</span>
           </div>
         `;
       }
     }
     
-    // Update preview
+    // Update preview display
     if (hasNewAddress || hasOldAddress) {
       $preview.html(previewHTML).addClass('has-address');
     } else {
-      $preview.html('<span class="text-muted font-italic">Địa chỉ sẽ hiển thị tại đây khi bạn nhập...</span>')
+      $preview.html('<span class="text-muted font-italic">Địa chỉ sẽ hiển thị tại đây...</span>')
               .removeClass('has-address');
     }
   }
+
+  // Listen to ALL address inputs including house numbers
+  $(document).on('change', '#ward-hidden-input, #ward-hidden-input-new, #district-hidden-input', function() {
+    console.log('✓ Smart address updated:', this.id);
+    updateAddressPreview();
+  });
+
+  // Listen to manual inputs including house numbers
+  $(document).on('input change', 
+    'input[name="STREET_NEW"], input[name="CITY_NEW"], #street-autocomplete, input[name="PROVINCECITY"], #house-number-new, #full-address-input, #street-input-new', 
+    function() {
+      updateAddressPreview();
+  });
   
   // ==========================================
   // UI ENHANCEMENTS

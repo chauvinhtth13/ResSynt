@@ -1261,8 +1261,8 @@ window.enrollmentFormState = {
 </script>
 
 {# Custom Scripts #}
-<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/enrollment-form.js' %}"></script>
-<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/change-reason-handler.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/patient/enrollment-form.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/common/change-reason-handler.js' %}"></script>
 
 {# UPDATED: Use unified smart address script instead of old version #}
 <script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_44en/js/smart_address_hcmc.js' %}"></script>

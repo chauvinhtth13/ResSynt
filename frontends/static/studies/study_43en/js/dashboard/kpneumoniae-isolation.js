@@ -2,16 +2,14 @@
  * K. pneumoniae Isolation Statistics
  * ===================================
  * 
- * Table 7: No. of K. pneumoniae isolated from samples
+ * Table: K. pneumoniae isolation summary by sample type and site
  * 
  * Features:
- * - By study site (HTD, NHTD, Cho Ray)
- * - Patient and Contact data
- * - Throat swab vs Stool/Rectal swab
- * - Clinical Kp count
- * - Site filter support
+ * - 9-column layout: Sample Type | Total (P/C) | HTD (P/C) | CR (P/C) | NHTD (P/C)
+ * - Site filter integration with global site selector
+ * - Clinical Kp, Throat Swab, Stool/Rectal Swab rows
  * 
- * Version: 1.1 - Added site filtering
+ * Version: 2.0 - Simplified and integrated with site-selector
  */
 
 (function () {
@@ -24,7 +22,23 @@
     const CONFIG = {
         API_ENDPOINT: '/studies/43en/api/kpneumoniae-isolation/',
         CURRENT_SITE: 'all',
-        ALLOWED_SITES: [],
+    };
+
+    // Site code mapping
+    const SITE_CODES = {
+        '003': 'htd',
+        '011': 'choray',
+        '020': 'nhtd',
+    };
+
+    // ========================================================================
+    // DOM ELEMENTS
+    // ========================================================================
+
+    const DOM = {
+        tableContainer: () => document.getElementById('kpneumoniaeTableContainer'),
+        tableBody: () => document.getElementById('kpneumoniaeTableBody'),
+        loading: () => document.getElementById('kpneumoniaeLoading'),
     };
 
     // ========================================================================
@@ -32,66 +46,29 @@
     // ========================================================================
 
     document.addEventListener('DOMContentLoaded', function () {
-        initKpneumoniaeSiteButtons();
+        initSiteSelector();
+        loadKpneumoniaeData();
+    });
+
+    // ========================================================================
+    // SITE SELECTOR INTEGRATION
+    // ========================================================================
+
+    /**
+     * Initialize site selector listener (uses global site-selector.js)
+     */
+    function initSiteSelector() {
+        // Listen for site change events from global site selector
+        document.addEventListener('siteChanged', function (e) {
+            CONFIG.CURRENT_SITE = e.detail.site || 'all';
             loadKpneumoniaeData();
         });
 
-    // ========================================================================
-    // SITE FILTER BUTTONS
-    // ========================================================================
-
-    /**
-     * Initialize K. pneumoniae site filter dropdown
-     */
-    function initKpneumoniaeSiteButtons() {
-        const filterSelect = document.querySelector('.kpneumoniae-site-select');
-
-        if (filterSelect) {
-            filterSelect.addEventListener('change', function () {
-                const site = this.value;
-
-                // Update current site
-                CONFIG.CURRENT_SITE = site;
-
-                // Reload data
-                loadKpneumoniaeData();
-            });
+        // Get initial site from hidden input
+        const siteInput = document.getElementById('selectedSiteInput');
+        if (siteInput) {
+            CONFIG.CURRENT_SITE = siteInput.value || 'all';
         }
-    }
-
-    /**
-     * Update site filter buttons based on user's allowed sites
-     */
-    function updateKpneumoniaeSiteButtons(allowedSites) {
-        const filterButtons = document.querySelectorAll('.kpneumoniae-site-btn');
-
-        filterButtons.forEach(button => {
-            const site = button.getAttribute('data-site');
-
-            if (site === 'all') {
-                if (!allowedSites.includes('all')) {
-                    button.style.display = 'none';
-                }
-            } else {
-                if (!allowedSites.includes(site)) {
-                    button.style.display = 'none';
-                }
-            }
-        });
-
-        // If current active button is now hidden, select first visible one
-        const activeButton = document.querySelector('.kpneumoniae-site-btn.active');
-        if (activeButton && activeButton.style.display === 'none') {
-            const firstVisible = document.querySelector('.kpneumoniae-site-btn:not([style*="display: none"])');
-            if (firstVisible) {
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                firstVisible.classList.add('active');
-                CONFIG.CURRENT_SITE = firstVisible.getAttribute('data-site');
-                // Reload with correct site
-                loadKpneumoniaeData();
-            }
-        }
-
     }
 
     // ========================================================================
@@ -102,16 +79,11 @@
      * Load K. pneumoniae isolation statistics
      */
     function loadKpneumoniaeData() {
-        const tableContainer = document.getElementById('kpneumoniaeTableContainer');
-        const loadingIndicator = document.getElementById('kpneumoniaeLoading');
+        const loading = DOM.loading();
+        const container = DOM.tableContainer();
 
         // Show loading
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'block';
-        }
-        if (tableContainer) {
-            tableContainer.style.display = 'none';
-        }
+        if (loading) loading.style.display = 'flex';
 
         // Build API URL with site parameter
         const params = new URLSearchParams({
@@ -119,7 +91,6 @@
         });
 
         const url = `${CONFIG.API_ENDPOINT}?${params.toString()}`;
-
 
         // Fetch data
         fetch(url, {
@@ -140,34 +111,16 @@
                     throw new Error(result.error || 'Unknown error');
                 }
 
-
-                // Update allowed sites
-                if (result.allowed_sites) {
-                    CONFIG.ALLOWED_SITES = result.allowed_sites;
-                    updateKpneumoniaeSiteButtons(result.allowed_sites);
-                }
-
                 // Hide loading
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
-                }
-                if (tableContainer) {
-                    tableContainer.style.display = 'block';
-                }
+                if (loading) loading.style.display = 'none';
 
                 // Render table
                 renderKpneumoniaeTable(result.data);
             })
             .catch(error => {
-
-                if (loadingIndicator) {
-                    loadingIndicator.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        Failed to load K. pneumoniae data: ${escapeHtml(error.message)}
-                    </div>
-                `;
-                }
+                console.error('K. pneumoniae data error:', error);
+                if (loading) loading.style.display = 'none';
+                renderError(error.message);
             });
     }
 
@@ -176,144 +129,195 @@
     // ========================================================================
 
     /**
-     * Render K. pneumoniae isolation table
+     * Render K. pneumoniae isolation table with 9-column layout
      */
     function renderKpneumoniaeTable(data) {
-        const tbody = document.getElementById('kpneumoniaeTableBody');
-        if (!tbody) {
-            return;
-        }
+        const tbody = DOM.tableBody();
+        if (!tbody) return;
 
         // Clear existing rows
         tbody.innerHTML = '';
 
-        // Get site codes from data (only the ones returned by API)
-        const siteOrder = ['003', '011', '020'];
-        const sitesToRender = siteOrder.filter(site => data[site] !== undefined);
+        // Calculate totals from site data
+        const sites = ['003', '011', '020']; // HTD, Cho Ray, NHTD
+        
+        // Sample types to render
+        const sampleTypes = [
+            { key: 'clinical_kp', label: 'Clinical Kp.', contactNA: true },
+            { key: 'throat', label: 'Throat Swab', contactNA: false },
+            { key: 'stool_rectal', label: 'Stool/Rectal Swab', contactNA: false },
+        ];
 
-        if (sitesToRender.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">No data available</td></tr>';
-            return;
-        }
+        // Calculate and render each sample type row
+        sampleTypes.forEach(sampleType => {
+            const tr = document.createElement('tr');
 
-        // Render each site
-        sitesToRender.forEach(siteCode => {
-            const siteData = data[siteCode];
-            if (!siteData) return;
+            // Sample type label
+            const labelCell = document.createElement('td');
+            labelCell.className = 'fw-bold';
+            labelCell.textContent = sampleType.label;
+            tr.appendChild(labelCell);
 
-            // Patient row
-            const patientRow = createDataRow(
-                siteData.site_name,
-                'Patient',
-                siteData.patient.count,
-                siteData.patient.clinical_kp,
-                siteData.patient.throat,
-                siteData.patient.stool_rectal,
-                true  // First row for site (show site name)
-            );
-            tbody.appendChild(patientRow);
+            // Calculate totals
+            let totalPatient = 0;
+            let totalContact = 0;
+            const siteValues = {};
 
-            // Contact row
-            const contactRow = createDataRow(
-                '',  // No site name (merged cell)
-                'Contact',
-                siteData.contact.count,
-                '-',  // No clinical Kp for contacts
-                siteData.contact.throat,
-                siteData.contact.stool_rectal,
-                false
-            );
-            tbody.appendChild(contactRow);
+            sites.forEach(siteCode => {
+                const siteData = data?.[siteCode];
+                if (siteData) {
+                    let patientVal = 0;
+                    let contactVal = 0;
 
-            // Complicated cases row (only for HTD based on PDF)
-            if (siteCode === '003') {
-                const complicatedRow = createDataRow(
-                    '',  // No site name
-                    'Complicated cases',
-                    siteData.complicated.count,
-                    siteData.complicated.count,  // Same as count
-                    null,  // No throat data
-                    null,  // No stool/rectal data
-                    false
-                );
-                tbody.appendChild(complicatedRow);
-            }
+                    if (sampleType.key === 'clinical_kp') {
+                        patientVal = siteData.patient?.clinical_kp || 0;
+                        contactVal = 0; // Clinical Kp not applicable to contacts
+                    } else if (sampleType.key === 'throat') {
+                        patientVal = getSampleTotal(siteData.patient?.throat);
+                        contactVal = getSampleTotal(siteData.contact?.throat);
+                    } else if (sampleType.key === 'stool_rectal') {
+                        patientVal = getSampleTotal(siteData.patient?.stool_rectal);
+                        contactVal = getSampleTotal(siteData.contact?.stool_rectal);
+                    }
+
+                    totalPatient += patientVal;
+                    totalContact += contactVal;
+                    siteValues[siteCode] = { patient: patientVal, contact: contactVal };
+                }
+            });
+
+            // Total columns (Patient, Contact)
+            const totalPCell = document.createElement('td');
+            totalPCell.className = 'text-center fw-bold';
+            totalPCell.textContent = totalPatient || '-';
+            tr.appendChild(totalPCell);
+
+            const totalCCell = document.createElement('td');
+            totalCCell.className = 'text-center fw-bold';
+            totalCCell.textContent = sampleType.contactNA ? '-' : (totalContact || '-');
+            tr.appendChild(totalCCell);
+
+            // Site columns (HTD, Cho Ray, NHTD)
+            sites.forEach(siteCode => {
+                const vals = siteValues[siteCode] || { patient: 0, contact: 0 };
+
+                const pCell = document.createElement('td');
+                pCell.className = 'text-center';
+                pCell.textContent = vals.patient || '-';
+                tr.appendChild(pCell);
+
+                const cCell = document.createElement('td');
+                cCell.className = 'text-center';
+                cCell.textContent = sampleType.contactNA ? '-' : (vals.contact || '-');
+                tr.appendChild(cCell);
+            });
+
+            tbody.appendChild(tr);
         });
+
+        // Add Total row
+        const totalRow = createTotalRow(data, sites);
+        tbody.appendChild(totalRow);
     }
 
     /**
-     * Create a data row
+     * Create total row for K. pneumoniae table
      */
-    function createDataRow(siteName, subject, participantCount, clinicalKp, throatData, stoolRectalData, showSiteName) {
+    function createTotalRow(data, sites) {
         const tr = document.createElement('tr');
+        tr.className = 'table-light';
 
-        // Site name (only for first row of each site)
-        if (showSiteName) {
-            const siteCell = document.createElement('td');
-            siteCell.className = 'fw-bold';
-            siteCell.textContent = siteName;
-            // Set rowspan based on site (HTD has 3 rows, others have 2)
-            siteCell.rowSpan = siteName === 'HTD' ? 3 : 2;
-            tr.appendChild(siteCell);
-        }
+        // Label
+        const labelCell = document.createElement('td');
+        labelCell.className = 'fw-bold';
+        labelCell.textContent = 'Total Kp. Positive';
+        tr.appendChild(labelCell);
 
-        // Subject
-        const subjectCell = document.createElement('td');
-        subjectCell.textContent = subject;
-        if (subject === 'Complicated cases') {
-            subjectCell.className = 'fst-italic text-muted';
-        }
-        tr.appendChild(subjectCell);
+        // Calculate grand totals
+        let grandTotalPatient = 0;
+        let grandTotalContact = 0;
+        const siteTotals = {};
 
-        // Participant count
-        const countCell = document.createElement('td');
-        countCell.className = 'text-center';
-        countCell.textContent = participantCount || '-';
-        tr.appendChild(countCell);
+        sites.forEach(siteCode => {
+            const siteData = data?.[siteCode];
+            let sitePatient = 0;
+            let siteContact = 0;
 
-        // Clinical Kp
-        const clinicalCell = document.createElement('td');
-        clinicalCell.className = 'text-center fw-semibold';
-        clinicalCell.textContent = clinicalKp || '-';
-        tr.appendChild(clinicalCell);
+            if (siteData) {
+                // Sum all sample types for this site
+                sitePatient += siteData.patient?.clinical_kp || 0;
+                sitePatient += getSampleTotal(siteData.patient?.throat);
+                sitePatient += getSampleTotal(siteData.patient?.stool_rectal);
 
-        // Throat swab data (Day 1, 10, 28, 90)
-        if (throatData) {
-            ['day1', 'day2', 'day3', 'day4'].forEach(day => {
-                const cell = document.createElement('td');
-                cell.className = 'text-center bg-info bg-opacity-5';
-                cell.textContent = throatData[day] ? throatData[day].display : '-';
-                tr.appendChild(cell);
-            });
-        } else {
-            // Complicated cases - no throat data
-            for (let i = 0; i < 4; i++) {
-                const cell = document.createElement('td');
-                cell.className = 'text-center bg-info bg-opacity-5 text-muted';
-                cell.textContent = '-';
-                tr.appendChild(cell);
+                siteContact += getSampleTotal(siteData.contact?.throat);
+                siteContact += getSampleTotal(siteData.contact?.stool_rectal);
             }
-        }
 
-        // Stool/Rectal swab data (Day 1, 10, 28, 90)
-        if (stoolRectalData) {
-            ['day1', 'day2', 'day3', 'day4'].forEach(day => {
-                const cell = document.createElement('td');
-                cell.className = 'text-center bg-warning bg-opacity-5';
-                cell.textContent = stoolRectalData[day] ? stoolRectalData[day].display : '-';
-                tr.appendChild(cell);
-            });
-        } else {
-            // Complicated cases - no stool/rectal data
-            for (let i = 0; i < 4; i++) {
-                const cell = document.createElement('td');
-                cell.className = 'text-center bg-warning bg-opacity-5 text-muted';
-                cell.textContent = '-';
-                tr.appendChild(cell);
-            }
-        }
+            grandTotalPatient += sitePatient;
+            grandTotalContact += siteContact;
+            siteTotals[siteCode] = { patient: sitePatient, contact: siteContact };
+        });
+
+        // Total columns
+        const totalPCell = document.createElement('td');
+        totalPCell.className = 'text-center fw-bold';
+        totalPCell.textContent = grandTotalPatient || '-';
+        tr.appendChild(totalPCell);
+
+        const totalCCell = document.createElement('td');
+        totalCCell.className = 'text-center fw-bold';
+        totalCCell.textContent = grandTotalContact || '-';
+        tr.appendChild(totalCCell);
+
+        // Site columns
+        sites.forEach(siteCode => {
+            const vals = siteTotals[siteCode] || { patient: 0, contact: 0 };
+
+            const pCell = document.createElement('td');
+            pCell.className = 'text-center fw-bold';
+            pCell.textContent = vals.patient || '-';
+            tr.appendChild(pCell);
+
+            const cCell = document.createElement('td');
+            cCell.className = 'text-center fw-bold';
+            cCell.textContent = vals.contact || '-';
+            tr.appendChild(cCell);
+        });
 
         return tr;
+    }
+
+    /**
+     * Get total positive samples from sample data object
+     * Sample data has day1, day2, day3, day4 with positive counts
+     */
+    function getSampleTotal(sampleData) {
+        if (!sampleData) return 0;
+        
+        let total = 0;
+        ['day1', 'day2', 'day3', 'day4'].forEach(day => {
+            if (sampleData[day]?.positive) {
+                total += sampleData[day].positive;
+            }
+        });
+        return total;
+    }
+
+    /**
+     * Render error message
+     */
+    function renderError(message) {
+        const tbody = DOM.tableBody();
+        if (!tbody) return;
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${escapeHtml(message)}
+                </td>
+            </tr>
+        `;
     }
 
     // ========================================================================

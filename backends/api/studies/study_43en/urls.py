@@ -1,36 +1,33 @@
 # backends/api/studies/study_43en/urls.py
 
 from django.urls import path
-from django.conf import settings
 
+# Base views
+from .views import views_Base, views_Schedule, views_audit, views_report
 
-# Import views từ folder views/
-from .views import views_Base
-from .views import views_Schedule, views_audit
-from .views import views_report
+# Patient views
+from .views.patient.screening import views_scr_case, views_scr_case_list, api_views as scr_api
+from .views.patient.enrollment import views_enr_case
+from .views.patient.clinical import views_clinical_case, views_readonly, views_clinical_lab
+from .views.patient.laboratory import views_lab_micro, views_antibiotic_sensitivity
+from .views.patient.sample import views_sample
+from .views.patient.followup_28 import views_fu_28
+from .views.patient.followup_90 import views_fu_90
+from .views.patient.discharge import views_disch
+from .views.patient.endcase import views_endcase
 
-from backends.api.studies.study_43en.views.patient.SCR import views_scr_case, views_scr_case_list, api_views as scr_api
-from backends.api.studies.study_43en.views.patient.ENR import views_enr_case
-from backends.api.studies.study_43en.views.patient.CLI import views_clinical_case,views_readonly,views_clinical_lab
-from backends.api.studies.study_43en.views.patient.LAB import views_lab_micro
-from backends.api.studies.study_43en.views.patient.LAB import views_antibiotic_sensitivity
-from backends.api.studies.study_43en.views.patient.SAM import views_sample
-from backends.api.studies.study_43en.views.patient.FU28 import views_fu_28
-from backends.api.studies.study_43en.views.patient.FU90 import views_fu_90
-from backends.api.studies.study_43en.views.patient.DISCH import views_disch
-from backends.api.studies.study_43en.views.patient.ENDCASE import views_endcase
-from backends.api.studies.study_43en.views.contact.ENDCASE import views_contact_endcase
-from backends.api.studies.study_43en.views.contact.SCR import views_contact_scr, api_views as contact_scr_api
-from backends.api.studies.study_43en.views.contact.ENR import views_enr_contact
-from backends.api.studies.study_43en.views.contact.SAM import views_contact_sample
-from backends.api.studies.study_43en.views.contact.FU28 import views_contact_fu_28
-from backends.api.studies.study_43en.views.contact.FU90 import views_contact_fu_90
+# Contact views
+from .views.contact.screening import views_contact_scr, api_views as contact_scr_api
+from .views.contact.enrollment import views_enr_contact
+from .views.contact.sample import views_contact_sample
+from .views.contact.followup_28 import views_contact_fu_28
+from .views.contact.followup_90 import views_contact_fu_90
+from .views.contact.endcase import views_contact_endcase
 
-# Import dashboard từ services
+# Dashboard
 from .services import dashboard
 
-
-# App name for namespacing
+# App namespace
 app_name = 'study_43en'
 
 urlpatterns = [
@@ -47,9 +44,9 @@ urlpatterns = [
          name='enrollment_chart_api'),
     
     # Monthly screening & enrollment statistics
-    path('api/monthly-stats/', 
+    path('api/patient-monthly-stats/', 
          dashboard.get_monthly_screening_enrollment_api, 
-         name='monthly_stats_api'),
+         name='patient_monthly_stats_api'),
 
     # Contact monthly screening & enrollment statistics
     path('api/contact-monthly-stats/', 

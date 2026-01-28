@@ -1,133 +1,47 @@
-
-# Site filtering utilities
-from backends.studies.study_43en.utils.site_utils import (
-    get_site_filter_params,
-    get_filtered_queryset,
-    get_site_filtered_object_or_404
-)
-
-# backends/studies/study_43en/views/contactendcase/helpers.py
+# backends/api/studies/study_43en/views/contact/endcase/helpers.py
 """
-Contact End Case CRF Helper Functions
+Contact End Case CRF Helper Functions.
 
-Provides:
-- Query optimization helpers
-- Form utilities
-- Audit helpers
-- Context builders
+Provides query optimization and context builders.
 """
-
 import logging
 from django.shortcuts import get_object_or_404
 
-# Import models
 from backends.studies.study_43en.models.contact import (
-    SCR_CONTACT,
-    ENR_CONTACT,
-    ContactEndCaseCRF,
+    SCR_CONTACT, ENR_CONTACT, ContactEndCaseCRF,
+)
+from backends.studies.study_43en.utils.site_utils import (
+    get_site_filter_params, get_site_filtered_object_or_404,
+)
+
+# Use shared utilities
+from backends.api.studies.study_43en.views.shared import (
+    set_audit_metadata,
+    make_form_readonly,
+    get_contact_case_chain,
 )
 
 logger = logging.getLogger(__name__)
 
 
-# ==========================================
-# AUDIT HELPERS
-# ==========================================
-
-def set_audit_metadata(instance, user):
-    """
-    Set audit fields on instance
-    
-    Args:
-        instance: Model instance with audit fields
-        user: User object
-    
-    Usage:
-        set_audit_metadata(endcase, request.user)
-    """
-    if hasattr(instance, 'last_modified_by_id'):
-        instance.last_modified_by_id = user.id
-    if hasattr(instance, 'last_modified_by_username'):
-        instance.last_modified_by_username = user.username
-
-
-# ==========================================
-# QUERY OPTIMIZATION HELPERS
-# ==========================================
-
 def get_contact_endcase_with_related(request, usubjid):
     """
-    Get contact end case with optimized queries
-    
-    Optimizations:
-    - select_related: Reduce queries for foreign keys
-    - Single query structure
-    
-    Args:
-        usubjid: Contact ID (USUBJID)
+    Get contact end case with optimized queries.
     
     Returns:
         tuple: (screening_contact, enrollment_contact, endcase or None)
-    
-    Raises:
-        Http404: If screening or enrollment not found
-    
-    Example:
-        screening, enrollment, endcase = get_contact_endcase_with_related('SITE01-C-001')
     """
-    # Get site filtering parameters
-    site_filter, filter_type = get_site_filter_params(request)
-
-    # Get screening contact
-    #  Get with site filtering
-    screening_contact = get_site_filtered_object_or_404(
-        SCR_CONTACT,
-        site_filter,
-        filter_type,
-        USUBJID=usubjid
-    )
+    screening, enrollment = get_contact_case_chain(request, usubjid)
     
-    # Get enrollment contact
-    enrollment_contact = get_object_or_404(
-        ENR_CONTACT.objects.select_related('USUBJID'),
-        USUBJID=screening_contact
-    )
-    
-    # Get end case if exists
     try:
         endcase = ContactEndCaseCRF.objects.select_related(
-            'USUBJID',           # ENR_CONTACT
-            'USUBJID__USUBJID'   # SCR_CONTACT
-        ).get(USUBJID=enrollment_contact)
+            'USUBJID', 'USUBJID__USUBJID'
+        ).get(USUBJID=enrollment)
         
         logger.debug(f"Loaded contact end case for {usubjid}")
-        return screening_contact, enrollment_contact, endcase
-    
+        return screening, enrollment, endcase
     except ContactEndCaseCRF.DoesNotExist:
-        return screening_contact, enrollment_contact, None
-
-
-# ==========================================
-# FORM UTILITIES
-# ==========================================
-
-def make_form_readonly(form):
-    """
-    Make all form fields readonly
-    
-    Args:
-        form: Django form
-    
-    Example:
-        form = ContactEndCaseCRFForm(instance=endcase)
-        make_form_readonly(form)
-    """
-    for field in form.fields.values():
-        field.disabled = True
-        field.widget.attrs.update({
-            'readonly': True,
-            'disabled': True
-        })
+        return screening, enrollment, None
 
 
 # ==========================================

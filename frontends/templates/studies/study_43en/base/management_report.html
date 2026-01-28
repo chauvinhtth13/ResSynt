@@ -26,60 +26,52 @@
     <!-- Bottom Row: Stats -->
     <div class="d-flex justify-content-between align-items-center border-top border-white border-opacity-25 pt-3">
         <div class="d-flex flex-column justify-content-center">
-                <span class="small text-uppercase fw-semibold text-white-80 mb-1">
-                    {% trans "Study Site" %}
-                </span>
+            <span class="small text-uppercase fw-semibold text-white-80 mb-1">
+                {% trans "Study Site" %}
+            </span>
 
-                {% if user_sites_count == 1 %}
-                    <span class="text-white fw-bold">
-                        <i class="bi bi-geo-alt-fill text-accent-cyan me-1"></i>{{ site_name }}
-                    </span>
-                {% else %}
-                    <div class="dropdown" id="siteSelectContainer">
-                        <button class="btn btn-cyber-dropdown-sm dropdown-toggle" 
-                                style="width: 8rem;"
-                                type="button" 
-                                id="siteSelectBtn" 
-                                data-bs-toggle="dropdown" 
-                                aria-expanded="false"
-                                aria-label="{% trans 'Select study site' %}">
-                            <span id="selectedSiteLabel" class="text-truncate">{{ site_name }}</span>
+            {% if user_sites_count == 1 %}
+            <span class="text-white fw-bold">
+                <i class="bi bi-geo-alt-fill text-accent-cyan me-1"></i>{{ site_name }}
+            </span>
+            {% else %}
+            <div class="dropdown" id="siteSelectContainer">
+                <button class="btn btn-cyber-dropdown-sm dropdown-toggle" style="width: 8rem;" type="button"
+                    id="siteSelectBtn" data-bs-toggle="dropdown" aria-expanded="false"
+                    aria-label="{% trans 'Select study site' %}">
+                    <span id="selectedSiteLabel" class="text-truncate">{{ site_name }}</span>
+                </button>
+
+                <div class="dropdown-menu dropdown-menu-base dropdown-menu-select p-0" style="width: 8rem;"
+                    aria-labelledby="siteSelectBtn">
+
+                    {# Site List - Clickable items with auto-apply #}
+                    <div class="site-option-list px-2 py-2" id="siteOptionsList"
+                        style="max-height: 280px; overflow-y: auto;">
+
+                        {# All Sites Option #}
+                        <button type="button" class="site-option-btn d-flex align-items-center gap-2 w-100"
+                            data-value="all" data-display="{% trans 'All Sites' %}">
+                            <span class="text-truncate">{% trans "All Sites" %}</span>
                         </button>
-                        
-                        <div class="dropdown-menu dropdown-menu-base dropdown-menu-select p-0" 
-                             style="width: 8rem;" 
-                             aria-labelledby="siteSelectBtn">
-                            
-                            {# Site List - Clickable items with auto-apply #}
-                            <div class="site-option-list px-2 py-2" id="siteOptionsList" 
-                                 style="max-height: 280px; overflow-y: auto;">
-                                
-                                {# All Sites Option #}
-                                <button type="button" 
-                                        class="site-option-btn d-flex align-items-center gap-2 w-100"
-                                        data-value="all"
-                                        data-display="{% trans 'All Sites' %}">
-                                    <span class="text-truncate">{% trans "All Sites" %}</span>
-                                </button>
-                                
-                                {# Divider #}
-                                <hr class="my-1 border-white border-opacity-25">
-                                
-                                {# Individual Sites #}
-                                {% for site_item in accessible_sites_data %}
-                                <button type="button" 
-                                        class="site-option-btn d-flex align-items-center gap-2 w-100"
-                                        data-value="{{ site_item.code }}"
-                                        data-display="{{ site_item.display }}">
-                                    <span class="text-truncate">{{ site_item.display }}</span>
-                                </button>
-                                {% endfor %}
-                            </div>
-                        </div>
+
+                        {# Divider #}
+                        <hr class="my-1 border-white border-opacity-25">
+
+                        {# Individual Sites #}
+                        {% for site_item in accessible_sites_data %}
+                        <button type="button" class="site-option-btn d-flex align-items-center gap-2 w-100"
+                            data-value="{{ site_item.code }}" data-display="{{ site_item.display }}">
+                            <span class="text-truncate">{{ site_item.display }}</span>
+                        </button>
+                        {% endfor %}
                     </div>
-                    
-                    <input type="hidden" id="selectedSiteInput" name="site" value="{% if filter_type == 'all' %}all{% else %}{{ site_filter }}{% endif %}">
-                {% endif %}
+                </div>
+            </div>
+
+            <input type="hidden" id="selectedSiteInput" name="site"
+                value="{% if filter_type == 'all' %}all{% else %}{{ site_filter }}{% endif %}">
+            {% endif %}
         </div>
 
         <div class="d-flex justify-content-center gap-2">
@@ -110,22 +102,24 @@
 </div>
 
 <div class="row g-4 mb-4">
+    {# Screening & Enrollment Patients Monthly #}
     <div class="col-12 col-xl-6">
         <div class="card chart-card">
             <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <span class="fw-bold">{% trans "Screening & Enrollment Patients" %}</span>
-                
+                <span class="fw-bold">{% trans "Screening & Enrollment Patients Monthly" %}</span>
+
                 {# Simple Filter: View Mode + Year #}
                 <div class="d-flex align-items-center gap-2">
-                    {# View Mode Selector (Quarter or Month) #}
+                    {# View Mode Selector (Year, Quarter or Month) #}
                     <select class="form-select form-select-sm" id="patientViewMode" style="width: auto;">
+                        <option value="year">{% trans "By Year" %}</option>
                         <option value="quarter" selected>{% trans "By Quarter" %}</option>
                         <option value="month">{% trans "By Month" %}</option>
                     </select>
-                    
+
                     {# Year Selector #}
                     <select class="form-select form-select-sm" id="patientYear" style="width: auto;">
-                        <option value="all" selected>{% trans "All" %}</option>
+                        <option value="all" selected>{% trans "All Years" %}</option>
                         <option value="2024">2024</option>
                         <option value="2025">2025</option>
                         <option value="2026">2026</option>
@@ -141,25 +135,53 @@
                     <span class="loading-text mt-2">{% trans "Loading chart data..." %}</span>
                 </div>
                 <div id="patientMonthlyChart"></div>
+
+                {# Data Table - Scrollable container for better UX #}
+                <div class="table-responsive mt-3 mb-1" id="patientDataTableContainer" style="display: none;">
+                    <table class="table table-bordered table-hover table-striped table-sm mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="text-center align-middle bg-light" style="width: 25%;">{% trans "Timeline" %}
+                                </th>
+                                <th class="text-center align-middle bg-light" style="width: 25%;">
+                                    {% trans "Screening" %}<br>
+                                    <small class="fw-normal text-muted" id="patientScreeningTotal">(N=0)</small>
+                                </th>
+                                <th class="text-center align-middle bg-light" style="width: 25%;">
+                                    {% trans "Enrollment" %}<br>
+                                    <small class="fw-normal text-muted" id="patientEnrollmentTotal">(N=0)</small>
+                                </th>
+                                <th class="text-center align-middle bg-light" style="width: 25%;">
+                                    {% trans "Rate" %} (%)<br>
+                                    <small class="fw-normal text-muted" id="patientRateTotal">(0%)</small>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientDataTableBody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+    {# Screening & Enrollment Contact Monthly #}
     <div class="col-12 col-xl-6">
         <div class="card chart-card">
             <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <span class="fw-bold">{% trans "Screening & Enrollment Contact" %}</span>
-                
+                <span class="fw-bold">{% trans "Screening & Enrollment Contact Monthly" %}</span>
+
                 {# Simple Filter: View Mode + Year #}
                 <div class="d-flex align-items-center gap-2">
-                    {# View Mode Selector (Quarter or Month) #}
+                    {# View Mode Selector (Year, Quarter or Month) #}
                     <select class="form-select form-select-sm" id="contactViewMode" style="width: auto;">
+                        <option value="year">{% trans "By Year" %}</option>
                         <option value="quarter" selected>{% trans "By Quarter" %}</option>
                         <option value="month">{% trans "By Month" %}</option>
                     </select>
-                    
+
                     {# Year Selector #}
                     <select class="form-select form-select-sm" id="contactYear" style="width: auto;">
-                        <option value="all" selected>{% trans "All" %}</option>
+                        <option value="all" selected>{% trans "All Years" %}</option>
                         <option value="2024">2024</option>
                         <option value="2025">2025</option>
                         <option value="2026">2026</option>
@@ -175,169 +197,375 @@
                     <span class="loading-text mt-2">{% trans "Loading chart data..." %}</span>
                 </div>
                 <div id="contactMonthlyChart"></div>
+
+                {# Data Table - Scrollable container for better UX #}
+                <div class="table-responsive mt-3 mb-1" id="contactDataTableContainer" style="display: none;">
+                    <table class="table table-bordered table-hover table-striped table-sm mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="text-center align-middle bg-light" style="width: 25%;">{% trans "Timeline" %}
+                                </th>
+                                <th class="text-center align-middle bg-light" style="width: 25%;">
+                                    {% trans "Screening" %}<br>
+                                    <small class="fw-normal text-muted" id="contactScreeningTotal">(N=0)</small>
+                                </th>
+                                <th class="text-center align-middle bg-light" style="width: 25%;">
+                                    {% trans "Enrollment" %}<br>
+                                    <small class="fw-normal text-muted" id="contactEnrollmentTotal">(N=0)</small>
+                                </th>
+                                <th class="text-center align-middle bg-light" style="width: 25%;">
+                                    {% trans "Rate" %} (%)<br>
+                                    <small class="fw-normal text-muted" id="contactRateTotal">(0%)</small>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="contactDataTableBody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-
-
-<!-- {# Sample Management & K. pneumoniae Tables - Combined Row #}
-<div class="row g-4 mb-4">
-    {# K. pneumoniae Isolation Statistics Table - 60% #}
-    <div class="col-12 col-xl-7">
-        <div class="card chart-card chart-card--full-height">
-            <div class="chart-card__header">
-                <div class="header-flex">
-                    <h6 class="chart-card__title">
-                        <i class="bi bi-virus text-danger"></i>
-                        {% trans "K. pneumoniae isolated from throat swab & stool/rectal swab samples" %}
-                    </h6>
-
-                    {# Site Filter Dropdown #}
-                    <select class="site-filter kpneumoniae-site-select" data-chart="kpneumoniae">
-                        <option value="all">{% trans "All Sites" %}</option>
-                        {% for site in accessible_sites %}
-                        <option value="{{ site }}">{{ site }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+    {# Screening & Enrollment Status #}
+    <div class="col-12">
+        <div class="card chart-card">
+            <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold">{% trans "Screening & Enrollment Summary Status" %}</span>
             </div>
             <div class="card-body">
-                {# Loading indicator #}
-                <div id="kpneumoniaeLoading" class="loading-container">
-                    <div class="spinner-border loading-spinner--danger" role="status">
-                        <span class="visually-hidden">{% trans "Loading..." %}</span>
-                    </div>
-                    <p class="loading-text">{% trans "Loading K. pneumoniae data..." %}</p>
-                </div>
-
-                {# K. pneumoniae Table #}
-                <div id="kpneumoniaeTableContainer" style="display: none;">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover table-sm">
-                            <thead class="table-light">
-                                <tr>
-                                    <th rowspan="2" class="align-middle">{% trans "Study site" %}</th>
-                                    <th rowspan="2" class="align-middle">{% trans "Subject" %}</th>
-                                    <th rowspan="2" class="align-middle text-center">{% trans "No. of participant" %}
-                                    </th>
-                                    <th rowspan="2" class="align-middle text-center">{% trans "Clinical Kp." %}</th>
-                                    <th colspan="4" class="text-center bg-info bg-opacity-10">{% trans "Throat swab" %}
-                                    </th>
-                                    <th colspan="4" class="text-center bg-warning bg-opacity-10">{% trans "Stool/Rectalswab" %}</th>
-                                </tr>
-                                <tr>
-                                    <th class="text-center bg-info bg-opacity-10">{% trans "Day 1" %}</th>
-                                    <th class="text-center bg-info bg-opacity-10">{% trans "Day 10" %}</th>
-                                    <th class="text-center bg-info bg-opacity-10">{% trans "Day 28" %}</th>
-                                    <th class="text-center bg-info bg-opacity-10">{% trans "Day 90" %}</th>
-                                    <th class="text-center bg-warning bg-opacity-10">{% trans "Day 1" %}</th>
-                                    <th class="text-center bg-warning bg-opacity-10">{% trans "Day 10" %}</th>
-                                    <th class="text-center bg-warning bg-opacity-10">{% trans "Day 28" %}</th>
-                                    <th class="text-center bg-warning bg-opacity-10">{% trans "Day 90" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody id="kpneumoniaeTableBody">
-                                <tr>
-                                    <td colspan="12" class="text-center text-muted">{% trans "Loading..." %}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="alert-note alert-note--secondary">
-                        <small>
-                            <i class="bi bi-asterisk"></i>
-                            <strong>*</strong>
-                            {% trans "K. pneumoniae positive sample / Total collected samples" %}
-                        </small>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-sm mb-0" id="summaryStatusTable">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="text-center align-middle" style="width: 12%;"></th>
+                                <th colspan="2" class="text-center align-middle fw-bold">
+                                    {% trans "Total" %}
+                                </th>
+                                <th colspan="2" class="text-center align-middle fw-bold">
+                                    {% trans "HTD" %}<br>
+                                    <small class="fw-normal text-muted">({% trans "from" %} 01Jul2024)</small>
+                                </th>
+                                <th colspan="2" class="text-center align-middle fw-bold">
+                                    {% trans "Cho Ray Hospital" %}<br>
+                                    <small class="fw-normal text-muted">({% trans "from" %} 13Oct2025)</small>
+                                </th>
+                                <th colspan="2" class="text-center align-middle fw-bold">
+                                    {% trans "NHTD" %}<br>
+                                    <small class="fw-normal text-muted">({% trans "from" %} 05Nov2025)</small>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th class="text-center align-middle fw-bold" style="width: 10%;">{% trans "PATIENT" %}
+                                </th>
+                                <th class="text-center align-middle fw-bold" style="width: 10%;">{% trans "CONTACT" %}
+                                </th>
+                                <th class="text-center align-middle fw-bold" style="width: 10%;">{% trans "PATIENT" %}
+                                </th>
+                                <th class="text-center align-middle fw-bold" style="width: 10%;">{% trans "CONTACT" %}
+                                </th>
+                                <th class="text-center align-middle fw-bold" style="width: 10%;">{% trans "PATIENT" %}
+                                </th>
+                                <th class="text-center align-middle fw-bold" style="width: 10%;">{% trans "CONTACT" %}
+                                </th>
+                                <th class="text-center align-middle fw-bold" style="width: 10%;">{% trans "PATIENT" %}
+                                </th>
+                                <th class="text-center align-middle fw-bold" style="width: 10%;">{% trans "CONTACT" %}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold">{% trans "Screened" %}</td>
+                                <td class="text-center">780</td>
+                                <td class="text-center">160</td>
+                                <td class="text-center">538</td>
+                                <td class="text-center">107</td>
+                                <td class="text-center">213</td>
+                                <td class="text-center">48</td>
+                                <td class="text-center">29</td>
+                                <td class="text-center">5</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">{% trans "Enrolled" %}</td>
+                                <td class="text-center">160</td>
+                                <td class="text-center">77</td>
+                                <td class="text-center">107</td>
+                                <td class="text-center">63</td>
+                                <td class="text-center">47</td>
+                                <td class="text-center">13</td>
+                                <td class="text-center">6</td>
+                                <td class="text-center">1</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">{% trans "Ineligible" %}</td>
+                                <td class="text-center">532</td>
+                                <td class="text-center">59</td>
+                                <td class="text-center">371</td>
+                                <td class="text-center">31</td>
+                                <td class="text-center">138</td>
+                                <td class="text-center">24</td>
+                                <td class="text-center">23</td>
+                                <td class="text-center">4</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">{% trans "Missed" %}</td>
+                                <td class="text-center">69</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">45</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">24</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">{% trans "Declined" %}</td>
+                                <td class="text-center">19</td>
+                                <td class="text-center">24</td>
+                                <td class="text-center">15</td>
+                                <td class="text-center">13</td>
+                                <td class="text-center">4</td>
+                                <td class="text-center">11</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">{% trans "Death" %}</td>
+                                <td class="text-center">18</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">11</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">6</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">1</td>
+                                <td class="text-center">0</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">{% trans "Withdrawn" %}</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">{% trans "Lost to Follow Up" %}</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                                <td class="text-center">0</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-
-    {# Sampling Follow-up Table (Patient & Contact) - 40% #}
-    <div class="col-12 col-xl-5">
-        <div class="card chart-card chart-card--full-height">
-            <div class="chart-card__header">
-                <div class="header-flex">
-                    <h6 class="chart-card__title">
-                        <i class="bi bi-clipboard-data text-info"></i>
-                        {% trans "Sample Management: Patient & Contact Sampling Follow-up" %}
-                    </h6>
-
-                    {# Site Filter Dropdown #}
-                    <select class="site-filter sampling-site-select" data-chart="sampling">
-                        <option value="all">{% trans "All Sites" %}</option>
-                        {% for site in accessible_sites %}
-                        <option value="{{ site }}">{{ site }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+    {# Missed/Declined Reason Patients #}
+    <div class="col-12 col-xl-6">
+        <div class="card chart-card">
+            <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold">{% trans "Missed/Declined Reason Patients" %}</span>
             </div>
             <div class="card-body">
-                {# Loading indicator #}
-                <div id="samplingLoading" class="loading-container">
-                    <div class="spinner-border loading-spinner--info" role="status">
-                        <span class="visually-hidden">{% trans "Loading..." %}</span>
-                    </div>
-                    <p class="loading-text">{% trans "Loading sampling data..." %}</p>
-                </div>
-
-                {# Sampling Table #}
-                <div id="samplingTableContainer" style="display: none;">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th rowspan="2" class="align-middle">{% trans "Schedule" %}</th>
-                                    <th colspan="2" class="text-center bg-primary bg-opacity-10">{% trans "PATIENT" %}
-                                    </th>
-                                    <th colspan="2" class="text-center bg-success bg-opacity-10">{% trans "CONTACT" %}
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <th class="text-center bg-primary bg-opacity-10">{% trans "Total Sampling" %}</th>
-                                    <th class="text-center bg-primary bg-opacity-10">{% trans "Blood Sampling" %}</th>
-                                    <th class="text-center bg-success bg-opacity-10">{% trans "Total Sampling" %}</th>
-                                    <th class="text-center bg-success bg-opacity-10">{% trans "Blood Sampling" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody id="samplingTableBody">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted">{% trans "Loading..." %}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="alert-note alert-note--info">
-                        <small>
-                            <i class="bi bi-info-circle"></i>
-                            <strong>{% trans "Note:" %}</strong>
-                            {% trans "Total Sampling includes Stool, Rectal Swab, and Throat Swab samples (excludes
-                            blood). Blood Sampling is counted separately." %}
-                        </small>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-sm mb-0" id="missedDeclinedPatientTable">
+                        <thead>
+                            <tr>
+                                <th class="align-middle fw-bold" style="width: 70%;">{% trans "Missed/Declined Reason"%}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 30%;">{% trans "No. of Patient" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{% trans "Participant does not want to participate in research" %}</td>
+                                <td class="text-center">17</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Not enough time/ too busy to commit" %}</td>
+                                <td class="text-center">2</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Not able to get informed consent" %}</td>
+                                <td class="text-center">51</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Dr/RN too busy to screen participant properly" %}</td>
+                                <td class="text-center">18</td>
+                            </tr>
+                            <tr class="table-light">
+                                <td class="fw-bold">{% trans "Total" %}</td>
+                                <td class="text-center fw-bold">88</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-</div> -->
+    {# Missed/Declined Reason Contact #}
+    <div class="col-12 col-xl-6">
+        <div class="card chart-card">
+            <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold">{% trans "Missed/Declined Reason Contact" %}</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-sm mb-0" id="missedDeclinedPatientTable">
+                        <thead>
+                            <tr>
+                                <th class="align-middle fw-bold" style="width: 70%;">{% trans "Missed/Declined Reason"%}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 30%;">{% trans "No. of Contact" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{% trans "Participant does not want to participate in research" %}</td>
+                                <td class="text-center">17</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Not enough time/ too busy to commit" %}</td>
+                                <td class="text-center">2</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Not able to get informed consent" %}</td>
+                                <td class="text-center">51</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Dr/RN too busy to screen participant properly" %}</td>
+                                <td class="text-center">18</td>
+                            </tr>
+                            <tr class="table-light">
+                                <td class="fw-bold">{% trans "Total" %}</td>
+                                <td class="text-center fw-bold">88</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Sampling Follow-up Summary Table - Left (col-4) #}
+    <div class="col-12 col-xl-4">
+        <div class="card chart-card">
+            <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold">{% trans "Sampling Follow-up Summary" %}</span>
+            </div>
+            <div class="card-body position-relative">
+                {# Loading Indicator #}
+                <div id="samplingLoading" class="chart-loading-overlay" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="loading-text mt-2">{% trans "Loading data..." %}</span>
+                </div>
+
+                <div class="table-responsive" id="samplingTableContainer">
+                    <table class="table table-bordered table-hover table-sm mb-0" id="samplingFollowupTable">
+                        <thead>
+                            <tr>
+                                <th class="text-center align-middle fw-bold" style="width: 35%;">{% trans "Schedule" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 32.5%;">{% trans "PATIENT" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 32.5%;">{% trans "CONTACT" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="samplingTableBody">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">{% trans "Loading..." %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        {% trans "Shows number of samples collected at each timepoint." %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# K. pneumoniae Isolation Statistics Table - Right (col-8) #}
+    <div class="col-12 col-xl-8">
+        <div class="card chart-card">
+            <div class="chart-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold">{% trans "K. pneumoniae Isolation Summary" %}</span>
+            </div>
+            <div class="card-body position-relative">
+                {# Loading Indicator #}
+                <div id="kpneumoniaeLoading" class="chart-loading-overlay" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="loading-text mt-2">{% trans "Loading data..." %}</span>
+                </div>
+
+                <div class="table-responsive" id="kpneumoniaeTableContainer">
+                    <table class="table table-bordered table-hover table-sm mb-0" id="kpneumoniaeTable">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="text-center align-middle fw-bold" style="width: 12%;">{% trans "Sample Type" %}</th>
+                                <th colspan="2" class="text-center align-middle fw-bold">{% trans "Total" %}</th>
+                                <th colspan="2" class="text-center align-middle fw-bold">{% trans "HTD" %}</th>
+                                <th colspan="2" class="text-center align-middle fw-bold">{% trans "Cho Ray" %}</th>
+                                <th colspan="2" class="text-center align-middle fw-bold">{% trans "NHTD" %}</th>
+                            </tr>
+                            <tr>
+                                <th class="text-center align-middle fw-bold" style="width: 11%;">{% trans "P" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 11%;">{% trans "C" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 11%;">{% trans "P" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 11%;">{% trans "C" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 11%;">{% trans "P" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 11%;">{% trans "C" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 11%;">{% trans "P" %}</th>
+                                <th class="text-center align-middle fw-bold" style="width: 11%;">{% trans "C" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kpneumoniaeTableBody">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">{% trans "Loading..." %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        {% trans "P = Patient, C = Contact. Clinical Kp. only applies to Patients." %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
 
 {% block dashboard_js %}
-{# Site Selection Dropdown JavaScript #}
-<script nonce="{{ request.csp_nonce }}"
-    src="{% static 'studies/study_43en/js/management-dashboard/site-selector.js' %}"></script>
+{# Common Utilities - Site Selection #}
+<script nonce="{{ request.csp_nonce }}" src="{% static 'studies/study_43en/js/common/site-selector.js' %}"></script>
 
-{# Dashboard JavaScript - Enrollment Progress Chart #}
+{# Dashboard Charts - Enrollment Progress #}
 <script nonce="{{ request.csp_nonce }}"
-    src="{% static 'studies/study_43en/js/management-dashboard/enrollment-progress.js' %}"></script>
+    src="{% static 'studies/study_43en/js/dashboard/enrollment-progress.js' %}"></script>
 
-{# Monthly Statistics Charts - Patient & Contact #}
+{# Dashboard Charts - Monthly Statistics (Patient & Contact) #}
 <script nonce="{{ request.csp_nonce }}"
-    src="{% static 'studies/study_43en/js/management-dashboard/monthly-statistics.js' %}"></script>
+    src="{% static 'studies/study_43en/js/dashboard/monthly-statistics.js' %}"></script>
+
+{# Dashboard Tables - Sampling Follow-up & K. pneumoniae #}
+<script nonce="{{ request.csp_nonce }}"
+    src="{% static 'studies/study_43en/js/dashboard/sampling-followup.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}"
+    src="{% static 'studies/study_43en/js/dashboard/kpneumoniae-isolation.js' %}"></script>
 {% endblock %}

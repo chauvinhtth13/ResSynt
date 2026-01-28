@@ -1,1 +1,0 @@
-# CLI patient views
